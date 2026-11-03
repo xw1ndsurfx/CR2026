@@ -48,7 +48,7 @@ public sealed partial class FrmFishing : Form
         _apply.Text = T("Apply to game"); _apply.Click += (_, _) => Save(); toolbar.Controls.Add(_apply);
         AddButton(toolbar, "Validate", () => { if (ValidateDraft()) _status.Text = T("Configuration is valid."); });
         AddButton(toolbar, "Reload resources", RebuildPages);
-        var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(1160, 660), SplitterDistance = 260 };
+        var split = new SplitContainer { Name = "EditorWorkspaceSplit", Dock = DockStyle.Fill, Size = new(1160, 660), SplitterDistance = 260 };
         var zoneButtons = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(4) };
         AddButton(zoneButtons, "New zone", NewZone);
         AddButton(zoneButtons, "Duplicate", DuplicateZone);
@@ -61,7 +61,8 @@ public sealed partial class FrmFishing : Form
             var page = new TabPage(T(title)) { AutoScroll = true, Padding = new Padding(8) };
             _pages.Add(page); _tabs.TabPages.Add(page);
         }
-        Controls.Add(split); Controls.Add(toolbar); Controls.Add(_status);
+        InitializeFishingFeedback();
+        Controls.Add(split); Controls.Add(_fishingFeedback); Controls.Add(toolbar); Controls.Add(_status);
         _search.TextChanged += (_, _) => RefreshZoneList();
         _zones.SelectedIndexChanged += (_, _) => {
             if (_loading) return;
@@ -70,7 +71,7 @@ public sealed partial class FrmFishing : Form
             _catch = _zone?.Catches.FirstOrDefault(); RebuildPages();
         };
         _tabs.SelectedIndexChanged += (_, _) => { if (!_loading) BuildSelectedPage(); };
-        _saveTimeout.Tick += (_, _) => { _saveTimeout.Stop(); _save.Enabled = _apply.Enabled = true; _pendingSaveJson = null; _status.Text = T("No server response. Your draft is still available."); };
+        _saveTimeout.Tick += (_, _) => SaveTimedOut();
         FormClosing += (_, e) => {
             if (_pendingSaveJson is not null)
             { e.Cancel = true; _status.Text = T("A save is pending. Wait for the server response before closing."); return; }
@@ -101,7 +102,12 @@ public sealed partial class FrmFishing : Form
     private static bool HasOpenChoice(Control root) => root.Controls.Cast<Control>()
         .Any(control => control is ComboBox { DroppedDown: true } || HasOpenChoice(control));
 
-    private void Changed() { if (!_loading) { _dirty = true; _status.Text = T("Unsaved changes"); } }
+    private void Changed()
+    {
+        if (_loading) return;
+        _dirty = true; _status.Text = T("Unsaved changes");
+        RefreshFishingActivationState();
+    }
     private void RefreshZoneList()
     {
         _loading = true; _zones.BeginUpdate();
@@ -112,7 +118,7 @@ public sealed partial class FrmFishing : Form
         _zones.SelectedItem = selected;
         _zones.EndUpdate(); _loading = false;
     }
-    private void RebuildPages() { StopPreview(); BuildSelectedPage(); }
+    private void RebuildPages() { StopPreview(); BuildSelectedPage(); RefreshFishingActivationState(); }
     private void BuildSelectedPage()
     {
         if (_tabs.SelectedIndex < 0) return;
@@ -397,7 +403,13 @@ public sealed partial class FrmFishing : Form
     }
     private void Save()
     {
-        if (!ValidateDraft()) return;
+        if (_pendingSaveJson is not null) return;
+        ClearApplicationFailure();
+        if (!ValidateDraft())
+        {
+            ShowApplicationFailure(_status.Text);
+            return;
+        }
         SendConfiguration(isDraft: false);
     }
     private void SaveDraft()
@@ -418,6 +430,20 @@ public sealed partial class FrmFishing : Form
     }
     internal void Response(FishingStatePacket packet)
     {
+        if (packet.ConfigurationAction is { } action)
+        {
+            if (action is FishingAction.GetConfiguration or FishingAction.GetDraftConfiguration)
+            {
+                // A read started before the click can fail while a later save is pending.
+                if (_pendingSaveJson is not null) return;
+            }
+            else
+            {
+                var expected = _pendingSaveIsDraft ? FishingAction.SaveDraftConfiguration : FishingAction.SaveConfiguration;
+                if (_pendingSaveJson is null || action != expected) return;
+            }
+        }
+        // Older responses have no action field and keep the existing Draft/JSON matching.
         // A refresh for the Event picker must not acknowledge an in-flight save.
         if (!packet.Saved && string.IsNullOrEmpty(packet.Message)) return;
         if (packet.Saved)
@@ -432,7 +458,10 @@ public sealed partial class FrmFishing : Form
         {
             if (_pendingSaveJson is not null && packet.Draft != _pendingSaveIsDraft) return;
             _status.Text = FishingUiText.Get(packet.Message, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            if (_pendingSaveJson is not null && !_pendingSaveIsDraft)
+                ShowApplicationFailure(_status.Text);
         }
         _saveTimeout.Stop(); _save.Enabled = _apply.Enabled = true; _pendingSaveJson = null;
+        RefreshFishingActivationState();
     }
 }

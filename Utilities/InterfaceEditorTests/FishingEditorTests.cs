@@ -4,6 +4,7 @@ using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.EditorHub;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.Forms.Styling;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
@@ -13,6 +14,7 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
+using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 
 internal static class FishingEditorTests
@@ -47,10 +49,12 @@ internal static class FishingEditorTests
         Check(tabs.SelectedTab == tabs.TabPages[index], "Selecting a fishing tab must activate the requested native page.");
     }
     private static void Select(ComboBox picker, string caption) => picker.SelectedItem = picker.Items.Cast<object>().Single(i => i.ToString() == caption);
-    private static FrmFishing Open(string json)
+    private static FrmFishing Open(string json, Form? owner = null)
     {
         var form = new FrmFishing(json) { ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new(-20000, -20000) };
-        form.Show(); Application.DoEvents();
+        if (owner is null) form.Show();
+        else EditorWindows.Show(form, owner);
+        Application.DoEvents();
         return form;
     }
 
@@ -85,6 +89,7 @@ internal static class FishingEditorTests
                         Catches = [new() { ItemId = fish.Id, ToolItemIds = [rod.Id] }] }],
                 };
                 CheckDraftWorkflow(source, replacement, fish);
+                CheckActivationFeedback(source);
                 // TabControl selects its initial page during native handle creation.
                 // Exercise the same Show lifecycle as EditorWindows.Show before reading controls.
                 using var form = Open(source.ToJson());
@@ -190,7 +195,7 @@ internal static class FishingEditorTests
             catch (InvalidDataException) { }
             Check(FishingEditorState.Configuration.ToJson() == cached, "A malformed reply leaves the last valid Event-zone cache intact.");
             CheckEntryPoints();
-            Console.WriteLine("PASS fishing editor: translated controls, filtered multimap selection, incomplete draft resume, strict activation, active cache isolation, exact persistence, save acknowledgements, Event picker and menu/hub dispatch.");
+            Console.WriteLine("PASS fishing editor: translated controls, filtered multimap selection, incomplete draft resume, strict activation, live Event activation, persistent refusal feedback, failed refresh recovery, active cache isolation, exact persistence, save acknowledgements and menu/hub dispatch.");
         }
         finally
         {
@@ -277,6 +282,130 @@ internal static class FishingEditorTests
         Check(!Field<bool>(reopened, "_dirty") && FishingEditorState.Configuration.ToJson() == applied &&
             Field<Label>(reopened, "_status").Text == FishingEditorText.Get("Applied to game."),
             "Only a valid active reply updates the Event cache and reports successful activation.");
+    }
+
+    private static void CheckActivationFeedback(FishingConfiguration source)
+    {
+        FishingEditorState.Apply(source.ToJson());
+        using var main = new FrmMain();
+        using var form = Open(source.ToJson(), main);
+        typeof(FrmMain).GetField("_fishingEditor", Hidden)!.SetValue(main, form);
+        using var eventEditor = new FrmEvent(new MapDescriptor(Guid.NewGuid()))
+        {
+            ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new(-20000, -20000),
+        };
+        var zoneId = source.Zones[0].Id;
+        var command = new OpenFishingCommand { ZoneId = zoneId };
+        var page = new EventPage(); page.CommandLists.Values.First().Add(command);
+        eventEditor.CurrentPage = page;
+        eventEditor.MyEvent = new EventDescriptor(Guid.NewGuid(), true) { Pages = [page] };
+        eventEditor.Show(); Application.DoEvents();
+        Call(eventEditor, "OpenEditCommand", command);
+        using var picker = All(eventEditor).OfType<EventCommandFishing>().Single();
+        var zones = All(picker).OfType<ComboBox>().Single();
+        Guid SelectedId() => (Guid)zones.SelectedItem!.GetType().GetProperty("Id")!.GetValue(zones.SelectedItem)!;
+        string Caption() => zones.SelectedItem!.ToString()!;
+        var state = (TextBox)form.Controls.Find("FishingActivationState", true).Single();
+        var failure = form.Controls.Find("FishingApplyFailure", true).Single();
+        var reason = (TextBox)form.Controls.Find("FishingApplyFailureMessage", true).Single();
+        var title = form.Controls.Find("FishingApplyFailureTitle", true).Single();
+        var draft = Field<FishingConfiguration>(form, "_config");
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.GetConfiguration, ConfigurationJson = source.ToJson() });
+        Check(FishingEditorState.HasConfiguration && !FishingEditorState.IsRefreshing && FishingEditorState.LastError is null &&
+            SelectedId() == zoneId && Caption().Contains(FishingEditorText.Get("Disabled")),
+            "The already-open Event picker starts with the actual disabled server zone and its selected identity.");
+        Input<CheckBox>(form, "Enabled").Checked = true;
+        Check(draft.Zones[0].Enabled && !FishingEditorState.Configuration.Zones[0].Enabled &&
+            state.Text.Contains(string.Format(FishingEditorText.Get("Draft: {0}"), FishingEditorText.Get("Enabled"))) &&
+            state.Text.Contains(string.Format(FishingEditorText.Get("Last confirmed on server: {0}"), FishingEditorText.Get("Disabled"))),
+            "Checking Enabled changes only the draft; the visible comparison still identifies the disabled server state.");
+        Click(form, "Apply to game");
+        var applied = Field<string>(form, "_pendingSaveJson");
+        Check(FishingConfiguration.FromJson(applied).Zones.Single(z => z.Id == zoneId).Enabled &&
+            Caption().Contains(FishingEditorText.Get("Disabled")),
+            "The sent application contains Enabled=true without optimistically activating the Event before the server reply.");
+        const string concurrentReadFailure = "Fixture earlier active read failed while the application was pending.";
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.GetConfiguration, Message = concurrentReadFailure });
+        Check(Field<string>(form, "_pendingSaveJson") == applied && !Field<Button>(form, "_apply").Enabled &&
+            !failure.Visible && FishingEditorState.LastError == concurrentReadFailure && state.Text.Contains(concurrentReadFailure),
+            "An earlier Get error cannot reject or acknowledge the subsequent pending application, even when both replies are ordered.");
+        main.ApplyFishingConfiguration(new() { Editor = true, Saved = true, ConfigurationAction = FishingAction.SaveConfiguration, ConfigurationJson = applied });
+        Check(FishingEditorState.Configuration.Zones.Single(z => z.Id == zoneId).Enabled && SelectedId() == zoneId &&
+            !Caption().Contains(FishingEditorText.Get("Disabled")) && !failure.Visible &&
+            Field<Label>(form, "_status").Text == FishingEditorText.Get("Applied to game.") &&
+            state.Text.Contains(string.Format(FishingEditorText.Get("Last confirmed on server: {0}"), FishingEditorText.Get("Enabled"))),
+            "The actual Main reply path removes Disabled in an already-open Event and confirms the applied state in the editor.");
+        main.ApplyFishingConfiguration(new() { Editor = true, Draft = true, ConfigurationAction = FishingAction.GetDraftConfiguration, ConfigurationJson = source.ToJson() });
+        Check(FishingEditorState.Configuration.Zones[0].Enabled && SelectedId() == zoneId &&
+            !Caption().Contains(FishingEditorText.Get("Disabled")),
+            "A subsequent disabled draft reply cannot undo the confirmed Event activation.");
+
+        const string readFailure = "Fixture active configuration could not be read.";
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.GetConfiguration, Message = readFailure });
+        Check(FishingEditorState.HasConfiguration && !FishingEditorState.IsRefreshing && FishingEditorState.LastError == readFailure &&
+            FishingEditorState.Configuration.Zones[0].Enabled && SelectedId() == zoneId &&
+            Field<Label>(picker, "_status").Text.Contains(readFailure) && state.Text.Contains(readFailure) && !failure.Visible,
+            "A failed active refresh is visible in both windows without discarding the last confirmed state or claiming an Apply was refused.");
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.GetConfiguration, ConfigurationJson = "{\"Zones\":null}" });
+        Check(FishingEditorState.Configuration.Zones[0].Enabled &&
+            FishingEditorState.LastError == FishingEditorText.Get("The server returned an invalid active fishing configuration. The last confirmed state was preserved."),
+            "A malformed refresh retains the confirmed active zone and exposes the invalid response diagnostic.");
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.GetConfiguration, ConfigurationJson = source.ToJson() });
+        Check(FishingEditorState.LastError is null && !FishingEditorState.Configuration.Zones[0].Enabled,
+            "A valid later server response clears the refresh error and supplies the current server state.");
+
+        Click(form, "Apply to game");
+        var rejection = "Fixture tool has no valid equipment slot: " + source.Tools[0].ItemId + Environment.NewLine +
+            string.Join(Environment.NewLine, Enumerable.Repeat("Fixture detail: choose an equipment slot available on the server before applying this profile.", 14));
+        main.ApplyFishingConfiguration(new() { Editor = true, ConfigurationAction = FishingAction.SaveConfiguration, Message = rejection });
+        Check(Field<string?>(form, "_pendingSaveJson") is null && failure.Visible && reason.Text == rejection &&
+            title.Text == FishingEditorText.Get("Apply to game refused") && reason.ReadOnly && reason.Multiline && reason.WordWrap && reason.ScrollBars == ScrollBars.Vertical &&
+            draft.Zones[0].Enabled && !FishingEditorState.Configuration.Zones[0].Enabled && Caption().Contains(FishingEditorText.Get("Disabled")),
+            "A rejected application displays the complete reason while preserving enabled draft and disabled active state.");
+        Input<TextBox>(form, "Name").Text = "Changed after rejected application";
+        Click(form, "Save draft");
+        var savedDraft = Field<string>(form, "_pendingSaveJson");
+        main.ApplyFishingConfiguration(new() { Editor = true, Draft = true, ConfigurationAction = FishingAction.GetDraftConfiguration, Message = "Fixture earlier draft read failure." });
+        Check(Field<string>(form, "_pendingSaveJson") == savedDraft && !Field<Button>(form, "_save").Enabled,
+            "An earlier draft read failure cannot acknowledge the subsequent pending draft save.");
+        main.ApplyFishingConfiguration(new() { Editor = true, Draft = true, Saved = true, ConfigurationAction = FishingAction.SaveDraftConfiguration, ConfigurationJson = savedDraft });
+        Check(failure.Visible && reason.Text == rejection && !FishingEditorState.Configuration.Zones[0].Enabled &&
+            Field<Label>(form, "_status").Text == FishingEditorText.Get("Draft saved. Apply to the game when ready."),
+            "Editing and saving a draft never conceal an unresolved application refusal or activate its zone.");
+        Application.DoEvents();
+        var eventViewport = (Panel)picker.Controls.Find("FishingEventStatusViewport", true).Single();
+        var eventActions = picker.Controls.Find("FishingEventActions", true).Single();
+        var actionsBounds = picker.RectangleToClient(eventActions.RectangleToScreen(eventActions.ClientRectangle));
+        Check(eventViewport.AutoScroll && eventViewport.ClientSize.Height > 0 &&
+            eventViewport.DisplayRectangle.Height >= Field<Label>(picker, "_status").Bottom &&
+            actionsBounds.Top >= 0 && actionsBounds.Bottom <= picker.ClientSize.Height &&
+            Field<Label>(picker, "_status").Text.Contains(rejection),
+            "A long Event diagnostic can be scrolled without pushing the refresh and save actions outside the visible control.");
+        foreach (var size in new[] { form.MinimumSize, new Size(1180, 790) })
+        {
+            form.Size = size; Application.DoEvents();
+            var feedback = form.Controls.Find("FishingFeedback", true).Single();
+            var failureBounds = form.RectangleToClient(failure.RectangleToScreen(failure.ClientRectangle));
+            Check(failure.Visible && failureBounds.Top >= 0 && failureBounds.Bottom <= form.ClientSize.Height &&
+                failureBounds.Right <= form.ClientSize.Width && reason.Width > 100 && reason.Height >= reason.Font.Height &&
+                feedback.Bottom < Field<Label>(form, "_status").Top && !form.Controls.Find("EditorScrollContent", true).Any(),
+                "The refusal panel remains visible and readable above the editor body at " + size);
+        }
+
+        Click(form, "Apply to game");
+        Check(!failure.Visible, "A new application attempt replaces the previous refusal instead of displaying it as a new result.");
+        Call(form, "SaveTimedOut");
+        Check(failure.Visible && title.Text == FishingEditorText.Get("Application acknowledgement timed out") &&
+            Field<string?>(form, "_pendingSaveJson") is null && Field<Button>(form, "_apply").Enabled &&
+            !FishingEditorState.Configuration.Zones[0].Enabled,
+            "An application timeout reports missing confirmation, leaves the last confirmed state untouched and permits retry.");
+        Click(form, "Apply to game");
+        applied = Field<string>(form, "_pendingSaveJson");
+        main.ApplyFishingConfiguration(new() { Editor = true, Saved = true, ConfigurationAction = FishingAction.SaveConfiguration, ConfigurationJson = applied });
+        Check(!failure.Visible && !Field<bool>(form, "_dirty") && FishingEditorState.LastError is null &&
+            FishingEditorState.Configuration.Zones[0].Enabled && SelectedId() == zoneId &&
+            !Caption().Contains(FishingEditorText.Get("Disabled")),
+            "A successful retry clears the refusal and updates the same Event zone without reopening either window.");
     }
 
     private static void CheckEntryPoints()

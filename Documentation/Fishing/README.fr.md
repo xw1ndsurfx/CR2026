@@ -109,6 +109,18 @@ Le pack contient 32 WAV et 58 bindings ; le catalogue runtime expose 68 clés, d
 
 Quand la configuration est prête, utiliser **Valider**, puis **Appliquer au jeu**. Cette seconde action vérifie les objets équipables, les récompenses empilables, toutes les cartes et les autres références avant de modifier la configuration active `resources/fishing.json`. Une application réussie synchronise aussi le brouillon. Un échec conserve les données éditées ; aucune configuration invalide n’est activée.
 
+### Si l’Event affiche toujours « Désactivé »
+
+Le panneau au-dessus des onglets compare **Brouillon** et **Dernier état confirmé par le serveur** pour la même zone. La case **Activé** modifie le brouillon ; le suffixe de l’Event dépend de la configuration active reçue du serveur. L’ouverture de Fishing Editor demande les deux configurations séparément. Un état encore inconnu, une actualisation en cours et un échec de mise à jour sont affichés explicitement.
+
+Après **Appliquer au jeu**, attendre **Appliqué au jeu.** En cas de refus, un bandeau affiche la raison complète et reste présent pendant les modifications et l’enregistrement du brouillon. Les refus serveur précisent maintenant la ressource concernée, son identifiant et le réglage à corriger : métier absent, emplacement d’équipement invalide, appât non empilable, animation ou carte absente, récompense incompatible, pile maximale invalide ou variable absente. Un refus conserve l’ancienne configuration active.
+
+Si un métier vient d’être associé, vérifier qu’il a bien été enregistré dans **Professions** sur ce serveur. Si une prise légendaire vient d’être ajoutée, son **Objet remis** doit exister et accepter l’empilement, comme une prise ordinaire. Les contrôles portent sur toute la configuration, y compris les autres profils et zones.
+
+**Actualiser la configuration active** consulte l’état utilisé par le serveur. L’Event se met aussi à jour lorsqu’il est déjà ouvert, en conservant le GUID sélectionné. Si l’actualisation échoue, les deux fenêtres le signalent et présentent explicitement le dernier état confirmé ; elles ne remplacent pas les données par un état supposé.
+
+Pour examiner les fichiers, identifier clairement `fishing.json` et `fishing.draft.json` dans le dossier `resources` du serveur réellement lancé. Deux blocs JSON sans leur nom de fichier ne permettent pas de déterminer lequel est appliqué. Un fichier modifié directement sur disque n’actualise pas automatiquement le cache d’un serveur déjà lancé ; le parcours normal est **Appliquer au jeu** dans l’éditeur connecté à ce serveur.
+
 Une absence de réponse ne prouve pas que le serveur n’a rien écrit. Après un doute réseau, vérifier séparément le brouillon et la configuration active avant de continuer. Le client, le serveur et l’éditeur doivent tous être mis à jour pour utiliser ces actions.
 
 Les changements effectués après l’envoi restent signalés comme non enregistrés. Une sauvegarde en cours bloque la fermeture jusqu’à sa réponse ou son délai d’attente. `Échap` ferme une liste déroulante ouverte, puis demande la fermeture de l’éditeur ; un brouillon modifié demande confirmation. Dans le sélecteur Event, `Échap` annule le choix en cours.
