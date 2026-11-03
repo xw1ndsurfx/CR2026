@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen;
+﻿using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
 using Intersect.Client.Interface.Game.Shop;
@@ -53,7 +53,7 @@ internal sealed class ServiceShopWindow:Window
             if(state.Music)enabled=entry.Available && entry.Balance>=offer.Price;
             var row=ShopProductRow.Service(_list,"Service"+offer.Id,ClientLanguages.ContentText(offer.Name),detail,
                 $"{offer.Price} {ClientLanguages.ContentText(entry.Currency)}",T(state.Music?"Play music":entry.Owned?"Owned":"Learn spell"),enabled,
-                ()=>Networking.Network.SendPacket(new ServiceShopPurchasePacket{OfferId=offer.Id}),offer.Icon);
+                ()=>Networking.Network.SendPacket(new ServiceShopPurchasePacket{OfferId=offer.Id}),string.IsNullOrWhiteSpace(offer.Icon) && !state.Music?SpellDescriptor.Get(offer.SpellId)?.Icon??"":offer.Icon,state.Music?Guid.Empty:offer.SpellId);
             row.SetBounds(index%2*360,index/2*84,332,75);
         }
         _list.SetInnerSize(700,(entries.Length+1)/2*84);_list.UpdateScrollBars();

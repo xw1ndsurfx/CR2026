@@ -4398,7 +4398,7 @@
     "Submit for approval": {
       "en": "Submit for approval",
       "fr": "Soumettre pour approbation",
-      "es": "Enviar para aprobaciÃ³n"
+      "es": "Enviar para aprobación"
     },
     "Approve": {
       "en": "Approve",
@@ -4417,42 +4417,42 @@
     },
     "Awaiting approval": {
       "en": "Awaiting approval",
-      "fr": "En attente dâ€™approbation",
-      "es": "Pendiente de aprobaciÃ³n"
+      "fr": "En attente d’approbation",
+      "es": "Pendiente de aprobación"
     },
     "Approved": {
       "en": "Approved",
-      "fr": "ApprouvÃ©",
+      "fr": "Approuvé",
       "es": "Aprobado"
     },
     "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.": {
       "en": "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.",
-      "fr": "Seul le staff Game Master Premium peut proposer un logo. Un administrateur doit lâ€™approuver avant sa publication.",
+      "fr": "Seul le staff Game Master Premium peut proposer un logo. Un administrateur doit l’approuver avant sa publication.",
       "es": "Solo el personal Game Master Premium puede enviar un emblema. Un administrador debe aprobarlo antes de publicarlo."
     },
     "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.": {
       "en": "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.",
       "fr": "Choisis un PNG RGB ou RGBA valide, de 128 x 128 pixels et 64 Ko maximum.",
-      "es": "Elige un PNG RGB o RGBA vÃ¡lido, de 128 x 128 pÃ­xeles y 64 KB como mÃ¡ximo."
+      "es": "Elige un PNG RGB o RGBA válido, de 128 x 128 píxeles y 64 KB como máximo."
     },
     "Premium Game Master staff access is required.": {
       "en": "Premium Game Master staff access is required.",
-      "fr": "Un accÃ¨s staff Game Master Premium est requis.",
+      "fr": "Un accès staff Game Master Premium est requis.",
       "es": "Se requiere acceso de personal Game Master Premium."
     },
     "Guild emblem submitted for administrator approval.": {
       "en": "Guild emblem submitted for administrator approval.",
-      "fr": "Logo envoyÃ© pour approbation par un administrateur.",
-      "es": "Emblema enviado para aprobaciÃ³n de un administrador."
+      "fr": "Logo envoyé pour approbation par un administrateur.",
+      "es": "Emblema enviado para aprobación de un administrador."
     },
     "This submission has changed. Refresh the list.": {
       "en": "This submission has changed. Refresh the list.",
-      "fr": "Cette proposition a changÃ©. Actualise la liste.",
-      "es": "Este envÃ­o ha cambiado. Actualiza la lista."
+      "fr": "Cette proposition a changé. Actualise la liste.",
+      "es": "Este envío ha cambiado. Actualiza la lista."
     },
     "This folder cannot be opened.": {
       "en": "This folder cannot be opened.",
-      "fr": "Impossible dâ€™ouvrir ce dossier.",
+      "fr": "Impossible d’ouvrir ce dossier.",
       "es": "No se puede abrir esta carpeta."
     },
     "Open furniture shop": {
@@ -4557,7 +4557,78 @@
     },
     "Open": { "en": "Open", "fr": "Ouvrir", "es": "Abrir" },
     "Close": { "en": "Close", "fr": "Fermer", "es": "Cerrar" },
-    "Guild emblem could not be saved. Try again.": { "en": "Guild emblem could not be saved. Try again.", "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.", "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo." }
+    "Guild emblem could not be saved. Try again.": { "en": "Guild emblem could not be saved. Try again.", "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.", "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo." },
+    "Image": {
+      "en": "Image",
+      "fr": "Image",
+      "es": "Imagen"
+    },
+    "Choose lobby images using the image selector and preview. Party size also respects dungeon, ship and server limits.": {
+      "en": "Choose lobby images using the image selector and preview. Party size also respects dungeon, ship and server limits.",
+      "fr": "Choisis les images de lobby avec le sélecteur et son aperçu. La taille du groupe respecte aussi les limites du donjon, du navire et du serveur.",
+      "es": "Elige las imágenes de sala con el selector y su vista previa. El tamaño del grupo también respeta los límites de mazmorra, barco y servidor."
+    },
+    "Royal Seals shop": {
+      "en": "Royal Seals shop",
+      "fr": "Boutique de sceaux royaux",
+      "es": "Tienda de sellos reales"
+    },
+    "Royal Seals": {
+      "en": "Royal Seals",
+      "fr": "Sceaux royaux",
+      "es": "Sellos reales"
+    },
+    "Royal Seals: {0}": {
+      "en": "Royal Seals: {0}",
+      "fr": "Sceaux royaux : {0}",
+      "es": "Sellos reales: {0}"
+    },
+    "Total: {0} Royal Seals": {
+      "en": "Total: {0} Royal Seals",
+      "fr": "Total : {0} sceaux royaux",
+      "es": "Total: {0} sellos reales"
+    },
+    "No seal exchange is available.": {
+      "en": "No seal exchange is available.",
+      "fr": "Aucun échange de sceaux n’est disponible.",
+      "es": "No hay ningún intercambio de sellos disponible."
+    },
+    "Not enough Royal Seals.": {
+      "en": "Not enough Royal Seals.",
+      "fr": "Pas assez de sceaux royaux.",
+      "es": "No tienes suficientes sellos reales."
+    },
+    "This offer has changed. Refresh the shop.": {
+      "en": "This offer has changed. Refresh the shop.",
+      "fr": "Cette offre a changé. Actualise la boutique.",
+      "es": "Esta oferta ha cambiado. Actualiza la tienda."
+    },
+    "This offer is unavailable.": {
+      "en": "This offer is unavailable.",
+      "fr": "Cette offre n’est pas disponible.",
+      "es": "Esta oferta no está disponible."
+    },
+    "Exchange Royal Seals": {
+      "en": "Exchange Royal Seals",
+      "fr": "Échanger des sceaux royaux",
+      "es": "Canjear sellos reales"
+    },
+    "Quantity: {0}": {
+      "en": "Quantity: {0}",
+      "fr": "Quantité : {0}",
+      "es": "Cantidad: {0}"
+    },
+    "Make room in your inventory.": {
+      "en": "Make room in your inventory.",
+      "fr": "Libère de la place dans ton inventaire.",
+      "es": "Haz espacio en tu inventario."
+    },
+    "Unable to save. Please try again.": {
+      "en": "Unable to save. Please try again.",
+      "fr": "Impossible d’enregistrer. Réessaie.",
+      "es": "No se pudo guardar. Inténtalo de nuevo."
+    },
+    "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"}
 
   }
 }

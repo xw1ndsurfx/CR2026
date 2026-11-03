@@ -90,6 +90,27 @@ internal static class Program
                 window.Hide(); Check(window.IsHidden, "Closing preserves hidden state");
             }
         }
+
+        foreach(var language in GameTextCatalog.Languages)
+        {
+            languageProperty.SetValue(null,language);
+            using var renderer=new DrawingRenderer(1280,900);using var skin=new DrawingSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1280,900)};
+            var emblem=new GuildEmblemWindow(canvas);
+            emblem.Apply(new Intersect.Network.Packets.Guilds.GuildEmblemStatePacket {CanSubmit=true,CanModerate=true,
+                Approved=[new(){GuildId=Guid.NewGuid(),GuildName="Royal Guild"}]});
+            canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);
+            foreach(var label in All(emblem).OfType<Label>().Where(l=>!l.IsHidden && l.Text.Length>0 && l.Parent!=emblem.Titlebar))
+                Check(label.Font?.Name=="sourcesanspro","Guild emblem text explicitly uses the readable font");
+            renderer.Bitmap.Save(Path.Combine(output,"guild-emblem-"+language+".png"));emblem.Hide();
+            renderer.Clear();
+            var sealWindow=new RoyalSealShopWindow(canvas);
+            var sealState=new RoyalSealShopState {ShopId=Guid.NewGuid(),Seals=123,Shops=[new(){Id=Guid.Empty,Name="Royal exchange"}],Offers=[new(){Slot=0,ItemId=reward.Id,Price=25}]};
+            sealState.Shops[0].Id=sealState.ShopId;sealWindow.Apply(sealState);sealWindow.Apply(sealState);
+            canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);
+            Check(All(sealWindow).OfType<ImagePanel>().Any(i=>i.Name=="Icon" && i.Texture!=null),"Seal shop displays configured item art");
+            Check(All(sealWindow).OfType<Label>().Any(l=>l.Text?.Contains("123")==true),"Seal shop displays the sovereign currency balance");
+            renderer.Bitmap.Save(Path.Combine(output,"seal-shop-"+language+".png"));
+        }
         languageProperty.SetValue(null, "en");
         var catalog = GameTextCatalog.FromJson(File.ReadAllText(Path.Combine(root, "Framework", "Intersect.Framework.Core", "RoyalContracts", "Text.json")));
         foreach (var (source, versions) in catalog.Entries)

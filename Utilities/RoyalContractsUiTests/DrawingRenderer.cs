@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Intersect;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
@@ -21,6 +21,7 @@ internal sealed class DrawingRenderer : Intersect.Client.Framework.Gwen.Renderer
         _graphics.Clear(SD.Color.FromArgb(15, 12, 20));
         _graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
     }
+    internal void Clear() => _graphics.Clear(SD.Color.FromArgb(15,12,20));
     private static SD.Color Convert(Color c) => SD.Color.FromArgb(c.A, c.R, c.G, c.B);
     private static SD.Font Font(int size, float scale = 1) => new("Segoe UI", Math.Max(1, size * scale), SD.FontStyle.Regular, SD.GraphicsUnit.Pixel);
     public override Point MeasureText(IFont? font, int fontSize, string? text, float scale = 1)

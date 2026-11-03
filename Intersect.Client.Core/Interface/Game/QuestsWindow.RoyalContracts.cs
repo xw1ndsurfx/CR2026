@@ -111,7 +111,7 @@ public partial class GameInterface
         if (_journalPlayer != Intersect.Client.General.Globals.Me.Id)
         {
             _journalPlayer=Intersect.Client.General.Globals.Me.Id;_journalRefreshAt=0;RoyalContractJournal.Reset();
-            IntoxicationVisuals.GreenUntil=0;
+            IntoxicationVisuals.GreenUntil=IntoxicationVisuals.DrunkUntil=0;
         }
         var now = Environment.TickCount64;
         if (now >= _journalRefreshAt)

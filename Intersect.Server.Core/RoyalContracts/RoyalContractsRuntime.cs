@@ -131,6 +131,7 @@ internal static class RoyalContractsRuntime
             }
             try
             {
+                if (action==RoyalContractAction.OpenExchange) {RoyalSealShopRuntime.Open(player);return;}
                 if (!Current.Enabled) { Send(player, "The board is paused."); return; }
                 if (action == RoyalContractAction.Refresh) { Send(player); return; }
                 var now = DateTimeOffset.UtcNow;

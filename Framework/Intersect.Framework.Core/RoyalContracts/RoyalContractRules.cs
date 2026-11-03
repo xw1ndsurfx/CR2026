@@ -6,7 +6,7 @@ namespace Intersect.Framework.Core.RoyalContracts;
 
 public enum RoyalContractObjective { NpcKills, DeliverItems, ExploreMaps, ShipsSunk, DungeonsCompleted, QuestsCompleted, InvasionsCompleted, ShipsBoarded, WorldBossesDefeated }
 public enum RoyalContractPeriod { Daily, Weekly }
-public enum RoyalContractAction { Refresh, Accept, Deliver, Claim, Journal }
+public enum RoyalContractAction { Refresh, Accept, Deliver, Claim, Journal, OpenExchange }
 
 public sealed class RoyalContractTemplate
 {

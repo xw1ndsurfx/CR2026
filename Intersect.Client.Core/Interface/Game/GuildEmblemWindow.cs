@@ -1,4 +1,5 @@
 ﻿using Intersect.Client.Core;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -52,13 +53,13 @@ internal sealed class GuildEmblemWindow : Window
     internal GuildEmblemWindow(Canvas parent) : base(parent, T("Guild emblem"), false, nameof(GuildEmblemWindow))
     {
         SetSize(700, 525); Alignment = [Alignments.Center]; DisableResizing(); DeleteOnClose = false;
-        _status = new Label(this) { AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped, FontSize = 12, TextColorOverride = Color.White };
+        _status = new Label(this) { AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12, TextColorOverride = Color.White };
         _status.SetBounds(16, 12, 660, 68);
-        _path = new TextBox(this) { Text = "" }; _path.SetBounds(16, 85, 490, 30);
+        _path = new TextBox(this) { Text = "", Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12 }; _path.SetBounds(16, 85, 490, 30);
         Action(T("Browse PNG"), 514, 85, () => Browse(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)));
         _submit = Action(T("Submit for approval"), 16, 126, Submit, 250);
         Action(T("Refresh"), 282, 126, () => Request(GuildEmblemAction.Manage), 140);
-        _list = new ListBox(this); _list.SetBounds(16, 174, 440, 216);
+        _list = new ListBox(this) { FontName = "sourcesanspro", FontSize = 12 }; _list.SetBounds(16, 174, 440, 216);
         _preview = new ImagePanel(this) { MaintainAspectRatio = true, MouseInputEnabled = false }; _preview.SetBounds(486, 192, 128, 128);
         _approve = Action(T("Approve"), 16, 405, () => Review(GuildEmblemAction.Approve), 140);
         _reject = Action(T("Reject"), 170, 405, () => Review(GuildEmblemAction.Reject), 140);
@@ -70,7 +71,7 @@ internal sealed class GuildEmblemWindow : Window
     protected override void EnsureInitialized() { }
     private Button Action(string text, int x, int y, System.Action callback, int width = 160)
     {
-        var b = new Button(this) { Text = text }; b.SetBounds(x, y, width, 32); b.Clicked += (_, _) => callback(); return b;
+        var b = new Button(this) { Text = text, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12, TextColorOverride = new Color(255,241,222,185) }; b.SetBounds(x, y, width, 32); b.Clicked += (_, _) => callback(); return b;
     }
     private static void Request(GuildEmblemAction action, int page = 0) => Networking.Network.SendPacket(new GuildEmblemRequestPacket { Action = action, Page = Math.Max(0,page) });
     private void Submit()
@@ -116,8 +117,8 @@ internal sealed class GuildEmblemWindow : Window
     {
         var browser = new WindowControl(Parent, T("Browse PNG"), false, "GuildEmblemFilePicker") { DeleteOnClose = true };
         browser.SetSize(620, 470); browser.Alignment = [Alignments.Center]; browser.DisableResizing();
-        var path = new TextBox(browser) { Text = directory }; path.SetBounds(12, 12, 460, 30);
-        var list = new ListBox(browser); list.SetBounds(12, 55, 584, 350);
+        var path = new TextBox(browser) { Text = directory, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12 }; path.SetBounds(12, 12, 460, 30);
+        var list = new ListBox(browser) { FontName = "sourcesanspro", FontSize = 12 }; list.SetBounds(12, 55, 584, 350);
         void Load(string folder)
         {
             try
@@ -132,7 +133,7 @@ internal sealed class GuildEmblemWindow : Window
             }
             catch { _status.Text = T("This folder cannot be opened."); }
         }
-        var open = new Button(browser) { Text = T("Open") }; open.SetBounds(480, 12, 116, 30); open.Clicked += (_, _) => Load(path.Text);
+        var open = new Button(browser) { Text = T("Open"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12 }; open.SetBounds(480, 12, 116, 30); open.Clicked += (_, _) => Load(path.Text);
         Load(directory); browser.Show(); browser.BringToFront();
     }
 }

@@ -73,6 +73,7 @@ public partial class FrmShop
             // DockStyle.Fill prevents AutoScroll from measuring overflow. Keep a real
             // content rectangle so the final fields remain reachable on short screens.
             group.Dock = DockStyle.None;
+            group.Location = System.Drawing.Point.Empty;
             group.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             var minimum = group.MinimumSize;
             void FitOffers()

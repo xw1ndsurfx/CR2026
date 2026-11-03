@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Intersect.GameObjects;
 
-public enum ShopConfigurationKind { Normal, NavalAmmunition, NavalShipsAndSkills, Spells, PremiumMusic }
+public enum ShopConfigurationKind { Normal, NavalAmmunition, NavalShipsAndSkills, Spells, PremiumMusic, RoyalSeals }
 
 public partial class ShopDescriptor : DatabaseObject<ShopDescriptor>, IFolderable
 {

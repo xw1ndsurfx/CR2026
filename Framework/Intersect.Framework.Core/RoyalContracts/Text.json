@@ -429,6 +429,11 @@
       "en": "Unknown reward",
       "fr": "Récompense inconnue",
       "es": "Recompensa desconocida"
+    },
+    "Exchange Royal Seals": {
+      "en": "Exchange Royal Seals",
+      "fr": "Échanger des sceaux royaux",
+      "es": "Canjear sellos reales"
     }
   }
 }

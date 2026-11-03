@@ -1,4 +1,4 @@
-using Intersect.Core;
+﻿using Intersect.Core;
 using Intersect.Server.Achievements;
 using Intersect.Enums;
 using Intersect.Framework.Core.Achievements;
@@ -18,7 +18,7 @@ public partial class Player
         lock (EntityLock)
         {
             var shop = InShop;
-            if (shop == null || slot < 0 || slot >= shop.SellingItems.Count || amount < 1) { ShopFailed(); return; }
+            if (shop == null || shop.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.RoyalSeals || slot < 0 || slot >= shop.SellingItems.Count || amount < 1) { ShopFailed(); return; }
             var offer = shop.SellingItems[slot];
             var product = ItemDescriptor.Get(offer.ItemId); var currency = ItemDescriptor.Get(offer.CostItemId);
             var error = ShopInventoryPlan.Purchase(Enumerable.Range(0, Options.Instance.Player.MaxInventory).Select(i => (Item)Items[i]).ToArray(), product, currency, offer.CostItemQuantity, amount, out var plan);
@@ -33,7 +33,7 @@ public partial class Player
         lock (EntityLock)
         {
             var shop = InShop;
-            if (shop == null || slot < 0 || slot >= Options.Instance.Player.MaxInventory || Items[slot]?.Descriptor is not { } product || (!allCopies && amount < 1)) { ShopFailed(); return; }
+            if (shop == null || shop.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.RoyalSeals || slot < 0 || slot >= Options.Instance.Player.MaxInventory || Items[slot]?.Descriptor is not { } product || (!allCopies && amount < 1)) { ShopFailed(); return; }
             if (!product.CanSell) { PacketSender.SendChatMsg(this, Strings.Shops.Bound, ChatMessageType.Inventory, CustomColors.Items.Bound); return; }
             var offer = shop.BuyingItems.FirstOrDefault(item => item.ItemId == product.Id);
             if (shop.BuyingWhitelist != (offer != null))

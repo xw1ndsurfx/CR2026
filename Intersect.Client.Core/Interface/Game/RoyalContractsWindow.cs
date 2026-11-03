@@ -54,8 +54,9 @@ internal sealed class RoyalContractsWindow : Window
         _action = Action("ContractAction", "", 43, 402, 264, 32, Execute);
         _cards = new Base(this, "ContractCards") { ShouldDrawBackground = false };
         _cards.SetBounds(454, 156, 440, 286);
-        _seals = TextLabel(this, "Seals", "", 26, 457, 365, 25, Gold, 12);
-        _message = TextLabel(this, "Message", "", 26, 486, 390, 56, Gold, 10);
+        _seals = TextLabel(this, "Seals", "", 26, 449, 365, 25, Gold, 12);
+        Action("ExchangeRoyalSeals",T("Exchange Royal Seals"),26,480,365,32,()=>Request(RoyalContractAction.OpenExchange));
+        _message = TextLabel(this, "Message", "", 26, 515, 390, 32, Gold, 10);
         _previous = Action("PreviousPage", T("Previous"), 457, 463, 110, 30, () => { _page--; Rebuild(); });
         _pageLabel = TextLabel(this, "PageNumber", "", 572, 465, 190, 26, Gold, 11);
         _pageLabel.TextAlign = Pos.Center;
