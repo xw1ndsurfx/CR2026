@@ -100,10 +100,15 @@ internal static partial class NavalSystem
             lock(Gate)SendManagement(captain,NavalManageAction.Skills,now,"Boarding could not start. Check the deck, party requirements and dungeon configuration.");
         }
     }
+    private static bool HasBoardingParty(EnemyBoardingRun run, Player player) =>
+        player.Id == run.Captain || player.Party.Any(p => p.Id == run.Captain) ||
+        Player.FindOnline(run.Captain) is not { InGame: true } &&
+        DungeonRunRuntime.HasBoardingPartyMembership(run.Id, player.Id, run.Captain);
+
     internal static bool CanReceiveBoardingReward(Player player,Guid encounter)
     {
         lock(Gate)return EnemyBoardings.TryGetValue(encounter,out var run) && run.Members.Contains(player.Id) && !player.NavalPartyExitRequested &&
-            (player.Id==run.Captain || player.Party.Any(p=>p.Id==run.Captain));
+            HasBoardingParty(run, player);
     }
     internal static void CreditBoardingKill(Guid encounter,Guid actor,Guid enemyId)
     {
@@ -147,13 +152,13 @@ internal static partial class NavalSystem
         lock(Gate)
         {
             if(!EnemyBoardings.TryGetValue(encounter,out run) || !run.Members.Contains(player.Id))return false;
-            forfeit=player.NavalPartyExitRequested || player.Id!=run.Captain && !player.Party.Any(p=>p.Id==run.Captain);
+            forfeit=player.NavalPartyExitRequested || !HasBoardingParty(run, player);
         }
         if(forfeit && !CommitNavalForfeit(player,run.Ship,()=>SaveManagement(player)))return true;
         lock(Gate)
         {
             if(!EnemyBoardings.TryGetValue(encounter,out run) || !run.Members.Contains(player.Id))return false;
-            forfeit=player.NavalPartyExitRequested || player.Id!=run.Captain && !player.Party.Any(p=>p.Id==run.Captain);
+            forfeit=player.NavalPartyExitRequested || !HasBoardingParty(run, player);
             if(!forfeit && Ships.TryGetValue(run.Ship,out ship) && ship.Health>0 && ship.SunkUntil==0)
             {
                 if(player.Id==run.Captain){player.CaptainedShipId=run.Ship;ship.EnemyBoardingEncounter=Guid.Empty;ship.Anchored=true;ship.LastStep=0;}
@@ -226,7 +231,7 @@ internal static partial class NavalSystem
             if(Ships.TryGetValue(run.Ship,out var ship) && player.Id!=run.Captain)ship.Crew[player.Id]=new(player.Name,now);
         }
         if(run.Starting)return true;
-        if(player.NavalPartyExitRequested || player.Id!=run.Captain && !player.Party.Any(p=>p.Id==run.Captain))
+        if(player.NavalPartyExitRequested || !HasBoardingParty(run, player))
         {
             DungeonRunRuntime.LeaveNavalBoarding(player,run.Id);
             ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;

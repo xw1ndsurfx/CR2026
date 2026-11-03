@@ -1672,7 +1672,7 @@ public abstract partial class Entity : IEntity
             var s = projectile.Spell;
             if (s != null)
             {
-                HandleAoESpell(projectile.SpellId, s.Combat.HitRadius, target.MapId, target.X, target.Y, null);
+                HandleAoESpell(projectile.SpellId, s.Combat.HitRadius, target.MapId, target.X, target.Y, null, parentSpell == null ? parentItem : null);
             }
 
             //Check that the npc has not been destroyed by the splash spell
@@ -1775,7 +1775,12 @@ public abstract partial class Entity : IEntity
         SpellDescriptor spellDescriptor,
         bool onHitTrigger = false,
         bool trapTrigger = false
-    )
+    ) => ApplySpellAttack(target, spellDescriptor, onHitTrigger, trapTrigger, null);
+
+    protected virtual void TryAttackWeaponEffect(Entity target, SpellDescriptor spellDescriptor, ItemDescriptor sourceWeapon) =>
+        ApplySpellAttack(target, spellDescriptor, false, false, sourceWeapon);
+
+    private void ApplySpellAttack(Entity target, SpellDescriptor spellDescriptor, bool onHitTrigger, bool trapTrigger, ItemDescriptor sourceWeapon)
     {
         if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true })
         {
@@ -1889,7 +1894,7 @@ public abstract partial class Entity : IEntity
             Attack(
                 target, damageHealth, damageMana, (DamageType)spellDescriptor.Combat.DamageType,
                 (Stat)spellDescriptor.Combat.ScalingStat, spellDescriptor.Combat.Scaling, spellDescriptor.Combat.CritChance,
-                spellDescriptor.Combat.CritMultiplier, deadAnimations, aliveAnimations, false
+                spellDescriptor.Combat.CritMultiplier, deadAnimations, aliveAnimations, false, sourceWeapon
             );
         }
 
@@ -2212,7 +2217,7 @@ public abstract partial class Entity : IEntity
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
                 }
 
-                if (appliedHealthDamage > 0 && isAutoAttack && this is Player masteryAttacker && enemy is Npc masteryTarget)
+                if (appliedHealthDamage > 0 && (isAutoAttack || masteryWeapon != null) && this is Player masteryAttacker && enemy is Npc masteryTarget)
                     masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
                 switch (damageType)
@@ -2796,7 +2801,8 @@ public abstract partial class Entity : IEntity
         Guid startMapId,
         int startX,
         int startY,
-        Entity spellTarget
+        Entity spellTarget,
+        ItemDescriptor sourceWeapon = null
     )
     {
         var spellBase = SpellDescriptor.Get(spellId);
@@ -2825,7 +2831,8 @@ public abstract partial class Entity : IEntity
                                     }
                                 }
 
-                                TryAttack(entity, spellBase); //Handle damage
+                                if (sourceWeapon != null) TryAttackWeaponEffect(entity, spellBase, sourceWeapon);
+                                else TryAttack(entity, spellBase); //Handle damage
                             }
                         }
                     }

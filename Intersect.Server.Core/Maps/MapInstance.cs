@@ -188,7 +188,7 @@ public partial class MapInstance : IMapInstance
 
     public bool ShouldBeActive()
     {
-        return (InvasionNeedsSimulation || mIsProcessing || LastRequestedUpdateTime <= mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup);
+        return (DungeonRunRuntime.RetainsInstance(mMapController.Id, MapInstanceId) || InvasionNeedsSimulation || mIsProcessing || LastRequestedUpdateTime <= mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup);
     }
 
     public void RemoveLayerFromController()
@@ -550,8 +550,8 @@ public partial class MapInstance : IMapInstance
                 MapInstanceId = processLayer
             };
 
-            if (IsEnemyBoardingDeck || mMapController.GeneratedBoardingDeck) npc.ConfigureBoardingCombat();
             configure?.Invoke(npc);
+            if (IsEnemyBoardingDeck || mMapController.GeneratedBoardingDeck) npc.ConfigureBoardingCombat();
             AddEntity(npc);
             PacketSender.SendEntityDataToProximity(npc);
 
@@ -1279,10 +1279,11 @@ public partial class MapInstance : IMapInstance
         var vitalUpdates = new List<Entity>();
         var statusUpdates = new List<Entity>();
 
+        var retainsDungeon = DungeonRunRuntime.RetainsInstance(mMapController.Id, MapInstanceId);
         foreach (var en in mEntities)
         {
             //Let's see if and how long this map has been inactive, if longer than X seconds, regenerate everything on the map
-            if (timeMs > mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup &&
+            if (!retainsDungeon && timeMs > mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup &&
                 (en.Value is not Npc invader || invader.InvasionSessionId == Guid.Empty))
             {
                 //Regen Everything & Forget Targets

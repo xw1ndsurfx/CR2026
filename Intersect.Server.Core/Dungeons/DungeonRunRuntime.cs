@@ -35,6 +35,7 @@ internal static partial class DungeonRunRuntime
         public required MapInstanceType InstanceType { get; init; }
         public required int LivesRemaining { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
+        public ConcurrentDictionary<Guid, byte> PartyParticipants { get; } = [];
         public Guid NavalEncounterId {get;init;}
         public bool BossDefeated { get; set; }
         public bool QuestCompleted { get; set; }
@@ -67,7 +68,7 @@ internal static partial class DungeonRunRuntime
         public required long ExpiresAtUnixMilliseconds { get; init; }
     }
 
-    private static readonly Dictionary<Guid, Run> RunsByInstance = [];
+    private static readonly ConcurrentDictionary<Guid, Run> RunsByInstance = [];
     private static readonly Dictionary<Guid, RetryOffer> RetryOffers = [];
     private static long _nextUpdateAt;
 
@@ -249,7 +250,10 @@ internal static partial class DungeonRunRuntime
         foreach (var member in participants)
         {
             if (member.MapInstanceId == instanceId)
+            {
                 run.Participants.TryAdd(member.Id, 0);
+                if (sharedParty && participants.Count > 1) run.PartyParticipants.TryAdd(member.Id, 0);
+            }
         }
 
         lock (Gate)
@@ -313,20 +317,51 @@ internal static partial class DungeonRunRuntime
     private static bool IsDungeonMap(Run run, Guid mapId) =>
         GetDungeonMapIds(run.Dungeon, run.EntryMapId).Contains(mapId);
 
+    internal static bool RetainsInstance(Guid mapId, Guid instanceId) =>
+        RunsByInstance.TryGetValue(instanceId, out var run) && !run.Finished && IsDungeonMap(run, mapId);
+
+    internal static bool PrepareDisconnect(Player player)
+    {
+        if (!RunsByInstance.TryGetValue(player.MapInstanceId, out var run) || run.Finished ||
+            !run.Participants.ContainsKey(player.Id) || !IsDungeonMap(run, player.MapId)) return false;
+        player.SetVariableValue(ResumeMarkerId, run.MapInstanceId.ToString("N"));
+        return true;
+    }
+
+    internal static void OnPartyDeparture(Player player)
+    {
+        if (RunsByInstance.TryGetValue(player.MapInstanceId, out var run))
+            run.PartyParticipants.TryRemove(player.Id, out _);
+    }
+
+    internal static bool HasBoardingPartyMembership(Guid encounter, Guid member, Guid captain) =>
+        RunsByInstance.Values.Any(run => !run.Finished && run.NavalEncounterId == encounter &&
+            run.Participants.ContainsKey(member) && run.Participants.ContainsKey(captain) &&
+            run.PartyParticipants.ContainsKey(member) && run.PartyParticipants.ContainsKey(captain));
+
     internal static bool RecoverLogin(Player player)
     {
-        if(player.InstanceType==MapInstanceType.Overworld){player.SetVariableValue(ResumeMarkerId,string.Empty);return false;}
+        var marker = player.GetVariable(ResumeMarkerId)?.Value.String;
         Run? run;
         lock(Gate)
             run=RunsByInstance.Values.FirstOrDefault(candidate=>!candidate.Finished && candidate.Participants.ContainsKey(player.Id) && IsDungeonMap(candidate,player.MapId) &&
+                (player.InstanceType != MapInstanceType.Overworld || marker == candidate.MapInstanceId.ToString("N")) &&
                 (candidate.CompletionStarted || candidate.EndAtUnixMilliseconds<=0 || candidate.EndAtUnixMilliseconds>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
         if(run!=null)
         {
             player.MapInstanceId=run.MapInstanceId;player.InstanceType=run.InstanceType;
+            if (run.InstanceType == MapInstanceType.Shared) player.SharedMapInstanceId = run.MapInstanceId;
+            if (run.InstanceType == MapInstanceType.Personal) player.PersonalMapInstanceId = run.MapInstanceId;
+            if (run.PartyParticipants.ContainsKey(player.Id))
+                player.RestoreDungeonParty(run.PartyParticipants.Keys.Where(id => id != player.Id && run.Participants.ContainsKey(id))
+                    .Select(Player.FindOnline).OfType<Player>().Where(member => member.InGame && member.MapInstanceId == run.MapInstanceId).ToArray());
+            player.SetVariableValue(ResumeMarkerId, run.MapInstanceId.ToString("N"));
             player.Warp(player.MapId,player.X,player.Y,player.Dir,fromLogin:true,forceInstanceChange:true);
+            player.TryAddToInstanceController();
             player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run,player.Client?.LanguageCode??"en")));
             return true;
         }
+        if (player.InstanceType == MapInstanceType.Overworld && string.IsNullOrEmpty(marker)) return false;
         if(Naval.NavalSystem.RecoverFinishedEnemyBoarding(player))return true;
         if(!string.IsNullOrEmpty(player.GetVariable(ResumeMarkerId)?.Value.String) || DungeonConfigurationRuntime.Current.Dungeons.Any(dungeon=>dungeon.MapIds.Contains(player.MapId)))
         {
@@ -643,7 +678,7 @@ internal static partial class DungeonRunRuntime
             DungeonConfigurationRuntime.SendState(player, openWindow: false);
 
         lock (Gate)
-            RunsByInstance.Remove(run.MapInstanceId);
+            RunsByInstance.TryRemove(run.MapInstanceId, out _);
         if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
     }
 
@@ -679,7 +714,7 @@ internal static partial class DungeonRunRuntime
             DungeonConfigurationRuntime.SendState(player, openWindow: false);
 
         lock (Gate)
-            RunsByInstance.Remove(run.MapInstanceId);
+            RunsByInstance.TryRemove(run.MapInstanceId, out _);
         if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
 
         if (offerRetry && run.NavalEncounterId==Guid.Empty)

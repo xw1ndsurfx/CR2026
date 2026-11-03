@@ -20,6 +20,7 @@ internal static partial class DungeonRunRuntime
                     !run.Participants.TryRemove(player.Id, out _))
                     return false;
 
+                run.PartyParticipants.TryRemove(player.Id, out _);
                 run.ChestLoot.Remove(player.Id);
                 run.ChestClaimed.Remove(player.Id);
                 run.ChestRetryAt.Remove(player.Id);
@@ -27,7 +28,7 @@ internal static partial class DungeonRunRuntime
                 if (lastParticipant)
                 {
                     run.Finished = true;
-                    RunsByInstance.Remove(run.MapInstanceId);
+                    RunsByInstance.TryRemove(run.MapInstanceId, out _);
                 }
             }
 
