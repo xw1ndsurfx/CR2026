@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "description": "Approved Corps Royaux Exportation minigame visuals and original one-shot sound cues",
+  "assets": [
+    {
+      "zip": "exportation_work/panneau_nautique_orné_vide_et_localisable.png",
+      "path": "resources/gui/exportation/background.png",
+      "sha256": "eb1283ef9d57a7c5e0f4d823f6fd4a99b2c93a06544ddb64a522546502c6b39f",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "zip": "exportation_work/sprites/ancre.png",
+      "path": "resources/gui/exportation/sprites/ancre.png",
+      "sha256": "41a05021a894a59ad7fb0ae580fb3a22cbe1978601f02c70bd7221f1adfcb641",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/bateau.png",
+      "path": "resources/gui/exportation/sprites/bateau.png",
+      "sha256": "96b9ddd2dba1391dadb9bdba37bbdfa8204e582c31ad4eb3f37e019be16aacdd",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/caisse_scellee.png",
+      "path": "resources/gui/exportation/sprites/caisse_scellee.png",
+      "sha256": "2d72a1f37aa503b0bef8e60a4126f47ce0ba022e809728768258bcf9b689c7d3",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/destinataire.png",
+      "path": "resources/gui/exportation/sprites/destinataire.png",
+      "sha256": "8b51392a96ed936ecc8ef7dc14e04415760d8d28f6aabc1f2ec691cfff9fb2cc",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/lingots_fer.png",
+      "path": "resources/gui/exportation/sprites/lingots_fer.png",
+      "sha256": "e55077f066ae2aa76b3446b395b2311161ed38626ef9d5f8aa11e69e5b678471",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/marchand.png",
+      "path": "resources/gui/exportation/sprites/marchand.png",
+      "sha256": "85e9da09c5a35b99d2b6fb552668cbbd7931349e958c61a8d14d3a9e12dbb066",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/parchemin_quete.png",
+      "path": "resources/gui/exportation/sprites/parchemin_quete.png",
+      "sha256": "054054a14e2b822078d330b669397bb00858d116c5c012f0611265a069076fdb",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/planches.png",
+      "path": "resources/gui/exportation/sprites/planches.png",
+      "sha256": "957bbedb003d45863510c55b1bc4f217f8b788259016792da1aaba05e7589f2d",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/pommes.png",
+      "path": "resources/gui/exportation/sprites/pommes.png",
+      "sha256": "c5ef50a675752122a915417d48cf09e7d7f442d4cf9a715c86df8755643f4d9e",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/potion_rouge.png",
+      "path": "resources/gui/exportation/sprites/potion_rouge.png",
+      "sha256": "ad299cdabe3c670561b3cc93f76256d7bc1eda3af8c892ab52509f9cfb6c07ca",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/sceau_royal.png",
+      "path": "resources/gui/exportation/sprites/sceau_royal.png",
+      "sha256": "59b75d2abe9a2a0eccf8fe025db80893badae7fa0551db8907817e05e3c1a969",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sprites/tissu.png",
+      "path": "resources/gui/exportation/sprites/tissu.png",
+      "sha256": "b4e7d36e4d5f0d171ef17edd5c63f4c915c792b3530e11c588f69085636ba15c",
+      "width": 362,
+      "height": 362
+    },
+    {
+      "zip": "exportation_work/sons/cargo_lost.wav",
+      "path": "resources/sounds/exportation/cargo_lost.wav",
+      "sha256": "ef59d26ee08c7a315431a11afa55b1d7384cd6c1c9310ccec787b37620abdf00",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/cargo_seal.wav",
+      "path": "resources/sounds/exportation/cargo_seal.wav",
+      "sha256": "f267b3fc754f422e4efed190aed548bdfd0337d97bc669330eed5f187f655a20",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/delivery_success.wav",
+      "path": "resources/sounds/exportation/delivery_success.wav",
+      "sha256": "7c73d89b0794ec94ba55be8605e460f87f7d83b54474038a88019d2bb8c95f57",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/item_glass.wav",
+      "path": "resources/sounds/exportation/item_glass.wav",
+      "sha256": "7eea1fffe196202cf843d0b28305a3869d1a66234170ff584b95ab25a01a0731",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/item_metal.wav",
+      "path": "resources/sounds/exportation/item_metal.wav",
+      "sha256": "c889fdb790ad20c1b6f110c78a61c888ddaef07e81fba0979f964d970a7ddd11",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/item_remove.wav",
+      "path": "resources/sounds/exportation/item_remove.wav",
+      "sha256": "f6fb2b4f0411332de483067bec3421ea40122711e38441850251ab048da85980",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/item_wood.wav",
+      "path": "resources/sounds/exportation/item_wood.wav",
+      "sha256": "c768f9fa13ea9672a5366680d14bf174d9108c07aac5f87cfff7b6373a13dc85",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/order_complete.wav",
+      "path": "resources/sounds/exportation/order_complete.wav",
+      "sha256": "12930bf882b8fedbbc56420562e0961c12e2d8368ab24207523582ea9d72bfed",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/ui_close.wav",
+      "path": "resources/sounds/exportation/ui_close.wav",
+      "sha256": "62fe45c499e7442c7941884f36dcb7e6f3043ecd5dcf893c03698e2333f2a796",
+      "sampleRate": 32000
+    },
+    {
+      "zip": "exportation_work/sons/ui_open.wav",
+      "path": "resources/sounds/exportation/ui_open.wav",
+      "sha256": "5d5ddc07acd0042d8d9e266b0ce518b4ca34e8bd4f88952b129bcca5caff91eb",
+      "sampleRate": 32000
+    }
+  ]
+}

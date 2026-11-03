@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../Shared/FishingAssets.props" />
+  <Import Project="../Shared/ExportationAssets.props" />
   <Import Project="../Shared/JoustingAssets.props" />
   <ItemGroup>
     <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs" Link="Rendering/MapPerspectiveGeometry.cs" />

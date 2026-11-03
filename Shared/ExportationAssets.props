@@ -1,0 +1,18 @@
+<Project>
+  <!-- Runtime GUI sprites and one-shot WAV cues. Both client and editor use these assets.
+       Glob paths are optional until scripts/exportation/install_assets.py installs the pack. -->
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/gui/exportation/**/*.png">
+      <Link>resources/gui/exportation/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/sounds/exportation/*.wav">
+      <Link>resources/sounds/exportation/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+</Project>
