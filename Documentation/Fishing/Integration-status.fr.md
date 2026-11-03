@@ -2,7 +2,7 @@
 
 ## Livraison
 
-La première version du métier a été intégrée à `main` par la [PR #218](https://github.com/xw1ndsurfx/CR2026/pull/218), au commit `210114fd695fa937ea33b92037e38cb9daef272b`. Le correctif `fix/fishing-editor-zones` part de cette version et traite l’accès depuis le hub, les zones à plusieurs cartes et la sauvegarde d’un travail incomplet. Le [guide de mise en route](README.fr.md) explique les liaisons de contenu à effectuer. Le [mandat](Work-Mandate.fr.md) conserve les demandes et les critères de recette.
+La première version du métier a été intégrée à `main` par la [PR #218](https://github.com/xw1ndsurfx/CR2026/pull/218), au commit `210114fd695fa937ea33b92037e38cb9daef272b`. La [PR #219](https://github.com/xw1ndsurfx/CR2026/pull/219), fusionnée au commit `1bfdcf6be2aefbcbbd4444aea6b55b9cfa49d316`, traite l’accès depuis le hub, les zones à plusieurs cartes et la sauvegarde d’un travail incomplet. Le correctif `fix/fishing-activation-feedback` part de ce dernier commit pour rendre visibles les refus d’application et le dernier état confirmé par le serveur. Le [guide de mise en route](README.fr.md) explique les liaisons de contenu à effectuer. Le [mandat](Work-Mandate.fr.md) conserve les demandes et les critères de recette.
 
 La fenêtre du mini-jeu reprend le cadre bois et dorures, la vue sous-marine, les équipements, les piles de prises, les barres et les quatre compétences de la référence approuvée. Elle ne contient ni avatar ni quai. Dans le monde, le système de présentation dessine les couches de l’outil autour de l’apparence réelle du joueur, avec réplication aux joueurs proches.
 
@@ -33,6 +33,20 @@ Une invitation légendaire ignorée en AUTO laisse fuir la créature sans récom
 
 La consommation d’appât est enregistrée au lancer. Une capture ensuite échouée conserve ce coût. La récompense regroupe les poissons, l’XP, les éventuels objets de niveau et le reçu dans le même checkpoint du compte ; un échec du checkpoint restaure l’inventaire et les variables. Les tests de cette transaction utilisent les véritables classes d’inventaire avec une sauvegarde injectée, sans connexion à une base de production.
 
+## Diagnostic des zones restant désactivées
+
+La case **Activé** appartient au brouillon. L’Event affiche la valeur du même GUID dans la configuration active reçue du serveur. Les deux états sont maintenant comparés dans un panneau permanent de Fishing Editor ; la lecture active est demandée à l’ouverture en plus du brouillon. Un état inconnu, une absence de zone, une actualisation et un échec de mise à jour restent distincts.
+
+Un refus d’application apparaît dans un bandeau dédié, avec un texte complet, multiligne et défilable. Le message reste visible pendant les corrections et les sauvegardes du brouillon. Les 16 diagnostics serveur précisent le métier, l’équipement et son emplacement, l’appât, l’animation, la carte, le rayon, la prise, la récompense ou la variable qui bloque. Les contrôles de validité sont conservés. Une absence de confirmation est présentée comme telle, sans affirmer que le serveur n’a rien écrit.
+
+Les erreurs d’actualisation sont également transmises au dialogue Event. La dernière configuration confirmée reste disponible et explicitement identifiée ; une erreur de lecture ne remplace pas ce cache. Le sélecteur conserve le GUID courant et retire **Désactivé** dès qu’une configuration active avec `Enabled=true` est reçue, même s’il est resté ouvert.
+
+Une confusion entre lecture et sauvegarde a aussi été corrigée : une erreur de lecture reçue pendant une application en attente pouvait terminer cette attente et faire ignorer son accusé. Le serveur identifie désormais l’opération de configuration dans sa réponse. Le champ nullable est ajouté en clé MessagePack 8, sans renuméroter les anciennes clés ni les actions ; les anciens paquets gardent le traitement compatible. Il ne s’agit pas d’un réordonnancement du transport réseau.
+
+Les [preuves locales de ce correctif](activation-feedback-evidence.json) couvrent la transition serveur réellement sauvegardée de `Enabled=false` à `true`, les refus détaillés dans les trois langues, la conservation des deux fichiers, le protocole et la compilation de l’éditeur. Les tests WinForms ajoutés passent par le thème et le parcours réel d’ouverture, gardent l’Event ouvert pendant l’application et vérifient le message long à la taille minimale. Leur exécution native est confiée au workflow Windows de la révision ; une compilation croisée ne constitue pas cette exécution.
+
+Les deux configurations transmises pendant le diagnostic passent les règles structurelles partagées et conservent leur valeur `Enabled` après sérialisation. Leurs noms de fichiers et les définitions des ressources de production n’étaient pas fournis : cela ne permet pas d’attribuer avec certitude le refus à une ressource particulière. Les tests utilisent des références synthétiques ; aucun identifiant de contenu de production n’est ajouté au dépôt.
+
 ## GFX et audio
 
 Le [manifeste](../../resources/fishing/assets-manifest.json) répertorie **20 PNG de jeu** : les deux planches d’objets, les cinq décors, les neuf planches du filet et quatre nouveaux GFX. Les fichiers reçus sont conservés octet pour octet. L’archive originale du filet et la capture de référence sont également conservées dans ce dossier.
@@ -43,7 +57,7 @@ Le pack contient **32 WAV originaux** et **58 associations sonores**. Le catalog
 
 Deux clés de défis futurs sont signalées comme réservées ; le défi implémenté est la séquence de directions. Les métadonnées de hauteur, bus et fondu du pack ne sont pas présentées comme des réglages déjà actifs dans le moteur. Le [contrat audio](Audio.fr.md) précise ces limites.
 
-## Vérifications locales du correctif
+## Vérifications locales du correctif du hub et des cartes (PR #219)
 
 | Vérification | Résultat |
 | --- | --- |

@@ -1119,6 +1119,116 @@
       "en": "Catch #{0} in {1}: an allowed item has no fishing tool profile. Create its profile or remove that association.",
       "fr": "Prise n°{0} dans {1} : un objet autorisé n’a aucun profil d’équipement de pêche. Créez son profil ou retirez cette association.",
       "es": "Captura n.º {0} en {1}: un objeto permitido no tiene perfil de herramienta de pesca. Crea su perfil o quita esa asociación."
+    },
+    "The server did not respond while loading the active fishing configuration. Refresh to try again.": {
+      "en": "The server did not respond while loading the active fishing configuration. Refresh to try again.",
+      "fr": "Le serveur n’a pas répondu au chargement de la configuration de pêche active. Actualisez pour réessayer.",
+      "es": "El servidor no respondió al cargar la configuración de pesca activa. Actualiza para volver a intentarlo."
+    },
+    "The active fishing configuration could not be requested. Check the server connection and refresh to try again.": {
+      "en": "The active fishing configuration could not be requested. Check the server connection and refresh to try again.",
+      "fr": "Impossible de demander la configuration de pêche active. Vérifiez la connexion au serveur, puis actualisez pour réessayer.",
+      "es": "No se pudo solicitar la configuración de pesca activa. Comprueba la conexión al servidor y actualiza para volver a intentarlo."
+    },
+    "The server returned an invalid active fishing configuration. The last confirmed state was preserved.": {
+      "en": "The server returned an invalid active fishing configuration. The last confirmed state was preserved.",
+      "fr": "Le serveur a renvoyé une configuration de pêche active invalide. Le dernier état confirmé a été conservé.",
+      "es": "El servidor devolvió una configuración de pesca activa no válida. Se conservó el último estado confirmado."
+    },
+    "Zone state not loaded: {0}": {
+      "en": "Zone state not loaded: {0}",
+      "fr": "État de la zone non chargé : {0}",
+      "es": "Estado de la zona sin cargar: {0}"
+    },
+    "The active fishing state could not be updated. The last confirmed state is shown. {0}": {
+      "en": "The active fishing state could not be updated. The last confirmed state is shown. {0}",
+      "fr": "L’état actif de la pêche n’a pas pu être actualisé. Le dernier état confirmé est affiché. {0}",
+      "es": "No se pudo actualizar el estado activo de la pesca. Se muestra el último estado confirmado. {0}"
+    },
+    "The active fishing state is unavailable. {0}": {
+      "en": "The active fishing state is unavailable. {0}",
+      "fr": "L’état actif de la pêche est indisponible. {0}",
+      "es": "El estado activo de la pesca no está disponible. {0}"
+    },
+    "Refreshing active fishing zones. The last confirmed state is shown.": {
+      "en": "Refreshing active fishing zones. The last confirmed state is shown.",
+      "fr": "Actualisation des zones de pêche actives. Le dernier état confirmé est affiché.",
+      "es": "Actualizando las zonas de pesca activas. Se muestra el último estado confirmado."
+    },
+    "Loading active fishing zones...": {
+      "en": "Loading active fishing zones...",
+      "fr": "Chargement des zones de pêche actives…",
+      "es": "Cargando las zonas de pesca activas…"
+    },
+    "The active fishing configuration has not been loaded. Refresh the zones to check their state.": {
+      "en": "The active fishing configuration has not been loaded. Refresh the zones to check their state.",
+      "fr": "La configuration de pêche active n’a pas été chargée. Actualisez les zones pour vérifier leur état.",
+      "es": "No se ha cargado la configuración de pesca activa. Actualiza las zonas para comprobar su estado."
+    },
+    "Choose a zone applied to the game. The server requires compatible equipped fishing equipment.": {
+      "en": "Choose a zone applied to the game. The server requires compatible equipped fishing equipment.",
+      "fr": "Choisissez une zone appliquée au jeu. Le serveur exige un équipement de pêche compatible équipé.",
+      "es": "Elige una zona aplicada al juego. El servidor exige llevar equipado un utensilio de pesca compatible."
+    },
+    "Apply to game refused": {
+      "en": "Apply to game refused",
+      "fr": "Application au jeu refusée",
+      "es": "Aplicación al juego rechazada"
+    },
+    "Application acknowledgement timed out": {
+      "en": "Application acknowledgement timed out",
+      "fr": "Délai de confirmation de l’application dépassé",
+      "es": "Se agotó el tiempo de confirmación de la aplicación"
+    },
+    "The server did not acknowledge the application before the timeout. Refresh the active configuration to check its current state. Your draft is preserved.": {
+      "en": "The server did not acknowledge the application before the timeout. Refresh the active configuration to check its current state. Your draft is preserved.",
+      "fr": "Le serveur n’a pas confirmé l’application avant la fin du délai. Actualisez la configuration active pour vérifier son état actuel. Votre brouillon est conservé.",
+      "es": "El servidor no confirmó la aplicación antes de que se agotara el tiempo. Actualiza la configuración activa para comprobar su estado actual. El borrador se conserva."
+    },
+    "Selected zone: {0}": {
+      "en": "Selected zone: {0}",
+      "fr": "Zone sélectionnée : {0}",
+      "es": "Zona seleccionada: {0}"
+    },
+    "Draft: {0}": {
+      "en": "Draft: {0}",
+      "fr": "Brouillon : {0}",
+      "es": "Borrador: {0}"
+    },
+    "Last confirmed on server: {0}": {
+      "en": "Last confirmed on server: {0}",
+      "fr": "Dernier état confirmé par le serveur : {0}",
+      "es": "Último estado confirmado por el servidor: {0}"
+    },
+    "No zone selected.": {
+      "en": "No zone selected.",
+      "fr": "Aucune zone sélectionnée.",
+      "es": "Ninguna zona seleccionada."
+    },
+    "Unknown — no active configuration received.": {
+      "en": "Unknown — no active configuration received.",
+      "fr": "Inconnu — aucune configuration active reçue.",
+      "es": "Desconocido: no se ha recibido ninguna configuración activa."
+    },
+    "Absent from the active configuration.": {
+      "en": "Absent from the active configuration.",
+      "fr": "Absente de la configuration active.",
+      "es": "Ausente de la configuración activa."
+    },
+    "Refreshing the active configuration...": {
+      "en": "Refreshing the active configuration...",
+      "fr": "Actualisation de la configuration active…",
+      "es": "Actualizando la configuración activa…"
+    },
+    "Active configuration update failed: {0}": {
+      "en": "Active configuration update failed: {0}",
+      "fr": "Échec de la mise à jour de la configuration active : {0}",
+      "es": "Error al actualizar la configuración activa: {0}"
+    },
+    "Refresh active configuration": {
+      "en": "Refresh active configuration",
+      "fr": "Actualiser la configuration active",
+      "es": "Actualizar la configuración activa"
     }
   }
 }

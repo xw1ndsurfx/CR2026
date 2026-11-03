@@ -26,22 +26,26 @@ internal sealed partial class PacketHandler
                 };
                 client.Send(new FishingStatePacket
                 {
-                    Editor = true, Open = true, Draft = draft, Saved = save,
+                    Editor = true, Open = true, Draft = draft, Saved = save, ConfigurationAction = packet.Action,
                     ConfigurationJson = json,
                     Message = save ? FishingText.Get(draft ? "Fishing draft saved." : "Fishing configuration saved.", client.LanguageCode ?? "en") : "",
                 });
             }
             catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException)
             {
-                var message = exception.Message is FishingRuntime.InvalidDraftMessage or
-                    "Fishing configuration references a missing item, map, profession or animation."
-                    ? exception.Message
-                    : exception is InvalidDataException or System.Text.Json.JsonException or ArgumentException
-                        ? "Invalid fishing configuration."
-                        : save ? "Fishing configuration could not be saved. The active configuration was not changed."
-                            : "Fishing configuration could not be read. Existing files were preserved.";
-                client.Send(new FishingStatePacket { Editor = true, Draft = draft,
-                    Message = FishingText.Get(message, client.LanguageCode ?? "en") });
+                var language = client.LanguageCode ?? "en";
+                if (!FishingValidationDiagnostic.TryLocalize(exception, language, out var message))
+                {
+                    var source = exception.Message == FishingRuntime.InvalidDraftMessage
+                        ? exception.Message
+                        : exception is InvalidDataException or System.Text.Json.JsonException or ArgumentException
+                            ? "Invalid fishing configuration."
+                            : save ? "Fishing configuration could not be saved. The active configuration was not changed."
+                                : "Fishing configuration could not be read. Existing files were preserved.";
+                    message = FishingText.Get(source, language);
+                }
+                client.Send(new FishingStatePacket { Editor = true, Draft = draft, ConfigurationAction = packet.Action,
+                    Message = message });
             }
             return;
         }
