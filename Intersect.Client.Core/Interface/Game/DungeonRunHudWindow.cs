@@ -22,7 +22,7 @@ internal sealed class DungeonRunHudWindow : Base
     private readonly Label _lives;
     private readonly Label _timer;
     private readonly Button _abandon;
-    private bool _confirmingAbandon;
+    private DungeonAbandonConfirmationWindow? _abandonConfirmation;
 
     private DungeonRunStatePacket? _state;
     private long _resultHideAt;
@@ -90,6 +90,8 @@ internal sealed class DungeonRunHudWindow : Base
 
     public void Apply(DungeonRunStatePacket state)
     {
+        if (_abandonConfirmation != null && (_state?.RunId != state.RunId || state.Status != DungeonRunStatus.Active))
+            _abandonConfirmation.Close();
         _state = state;
         _resultHideAt = 0;
         var canAbandon = state.Status == DungeonRunStatus.Active && state.RunId != Guid.Empty;
@@ -145,23 +147,21 @@ internal sealed class DungeonRunHudWindow : Base
 
     private void ConfirmAbandon()
     {
-        if (_confirmingAbandon || _state is not { Status: DungeonRunStatus.Active } state || state.RunId == Guid.Empty)
+        if (_abandonConfirmation != null)
+        {
+            _abandonConfirmation.Show();
+            _abandonConfirmation.BringToFront();
             return;
-
+        }
+        if (_state is not { Status: DungeonRunStatus.Active } state || state.RunId == Guid.Empty)
+            return;
         var runId = state.RunId;
-        _confirmingAbandon = true;
-        var confirmation = new InputBox(
-            ClientLanguages.Text("Abandon dungeon"),
-            ClientLanguages.Text("Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue."),
-            InputType.YesNo,
-            onSubmit: (_, _) =>
-            {
-                _confirmingAbandon = false;
-                if (_state is { Status: DungeonRunStatus.Active } current && current.RunId == runId)
-                    PacketSender.SendAbandonDungeon(runId);
-            },
-            onCancel: (_, _) => _confirmingAbandon = false);
-        confirmation.Closed += (_, _) => _confirmingAbandon = false;
+        _abandonConfirmation = new DungeonAbandonConfirmationWindow(Canvas!, () =>
+        {
+            if (_state is { Status: DungeonRunStatus.Active } current && current.RunId == runId)
+                PacketSender.SendAbandonDungeon(runId);
+        });
+        _abandonConfirmation.Closed += (_, _) => _abandonConfirmation = null;
     }
 
     private static string BuildTimeText(long endTimeUnixMilliseconds)

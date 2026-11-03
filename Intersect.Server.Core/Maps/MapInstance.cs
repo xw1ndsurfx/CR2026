@@ -160,6 +160,7 @@ public partial class MapInstance : IMapInstance
     }
 
     public bool IsDisposed { get; protected set; }
+    internal bool IsEnemyBoardingDeck { get; set; }
 
     /// <summary>
     /// Initializes the processing instance for processing - called in the constructor. Essentially refreshes the instance
@@ -549,6 +550,7 @@ public partial class MapInstance : IMapInstance
                 MapInstanceId = processLayer
             };
 
+            if (IsEnemyBoardingDeck || mMapController.GeneratedBoardingDeck) npc.ConfigureBoardingCombat();
             configure?.Invoke(npc);
             AddEntity(npc);
             PacketSender.SendEntityDataToProximity(npc);

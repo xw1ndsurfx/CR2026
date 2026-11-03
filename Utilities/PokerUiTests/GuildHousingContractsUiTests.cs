@@ -48,9 +48,14 @@ internal static class GuildHousingContractsUiTests
                 var homeTabs=(Button[])Field(home,"_tabs");var shopTabs=(Button[])Field(shop,"_tabs");
                 Check(homeTabs[0].IsHidden && !homeTabs[1].IsHidden,"Home shows storage and hides the NPC furniture catalogue");
                 Check(!shopTabs[0].IsHidden && shopTabs.Skip(1).All(b=>b.IsHidden),"Merchant shop contains only furniture catalogue");
+                var houseCaption = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("{0}'s house", language);
+                Check(Intersect.Localization.GameTextTokens.Compatible("{0}'s house", houseCaption), "Translated house names preserve the owner placeholder: " + language);
+                Check(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Catalog.Entries["{0}'s house"].ContainsKey(language), "House owner caption has locale coverage: " + language);
                 var directory=assembly.GetType("Intersect.Client.Interface.Game.HouseDirectoryWindow",true)!;
                 var houses=(Base)Activator.CreateInstance(directory,BindingFlags.Instance|BindingFlags.NonPublic,null,[canvas],null)!;
                 directory.GetMethod("Apply",Hidden)!.Invoke(houses,[new HouseDirectoryPacket{Houses=[new(){OwnerId=Guid.NewGuid(),OwnerName="Public owner"}],HasMore=true}]);
+                foreach (var label in All(houses).OfType<Label>().Where(l => l is Button || l.Parent == Field(houses,"_rows") || l is TextBox))
+                    Check(label.Font != null && label.FontSize >= 12, "House directory controls have measurable, readable fonts: " + language);
                 Check(((Button)Field(houses,"_previous")).IsDisabled && !((Button)Field(houses,"_next")).IsDisabled,"House directory page boundaries remain usable");
                 Check(All(houses).OfType<Button>().Any(b=>b.Text==Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Visit house",language)),"House travel action localized: "+language);
             }

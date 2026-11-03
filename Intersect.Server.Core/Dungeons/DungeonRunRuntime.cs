@@ -263,6 +263,8 @@ internal static partial class DungeonRunRuntime
             RunsByInstance[instanceId] = run;
         }
 
+        if (navalEncounterId != Guid.Empty) SetBoardingCombat(run, true);
+
         if(navalEncounterId!=Guid.Empty && CountAliveMonsters(run)==0)
         {
             Fail(run,"NO ENEMY CREW ON DECK",reviveDeadPlayers:false,offerRetry:false);
@@ -280,6 +282,17 @@ internal static partial class DungeonRunRuntime
         BroadcastObjectives(run);
         EvaluateCompletion(run);
         return true;
+    }
+
+    private static void SetBoardingCombat(Run run, bool enabled)
+    {
+        foreach (var deckId in GetDungeonMapIds(run.Dungeon, run.EntryMapId))
+            if (MapController.TryGetInstanceFromMap(deckId, run.MapInstanceId, out var deck))
+            {
+                deck.IsEnemyBoardingDeck = enabled;
+                foreach (var crew in deck.GetCachedEntities().OfType<Npc>())
+                    crew.ConfigureBoardingCombat(enabled);
+            }
     }
 
     private static Direction ResolveDirection(Player player, WarpDirection direction) =>
@@ -631,6 +644,7 @@ internal static partial class DungeonRunRuntime
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
+        if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
     }
 
     private static void Fail(Run run, string reason, bool reviveDeadPlayers, bool offerRetry)
@@ -666,6 +680,7 @@ internal static partial class DungeonRunRuntime
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
+        if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
 
         if (offerRetry && run.NavalEncounterId==Guid.Empty)
         {

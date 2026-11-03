@@ -25,4 +25,5 @@ public partial class WorldBossStatusPacket : IntersectPacket
     [Key(10)] public long YourDamage { get; set; }
     [Key(11)] public int YourRank { get; set; }
     [Key(12)] public WorldBossRankEntry[] TopDamagers { get; set; } = [];
+    [Key(13)] public Guid NpcId { get; set; }
 }

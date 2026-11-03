@@ -19,7 +19,6 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly List<InvasionDefinition> _invasions;
     private readonly ListBox _list = new() { Dock = DockStyle.Fill };
 
-    private readonly NumericUpDown _environmentLead = new() { Minimum = 0, Maximum = 3600, Value = 0, Width = 100 };
     private readonly TextBox _name = new() { Width = 320 };
     private readonly CheckBox _enabled = new() { Text = "Enabled", AutoSize = true };
     private readonly CheckedListBox _days = new() { Height = 88, CheckOnClick = true };
@@ -571,7 +570,6 @@ public sealed class FrmInvasionConfiguration : DarkForm
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        AddRow(table, "Seconds before first alert", _environmentLead);
         AddRow(table, "Invasion music", _invasionMusic);
         AddRow(table, "Night brightness (%)", _nightBrightness);
 
@@ -762,7 +760,6 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _fogXSpeed.Value = invasion.FogXSpeed;
         _fogYSpeed.Value = invasion.FogYSpeed;
         _environmentOutdoorsOnly.Checked = invasion.EnvironmentOutdoorsOnly;
-        _environmentLead.Value = invasion.EnvironmentLeadSeconds;
         _scaleNpcToPlayers.Checked = invasion.ScaleNpcToPlayers;
         _scalingMinimumLevel.Value = invasion.ScalingMinimumLevel;
         _scalingMaximumLevel.Value = invasion.ScalingMaximumLevel;
@@ -813,7 +810,6 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.FogXSpeed = (int)_fogXSpeed.Value;
         invasion.FogYSpeed = (int)_fogYSpeed.Value;
         invasion.EnvironmentOutdoorsOnly = _environmentOutdoorsOnly.Checked;
-        invasion.EnvironmentLeadSeconds = (int)_environmentLead.Value;
         invasion.ScaleNpcToPlayers = _scaleNpcToPlayers.Checked;
         invasion.ScalingMinimumLevel = (int)_scalingMinimumLevel.Value;
         invasion.ScalingMaximumLevel = (int)_scalingMaximumLevel.Value;

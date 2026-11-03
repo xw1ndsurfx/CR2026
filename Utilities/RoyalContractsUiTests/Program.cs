@@ -110,6 +110,20 @@ internal static class Program
             Check(All(sealWindow).OfType<ImagePanel>().Any(i=>i.Name=="Icon" && i.Texture!=null),"Seal shop displays configured item art");
             Check(All(sealWindow).OfType<Label>().Any(l=>l.Text?.Contains("123")==true),"Seal shop displays the sovereign currency balance");
             renderer.Bitmap.Save(Path.Combine(output,"seal-shop-"+language+".png"));
+            sealWindow.Hide(); renderer.Clear();
+            var houses = new HouseDirectoryWindow(canvas);
+            houses.Apply(new Intersect.Network.Packets.Housing.HouseDirectoryPacket { Houses = [new() { OwnerId = Guid.NewGuid(), OwnerName = "Nicolas" }], HasMore = true });
+            canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);
+            foreach (var label in All(houses).OfType<Label>().Where(l => l.Parent != houses.Titlebar && !l.IsHidden && !string.IsNullOrEmpty(l.Text)))
+                Check(label.Font != null && label.FontSize >= 12, "House directory captions have explicit readable fonts: " + language);
+            renderer.Bitmap.Save(Path.Combine(output,"accessible-houses-"+language+".png"));
+            houses.Hide(); renderer.Clear();
+            var abandon = new DungeonAbandonConfirmationWindow(canvas, () => { });
+            canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);canvas.RenderCanvas(TimeSpan.FromMilliseconds(16),TimeSpan.Zero);
+            Check(All(abandon).OfType<Button>().Count(b=>b.Name is "ConfirmDungeonAbandon" or "CancelDungeonAbandon") == 2, "Dungeon abandonment offers two visible actions");
+            renderer.Bitmap.Save(Path.Combine(output,"abandon-dungeon-"+language+".png"));
+            abandon.Close();
+
         }
         languageProperty.SetValue(null, "en");
         var catalog = GameTextCatalog.FromJson(File.ReadAllText(Path.Combine(root, "Framework", "Intersect.Framework.Core", "RoyalContracts", "Text.json")));

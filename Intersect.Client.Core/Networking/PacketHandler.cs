@@ -1240,6 +1240,7 @@ internal sealed partial class PacketHandler
     //EntityDiePacket
     public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
     {
+        Intersect.Client.Interface.Interface.InGameUiOrNull?.OnWorldBossNpcDied(packet.Id);
         var id = packet.Id;
         var type = packet.Type;
         var mapId = packet.MapId;
