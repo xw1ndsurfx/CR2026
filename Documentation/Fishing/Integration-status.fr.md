@@ -61,6 +61,18 @@ Le script Windows exécute ces contrôles client en plus des contrôles serveur 
 
 Validation locale sur la base `2a3d594edf501fb50ed8d192c77a53c0dde950c5` : **695 contrôles serveur réussis**, dont le parcours réel d’ouverture, et **15 tests client réussis**. Avant la correction, les deux variantes événement + ressource envoyaient une attaque au lieu d’activer l’événement ; le cas de superposition avec un PNJ vérifiait aussi la priorité du combat. Les 12 autres cas passaient déjà. Le client et le serveur ont été compilés en .NET 8 ; les tests client ont été exécutés par le runner NUnit dans le processus car l’hôte VSTest de l’environnement local échoue avant leur lancement. Le workflow Windows utilise `dotnet test` normalement.
 
+## Connexion réelle et refus d’ouverture après la PR #224
+
+Le journal serveur du 3 novembre 2026 confirme l’exécution de `5f4a6e6` et trois séquences **Event interaction received → Fishing opening requested → Fishing opening ignored**, avec le motif `invalid_player_or_event_context`. L’événement atteignait donc bien la commande d’ouverture.
+
+La cause a été isolée dans `LiteNetLibConnection`. Son indicateur `IsConnected` provenait du booléen de base, initialement faux, alors que les notifications LiteNetLib n’appellent pas le setter de ce booléen. Les échanges de paquets fonctionnaient, mais `Client.IsConnected()` renvoyait faux. Les contrôles d’ouverture et de maintien de la pêche rejetaient donc le joueur avant l’examen de sa zone ou de son outil. Les anciennes fixtures de pêche utilisaient une connexion simulée toujours active et ne couvraient pas ce défaut.
+
+La connexion expose maintenant l’état natif du transport : `Connected` et la transition `EndPointChange` conservent la session ; `Outgoing`, `ShutdownRequested` et `Disconnected` ne sont pas des connexions établies. Le retrait des connexions continue d’exiger un état déconnecté. Les gardes de pêche, le protocole et les fichiers de configuration restent identiques. Les traces d’ouverture détaillent les indicateurs du joueur, du client, de sa connexion et de la pile de l’événement.
+
+Le nouveau test établit une vraie paire UDP locale par les classes de connexion du moteur, avec handshake et clés éphémères. Avant correction, il échoue sur une connexion approuvée dont `IsConnected` reste faux. Après correction, la suite native réussit **766 contrôles, dont 37 nouveaux** : état observé dans les callbacks, ouverture par l’événement après dialogue, réception chiffrée du paquet `Ready`, maintien au tick suivant et pendant une migration d’adresse native, fermeture après déconnexion, retrait des connexions et nouvelle ouverture après reconnexion. La compilation serveur .NET 8 réussit également. Le workflow Fishing est déclenché par les modifications du transport concerné, en plus des changements de pêche.
+
+Cette vérification utilise de vrais sockets et le traitement natif des événements, avec un joueur et des cartes de test. Elle ne démarre pas une session graphique sur les données de production et ne remplace pas la confirmation visuelle après déploiement du serveur corrigé. Les journaux fournis et les identifiants de production ne sont pas ajoutés au dépôt.
+
 ## GFX et audio
 
 ### Suivi du blocage d’ouverture après la PR #222

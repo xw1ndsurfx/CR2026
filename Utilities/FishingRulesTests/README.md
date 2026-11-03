@@ -8,6 +8,8 @@ dotnet run --project Utilities/FishingRulesTests/FishingRulesTests.csproj
 
 The server variant uses the real `Player`, `Item`, inventory slots and `FishingRewards.Commit`. The injected save callback tests atomic staging and failure recovery without connecting to a player database. It additionally verifies bounded native stacks, partial inventory capacity, rollback after save failures/exceptions, receipt replay and restoration, equipped bait protection, profession XP and level rewards, localized messages and MessagePack serialization.
 
+Its connection regression also opens a real loopback UDP connection through `ClientNetwork` and `LiteNetLibInterface`, using an ephemeral RSA handshake key and OS-assigned ports. The test observes the actual connection state before connection/disconnection consumers run, supplies that connection to the native Event fixture, sends the fishing opening packet over the encrypted transport, and checks the next fishing tick. It covers pending connections, shutdown, native endpoint migration and a fresh connection after disconnect. It never calls `HandleConnected()` or assigns a connection-state field to make the test pass. Player/map/inventory fixtures still isolate this test from a production account database; this is not a graphical client smoke test. Socket waits are bounded and both native managers are stopped even if an assertion fails.
+
 ```sh
 dotnet run --project Utilities/FishingRulesTests/FishingRulesTests.csproj -p:TestServer=true
 ```

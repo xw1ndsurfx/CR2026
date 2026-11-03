@@ -2,6 +2,9 @@ name: Fishing profession
 on:
   pull_request:
     paths:
+      - 'Intersect (Core)/Network/AbstractConnection.cs'
+      - 'Intersect (Core)/Network/AbstractNetwork.cs'
+      - 'Intersect.Network/LiteNetLib/**'
       - 'Framework/Intersect.Framework.Core/Fishing/**'
       - 'Framework/Intersect.Framework.Core/Network/Packets/**/Fishing*'
       - 'Framework/Intersect.Framework.Core/GameObjects/Events/**'

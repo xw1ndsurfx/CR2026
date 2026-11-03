@@ -33,7 +33,7 @@ public abstract partial class AbstractConnection : IConnection
 
     public Guid Guid { get; }
 
-    public bool IsConnected { get; private set; }
+    public virtual bool IsConnected { get; private set; }
 
     public abstract string Ip { get; }
 

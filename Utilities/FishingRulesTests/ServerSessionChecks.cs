@@ -54,6 +54,7 @@ internal static class ServerSessionChecks
             CheckConfiguredNet(check);
             CheckRejections(check);
             CheckMovementInterruption(check);
+            ServerConnectionChecks.Run(check);
         }
         finally
         {
@@ -183,7 +184,7 @@ internal static class ServerSessionChecks
             "Movement after the opening packet closes the session with a localized state message");
     }
 
-    private sealed class Fixture : IDisposable
+    internal sealed class Fixture : IDisposable
     {
         private readonly ConcurrentQueue<Tuple<IPacket, TransmissionMode, long>> _queue = new();
         private readonly PacketHandler _handler;
@@ -200,7 +201,7 @@ internal static class ServerSessionChecks
         internal readonly FishingConfiguration Configuration;
         internal IPacket[] Packets => _queue.Select(entry => entry.Item1).ToArray();
 
-        internal Fixture(bool withDialogue, bool worldProfile, bool customProfession = false)
+        internal Fixture(bool withDialogue, bool worldProfile, bool customProfession = false, IConnection? connection = null)
         {
             Map = new MapController(Guid.NewGuid()) { Name = "Fishing Event fixture", SurroundingMapIds = [], SurroundingMaps = [] };
             GC.SuppressFinalize(Map);
@@ -245,11 +246,10 @@ internal static class ServerSessionChecks
             if (!customProfession) Player.Equipment[0] = 0;
             Client = (Client)RuntimeHelpers.GetUninitializedObject(typeof(Client));
             Client.LanguageCode = "fr";
-            Client.Entity = Player;
             Client.PacketSendingQueued = true;
             typeof(Client).GetField("mSendPacketQueue", PrivateInstance)!.SetValue(Client, _queue);
-            typeof(Client).GetProperty(nameof(Client.Connection))!.SetValue(Client, new TestConnection());
-            Player.Client = Client;
+            typeof(Client).GetProperty(nameof(Client.Connection))!.SetValue(Client, connection ?? new TestConnection());
+            Client.LoadCharacter(Player);
             _handler = (PacketHandler)RuntimeHelpers.GetUninitializedObject(typeof(PacketHandler));
             if (customProfession)
             {
