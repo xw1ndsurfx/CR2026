@@ -2,6 +2,15 @@
 
 Ce guide permet de relier le mini-jeu aux véritables cartes, objets, animations et événements du projet. **Consulter le [rapport d’intégration](Integration-status.fr.md) pour connaître les compilations et essais réellement effectués.** Les commandes et la recette ci-dessous constituent une procédure ; leur présence ne signifie pas qu’une validation Windows ou multijoueur a déjà réussi.
 
+## Équilibrage de la pêche automatique
+
+Dans **Éditeur de pêche → Zones**, deux réglages indépendants définissent la rentabilité du mode idle, par zone :
+
+- **Probabilité d'échec automatique (%)** : **50 %** par défaut. Le tirage est effectué côté serveur à la fin d'une tentative ordinaire. Un échec consomme le temps et les appâts de la tentative, ne donne **ni prise ni XP**, et laisse la pêche automatique reprendre après son délai normal de 1,5 seconde si les conditions restent remplies.
+- **XP automatique (% de la pêche active)** : **20 %** par défaut, appliquée à l'XP de base d'une prise réussie, avec arrondi à l'entier inférieur. Par exemple, une prise à 25 XP rapporte 5 XP en automatique ; le bonus éventuel d'activité est ensuite calculé sur cette base réduite.
+
+La **pêche active** conserve sa chance de réussite liée au mini-jeu et son XP normale. Les créatures légendaires continuent à interrompre le mode idle pour exiger leurs défis manuels. Les deux réglages sont bornés entre 0 et 100 %, enregistrés dans `fishing.json` et compatibles avec les anciennes zones : les valeurs par défaut s'appliquent lorsque les champs n'existent pas dans le JSON. L'Event, les cartes, les équipements et les prises n'ont pas besoin d'être recréés.
+
 ## 1. Préparer des versions compatibles
 
 Utiliser le serveur, le client et l’éditeur provenant de la même révision de cette intégration. La pêche ajoute des paquets réseau et une commande Event ; mettre à jour un seul de ces programmes ne suffit pas. Construire les trois applications avec les mêmes clés de handshake, comme le prévoit le script de vérification.
