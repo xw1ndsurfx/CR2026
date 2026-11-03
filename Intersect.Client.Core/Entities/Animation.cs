@@ -36,7 +36,7 @@ public partial class Animation : IAnimation
 
     public float ParentOffsetY { get; set; }
 
-    /// <summary>Quest markers sit above the visible head; ordinary effects remain body-centered.</summary>
+    /// <summary>Opt-in overhead effects sit above the visible head; other effects remain body-centered.</summary>
     public bool AboveParent { get; set; }
     public bool DrawAsWorldEntity { get; set; }
     public bool AlignToTileBase { get; set; }
