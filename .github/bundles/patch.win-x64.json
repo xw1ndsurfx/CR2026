@@ -4,7 +4,9 @@
 		"Server",
 		"Server/wwwroot",
 		"Server/resources",
-		"Client and Editor/resources/ocean"
+		"Client and Editor/resources/ocean",
+		"Client and Editor/resources/gui/fishing",
+		"Client and Editor/resources/sounds/fishing"
 	],
 	"includes": [
 		{
@@ -46,6 +48,14 @@
 		{
 			"source": "resources/ocean/**",
 			"target": "Client and Editor/resources/ocean"
+		},
+		{
+			"source": "resources/fishing/**",
+			"target": "Client and Editor/resources/gui/fishing"
+		},
+		{
+			"source": "resources/sounds/fishing/**",
+			"target": "Client and Editor/resources/sounds/fishing"
 		}
 	],
 	"name": "patch",

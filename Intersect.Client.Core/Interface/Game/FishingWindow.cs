@@ -273,9 +273,11 @@ internal sealed class FishingWindow : Base
     }
     internal void Leave()
     {
-        Release(); _audio.StopLoops();
-        if (_leftSession) return;
-        Send(FishingAction.Leave); _leftSession = true;
+        Release();
+        // Audio is optional: a failing sound device must not leave a live server
+        // session that subsequent Event interactions would reopen and dismiss.
+        if (!_leftSession) { Send(FishingAction.Leave); _leftSession = true; }
+        _audio.StopLoops();
     }
 
     protected override bool OnChar(char character)
@@ -511,10 +513,18 @@ internal sealed class FishingWindow : Base
     internal void Destroy(bool playClose = true)
     {
         if (_destroyed) return;
-        _destroyed = true; Release(); Interface.InputBlockingComponents.Remove(this);
-        if (playClose) _audio.Close(_state?.Phase == FishingPhase.Closed && !string.IsNullOrEmpty(_state.SoundCue) ? _state.SoundCue : "session_end");
-        else _audio.Dispose();
-        Hide(); Parent?.RemoveChild(this, false); Dispose();
+        _destroyed = true;
+        try
+        {
+            Release();
+            if (playClose) _audio.Close(_state?.Phase == FishingPhase.Closed && !string.IsNullOrEmpty(_state.SoundCue) ? _state.SoundCue : "session_end");
+            else _audio.Dispose();
+        }
+        finally
+        {
+            Interface.InputBlockingComponents.Remove(this);
+            Hide(); Parent?.RemoveChild(this, false); Dispose();
+        }
     }
 
     private sealed class FishingViewport(FishingWindow owner) : Base(owner, "FishingWater")

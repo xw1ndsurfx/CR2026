@@ -449,6 +449,13 @@ internal sealed partial class PacketHandler
 
     private bool ProcessPacketCore(IPacket packet, Client client)
     {
+        // Correlate an administrator's interaction trace with the server before
+        // activity filters or event-page checks can decline the activation.
+        if (packet is ActivateEventPacket activation && client.User?.Power.IsAdmin == true)
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Event interaction received: CharacterId={CharacterId} EventInstanceId={EventInstanceId} MapId={MapId} NavalShipId={NavalShipId} Dead={Dead}",
+                client.Entity?.Id, activation.EventId, client.Entity?.MapId, client.Entity?.NavalShipId,
+                client.Entity is { IsDead: true } or { HasPendingDeath: true });
         if (client.Entity is { NavalShipId: var shipId } navalPlayer && shipId != Guid.Empty &&
             !(navalPlayer.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld && Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(navalPlayer)) &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)

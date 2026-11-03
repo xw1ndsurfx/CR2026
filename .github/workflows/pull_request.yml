@@ -13,6 +13,11 @@ on:
       - '!Documentation/**'
       - '!.git*'
       - '!*.DotSettings'
+      - '.github/bundles/**'
+      - '.github/workflows/pull_request.yml'
+      - 'resources/fishing/**'
+      - 'resources/sounds/fishing/**'
+      - 'scripts/fishing/verify_assets.py'
   workflow_dispatch:
     inputs:
       forceBuild:
@@ -88,6 +93,21 @@ jobs:
       with:
         bundle: .github/bundles/patch.*.json
         version: ${{ env.VERSION_PREFIX }}${{ env.VERSION_SUFFIX }}.${{ github.run_number }}+build.${{ github.sha }}
+
+    - name: Setup Python for package verification
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Verify fishing assets in the Windows package
+      shell: pwsh
+      run: |
+        python -m pip install Pillow
+        if ($LASTEXITCODE -ne 0) { throw 'Unable to install the asset verification dependency.' }
+        $fishingBundles = @(Get-ChildItem -Path dist -Filter 'intersect-win-x64-patch-*.zip' -File)
+        if ($fishingBundles.Count -ne 1) { throw 'Expected one Windows patch ZIP for verification.' }
+        python scripts/fishing/verify_assets.py --archive $fishingBundles[0].FullName
+        if ($LASTEXITCODE -ne 0) { throw 'The Windows package is missing or has changed fishing resources.' }
 
     # - name: Debug output
     #   run: ls -R ./dist

@@ -8,9 +8,13 @@ on:
       - 'Intersect.Server.Core/Fishing/**'
       - 'Intersect.Server.Core/**/Player.Fishing.cs'
       - 'Intersect.Server.Core/**/PacketHandler.Fishing.cs'
+      - 'Intersect.Server.Core/Networking/PacketHandler.cs'
       - 'Intersect.Server.Core/**/CommandProcessing.Fishing.cs'
       - 'Intersect.Client.Core/**/*Fishing*.cs'
       - 'Intersect.Client.Core/Entities/Player.cs'
+      - 'Intersect.Client.Core/Entities/Player.InteractionDiagnostics.cs'
+      - 'Intersect.Client.Core/Networking/PacketSender.cs'
+      - 'Intersect.Client.Core/MonoGame/File Management/MonoContentManager.cs'
       - 'Intersect.Tests.Client/Fishing*Tests.cs'
       - 'Intersect.Editor/**/*Fishing*'
       - 'Intersect.Editor/Forms/EditorHub/**'
@@ -25,6 +29,7 @@ on:
       - 'Utilities/InterfaceEditorTests/EditorHubTests.cs'
       - 'scripts/fishing/**'
       - 'scripts/Verify-Fishing.ps1'
+      - '.github/bundles/**'
       - '.github/workflows/fishing.yml'
   workflow_dispatch:
 jobs:

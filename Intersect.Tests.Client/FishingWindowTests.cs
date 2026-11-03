@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Intersect.Client.Framework.Audio;
 using Intersect.Client.Core;
 using Intersect.Client.Core.Sounds;
 using Intersect.Client.Entities;
@@ -101,15 +103,128 @@ public sealed class FishingWindowTests
         Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
     }
 
-    [Test]
-    public void OpeningRefusalIsVisibleInChatWithoutCreatingAnEmptyWindow()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void OpeningRefusalIsVisibleEvenWithAnAbsentOrBrokenNoticeSound(bool brokenAudio)
     {
         using var fixture = new ClientFixture(1600, 900);
         const string message = "Equip a compatible fishing tool.";
-        fixture.Receive(new FishingStatePacket { Message = message });
+        if (brokenAudio) fixture.Content.BreakSound(FishingSoundCatalog.Default("tool_missing").File);
+        fixture.Receive(new FishingStatePacket { Message = message, NoticeSoundJson = JsonSerializer.Serialize(
+            FishingSoundCatalog.Default("tool_missing"), FishingConfiguration.JsonOptions) });
         Assert.That(fixture.Window, Is.Null);
-        Assert.That(ChatboxMsg.GetMessages().Last().Message, Is.EqualTo(message));
-        Assert.That(ChatboxMsg.GetMessages().Last().Type, Is.EqualTo(ChatMessageType.Error));
+        Assert.That(ChatboxMsg.GetMessages().Single().Message, Is.EqualTo(message));
+        Assert.That(ChatboxMsg.GetMessages().Single().Type, Is.EqualTo(ChatMessageType.Error));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void FailedOpeningReportsAnErrorReleasesInputAndAllowsAnotherAttempt(bool duringConstruction)
+    {
+        using var fixture = new ClientFixture(1600, 900);
+        var configuration = Configuration();
+        var state = Ready(configuration);
+        if (duringConstruction) fixture.Renderer.FailMeasurement = true;
+        else fixture.Content.BreakSound(FishingSoundCatalog.Default("session_start").File);
+
+        Assert.DoesNotThrow(() => fixture.Receive(OpenPacket(configuration, state)));
+        Assert.That(fixture.Window, Is.Null);
+        Assert.That(fixture.Canvas.Children.OfType<FishingWindow>(), Is.Empty,
+            "A failed constructor must not leave an orphan surface attached to the game canvas.");
+        Assert.That(ClientInterface.InputBlockingComponents.OfType<FishingWindow>(), Is.Empty);
+        Assert.That(ChatboxMsg.GetMessages().Single().Type, Is.EqualTo(ChatMessageType.Error));
+        var leave = fixture.Socket.Packets.OfType<FishingRequestPacket>().Single();
+        Assert.That(leave.Action, Is.EqualTo(FishingAction.Leave));
+        Assert.That(leave.SessionId, Is.EqualTo(state.SessionId));
+        Assert.That(leave.Sequence, Is.GreaterThan(0));
+
+        fixture.Renderer.FailMeasurement = false;
+        fixture.Content.ClearSounds();
+        fixture.Receive(OpenPacket(configuration, state));
+        Assert.That(fixture.Window, Is.Null, "A delayed packet for the failed session must not reopen it.");
+        var retry = Ready(configuration);
+        fixture.Receive(OpenPacket(configuration, retry));
+        Assert.That(fixture.Window?.SessionId, Is.EqualTo(retry.SessionId));
+        Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
+    }
+
+    [Test]
+    public void InvalidOpeningDataIsReportedWithoutAttachingABlockingWindow()
+    {
+        using var fixture = new ClientFixture(1600, 900);
+        fixture.Receive(new FishingStatePacket { Open = true, StateJson = "{" });
+        Assert.That(fixture.Window, Is.Null);
+        Assert.That(ClientInterface.InputBlockingComponents.OfType<FishingWindow>(), Is.Empty);
+        Assert.That(ChatboxMsg.GetMessages().Single().Type, Is.EqualTo(ChatMessageType.Error));
+        var configuration = Configuration();
+        fixture.Receive(OpenPacket(configuration, Ready(configuration)));
+        Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void FailingActiveLoopCleanupLeavesTheServerSessionAndAllowsReopening(bool serverClosed)
+    {
+        using var fixture = new ClientFixture(1600, 900);
+        var configuration = Configuration();
+        var state = Ready(configuration);
+        var opening = OpenPacket(configuration, state);
+        var ambience = fixture.Content.BreakSoundCleanup(FishingSoundCatalog.Default("ambience").File);
+        fixture.Receive(opening);
+        var window = fixture.Window!;
+        var cast = Descendants(window).OfType<Button>().Single(button => button.Name == "FishingCast");
+
+        // Advance the real request sequence through the native cast button;
+        // a recovery Leave with a hardcoded sequence of 1 would be rejected.
+        InputHandler.HoveredControl = cast;
+        var mouseInput = typeof(ControlBase).GetMethod("InputMouseButtonState", Hidden)!;
+        var position = cast.ToCanvas(cast.Width / 2, cast.Height / 2);
+        mouseInput.Invoke(cast, [MouseButton.Left, position, true, true]);
+        mouseInput.Invoke(cast, [MouseButton.Left, position, false, true]);
+        var castRequest = fixture.Socket.Packets.OfType<FishingRequestPacket>().Single();
+        Assert.That(castRequest.Action, Is.EqualTo(FishingAction.Cast));
+        Assert.That(castRequest.Sequence, Is.EqualTo(1));
+
+        state.Phase = FishingPhase.Waiting;
+        state.Revision++;
+        fixture.Receive(new FishingStatePacket { StateJson = state.ToJson() });
+        Assert.That(ambience.Instance, Is.Not.Null);
+        Assert.That(ambience.Instance!.State, Is.EqualTo(GameAudioInstance.AudioInstanceState.Playing));
+        Assert.That(ambience.Instance.IsLooping, Is.True);
+
+        if (serverClosed)
+        {
+            state.Phase = FishingPhase.Closed;
+            state.Revision++;
+            Assert.DoesNotThrow(() => fixture.Receive(new FishingStatePacket { StateJson = state.ToJson() }));
+            Assert.DoesNotThrow(fixture.UpdateFishing);
+        }
+        else
+        {
+            // CloseAllWindows also calls this entry point directly, without
+            // the UpdateFishing exception guard used for the close button.
+            Assert.DoesNotThrow(fixture.CloseFishing);
+        }
+
+        Assert.That(ambience.Instance.DisposeAttempts, Is.GreaterThan(0), "Exercise failing cleanup of an active loop.");
+        Assert.That(fixture.Window, Is.Null);
+        Assert.That(fixture.Canvas.Children.OfType<FishingWindow>(), Is.Empty);
+        Assert.That(ClientInterface.InputBlockingComponents.OfType<FishingWindow>(), Is.Empty);
+        Assert.That(InputHandler.KeyboardFocus, Is.Not.SameAs(window));
+        var leave = fixture.Socket.Packets.OfType<FishingRequestPacket>()
+            .Single(packet => packet.Action == FishingAction.Leave);
+        Assert.That(leave.SessionId, Is.EqualTo(state.SessionId));
+        Assert.That(leave.Sequence, Is.GreaterThan(castRequest.Sequence),
+            "The server must accept the cancellation even when audio disposal fails.");
+        Assert.That(ChatboxMsg.GetMessages().Single().Type, Is.EqualTo(ChatMessageType.Error));
+
+        fixture.Content.ClearSounds();
+        fixture.Receive(opening);
+        Assert.That(fixture.Window, Is.Null, "Ignore delayed packets from the dismissed session.");
+        var retry = Ready(configuration);
+        fixture.Receive(OpenPacket(configuration, retry));
+        Assert.That(fixture.Window?.SessionId, Is.EqualTo(retry.SessionId));
+        Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
     }
 
     private static FishingConfiguration Configuration()
@@ -211,6 +326,7 @@ public sealed class FishingWindowTests
         }
 
         internal void UpdateFishing() => typeof(GameInterface).GetMethod("UpdateFishing", Hidden)!.Invoke(_game, null);
+        internal void CloseFishing() => typeof(GameInterface).GetMethod("CloseFishingWindow", Hidden)!.Invoke(_game, null);
 
         public void Dispose()
         {
@@ -270,6 +386,14 @@ public sealed class FishingWindowTests
             mFontDict["sourcesansproblack"] = new TestFont();
         }
         public override IGameTexture? GetTexture(TextureType type, string name) { Requests.Add((type, name)); return null; }
+        internal void BreakSound(string file) => mSoundDict[RemoveExtension(file)] = new FailingSoundSource();
+        internal FailingCleanupSoundSource BreakSoundCleanup(string file)
+        {
+            var source = new FailingCleanupSoundSource();
+            mSoundDict[RemoveExtension(file)] = source;
+            return source;
+        }
+        internal void ClearSounds() => mSoundDict.Clear();
         public override void LoadTilesets(string[] names) => throw new InvalidOperationException();
         public override void LoadTexturePacks() => throw new InvalidOperationException();
         public override void LoadItems() => throw new InvalidOperationException();
@@ -305,9 +429,45 @@ public sealed class FishingWindowTests
     private sealed class RecordingRenderer : RendererBase
     {
         internal readonly List<Rectangle> Fills = [];
+        internal bool FailMeasurement;
         public override void DrawFilledRect(Rectangle rectangle) => Fills.Add(rectangle);
-        public override Point MeasureText(IFont? font, int size, string? text, float scale = 1f) =>
-            new((int)Math.Ceiling((text?.Length ?? 0) * size * .6 * scale), (int)Math.Ceiling((size + 3) * scale));
+        public override Point MeasureText(IFont? font, int size, string? text, float scale = 1f) => FailMeasurement
+            ? throw new InvalidOperationException("Fixture font renderer unavailable")
+            : new((int)Math.Ceiling((text?.Length ?? 0) * size * .6 * scale), (int)Math.Ceiling((size + 3) * scale));
+    }
+
+    private sealed class FailingSoundSource : GameAudioSource
+    {
+        public override bool IsLoaded => true;
+        public override int TypeVolume => 100;
+        public override GameAudioInstance CreateInstance() => throw new InvalidOperationException("Fixture audio device unavailable");
+        public override void ReleaseInstance(GameAudioInstance? audioInstance) { }
+    }
+
+    private sealed class FailingCleanupSoundSource : GameAudioSource
+    {
+        internal FailingCleanupSoundInstance? Instance;
+        public override bool IsLoaded => true;
+        public override int TypeVolume => 100;
+        public override GameAudioInstance CreateInstance() => Instance = new FailingCleanupSoundInstance(this);
+        public override void ReleaseInstance(GameAudioInstance? audioInstance) { }
+    }
+
+    private sealed class FailingCleanupSoundInstance(GameAudioSource source) : GameAudioInstance(source)
+    {
+        private AudioInstanceState _state = AudioInstanceState.Stopped;
+        internal int DisposeAttempts;
+        public override AudioInstanceState State => _state;
+        protected override void OnVolumeChanged(int oldVolume, int newVolume) { }
+        protected override void OnLoopingChanged(bool isLooping) { }
+        public override void Play() => _state = AudioInstanceState.Playing;
+        public override void Pause() => _state = AudioInstanceState.Paused;
+        public override void Stop() => _state = AudioInstanceState.Stopped;
+        public override void Dispose()
+        {
+            DisposeAttempts++;
+            throw new InvalidOperationException("Fixture audio device failed while disposing an active loop");
+        }
     }
 
     private sealed class TestFont : IFont

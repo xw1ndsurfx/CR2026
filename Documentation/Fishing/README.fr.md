@@ -22,6 +22,10 @@ Dans les dossiers de sortie ou de publication correspondant à cette constructio
 
 La règle [FishingAssets.props](../../Shared/FishingAssets.props) copie les GFX dans `resources/gui/fishing/` et les WAV dans `resources/sounds/fishing/` du client et de l’éditeur. Les sources graphiques restent dans `resources/fishing/` du dépôt. Ne pas déplacer les originaux pour corriger un chemin de lancement.
 
+Les archives **patch**, **full** et **upgrade** des trois plateformes incluent maintenant ces ressources sous `Client and Editor/resources/`, avec leurs sous-dossiers. Les anciennes listes de distribution les omettaient, même lorsque la publication .NET les avait copiées : remplacer uniquement les exécutables d’une ancienne archive pouvait laisser les GFX et sons manquants. Copier aussi le dossier `resources` livré dans la nouvelle archive. Les fichiers de configuration actifs et brouillons du serveur ne sont pas fournis par ce pack.
+
+Le vérificateur couvre les neuf listes de distribution. Le workflow de PR vérifie aussi les chemins et les empreintes des **57 fichiers de pêche** dans le ZIP Windows effectivement produit : 20 PNG, 32 WAV et 5 JSON de ressources. Pour reproduire ce contrôle, utiliser `python scripts/fishing/verify_assets.py --archive <chemin-du-zip-bundle>`. Cette option attend le ZIP de distribution produit dans `dist/`, pas l’enveloppe ZIP téléchargée depuis Actions.
+
 ## 2. Créer les objets et choisir la progression
 
 Dans l’éditeur, ouvrir l’**Éditeur d’objets** et créer ou sélectionner les ressources réelles nécessaires :
@@ -138,6 +142,27 @@ Un événement **Action Button** sur la case visée est prioritaire sur une ress
 Un événement sans image et avec **Disable Inspector** reste utilisable par la commande d’interaction face à sa case. L’objet de pêche doit être équipé ; la présence d’un filet dans l’inventaire ne suffit pas. L’absence d’appâts ne bloque pas l’ouverture de la fenêtre : elle est signalée au lancer.
 
 Pour distinguer une interaction qui n’atteint pas l’événement d’un refus de pêche, placer temporairement **Afficher un texte** avant **Ouvrir la pêche**. Enregistrer chaque commande, puis **Sauvegarder l’événement et la carte**. Le texte doit apparaître dans le client, puis être fermé pour laisser continuer la commande suivante. Le déclenchement doit être vérifié dans le client. Un refus de zone ou d’équipement s’affiche dans le chat ; vérifier également les conditions de la page si le texte ne paraît pas.
+
+Si **Dernier état confirmé par le serveur : Activé** est déjà affiché, conserver cette configuration pendant le diagnostic. Le type **Filet** décrit le profil de pêche ; **Objet à équiper** désigne l’objet exact à porter. Un objet nommé **Knife Wood** peut être configuré comme filet : son nom ne le rend pas invalide. Les monnaies peuvent aussi servir d’appâts ou de récompenses lorsqu’elles satisfont les règles d’empilement.
+
+Les refus d’ouverture utilisent désormais le chat normal, indépendamment de l’interface et du son de pêche. Le refus d’équipement donne le nom des objets configurés. Une exception de création ou de mise à jour de la fenêtre est signalée dans le chat et le journal du client ; les contrôles de pêche sont libérés et la session est quittée pour permettre une nouvelle tentative.
+
+Pour un blocage persistant, faire **une interaction dans le client**, puis conserver le fichier le plus récent `logs/client-loop-*.log`, le journal `logs/Corps Royaux-*.log` et `logs/errors-Corps Royaux.log` s’il existe, dans le dossier du client lancé. Conserver également le journal `logs/Intersect Server-*.log` du serveur sur la même période. Le journal d’erreurs contient le détail d’une exception d’affichage ; les marqueurs permettent de localiser l’arrêt :
+
+| Marqueur | Ce qu’il établit |
+| --- | --- |
+| `interaction-press` | Le client voit un nouvel appui ; les indicateurs précisent le focus, une activité bloquante, un dialogue, une attaque ou l’état naval. |
+| `event-activate sent` | Le client a envoyé l’identifiant de l’Event visé. |
+| `Event interaction received` | Le serveur a reçu l’activation d’un administrateur, avant ses filtres d’activité. |
+| `Fishing opening requested` | L’Event a atteint la commande **Ouvrir la pêche**. |
+| `Fishing opening refused` / `ignored` | Le journal donne la raison du refus ou le contexte invalide. |
+| `Fishing opening ready` / `reopened` | Le serveur a envoyé l’ouverture de la session. |
+| `fishing-packet received` puis `fishing-window displayed` | Le client a reçu la réponse puis construit et affiché la fenêtre. |
+| `Fishing closing`, `fishing-window closing` ou `fishing-window failed` | La session a été fermée ou l’interface a rencontré une exception. |
+
+Une absence de marqueur ne suffit pas à conclure si l’application n’utilise pas cette révision ou si son journal n’est pas celui de l’exécutable lancé. Les traces ne contiennent ni texte de dialogue, ni chat, ni configuration complète. Il n’est pas nécessaire de modifier les cartes pour les obtenir.
+
+La mention **Son manquant : fishing/…wav** dans l’éditeur indique que le fichier n’est pas disponible dans ses ressources locales. Conserver le sous-dossier `resources/sounds/fishing/` livré avec le client et l’éditeur. Le client indexe désormais les WAV de ce sous-dossier en conservant leurs chemins relatifs ; un son absent reste facultatif et ne prouve pas la cause d’une absence de fenêtre.
 
 Poursuivre la recette avec les trois familles d’outils : chaque prise exclusive doit rester inaccessible aux deux autres. Tester ensuite l’automatique connecté, le manque d’appâts, l’inventaire plein et les légendaires. Déconnecter puis reconnecter pour vérifier la persistance de l’XP et l’absence de récompenses hors ligne.
 

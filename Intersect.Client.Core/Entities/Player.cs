@@ -274,6 +274,7 @@ public partial class Player : Entity, IPlayer
 
         if (Globals.Me == this)
         {
+            TraceInteractionPress();
             if (Naval.NavalWorld.IsAboard(Id)) Naval.NavalWorld.Input(IsBusy);
             else HandleInput();
         }
