@@ -1,0 +1,144 @@
+{
+  "Entries": {
+    "Exportation": {
+      "en": "Exportation",
+      "fr": "Exportation",
+      "es": "Exportación"
+    },
+    "ORDER SLIP": {
+      "en": "ORDER SLIP",
+      "fr": "BON DE COMMANDE",
+      "es": "HOJA DE PEDIDO"
+    },
+    "PACK THE CRATES": {
+      "en": "PACK THE CRATES",
+      "fr": "PRÉPARER LES CAISSES",
+      "es": "PREPARAR LAS CAJAS"
+    },
+    "Drag the goods into the crates": {
+      "en": "Drag the goods into the crates",
+      "fr": "Glissez les marchandises dans les caisses",
+      "es": "Arrastra las mercancías a las cajas"
+    },
+    "Goods provided by the merchant": {
+      "en": "Goods provided by the merchant",
+      "fr": "Objets fournis par le marchand",
+      "es": "Artículos proporcionados por el comerciante"
+    },
+    "MATERIALS": {
+      "en": "MATERIALS",
+      "fr": "MATÉRIAUX",
+      "es": "MATERIALES"
+    },
+    "FRAGILE": {
+      "en": "FRAGILE",
+      "fr": "FRAGILES",
+      "es": "FRÁGILES"
+    },
+    "PROVISIONS": {
+      "en": "PROVISIONS",
+      "fr": "PROVISIONS",
+      "es": "PROVISIONES"
+    },
+    "DELIVERY": {
+      "en": "DELIVERY",
+      "fr": "LIVRAISON",
+      "es": "ENTREGA"
+    },
+    "Recipient: {0}": {
+      "en": "Recipient: {0}",
+      "fr": "Destinataire : {0}",
+      "es": "Destinatario: {0}"
+    },
+    "Boat ready": {
+      "en": "Boat ready",
+      "fr": "Bateau amarré",
+      "es": "Barco amarrado"
+    },
+    "Boat required": {
+      "en": "Boat required",
+      "fr": "Bateau requis",
+      "es": "Se requiere un barco"
+    },
+    "At delivery": {
+      "en": "At delivery",
+      "fr": "À la livraison",
+      "es": "Al entregar"
+    },
+    "After sealing": {
+      "en": "After sealing",
+      "fr": "Après le scellement",
+      "es": "Después de sellar"
+    },
+    "Delivery quest started": {
+      "en": "Delivery quest started",
+      "fr": "Quête de livraison commencée",
+      "es": "Misión de entrega iniciada"
+    },
+    "SEAL THE CARGO": {
+      "en": "SEAL THE CARGO",
+      "fr": "SCELLER LA CARGAISON",
+      "es": "SELLAR LA CARGA"
+    },
+    "Complete the order": {
+      "en": "Complete the order",
+      "fr": "Complétez la commande",
+      "es": "Completa el pedido"
+    },
+    "{0} / {1} items packed": {
+      "en": "{0} / {1} items packed",
+      "fr": "{0} / {1} objets préparés",
+      "es": "{0} / {1} artículos preparados"
+    },
+    "Level {0}": {
+      "en": "Level {0}",
+      "fr": "Niveau {0}",
+      "es": "Nivel {0}"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Cargo lost — return to the merchant": {
+      "en": "Cargo lost — return to the merchant",
+      "fr": "Cargaison perdue — retournez voir le marchand",
+      "es": "Carga perdida — regresa con el comerciante"
+    },
+    "Death or sinking destroys the cargo": {
+      "en": "Death or sinking destroys the cargo",
+      "fr": "Mort ou naufrage : cargaison perdue",
+      "es": "Muerte o naufragio: carga perdida"
+    },
+    "PREPARE CARGO AGAIN": {
+      "en": "PREPARE CARGO AGAIN",
+      "fr": "REPRÉPARER LA CARGAISON",
+      "es": "VOLVER A PREPARAR LA CARGA"
+    },
+    "DELIVER CARGO": {
+      "en": "DELIVER CARGO",
+      "fr": "REMETTRE LA CARGAISON",
+      "es": "ENTREGAR LA CARGA"
+    },
+    "Delivery successful": {
+      "en": "Delivery successful",
+      "fr": "Livraison réussie",
+      "es": "Entrega completada"
+    },
+    "Wrong recipient": {
+      "en": "Wrong recipient",
+      "fr": "Mauvais destinataire",
+      "es": "Destinatario incorrecto"
+    },
+    "Voyage by boat required": {
+      "en": "Voyage by boat required",
+      "fr": "Traversée en bateau requise",
+      "es": "Se requiere cruzar en barco"
+    },
+    "Return to the original merchant": {
+      "en": "Return to the original merchant",
+      "fr": "Retournez voir le marchand de départ",
+      "es": "Vuelve con el comerciante de origen"
+    }
+  }
+}
