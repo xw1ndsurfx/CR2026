@@ -12,7 +12,7 @@ using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
-internal sealed class AchievementsWindow : Window
+internal sealed partial class AchievementsWindow : Window
 {
     private static readonly Color Gold = new(a: 255, r: 224, g: 190, b: 113);
     private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
@@ -169,12 +169,7 @@ internal sealed class AchievementsWindow : Window
             MouseInputEnabled = false,
         };
         icon.SetBounds(19, 19, 72, 72);
-        if (!string.IsNullOrWhiteSpace(definition.Icon))
-        {
-            icon.Texture = Globals.ContentManager.GetTexture(TextureType.Achievement, definition.Icon);
-            if (icon.Texture == null) icon.Hide();
-        }
-        else icon.Hide();
+        ApplyStateIcon(icon, card, definition, progress.Completed);
 
         AddText(card, $"AchievementName{definition.Id}", definition.Name,
             110, 13, 380, 25, 13, progress.Completed ? Gold : Cream, bold: true);

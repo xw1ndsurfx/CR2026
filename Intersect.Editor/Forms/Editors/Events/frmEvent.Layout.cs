@@ -13,10 +13,6 @@ public partial class FrmEvent
     private readonly DarkComboBox _animationLayer = new() { Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly DarkCheckBox _chatEmote = new() { Text = "Allow this event in the chat emote menu", AutoSize = true };
     private bool _loadingOffsets;
-    private FormBorderStyle _normalBorder;
-    private FormWindowState _normalWindowState;
-    private Rectangle _normalBounds;
-    private bool _fullscreen;
     private readonly List<TreeNode> _commandRoots = [];
 
     private void InitializeModernLayout()
@@ -114,11 +110,6 @@ public partial class FrmEvent
         Controls.Remove(pnlEditorComponents);
         Controls.Add(split); Controls.Add(tabs); Controls.Add(header); Controls.Add(footer);
         split.BringToFront();
-        KeyDown += (_, args) =>
-        {
-            if (args.KeyCode != Keys.F11) return;
-            ToggleEventFullscreen(); args.Handled = args.SuppressKeyPress = true;
-        };
         ResumeLayout(true);
     }
 
@@ -133,18 +124,7 @@ public partial class FrmEvent
 
     private void ToggleEventFullscreen()
     {
-        if (_fullscreen)
-        {
-            WindowState = FormWindowState.Normal; FormBorderStyle = _normalBorder;
-            Bounds = _normalBounds; WindowState = _normalWindowState;
-        }
-        else
-        {
-            _normalBorder = FormBorderStyle; _normalWindowState = WindowState;
-            _normalBounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
-            WindowState = FormWindowState.Normal; FormBorderStyle = FormBorderStyle.None; WindowState = FormWindowState.Maximized;
-        }
-        _fullscreen = !_fullscreen;
+        Styling.EditorWindows.ToggleFullscreen(this);
     }
 
     private void LoadWorldMapOffsets()

@@ -36,7 +36,7 @@ public partial class ConditionControl_QuestCompleted : UserControl
     public new void Show()
     {
         cmbCompletedQuest.Items.Clear();
-        cmbCompletedQuest.Items.AddRange(QuestDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<QuestDescriptor>(cmbCompletedQuest);
         base.Show();
     }
 }

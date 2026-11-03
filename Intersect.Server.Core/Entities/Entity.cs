@@ -534,6 +534,10 @@ public abstract partial class Entity : IEntity
 
         int tileX = tileHelper.GetX();
         int tileY = tileHelper.GetY();
+        if (this is Player or Npc && Intersect.Server.Campfires.CampfireRuntime.Blocks(tileHelper.GetMapId(), MapInstanceId, tileX, tileY, Z))
+        {
+            blockerType = MovementBlockerType.MapAttribute; blockingEntity = default; return false;
+        }
 
         if (IsBlockedByMapAttribute(direction, mapController.Attributes[tileX, tileY], out blockerType))
         {
@@ -1040,6 +1044,7 @@ public abstract partial class Entity : IEntity
     }
 
     //Returns the amount of time required to traverse 1 tile
+    [NotMapped, JsonIgnore] public virtual int ScriptedMovementMilliseconds => 0;
     public virtual float GetMovementTime()
     {
         var time = 1000f / (float)(1 + Math.Log(Stat[(int)Enums.Stat.Speed].Value()));
@@ -1161,6 +1166,7 @@ public abstract partial class Entity : IEntity
                     var newMaps = currentMap?.GetSurroundingMaps(true);
 
                     MapId = tile.GetMapId();
+                    if (this is Player exploringPlayer) exploringPlayer.DiscoverWorldMap(MapId);
 
                     if (oldMaps != null)
                     {
@@ -1651,7 +1657,7 @@ public abstract partial class Entity : IEntity
         {
             Attack(
                 target, parentItem.Damage, 0, (DamageType)parentItem.DamageType, (Stat)parentItem.ScalingStat,
-                parentItem.Scaling, parentItem.CritChance, parentItem.CritMultiplier, null, null, true
+                parentItem.Scaling, parentItem.CritChance, parentItem.CritMultiplier, null, null, true, parentItem
             );
         }
 
@@ -1771,7 +1777,7 @@ public abstract partial class Entity : IEntity
         bool trapTrigger = false
     )
     {
-        if (target is Resource || target is EventPageInstance)
+        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true })
         {
             return;
         }
@@ -1991,6 +1997,7 @@ public abstract partial class Entity : IEntity
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
         ItemDescriptor weapon = null)
     {
+        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true }) return;
         if (IsAttacking)
         {
             return;
@@ -2054,7 +2061,7 @@ public abstract partial class Entity : IEntity
 
         Attack(
             target, baseDamage, 0, damageType, scalingStat, scaling, critChance, critMultiplier, deadAnimations,
-            aliveAnimations, true
+            aliveAnimations, true, weapon
         );
     }
 
@@ -2069,7 +2076,8 @@ public abstract partial class Entity : IEntity
         double critMultiplier,
         List<KeyValuePair<Guid, Direction>> deadAnimations = null,
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
-        bool isAutoAttack = false
+        bool isAutoAttack = false,
+        ItemDescriptor masteryWeapon = null
     )
     {
         var damagingAttack = baseDamage > 0;
@@ -2084,8 +2092,13 @@ public abstract partial class Entity : IEntity
         var enemyVitals = enemy.GetVitals();
         var invulnerable = enemy.CachedStatuses.Any(status => status.Type == SpellEffect.Invulnerable);
 
+        if (baseDamage > 0 && isAutoAttack && this is Player masteryPlayer && enemy is not Resource)
+            baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(baseDamage * masteryPlayer.MasteryMultiplier(masteryWeapon)));
+
         bool isCrit = false;
         //Is this a critical hit?
+        if (isAutoAttack && this is Player criticalMastery && masteryWeapon != null)
+            critChance = Math.Clamp(critChance + criticalMastery.MasteryPassives(masteryWeapon).Crit, 0, 100);
         if (Randomization.Next(1, 101) > critChance)
         {
             critMultiplier = 1;
@@ -2199,6 +2212,8 @@ public abstract partial class Entity : IEntity
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
                 }
 
+                if (appliedHealthDamage > 0 && isAutoAttack && this is Player masteryAttacker && enemy is Npc masteryTarget)
+                    masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
                 switch (damageType)
                 {

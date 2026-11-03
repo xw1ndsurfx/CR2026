@@ -185,9 +185,9 @@ public static partial class PacketSender
         Network.SendPacket(new LinkMapPacket(linkMapId, adjacentMapId, gridX, gridY));
     }
 
-    public static void SendCreateObject(GameObjectType type)
+    public static void SendCreateObject(GameObjectType type, Guid requestedId = default)
     {
-        Network.SendPacket(new CreateGameObjectPacket(type));
+        Network.SendPacket(new CreateGameObjectPacket(type, requestedId));
     }
 
     public static void SendOpenEditor(GameObjectType type)

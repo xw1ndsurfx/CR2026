@@ -7,7 +7,7 @@ public partial class FrmMain
 {
     private void AddWorldMapEditorMenu()
     {
-        var item = new ToolStripMenuItem("World Map Editor...");
+        var item = new ToolStripMenuItem("World Map Editor...") { Name = "worldMapEditor" };
         item.Click += (_, _) => Networking.Network.SendPacket(new RequestWorldMapLegendPacket());
         contentEditorsToolStripMenuItem.DropDownItems.Add(item);
     }

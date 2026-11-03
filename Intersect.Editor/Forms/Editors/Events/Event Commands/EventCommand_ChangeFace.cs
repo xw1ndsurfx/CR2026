@@ -22,7 +22,7 @@ public partial class EventCommandChangeFace : UserControl
         InitLocalization();
         cmbFace.Items.Clear();
         cmbFace.Items.Add(Strings.General.None);
-        cmbFace.Items.AddRange(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Face));
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbFace, GameContentManager.TextureType.Face);
         cmbFace.SelectedIndex = Math.Max(0, cmbFace.Items.IndexOf(TextUtils.NullToNone(mMyCommand.Face)));
         UpdatePreview();
     }

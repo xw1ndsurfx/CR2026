@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.File_Management;
+﻿using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
@@ -106,7 +106,7 @@ internal class NavalManagementWindow:Window
                 var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(16,18,36,34);
                 var item=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(a.ItemId);
                 icon.Texture=!string.IsNullOrEmpty(a.Icon)?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon):
-                    item==null?null:GameContentManager.Current.GetTexture(item.UsesSpellIcon?Intersect.Client.Framework.Content.TextureType.Spell:Intersect.Client.Framework.Content.TextureType.Item,item.DisplayIcon);
+                    item==null?null:Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
                 if(a.Kind==state.SelectedAmmo)
                 {
                     var active=Text(slot,"AmmoInUse",T("Active"),0,0,70,18,10);

@@ -1,4 +1,4 @@
-using DarkUI.Forms;
+﻿using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.General;
@@ -96,11 +96,11 @@ public partial class FrmShop : EditorForm
         cmbBuyFor.Items.Clear();
         cmbSellFor.Items.Clear();
         cmbDefaultCurrency.Items.Clear();
-        cmbAddBoughtItem.Items.AddRange(ItemDescriptor.Names);
-        cmbAddSoldItem.Items.AddRange(ItemDescriptor.Names);
-        cmbBuyFor.Items.AddRange(ItemDescriptor.Names);
-        cmbSellFor.Items.AddRange(ItemDescriptor.Names);
-        cmbDefaultCurrency.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbAddBoughtItem);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbAddSoldItem);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbBuyFor);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbSellFor);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbDefaultCurrency);
         if (cmbAddBoughtItem.Items.Count > 0)
         {
             cmbAddBoughtItem.SelectedIndex = 0;
@@ -198,6 +198,7 @@ public partial class FrmShop : EditorForm
             cmbSellSound.SelectedIndex = cmbSellSound.FindString(TextUtils.NullToNone(mEditorItem.SellSound));
 
             UpdateWhitelist();
+            UpdateSealShopControls();
             UpdateLists();
             if (mChanged.IndexOf(mEditorItem) == -1)
             {
@@ -261,7 +262,7 @@ public partial class FrmShop : EditorForm
                 Strings.ShopEditor.selldesc.ToString(
                     ItemDescriptor.GetName(mEditorItem.SellingItems[i].ItemId),
                     mEditorItem.SellingItems[i].CostItemQuantity,
-                    ItemDescriptor.GetName(mEditorItem.SellingItems[i].CostItemId)
+                    mEditorItem.ConfigurationKind==ShopConfigurationKind.RoyalSeals?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Royal Seals",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName):ItemDescriptor.GetName(mEditorItem.SellingItems[i].CostItemId)
                 ) + (mEditorItem.SellingItems[i].Promotion is { Enabled: true } promotion ?
                     " · " + FrmShopPromotion.T("Special offer") + $" -{promotion.DiscountPercent}%" : "")
             );
@@ -297,7 +298,7 @@ public partial class FrmShop : EditorForm
         var addedItem = false;
         var cost = (int) nudSellCost.Value;
         var newItem = new ShopItemDescriptor(
-            ItemDescriptor.IdFromList(cmbAddSoldItem.SelectedIndex), ItemDescriptor.IdFromList(cmbSellFor.SelectedIndex), cost
+            ItemDescriptor.IdFromList(cmbAddSoldItem.SelectedIndex), mEditorItem.ConfigurationKind==ShopConfigurationKind.RoyalSeals?Guid.Empty:ItemDescriptor.IdFromList(cmbSellFor.SelectedIndex), cost
         );
 
         for (var i = 0; i < mEditorItem.SellingItems.Count; i++)

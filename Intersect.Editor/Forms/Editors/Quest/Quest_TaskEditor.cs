@@ -203,7 +203,7 @@ public partial class QuestTaskEditor : UserControl
                 _guideResourceLabel.Show();
                 _guideResource.Show();
                 cmbItem.Items.Clear();
-                cmbItem.Items.AddRange(ItemDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItem);
                 if (cmbItem.Items.Count > 0)
                 {
                     cmbItem.SelectedIndex = 0;
@@ -218,7 +218,7 @@ public partial class QuestTaskEditor : UserControl
                 _guideResourceLabel.Hide();
                 _guideResource.Hide();
                 cmbNpc.Items.Clear();
-                cmbNpc.Items.AddRange(NPCDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpc);
                 if (cmbNpc.Items.Count > 0)
                 {
                     cmbNpc.SelectedIndex = 0;
@@ -482,7 +482,7 @@ public partial class QuestTaskEditor : UserControl
         _guideAnimation.Location = new System.Drawing.Point(104, 18);
         _guideAnimation.Size = new Size(116, 21);
         _guideAnimation.Items.Add("None");
-        _guideAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(_guideAnimation);
 
         _guideResourceLabel.Text = "Resource:";
         _guideResourceLabel.AutoSize = true;
@@ -493,7 +493,7 @@ public partial class QuestTaskEditor : UserControl
         _guideResource.Location = new System.Drawing.Point(104, 45);
         _guideResource.Size = new Size(116, 21);
         _guideResource.Items.Add("None");
-        _guideResource.Items.AddRange(ResourceDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ResourceDescriptor>(_guideResource);
 
         _showNavigationArrow.Text = "Show objective arrow";
         _showNavigationArrow.AutoSize = true;

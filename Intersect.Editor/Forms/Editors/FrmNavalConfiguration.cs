@@ -116,7 +116,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             UpdateRemove();
             foreach (Control control in split.Panel2.Controls.Cast<Control>().ToArray()) control.Dispose();
             if (list.SelectedItem is not TItem item) return;
-            var fields = Fields(item, section, item is HarbourOffer or HerboniaPatrol ? ["Ship", "Loot", "AdditionalData"] : ["AdditionalData"]);
+            var fields = Fields(item, section, (item is HarbourOffer or HerboniaPatrol) ? ["Ship", "Loot", "AdditionalData"] : ["AdditionalData"]);
             if (item is HarbourOffer offer)
             {
                 var model = Fields(offer.Ship, section, ["Id", "MapId", "X", "Y", "DockX", "DockY", "SinkingGraphics", "AdditionalData"]);

@@ -114,7 +114,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     // Fog transition state. Keep the currently rendered fog around while it
     // fades out so changing maps/environments never pops a cloud layer in or out.
     private string mRenderedFogName = string.Empty;
-    private int mRenderedFogAlpha;
+    private float mRenderedFogAlpha;
     private int mRenderedFogXSpeed;
     private int mRenderedFogYSpeed;
 
@@ -979,9 +979,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 }
 
                 // Set up all information we need to draw this name.
-                var itemTexture = GameContentManager.Current.GetTexture(
-                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
-                );
+                var itemTexture = Intersect.Client.Interface.Game.ItemIconTexture.Get(itemDescriptor);
 
                 if (itemTexture == null)
                 {
@@ -1401,12 +1399,14 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var desiredFogAlpha = FogTransparency;
         var desiredFogXSpeed = FogXSpeed;
         var desiredFogYSpeed = FogYSpeed;
-        if (IsRaining && WeatherEffects.OverrideRainFog)
+        var weatherStrength = WeatherStrength;
+        var weather = RenderedWeather;
+        if (weatherStrength > 0 && weather.OverrideFog)
         {
-            desiredFogName = WeatherEffects.RainFog;
-            desiredFogAlpha = Math.Clamp(WeatherEffects.RainFogOpacity,0,255);
-            desiredFogXSpeed = Math.Clamp(WeatherEffects.RainFogXSpeed,-5,5);
-            desiredFogYSpeed = Math.Clamp(WeatherEffects.RainFogYSpeed,-5,5);
+            desiredFogName = weather.Fog;
+            desiredFogAlpha = (int)Math.Round(Math.Clamp(weather.FogOpacity,0,255) * weatherStrength);
+            desiredFogXSpeed = Math.Clamp(weather.FogXSpeed,-5,5);
+            desiredFogYSpeed = Math.Clamp(weather.FogYSpeed,-5,5);
         }
 
         if (InvasionEnvironmentManager.TryGetEnvironment(this, out var invasionEnvironment))
@@ -1422,7 +1422,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             return;
         }
 
-        var now = Timing.Global.MillisecondsUtc;
+        var now = Environment.TickCount64;
         var elapsedTime = mFogUpdateTime < 0
             ? 0f
             : (float)Math.Clamp(now - mFogUpdateTime, 0L, 1000L);
@@ -1453,7 +1453,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var fadingOldFog = fogChanged && !string.IsNullOrWhiteSpace(mRenderedFogName);
         if (fadingOldFog)
         {
-            mCurFogIntensity = Math.Max(0f, mCurFogIntensity - elapsedTime / 2000f);
+            mCurFogIntensity = Math.Max(0f, mCurFogIntensity - elapsedTime / 5000f);
 
             if (mCurFogIntensity <= 0f)
             {
@@ -1472,15 +1472,17 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             if (desiredHasFog &&
                 string.Equals(mRenderedFogName, desiredFogName, StringComparison.OrdinalIgnoreCase))
             {
-                mRenderedFogAlpha = desiredFogAlpha;
+                // Live opacity changes (including cinematic commands) must fade too.
+                mRenderedFogAlpha = WeatherTransition.Approach(mRenderedFogAlpha,
+                    Math.Clamp(desiredFogAlpha, 0, 255), elapsedTime * 255f / 5000f);
                 mRenderedFogXSpeed = desiredFogXSpeed;
                 mRenderedFogYSpeed = desiredFogYSpeed;
             }
 
             var targetVisible = isCurrentMap && desiredHasFog;
             mCurFogIntensity = targetVisible
-                ? Math.Min(1f, mCurFogIntensity + elapsedTime / 2000f)
-                : Math.Max(0f, mCurFogIntensity - elapsedTime / 2000f);
+                ? Math.Min(1f, mCurFogIntensity + elapsedTime / 5000f)
+                : Math.Max(0f, mCurFogIntensity - elapsedTime / 5000f);
 
             if (!desiredHasFog && mCurFogIntensity <= 0f)
             {
@@ -1551,11 +1553,13 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             _weatherSoundOwner?.StopWeatherSounds();
             _weatherSoundOwner = this;
         }
-        if (Globals.Me.MapInstance!=this || !WeatherIsActive)
+        var strength = WeatherStrength;
+        if (Globals.Me.MapInstance != this || strength <= 0)
         {
-            ClearWeather();return;
+            ClearWeather(); return;
         }
-        if (WeatherEffects.GeneratedRain)
+        var weather = RenderedWeather;
+        if (weather.Generated)
         {
             foreach (var particle in _weatherParticles) particle.Dispose();
             _weatherParticles.Clear();
@@ -1568,8 +1572,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         _generatedRain.Clear();
         _generatedRainUpdated = 0;
         UpdateStormEffects();
-        var anim = AnimationDescriptor.Get(WeatherAnimationId);
-        if (anim == null || WeatherIntensity == 0)
+        var anim = AnimationDescriptor.Get(weather.AnimationId);
+        if (anim == null || weather.Intensity == 0)
         {
             foreach(var particle in _weatherParticles)particle.Dispose();
             _weatherParticles.Clear();return;
@@ -1577,12 +1581,12 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
         _removeParticles.Clear();
 
-        if ((WeatherXSpeed != 0 || WeatherYSpeed != 0) && Globals.Me.MapInstance == this)
+        if (strength > 0 && (weather.XSpeed != 0 || weather.YSpeed != 0) && Globals.Me.MapInstance == this)
         {
             if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime && _weatherParticles.Count<256)
             {
-                _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim,WeatherEffects.GroundSplashes?SpawnRainSplash:null));
-                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(WeatherIntensity,0,100) / 100f));
+                _weatherParticles.Add(new WeatherParticle(_removeParticles, weather.XSpeed, weather.YSpeed, anim,weather.Splashes?SpawnRainSplash:null));
+                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(weather.Intensity * strength,0,100) / 100f));
                 spawnTime = (int)(spawnTime *
                                    (480000f /
                                     (Graphics.Renderer.ScreenWidth * Graphics.Renderer.ScreenHeight)));
@@ -1594,6 +1598,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         //Process and draw each weather particle
         foreach (var w in _weatherParticles)
         {
+            if (w is WeatherParticle particle) particle.Opacity = strength;
             w.Update();
         }
 
@@ -1627,7 +1632,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         // Never force fog to 100% on a grid/environment switch. Preserve the
         // current transition state and restart the timer so the next frame
         // cannot create a large opacity jump.
-        mFogUpdateTime = Timing.Global.MillisecondsUtc;
+        mFogUpdateTime = Environment.TickCount64;
     }
 
     public void DrawPanorama()
@@ -1706,6 +1711,19 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             return;
         }
 
+        // A shared storm should not restart its ten-second fade at every map boundary.
+        if (!IsIndoors && !tempMap.IsIndoors)
+        {
+            _weatherTransition.CopyFrom(tempMap._weatherTransition);
+            if (_weatherSoundOwner == tempMap)
+            {
+                StopWeatherSounds();
+                _rainLoop = tempMap._rainLoop; tempMap._rainLoop = null;
+                _rainFilename = tempMap._rainFilename; tempMap._rainFilename = "";
+                _weatherSoundOwner = this;
+            }
+        }
+
         // Check if fog is the same.
         if (tempMap.Fog == Fog)
         {
@@ -1719,10 +1737,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             // Copy over fog values and the retained visual state so the same
             // fog continues smoothly across adjacent maps.
             mFogUpdateTime = tempMap.mFogUpdateTime;
-            var ratio = FogTransparency <= 0
-                ? 1f
-                : (float)tempMap.FogTransparency / FogTransparency;
-            mCurFogIntensity = Math.Clamp(ratio * tempMap.mCurFogIntensity, 0f, 1f);
+            // Retain the actual outgoing alpha; a different target opacity fades in DrawFog.
+            mCurFogIntensity = tempMap.mCurFogIntensity;
             mFogCurrentX = tempMap.mFogCurrentX;
             mFogCurrentY = tempMap.mFogCurrentY;
             mRenderedFogName = tempMap.mRenderedFogName;
@@ -1765,6 +1781,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void DrawActionMsgs()
     {
+        var textScale=1f/Math.Clamp(Graphics.WorldScale,.25f,16f);
         for (var n = ActionMessages.Count - 1; n > -1; n--)
         {
             var actionMessage = ActionMessages[n];
@@ -1775,7 +1792,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                     actionMessage.Text,
                     Graphics.ActionMsgFont,
                     Graphics.ActionMsgFontSize,
-                    1
+                    textScale
                 )
                 .X;
 
@@ -1785,7 +1802,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 Graphics.ActionMsgFontSize,
                 x - textWidth / 2f,
                 y,
-                1,
+                textScale,
                 actionMessage.Color,
                 true,
                 null,

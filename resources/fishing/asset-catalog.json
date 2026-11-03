@@ -1,0 +1,1524 @@
+{
+  "schema": "corps-royaux.fishing-assets.v1",
+  "texture_namespace": "Gui",
+  "runtime_root": "resources/gui/",
+  "note": "Authoring catalog; configure actual zones and item IDs in Fishing Editor. Original files are not altered.",
+  "background_presets": [
+    {
+      "id": "water_1",
+      "name": {
+        "fr": "Récif et ruines",
+        "en": "Reef and ruins",
+        "es": "Arrecife y ruinas"
+      },
+      "Background": "fishing/backgrounds/Water_Background1.png",
+      "Foreground": "",
+      "Decorations": "",
+      "portrait_depth_camera": false
+    },
+    {
+      "id": "water_2",
+      "name": {
+        "fr": "Grande profondeur",
+        "en": "Deep water",
+        "es": "Aguas profundas"
+      },
+      "Background": "fishing/backgrounds/Water_Background2.png",
+      "Foreground": "",
+      "Decorations": "",
+      "portrait_depth_camera": true
+    },
+    {
+      "id": "water_3",
+      "name": {
+        "fr": "Épave sous-marine",
+        "en": "Underwater wreck",
+        "es": "Naufragio submarino"
+      },
+      "Background": "fishing/backgrounds/Water_Background3.png",
+      "Foreground": "fishing/backgrounds/Water_Background5.png",
+      "Decorations": "fishing/gui/coral_foreground.png",
+      "portrait_depth_camera": false
+    },
+    {
+      "id": "water_4",
+      "name": {
+        "fr": "Pleine mer",
+        "en": "Open sea",
+        "es": "Mar abierto"
+      },
+      "Background": "fishing/backgrounds/Water_Background4.png",
+      "Foreground": "fishing/backgrounds/Water_Background5.png",
+      "Decorations": "fishing/gui/coral_foreground.png",
+      "portrait_depth_camera": false
+    }
+  ],
+  "sprite_grids": [
+    {
+      "file": "fishing/items/Item_Sheet_Fishing.png",
+      "cell_width": 32,
+      "cell_height": 32,
+      "columns": 20,
+      "rows": 6,
+      "index_origin": 0,
+      "occupied_cells": [
+        {
+          "column": 0,
+          "row": 0,
+          "source_rect": [
+            0,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 0,
+          "source_rect": [
+            32,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 0,
+          "source_rect": [
+            64,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 0,
+          "source_rect": [
+            96,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 0,
+          "source_rect": [
+            128,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 0,
+          "source_rect": [
+            160,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 0,
+          "source_rect": [
+            192,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 0,
+          "source_rect": [
+            224,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 0,
+          "source_rect": [
+            256,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 0,
+          "source_rect": [
+            288,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 0,
+          "source_rect": [
+            320,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 0,
+          "source_rect": [
+            352,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 0,
+          "source_rect": [
+            384,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 0,
+          "source_rect": [
+            416,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 0,
+          "source_rect": [
+            448,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 0,
+          "source_rect": [
+            480,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 0,
+          "source_rect": [
+            512,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 0,
+          "source_rect": [
+            544,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 0,
+          "source_rect": [
+            576,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 0,
+          "source_rect": [
+            608,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 1,
+          "source_rect": [
+            0,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 1,
+          "source_rect": [
+            32,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 1,
+          "source_rect": [
+            64,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 1,
+          "source_rect": [
+            96,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 1,
+          "source_rect": [
+            128,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 1,
+          "source_rect": [
+            160,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 1,
+          "source_rect": [
+            192,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 1,
+          "source_rect": [
+            224,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 1,
+          "source_rect": [
+            256,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 1,
+          "source_rect": [
+            288,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 1,
+          "source_rect": [
+            320,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 1,
+          "source_rect": [
+            352,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 1,
+          "source_rect": [
+            384,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 1,
+          "source_rect": [
+            416,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 1,
+          "source_rect": [
+            448,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 1,
+          "source_rect": [
+            480,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 1,
+          "source_rect": [
+            512,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 1,
+          "source_rect": [
+            544,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 1,
+          "source_rect": [
+            576,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 1,
+          "source_rect": [
+            608,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 2,
+          "source_rect": [
+            0,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 2,
+          "source_rect": [
+            32,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 2,
+          "source_rect": [
+            64,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 2,
+          "source_rect": [
+            96,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 2,
+          "source_rect": [
+            128,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 2,
+          "source_rect": [
+            160,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 2,
+          "source_rect": [
+            192,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 2,
+          "source_rect": [
+            224,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 2,
+          "source_rect": [
+            256,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 2,
+          "source_rect": [
+            288,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 2,
+          "source_rect": [
+            320,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 2,
+          "source_rect": [
+            352,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 2,
+          "source_rect": [
+            384,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 2,
+          "source_rect": [
+            416,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 2,
+          "source_rect": [
+            448,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 2,
+          "source_rect": [
+            480,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 2,
+          "source_rect": [
+            512,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 2,
+          "source_rect": [
+            544,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 2,
+          "source_rect": [
+            576,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 2,
+          "source_rect": [
+            608,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 3,
+          "source_rect": [
+            0,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 3,
+          "source_rect": [
+            32,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 3,
+          "source_rect": [
+            64,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 3,
+          "source_rect": [
+            96,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 3,
+          "source_rect": [
+            128,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 3,
+          "source_rect": [
+            160,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 3,
+          "source_rect": [
+            192,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 3,
+          "source_rect": [
+            224,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 3,
+          "source_rect": [
+            256,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 3,
+          "source_rect": [
+            288,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 3,
+          "source_rect": [
+            320,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 3,
+          "source_rect": [
+            352,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 3,
+          "source_rect": [
+            384,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 3,
+          "source_rect": [
+            416,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 3,
+          "source_rect": [
+            448,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 3,
+          "source_rect": [
+            480,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 3,
+          "source_rect": [
+            512,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 3,
+          "source_rect": [
+            544,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 3,
+          "source_rect": [
+            576,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 3,
+          "source_rect": [
+            608,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 4,
+          "source_rect": [
+            0,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 4,
+          "source_rect": [
+            32,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 4,
+          "source_rect": [
+            64,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 4,
+          "source_rect": [
+            96,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 4,
+          "source_rect": [
+            128,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 4,
+          "source_rect": [
+            160,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 4,
+          "source_rect": [
+            192,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 4,
+          "source_rect": [
+            224,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 4,
+          "source_rect": [
+            256,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 4,
+          "source_rect": [
+            288,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 4,
+          "source_rect": [
+            320,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 4,
+          "source_rect": [
+            352,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 4,
+          "source_rect": [
+            384,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 4,
+          "source_rect": [
+            416,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 4,
+          "source_rect": [
+            448,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 4,
+          "source_rect": [
+            480,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 4,
+          "source_rect": [
+            512,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 4,
+          "source_rect": [
+            544,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 4,
+          "source_rect": [
+            576,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 4,
+          "source_rect": [
+            608,
+            128,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 5,
+          "source_rect": [
+            0,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 5,
+          "source_rect": [
+            32,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 5,
+          "source_rect": [
+            64,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 5,
+          "source_rect": [
+            96,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 5,
+          "source_rect": [
+            128,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 5,
+          "row": 5,
+          "source_rect": [
+            160,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 6,
+          "row": 5,
+          "source_rect": [
+            192,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 7,
+          "row": 5,
+          "source_rect": [
+            224,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 8,
+          "row": 5,
+          "source_rect": [
+            256,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 9,
+          "row": 5,
+          "source_rect": [
+            288,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 10,
+          "row": 5,
+          "source_rect": [
+            320,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 11,
+          "row": 5,
+          "source_rect": [
+            352,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 12,
+          "row": 5,
+          "source_rect": [
+            384,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 13,
+          "row": 5,
+          "source_rect": [
+            416,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 14,
+          "row": 5,
+          "source_rect": [
+            448,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 15,
+          "row": 5,
+          "source_rect": [
+            480,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 16,
+          "row": 5,
+          "source_rect": [
+            512,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 17,
+          "row": 5,
+          "source_rect": [
+            544,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 18,
+          "row": 5,
+          "source_rect": [
+            576,
+            160,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 19,
+          "row": 5,
+          "source_rect": [
+            608,
+            160,
+            32,
+            32
+          ]
+        }
+      ]
+    },
+    {
+      "file": "fishing/items/Item_Sheet_Flora&Fauna_1.png",
+      "cell_width": 32,
+      "cell_height": 32,
+      "columns": 5,
+      "rows": 4,
+      "index_origin": 0,
+      "occupied_cells": [
+        {
+          "column": 0,
+          "row": 0,
+          "source_rect": [
+            0,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 0,
+          "source_rect": [
+            32,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 0,
+          "source_rect": [
+            64,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 0,
+          "source_rect": [
+            96,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 0,
+          "source_rect": [
+            128,
+            0,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 1,
+          "source_rect": [
+            0,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 1,
+          "source_rect": [
+            32,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 1,
+          "source_rect": [
+            64,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 1,
+          "source_rect": [
+            96,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 1,
+          "source_rect": [
+            128,
+            32,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 2,
+          "source_rect": [
+            0,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 2,
+          "source_rect": [
+            32,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 2,
+          "source_rect": [
+            64,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 2,
+          "source_rect": [
+            96,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 2,
+          "source_rect": [
+            128,
+            64,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 0,
+          "row": 3,
+          "source_rect": [
+            0,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 1,
+          "row": 3,
+          "source_rect": [
+            32,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 2,
+          "row": 3,
+          "source_rect": [
+            64,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 3,
+          "row": 3,
+          "source_rect": [
+            96,
+            96,
+            32,
+            32
+          ]
+        },
+        {
+          "column": 4,
+          "row": 3,
+          "source_rect": [
+            128,
+            96,
+            32,
+            32
+          ]
+        }
+      ]
+    }
+  ],
+  "world_animation": {
+    "preset": "FishingWorldProfile.Net()",
+    "frame_width": 128,
+    "frame_height": 128,
+    "rows": 4,
+    "default_fps": 8,
+    "direction_order": "Editable in Fishing Editor; check against the character rig in-game.",
+    "layer_interpretation": "B behind player / F in front; inference from transparent directions, to visually verify in-game.",
+    "clips": [
+      {
+        "action": "Idle",
+        "front": "fishing/paperdolls/F_Idle_1H_Tools_Fishing_Net.png",
+        "back": "",
+        "frames": 4,
+        "loop": true
+      },
+      {
+        "action": "Throw",
+        "front": "fishing/paperdolls/F_Throw_1H_Tools_Fishing_Net.png",
+        "back": "fishing/paperdolls/B_Throw_1H_Tools_Fishing_Net.png",
+        "frames": 6,
+        "loop": false
+      },
+      {
+        "action": "Fishing",
+        "front": "fishing/paperdolls/F_Fishing_1H_Tools_Fishing_Net.png",
+        "back": "fishing/paperdolls/B_Fishing_1H_Tools_Fishing_Net.png",
+        "frames": 4,
+        "loop": true
+      },
+      {
+        "action": "Catch",
+        "front": "fishing/paperdolls/F_Catch_1H_Tools_Fishing_Net.png",
+        "back": "fishing/paperdolls/B_Catch_1H_Tools_Fishing_Net-sheet.png",
+        "frames": 6,
+        "loop": false
+      },
+      {
+        "action": "Move",
+        "front": "fishing/paperdolls/F_Move_1H_Tools_Fishing_Net.png",
+        "back": "fishing/paperdolls/B_Move_1H_Tools_Fishing_Net.png",
+        "frames": 6,
+        "loop": true
+      }
+    ]
+  }
+}

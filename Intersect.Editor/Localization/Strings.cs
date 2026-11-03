@@ -187,6 +187,18 @@ public static partial class Strings
         return EventConditionDesc.levelorstat.ToString(lvlorstat, pLvl);
     }
 
+    public static string GetEventConditionalDesc(WeaponMasteryLevelCondition condition)
+    {
+        var language = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        var name = Intersect.Editor.Forms.Editors.RoyalCombatEditorState.Current?.Masteries.FirstOrDefault(m => m.Key == condition.MasteryKey)?.Name ?? condition.MasteryKey;
+        var comparison = condition.Comparator switch
+        {
+            VariableComparator.Equal => "==", VariableComparator.GreaterOrEqual => ">=", VariableComparator.LesserOrEqual => "<=",
+            VariableComparator.Greater => ">", VariableComparator.Less => "<", VariableComparator.NotEqual => "!=", _ => "?",
+        };
+        return string.Format(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Weapon mastery {0} level {1} {2}", language), Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(name, language), comparison, condition.Value);
+    }
+
     public static string GetEventConditionalDesc(ProfessionLevelCondition condition)
     {
         var profession = ProfessionConfiguration.Instance.Find(condition.ProfessionId);

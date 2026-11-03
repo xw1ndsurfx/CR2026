@@ -1,0 +1,46 @@
+Validation Editor Hub — 24 octobre 2026
+
+Compilation éditeur et banc de tests Windows : 0 erreur.
+Inventaire : 53 accès réels ; 54 images embarquées.
+Tailles vérifiées : 1920x1080, 1600x900, 1366x768, 1280x720.
+Test direct du rappel de sauvegarde : PASS.
+
+--- final-tests.log ---
+Loaded embedded application icon successfully
+PASS editor login creates map layers before server options; resource brush initializes once after configuration
+Hub chrome: menu visible=True, menu={X=0,Y=0,Width=1186,Height=32}, toolbar={X=0,Y=32,Width=1186,Height=38}
+PASS Editor Hub: exhaustive live-menu coverage, original command dispatch, live additions, bilingual/accent search, filters, preferences, real recents, disposal, embedded artwork, keyboard and four responsive sizes
+
+--- windows-tests.log ---
+Loaded embedded application icon successfully
+PASS editor login creates map layers before server options; resource brush initializes once after configuration
+PASS editor windows: native ownership, reopen/restore, F11/Escape, held keys, monitor bounds, class/shop responsive layouts and locales
+
+--- picker-tests.log ---
+Loaded embedded application icon successfully
+PASS editor login creates map layers before server options; resource brush initializes once after configuration
+PASS searchable choices: live dropdown, 20k entries, multiword/accent search, duplicate identities, stable indices, cancel, stale refresh, previews, missing sounds and en/fr/es
+
+--- fixes-tests.log ---
+Loaded embedded application icon successfully
+PASS editor login creates map layers before server options; resource brush initializes once after configuration
+PASS editor fixes: scroll reachability, nested modal ownership, identity previews, animation frames, campfire tables, rain transitions and locales
+
+--- theme-tests.log ---
+Loaded embedded application icon successfully
+PASS editor login creates map layers before server options; resource brush initializes once after configuration
+PASS editor startup registers mouse handlers on menus with commands, labels and separators
+PASS map grid, editor canvas and map list fill their docked panes after resizing and tab switching
+PASS Logiklik workspace: docking palette, tool actions, editable properties, dynamic controls, preserved swatches/save warnings and unobscured map viewport
+PASS shared editor theme: FrmItem, 288 controls
+PASS shared editor theme: FrmNpc, 263 controls
+PASS shared editor theme: FrmSpell, 202 controls
+PASS shared editor theme: FrmEvent, 106 controls
+PASS shared editor theme: FrmCommonEvent, 8 controls
+PASS shared editor theme: FrmSwitchVariable, 30 controls
+PASS shared editor theme: FrmTime, 32 controls
+PASS shared editor theme: FrmOptions, 21 controls
+PASS shared editor theme: FrmTranslations, 20 controls
+PASS shared editor theme: FrmAbout, 15 controls
+PASS shared editor theme: UpdatePreview, 7 controls
+PASS shared theme preserves control behavior and dynamic windows without duplicate handlers

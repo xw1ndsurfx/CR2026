@@ -3,6 +3,10 @@ using Intersect.Network.Packets.PartyLobbies;
 namespace Intersect.Server.Entities.Events;
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(OpenStableCommand command,Player player,Event instance,CommandInstance stackInfo,Stack<CommandInstance> callStack)
+    {
+        if (player.InGame) player.OpenStableFromEvent();
+    }
     private static void ProcessCommand(GrantExperienceBonusCommand command,Player player,Event instance,CommandInstance stackInfo,Stack<CommandInstance> callStack)=>player.GrantEventBonus(false,command.Percent,command.DurationSeconds);
     private static void ProcessCommand(GrantLootBonusCommand command,Player player,Event instance,CommandInstance stackInfo,Stack<CommandInstance> callStack)=>player.GrantEventBonus(true,command.Percent,command.DurationSeconds);
     private static void ProcessCommand(OpenAdventureLobbyCommand command,Player player,Event instance,CommandInstance stackInfo,Stack<CommandInstance> callStack)

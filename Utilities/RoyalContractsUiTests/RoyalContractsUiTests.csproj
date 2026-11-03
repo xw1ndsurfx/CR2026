@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>Intersect.Tests.Client</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Intersect.Client.Core/Intersect.Client.Core.csproj" />
+    <Compile Include="../../Intersect.Editor/Forms/Editors/FrmRoyalContracts.cs" Link="FrmRoyalContracts.cs" />
+    <Reference Include="DarkUI"><HintPath>../../Intersect.Editor/DarkUI.dll</HintPath></Reference>
+    <Compile Include="../PokerUiTests/TestContentManager.cs" Link="TestContentManager.cs" />
+  </ItemGroup>
+</Project>

@@ -22,6 +22,10 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (player.IsFishingActive) return;
+        if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id) && command.Game != MiniGameType.RollTheDice) return;
+        if (command.Game == MiniGameType.Archery) { player.OpenArcheryFromEvent(); return; }
+        if (player.IsArcheryActive) return;
         if (!MiniGameCatalog.TryGet(command.Game, out _))
         {
             PacketSender.SendChatMsg(player, "[Mini-game] This mini-game type is not supported by this server build.",
@@ -110,6 +114,16 @@ public static partial class CommandProcessing
             return;
         }
 
+        if (command.Game == MiniGameType.RollTheDice)
+        {
+            if (!Intersect.Server.MiniGames.Dice.DiceRuntime.Join(player, command))
+                PacketSender.SendChatMsg(player, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(
+                    "Unable to open Roll the Dice. Check the currency, buy-in and house reserve.", player.Client?.LanguageCode ?? "en"),
+                    ChatMessageType.Error, Color.White);
+            return;
+        }
+        if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id)) return;
+
         if (command.Game == MiniGameType.Roulette)
         {
             if (!RouletteRuntime.Join(player, command))
@@ -156,10 +170,13 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (player.IsFishingActive) { player.LeaveFishingFromEvent(); return; }
+        if (player.IsArcheryActive) { player.LeaveArcheryFromEvent(); return; }
         if(Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Leave(player))return;
         if (LockpickingRuntime.Leave(player)) return;
         if (PotionRuntime.Leave(player)) return;
         if (CookingRuntime.Leave(player)) return;
+        if (Intersect.Server.MiniGames.Dice.DiceRuntime.Leave(player)) return;
         if (RouletteRuntime.Leave(player)) return;
         if (!BlackjackRuntime.Leave(player)) PokerRuntime.Leave(player);
     }

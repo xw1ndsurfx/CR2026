@@ -2,6 +2,7 @@ using Intersect.Server.MiniGames.Currency;
 using Intersect.Server.MiniGames.Poker;
 using Microsoft.Data.Sqlite;
 
+DiceMoneyTests.Run();
 var passed=0; var failed=0;
 void Test(string name, Action<Fixture> run)
 {

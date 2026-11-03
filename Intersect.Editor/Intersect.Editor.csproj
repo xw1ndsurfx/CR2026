@@ -1,4 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Shared/FishingAssets.props" />
+  <Import Project="../Shared/JoustingAssets.props" />
+  <ItemGroup>
+    <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs" Link="Rendering/MapPerspectiveGeometry.cs" />
+    <Compile Include="../Shared/Rendering/ShipAtlasResources.cs" Link="Rendering/ShipAtlasResources.cs" />
+  </ItemGroup>
 
   <PropertyGroup>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -24,6 +30,14 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/Cinematics/Texts.json" LogicalName="Cinematics.Texts.json" />
+    <EmbeddedResource Include="Localization/FishingEditorText.json" LogicalName="Intersect.Editor.Fishing.Text" />
+    <EmbeddedResource Include="Resources/EditorHub/Catalog.json" LogicalName="EditorHub.Catalog.json" />
+    <EmbeddedResource Include="Resources/EditorHub/Texts.json" LogicalName="EditorHub.Texts.json" />
+    <EmbeddedResource Include="Resources/EditorHub/Art/*.png" LogicalName="EditorHub.Art.%(Filename)%(Extension)" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="LICENSE.md" LogicalName="Logiklik.Engine.License" />

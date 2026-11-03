@@ -118,35 +118,9 @@ public partial class FrmMain : Form
         InitMapProperties();
         InitLocalization();
         InitExternalTools();
-        AddRewardConfigurationEditorMenu();
-        AddLogiCoinShopEditorMenu();
-        AddProfessionEditorMenu();
-        PacketSender.SendRequestProfessionConfiguration(openEditor: false);
-        AddAchievementEditorMenu();
-        PacketSender.SendRequestAchievementConfiguration(openEditor: false);
-        AddDungeonEditorMenu();
-        PacketSender.SendRequestDungeonConfiguration(openEditor: false);
-        AddQuestShopEditorMenu();
-        PacketSender.SendRequestQuestShopConfiguration(openEditor: false);
-        var housingEditor = new ToolStripMenuItem("Housing & Furniture Catalog");
-        housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
-        contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
-        AddRoyalStylistEditorMenu();
-        PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
-        AddCharacterGeneratorEditorMenu();
-        AddAnimationImportEditorMenu();
-        AddSoundImportEditorMenu();
-        AddBalanceLabEditorMenu();
-        AddWorldEventsEditorMenu();
-        AddSystemEditorMenu();
-        AddWorldMapEditorMenu();
-        var resourceBrush=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Resource brush",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="ResourceBrushTool"};
-        resourceBrush.Click+=(_,_)=>{Globals.MapLayersWindow.Show();Globals.MapLayersWindow.ActivateResourceBrush();};
-        toolsToolStripMenuItem.DropDownItems.Add(resourceBrush);
-        var uiDesigner=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("UI Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
-        uiDesigner.Click+=(_,_)=>new Intersect.Editor.Forms.Editors.FrmUiDesigner().Show(this);
-        toolsToolStripMenuItem.DropDownItems.Add(uiDesigner);
+        InitializeEditorNavigation();
         InitializeSaveProtection();
+        InitializeEditorHub();
         Text="Logiklik 2D Engine · "+Intersect.Framework.Core.BuildIdentity.Label;
         Show();
 
@@ -250,18 +224,30 @@ public partial class FrmMain : Form
 
     private void AddRewardConfigurationEditorMenu()
     {
-        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem")) return;
-        var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
-        daily.Click += (_, _) => RequestMiniGameEditor(null);
-        contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
-        var games = new ToolStripMenuItem("Mini-Game") { Name = "miniGameEditorsToolStripMenuItem" };
+        if (!contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        {
+            var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
+            daily.Click += (_, _) => RequestMiniGameEditor(null);
+            contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
+        }
+        var games = GetOrCreateMiniGameEditorsMenu();
         foreach (var game in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
         {
-            var entry = new ToolStripMenuItem(game.DisplayName);
+            var name = "miniGame." + game.Type;
+            if (games.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == name)) continue;
+            var entry = new ToolStripMenuItem(game.DisplayName) { Name = name };
             entry.Click += (_, _) => RequestMiniGameEditor(game.Type);
             games.DropDownItems.Add(entry);
         }
-        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, games);
+    }
+
+    private ToolStripMenuItem GetOrCreateMiniGameEditorsMenu()
+    {
+        if (menuStrip.Items.OfType<ToolStripMenuItem>().FirstOrDefault(item => item.Name == "miniGameEditorsToolStripMenuItem") is { } existing)
+            return existing;
+        var menu = new ToolStripMenuItem(EditorHub.HubText.T("MiniGames")) { Name = "miniGameEditorsToolStripMenuItem" };
+        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, menu);
+        return menu;
     }
 
     public void OpenRewardConfigurationEditor()
@@ -538,7 +524,7 @@ public partial class FrmMain : Form
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(soundImport);
-        var translations = new ToolStripMenuItem { Text = "Game Translations..." };
+        var translations = new ToolStripMenuItem { Name = "gameTranslationsEditor", Text = "Game Translations..." };
         translations.Click += (_, _) => new FrmTranslations().Show(this);
         contentEditorsToolStripMenuItem.DropDownItems.Add(translations);
     }
@@ -781,6 +767,7 @@ public partial class FrmMain : Form
 
     private void FrmMain_KeyDown(object sender, KeyEventArgs e)
     {
+        if (_editorHub is { Visible: true }) return;
         switch (e.KeyData)
         {
             case Keys.Control | Keys.Z:
@@ -1854,7 +1841,9 @@ public partial class FrmMain : Form
 
     private void toolStripBtnUndo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapUndoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapUndoStates[Globals.MapEditorWindow.MapUndoStates.Count - 1]);
@@ -1865,13 +1854,16 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapUndoStates.RemoveAt(Globals.MapEditorWindow.MapUndoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }
 
     private void toolStripBtnRedo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapRedoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapRedoStates[Globals.MapEditorWindow.MapRedoStates.Count - 1]);
@@ -1882,6 +1874,7 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapRedoStates.RemoveAt(Globals.MapEditorWindow.MapRedoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }

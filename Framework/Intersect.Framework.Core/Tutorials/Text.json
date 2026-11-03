@@ -1,0 +1,219 @@
+{
+  "Entries": {
+    "Tutorial": {
+      "en": "Tutorial",
+      "fr": "Tutoriel",
+      "es": "Tutorial"
+    },
+    "Tutorial editor": {
+      "en": "Tutorial editor",
+      "fr": "Éditeur de tutoriel",
+      "es": "Editor de tutorial"
+    },
+    "Next": {
+      "en": "Next",
+      "fr": "Suivant",
+      "es": "Siguiente"
+    },
+    "Pause guide": {
+      "en": "Pause guide",
+      "fr": "Mettre en pause",
+      "es": "Pausar guía"
+    },
+    "Play cinematic": {
+      "en": "Play cinematic",
+      "fr": "Voir la cinématique",
+      "es": "Ver cinemática"
+    },
+    "Replay tutorial": {
+      "en": "Replay tutorial",
+      "fr": "Recommencer",
+      "es": "Repetir tutorial"
+    },
+    "Tutorial complete": {
+      "en": "Tutorial complete",
+      "fr": "Tutoriel terminé",
+      "es": "Tutorial completado"
+    },
+    "You can replay this guide at any time.": {
+      "en": "You can replay this guide at any time.",
+      "fr": "Tu peux recommencer ce guide à tout moment.",
+      "es": "Puedes repetir esta guía en cualquier momento."
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Saved": {
+      "en": "Saved",
+      "fr": "Enregistré",
+      "es": "Guardado"
+    },
+    "Add step": {
+      "en": "Add step",
+      "fr": "Ajouter une étape",
+      "es": "Añadir paso"
+    },
+    "Delete step": {
+      "en": "Delete step",
+      "fr": "Supprimer l’étape",
+      "es": "Eliminar paso"
+    },
+    "Move up": {
+      "en": "Move up",
+      "fr": "Monter",
+      "es": "Subir"
+    },
+    "Move down": {
+      "en": "Move down",
+      "fr": "Descendre",
+      "es": "Bajar"
+    },
+    "Restore default": {
+      "en": "Restore default",
+      "fr": "Rétablir le défaut",
+      "es": "Restaurar predeterminado"
+    },
+    "Enabled": {
+      "en": "Enabled",
+      "fr": "Activé",
+      "es": "Activado"
+    },
+    "Start on first login": {
+      "en": "Start on first login",
+      "fr": "Démarrer à la première connexion",
+      "es": "Iniciar en la primera conexión"
+    },
+    "Objective": {
+      "en": "Objective",
+      "fr": "Objectif",
+      "es": "Objetivo"
+    },
+    "Cinematic common event": {
+      "en": "Cinematic common event",
+      "fr": "Événement commun cinématique",
+      "es": "Evento común de cinemática"
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "New step": {
+      "en": "New step",
+      "fr": "Nouvelle étape",
+      "es": "Nuevo paso"
+    },
+    "Check steps and all three translations.": {
+      "en": "Check steps and all three translations.",
+      "fr": "Vérifie les étapes et les trois traductions.",
+      "es": "Revisa los pasos y las tres traducciones."
+    },
+    "Discard unsaved changes?": {
+      "en": "Discard unsaved changes?",
+      "fr": "Abandonner les modifications non enregistrées ?",
+      "es": "¿Descartar los cambios sin guardar?"
+    },
+    "Replace this draft with the default guide?": {
+      "en": "Replace this draft with the default guide?",
+      "fr": "Remplacer ce brouillon par le guide par défaut ?",
+      "es": "¿Reemplazar este borrador con la guía predeterminada?"
+    },
+    "Welcome to Corps Royaux": {
+      "en": "Welcome to Corps Royaux",
+      "fr": "Bienvenue dans Corps Royaux",
+      "es": "Bienvenido a Corps Royaux"
+    },
+    "Your first steps": {
+      "en": "Your first steps",
+      "fr": "Tes premiers pas",
+      "es": "Tus primeros pasos"
+    },
+    "Your interface": {
+      "en": "Your interface",
+      "fr": "Ton interface",
+      "es": "Tu interfaz"
+    },
+    "Inventory and equipment": {
+      "en": "Inventory and equipment",
+      "fr": "Inventaire et équipement",
+      "es": "Inventario y equipo"
+    },
+    "Combat and quests": {
+      "en": "Combat and quests",
+      "fr": "Combats et quêtes",
+      "es": "Combate y misiones"
+    },
+    "Professions and campfires": {
+      "en": "Professions and campfires",
+      "fr": "Métiers et feux de camp",
+      "es": "Profesiones y fogatas"
+    },
+    "Mini-games": {
+      "en": "Mini-games",
+      "fr": "Mini-jeux",
+      "es": "Minijuegos"
+    },
+    "Naval adventures": {
+      "en": "Naval adventures",
+      "fr": "Aventures navales",
+      "es": "Aventuras navales"
+    },
+    "Continue your adventure": {
+      "en": "Continue your adventure",
+      "fr": "Poursuis ton aventure",
+      "es": "Continúa tu aventura"
+    },
+    "Discover the kingdom at your own pace. You can pause this guide and reopen it with the Tutorial button.": {
+      "en": "Discover the kingdom at your own pace. You can pause this guide and reopen it with the Tutorial button.",
+      "fr": "Découvre le royaume à ton rythme. Tu peux mettre ce guide en pause et le rouvrir avec le bouton Tutoriel.",
+      "es": "Descubre el reino a tu ritmo. Puedes pausar esta guía y volver a abrirla con el botón Tutorial."
+    },
+    "Move your character a few tiles to discover the world. The guide will detect your movement.": {
+      "en": "Move your character a few tiles to discover the world. The guide will detect your movement.",
+      "fr": "Déplace ton personnage de quelques cases pour découvrir le monde. Le guide détectera ton déplacement.",
+      "es": "Mueve a tu personaje unas casillas para descubrir el mundo. La guía detectará tu movimiento."
+    },
+    "Your HUD shows your health, mana and experience. Use the menu buttons to explore your character, inventory, quests and map.": {
+      "en": "Your HUD shows your health, mana and experience. Use the menu buttons to explore your character, inventory, quests and map.",
+      "fr": "Ton interface affiche ta vie, ton mana et ton expérience. Utilise les boutons du menu pour consulter ton personnage, ton inventaire, tes quêtes et la carte.",
+      "es": "Tu interfaz muestra tu salud, maná y experiencia. Usa los botones del menú para consultar tu personaje, inventario, misiones y mapa."
+    },
+    "Open your inventory to inspect your items and equip suitable gear. Ammunition includes arrows and cannonballs; keep supplies for your activities.": {
+      "en": "Open your inventory to inspect your items and equip suitable gear. Ammunition includes arrows and cannonballs; keep supplies for your activities.",
+      "fr": "Ouvre ton inventaire pour examiner tes objets et équiper du matériel adapté. Les munitions comprennent les flèches et les boulets de canon ; prévois des réserves pour tes activités.",
+      "es": "Abre tu inventario para examinar tus objetos y equiparte. La munición incluye flechas y balas de cañón; guarda reservas para tus actividades."
+    },
+    "Talk to NPCs to discover quests. Follow your objectives and use your equipped weapons and spells during combat.": {
+      "en": "Talk to NPCs to discover quests. Follow your objectives and use your equipped weapons and spells during combat.",
+      "fr": "Parle aux PNJ pour découvrir des quêtes. Suis tes objectifs et utilise tes armes équipées et tes sorts pendant les combats.",
+      "es": "Habla con los PNJ para descubrir misiones. Sigue tus objetivos y usa tus armas equipadas y hechizos durante el combate."
+    },
+    "Gather resources and practise professions to progress. Discover crafting and campfires as you explore the kingdom.": {
+      "en": "Gather resources and practise professions to progress. Discover crafting and campfires as you explore the kingdom.",
+      "fr": "Récolte des ressources et pratique des métiers pour progresser. Découvre la fabrication et les feux de camp en explorant le royaume.",
+      "es": "Recolecta recursos y practica profesiones para progresar. Descubre la fabricación y las fogatas mientras exploras el reino."
+    },
+    "Discover activities such as cards, cooking, potion brewing, lockpicking, archery and jousting. Each activity introduces its own rules when opened.": {
+      "en": "Discover activities such as cards, cooking, potion brewing, lockpicking, archery and jousting. Each activity introduces its own rules when opened.",
+      "fr": "Découvre les cartes, la cuisine, les potions, le crochetage, le tir à l’arc et les joutes. Chaque activité présente ses règles à son ouverture.",
+      "es": "Descubre las cartas, la cocina, las pociones, la ganzúa, el tiro con arco y las justas. Cada actividad presenta sus reglas al abrirse."
+    },
+    "Visit a harbour to discover ships, crews, cannons and ammunition. Prepare your ship before sailing and learn navigation with your crew.": {
+      "en": "Visit a harbour to discover ships, crews, cannons and ammunition. Prepare your ship before sailing and learn navigation with your crew.",
+      "fr": "Visite un port pour découvrir les navires, les équipages, les canons et les munitions. Prépare ton navire avant de partir et apprends à naviguer avec ton équipage.",
+      "es": "Visita un puerto para descubrir barcos, tripulaciones, cañones y munición. Prepara tu barco antes de zarpar y aprende a navegar con tu tripulación."
+    },
+    "You are ready to explore. You can replay this guide at any time. Enjoy Corps Royaux!": {
+      "en": "You are ready to explore. You can replay this guide at any time. Enjoy Corps Royaux!",
+      "fr": "Tu es prêt à explorer. Tu peux recommencer ce guide à tout moment. Bon jeu dans Corps Royaux !",
+      "es": "Estás listo para explorar. Puedes repetir esta guía en cualquier momento. ¡Disfruta de Corps Royaux!"
+    },
+    "Save timed out. Reopen the editor before retrying.": {
+      "en": "Save timed out. Reopen the editor before retrying.",
+      "fr": "Délai d’enregistrement dépassé. Rouvre l’éditeur avant de réessayer.",
+      "es": "Se agotó el tiempo de guardado. Vuelve a abrir el editor antes de intentarlo de nuevo."
+    }
+  }
+}

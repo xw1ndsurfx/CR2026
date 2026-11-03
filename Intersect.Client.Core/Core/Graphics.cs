@@ -45,7 +45,12 @@ public static partial class Graphics
         }
     }
 
-    public static FloatRect WorldViewport => new(CurrentView.Position, CurrentView.Size / (Globals.Database?.WorldZoom ?? 1));
+    public static float WorldScale => Cinematics.CinematicCamera.Zoom is { } cinematicZoom
+        ? _cinematicWorldScale ?? cinematicZoom : Globals.Database?.WorldZoom ?? 1;
+    // UpdateView stores the display size alongside the world-space origin.
+    // Cinematic zoom uses the same renderer transform as ordinary world zoom:
+    // the visible world grows when zooming out, including neighbouring maps.
+    public static FloatRect WorldViewport => new(CurrentView.Position, CurrentView.Size / WorldScale);
 
     public static GameShader? DefaultShader;
 
@@ -375,6 +380,8 @@ public static partial class Graphics
                     EntitiesDrawn++;
                 }
 
+                if (x == 1) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y);
+
                 if (x == 0 && y > 0 && y % mapHeight == 0)
                 {
                     for (var x1 = gridX - 1; x1 <= gridX + 1; x1++)
@@ -419,6 +426,7 @@ public static partial class Graphics
             for (var x = 3; x < 6; x++)
             {
                 if (x == 4) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y, true);
+                if (x == 4) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y, true);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.
@@ -475,7 +483,7 @@ public static partial class Graphics
                     continue;
                 }
 
-                map.DrawWeather();
+                if (!Cinematics.CinematicCamera.PerspectiveRequested) map.DrawWeather();
                 map.DrawFog();
                 map.DrawOverlayGraphic();
                 map.DrawItemNames();
@@ -497,7 +505,7 @@ public static partial class Graphics
         // Draw lighting effects.
         GenerateLightMap();
         DrawDarkness();
-        (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
+        if (!Cinematics.CinematicCamera.PerspectiveRequested) (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
 
         for (var y = 0; y < mapHeight * 5; y++)
         {
@@ -581,12 +589,17 @@ public static partial class Graphics
 
         var gameState = Globals.GameState;
 
-        renderer.Scale = gameState == GameStates.InGame ? Globals.Database.WorldZoom : 1.0f;
+        Cinematics.CinematicCamera.Update();
 
         if (!renderer.Begin())
         {
             return;
         }
+
+        // Begin may refresh the display dimensions. Fit the current frame only
+        // after that refresh, and retain the scale the renderer really accepted.
+        PrepareCinematicFraming();
+        ApplyPreparedWorldScale(gameState);
 
         if (renderer.ScreenWidth != sOldWidth ||
             renderer.ScreenHeight != sOldHeight ||
@@ -607,6 +620,7 @@ public static partial class Graphics
 
         UpdateView();
 
+        renderer.BeginWorldBlur(gameState==GameStates.InGame ? Intersect.Client.Interface.Game.IntoxicationVisuals.BlurStrength : 0);
         switch (gameState)
         {
             case GameStates.Intro:
@@ -632,6 +646,11 @@ public static partial class Graphics
                 throw Exceptions.UnreachableInvalidEnum(gameState);
         }
 
+        Cinematics.CinematicCamera.DrawPerspective();
+        if (gameState == GameStates.InGame && Cinematics.CinematicCamera.PerspectiveRequested && Globals.Me?.MapInstance is MapInstance weatherMap)
+        { weatherMap.DrawWeather(); weatherMap.DrawStormFlash(); }
+        if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
+        renderer.EndWorldBlur();
         renderer.Scale = Globals.Database.UIScale;
 
         Interface.Interface.DrawGui(deltaTime, totalTime);
@@ -755,7 +774,8 @@ public static partial class Graphics
             OverlayColor.B = Approach(OverlayColor.B, target.B, change);
         }
 
-        DrawGameTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1), CurrentView, OverlayColor, null);
+        DrawScreenTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
+            new FloatRect(0, 0, Renderer.ScreenWidth, Renderer.ScreenHeight), OverlayColor);
         sOverlayUpdate = Timing.Global.MillisecondsUtc;
     }
 
@@ -965,8 +985,11 @@ public static partial class Graphics
 
         var w = x1 - x;
         var h = y1 - y;
-        var restrictView = new FloatRect(x, y, w, h );
+        var restrictView = Cinematics.CinematicCamera.Zoom != null && _cinematicWorldBounds is { } cinematicBounds
+            ? cinematicBounds : new FloatRect(x, y, w, h);
         var navalCamera = Naval.NavalWorld.TryCamera(out var navalX, out var navalY);
+        if (Cinematics.CinematicCamera.TryPosition(out var cinematicX, out var cinematicY))
+        { navalCamera = true; navalX = cinematicX; navalY = cinematicY; }
         var newView = new FloatRect(
             (int)Math.Ceiling((navalCamera ? navalX : en.Center.X) - Renderer.ScreenWidth / scale / 2f),
             (int)Math.Ceiling((navalCamera ? navalY : en.Center.Y) - Renderer.ScreenHeight / scale / 2f),
@@ -1057,7 +1080,7 @@ public static partial class Graphics
             return;
         }
 
-        var destRect = new FloatRect(new Vector2(), sDarknessTexture.Dimensions / Globals.Database.WorldZoom);
+        var destRect = new FloatRect(new Vector2(), sDarknessTexture.Dimensions / WorldScale);
         if (map.IsIndoors)
         {
             DrawGameTexture(
@@ -1111,7 +1134,7 @@ public static partial class Graphics
 
     internal static Color RainTint(MapInstance map, Color normal)
     {
-        var brightness=map.RainAdjustedBrightness(100,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+        var brightness=map.TransitionBrightness(100);
         if(brightness==100)return normal;
         return new Color(255-(255-normal.A)*brightness/100,normal.R,normal.G,normal.B);
     }
@@ -1391,9 +1414,10 @@ public static partial class Graphics
     /// <returns>The converted point.</returns>
     public static Vector2 ConvertToWorldPoint(Vector2 windowPoint)
     {
+        if (Cinematics.CinematicCamera.TryWorldPoint(windowPoint,out var projected)) return projected;
         return new Vector2(
-            (int)Math.Floor(windowPoint.X / Globals.Database.WorldZoom + CurrentView.Left),
-            (int)Math.Floor(windowPoint.Y / Globals.Database.WorldZoom + CurrentView.Top)
+            (int)Math.Floor(windowPoint.X / WorldScale + CurrentView.Left),
+            (int)Math.Floor(windowPoint.Y / WorldScale + CurrentView.Top)
         );
     }
 
@@ -1408,6 +1432,36 @@ public static partial class Graphics
     }
 
     //Rendering Functions
+
+    /// <summary>
+    /// Draws an overlay in display pixels without inheriting world or UI zoom.
+    /// Keeps the renderer state intact for subsequent weather and UI drawing.
+    /// </summary>
+    internal static void DrawScreenTexture(
+        IGameTexture texture,
+        FloatRect source,
+        FloatRect screenTarget,
+        Color color,
+        GameBlendModes blendMode = GameBlendModes.None
+    )
+    {
+        if (texture == null || Renderer is not { } renderer ||
+            !float.IsFinite(renderer.Scale) || renderer.Scale <= 0)
+        {
+            return;
+        }
+
+        var view = renderer.CurrentView;
+        var target = Cinematics.CinematicScreenGeometry.ToWorld(
+            new(screenTarget.X, screenTarget.Y, screenTarget.Width, screenTarget.Height),
+            view.X, view.Y, renderer.Scale
+        );
+        renderer.DrawTexture(
+            texture, source.X, source.Y, source.Width, source.Height,
+            target.X, target.Y, target.Width, target.Height, color,
+            blendMode: blendMode
+        );
+    }
 
     /// <summary>
     ///     Renders a specified texture onto a RenderTexture or the GameScreen (if renderTarget is passed as null) at the
@@ -1532,6 +1586,8 @@ public static partial class Graphics
         {
             return;
         }
+
+        if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 
         Renderer?.DrawTexture(
             tex, srcRectangle.X, srcRectangle.Y, srcRectangle.Width, srcRectangle.Height, targetRect.X,

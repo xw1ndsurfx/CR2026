@@ -8,6 +8,9 @@ on:
       - 'Intersect.Network/**'
       - 'Intersect.Server.Core/Core/**'
       - 'Intersect.Tests.Server/**'
+      - 'Utilities/CrashDiagnosticsTests/**'
+      - 'scripts/*server-diagnostics*'
+      - 'docs/server-crash-diagnostics.md'
       - '.github/workflows/server-network-stability.yml'
   workflow_dispatch:
 permissions:
@@ -35,3 +38,24 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Server, transport, protocol and crash diagnostics tests
         run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c ${{ matrix.configuration }} --nologo
+
+  crash-evidence:
+    name: crash-evidence-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Isolated crashes, console rotation and restart evidence
+        run: dotnet run --project Utilities/CrashDiagnosticsTests/Intersect.CrashDiagnosticsTests.csproj
+      - name: Linux supervisor exit codes and signal forwarding
+        if: runner.os == 'Linux'
+        run: python3 scripts/test-server-diagnostics.py

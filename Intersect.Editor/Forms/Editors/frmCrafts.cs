@@ -38,13 +38,13 @@ public partial class FrmCrafts : EditorForm
         lstGameObjects.GotFocus += itemList_FocusChanged;
         cmbResult.Items.Clear();
         cmbResult.Items.Add(Strings.General.None);
-        cmbResult.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbResult);
         cmbIngredient.Items.Clear();
         cmbIngredient.Items.Add(Strings.General.None);
-        cmbIngredient.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbIngredient);
         cmbEvent.Items.Clear();
         cmbEvent.Items.Add(Strings.General.None);
-        cmbEvent.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbEvent);
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }

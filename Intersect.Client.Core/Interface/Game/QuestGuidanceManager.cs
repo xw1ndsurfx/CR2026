@@ -304,7 +304,7 @@ internal sealed class QuestGuidanceManager
                 -1,
                 target.Entity,
                 source
-            ) { AboveParent = true };
+            ); // Objective markers surround the NPC's body; do not opt into the overhead anchor.
 
             if (!target.Entity.TryAddAnimation(animation, source))
             {

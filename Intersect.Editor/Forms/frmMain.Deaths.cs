@@ -10,7 +10,7 @@ public partial class FrmMain
     {
         if (menuStrip.Items.Cast<ToolStripItem>().Any(item => item.Name == "systemEditorToolStripMenuItem")) return;
         var system = new ToolStripMenuItem("System Editor") { Name = "systemEditorToolStripMenuItem", ForeColor = System.Drawing.Color.Gainsboro };
-        var death = new ToolStripMenuItem("Death Editor...") { ForeColor = System.Drawing.Color.Gainsboro };
+        var death = new ToolStripMenuItem("Death Editor...") { Name = "deathEditor", ForeColor = System.Drawing.Color.Gainsboro };
         death.Click += (_, _) =>
         {
             if (_deathEditor is { IsDisposed: false }) { _deathEditor.BringToFront(); return; }
@@ -18,10 +18,10 @@ public partial class FrmMain
         };
         system.DropDownItems.Add(death);
         AddNavalEditorMenu(system);
-        var menuAnimations=new ToolStripMenuItem("Main Menu Animations...");menuAnimations.Click+=(_,_)=>{using var dialog=new FrmMenuAnimations();dialog.ShowDialog(this);};system.DropDownItems.Add(menuAnimations);
+        var menuAnimations=new ToolStripMenuItem("Main Menu Animations...") { Name = "mainMenuAnimationsEditor" };menuAnimations.Click+=(_,_)=>{using var dialog=new FrmMenuAnimations();dialog.ShowDialog(this);};system.DropDownItems.Add(menuAnimations);
         void AddSection(ToolStripMenuItem menu, string title, Intersect.Framework.Core.WorldEvents.WorldActivitiesSection section)
         {
-            var item = new ToolStripMenuItem(title);
+            var item = new ToolStripMenuItem(title) { Name = "activity" + section };
             item.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.WorldEvents.RequestWorldActivitiesPacket { Section = section });
             menu.DropDownItems.Add(item);
         }

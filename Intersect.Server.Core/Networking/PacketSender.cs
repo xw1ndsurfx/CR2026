@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -109,6 +109,7 @@ public static partial class PacketSender
             }
 
             player.LoginWarp();
+            player.ResetTutorialSession();
             client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Snapshot(DateTimeOffset.Now, silent: true));
             client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.LootSnapshot(DateTimeOffset.Now,silent:true));
             player.SendExperienceBoostStatus();
@@ -909,7 +910,7 @@ public static partial class PacketSender
                 SendDataToProximityOnMapInstance(
                     en.MapId, en.MapInstanceId,
                     new EntityMovePacket(
-                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction
+                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction, en.ScriptedMovementMilliseconds
                     ), null, TransmissionMode.Any
                 );
                 return;
@@ -933,7 +934,7 @@ public static partial class PacketSender
             {
                 player.SendPacket(
                     new EntityMovePacket(
-                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction
+                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction, en.ScriptedMovementMilliseconds
                     )
                 );
                 return;
@@ -1058,9 +1059,9 @@ public static partial class PacketSender
     }
 
     //EventDialogPacket
-    public static void SendEventDialog(Player player, string prompt, string face, Guid eventId)
+    public static void SendEventDialog(Player player, string prompt, string face, Guid eventId, Guid dialogueToken = default)
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null));
+        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null) { DialogueToken = dialogueToken });
     }
 
     //EventDialogPacket
@@ -1072,10 +1073,11 @@ public static partial class PacketSender
         string opt3,
         string opt4,
         string face,
-        Guid eventId
+        Guid eventId,
+        Guid dialogueToken = default
     )
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 1, new string[4] { opt1, opt2, opt3, opt4 }));
+        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 1, new string[4] { opt1, opt2, opt3, opt4 }) { DialogueToken = dialogueToken });
     }
 
     public static void SendInputVariableDialog(
@@ -1504,6 +1506,9 @@ public static partial class PacketSender
             client.SentMaps.Clear();
         }
 
+        if (!client.IsEditor && client.Entity is { } exploringPlayer)
+            client.Send(exploringPlayer.WorldMapExplorationSnapshot());
+
         if (client.IsEditor)
         {
             client.Send(
@@ -1630,7 +1635,8 @@ public static partial class PacketSender
         AnimationSourceType animationSourceType = AnimationSourceType.Any,
         Guid animationSourceId = default,
         int offsetX = 0,
-        int offsetY = 0
+        int offsetY = 0,
+        int durationMilliseconds = 0
     )
     {
         if (!MapController.TryGetInstanceFromMap(mapId, mapInstanceId, out var mapInstance))
@@ -1651,6 +1657,7 @@ public static partial class PacketSender
             offsetX,
             offsetY
         );
+        playAnimationPacket.DurationMilliseconds = Math.Clamp(durationMilliseconds, 0, 600_000);
         if (Options.Instance.Packets.BatchAnimationPackets)
         {
             mapInstance.AddBatchedAnimation(playAnimationPacket);
@@ -1756,6 +1763,8 @@ public static partial class PacketSender
             return;
         }
 
+        if(shop.ConfigurationKind==ShopConfigurationKind.RoyalSeals)
+        {player.InShop=null;Intersect.Server.RoyalContracts.RoyalSealShopRuntime.Open(player,shop.Id);return;}
         if(shop.ConfigurationKind is ShopConfigurationKind.Spells or ShopConfigurationKind.PremiumMusic)
         {Intersect.Server.Shops.ServiceShopRuntime.Send(player);return;}
         player.SendPacket(new ShopPacket(shop.JsonData, false));
@@ -1772,22 +1781,32 @@ public static partial class PacketSender
     {
         if (table != null)
         {
-            //Use Json To Cheaply Clone The Table
-            var playerTable = JsonConvert.DeserializeObject<CraftingTableDescriptor>(table.JsonData);
-
-            //Strip our the items the player can't craft
-            foreach (var craft in table.Crafts)
-            {
-                var craftBase = CraftingRecipeDescriptor.Get(craft);
-                if (!(craftBase != null && Conditions.MeetsConditionLists(craftBase.CraftingRequirements, player, null)))
-                {
-                    playerTable.Crafts.Remove(craft);
-                }
-            }
-
-            //Send the modfied table
+            var playerTable = FilterCraftingTable(player, table);
             player.SendPacket(new CraftingTablePacket(playerTable.JsonData, false, journalMode));
         }
+    }
+
+    internal static CraftingTableDescriptor FilterCraftingTable(Player player, CraftingTableDescriptor table)
+    {
+        //Use Json To Cheaply Clone The Table
+        var playerTable = JsonConvert.DeserializeObject<CraftingTableDescriptor>(table.JsonData);
+        playerTable.Crafts.Clear();
+        playerTable.Crafts.AddRange(table.AvailableCrafts());
+        // Send a materialized, permission-filtered list. A client must not
+        // re-expand native creator recipes after requirements are filtered.
+        playerTable.CampfireCreator = false;
+
+        //Strip our the items the player can't craft
+        foreach (var craft in playerTable.Crafts.ToArray())
+        {
+            var craftBase = CraftingRecipeDescriptor.Get(craft);
+            if (!(craftBase != null && Conditions.MeetsConditionLists(craftBase.CraftingRequirements, player, null)))
+            {
+                playerTable.Crafts.Remove(craft);
+            }
+        }
+
+        return playerTable;
     }
 
     //CraftingTablePacket

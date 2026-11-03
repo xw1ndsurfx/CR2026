@@ -430,6 +430,9 @@ public partial class Entity : IEntity
         }
 
         _petDecoration=null;
+        ApplyArenaMount(packet is NpcEntityPacket mounted ? mounted.MountJson : "");
+        JoustSeated = packet is PlayerEntityPacket { JoustSeated: true } or NpcEntityPacket { JoustSeated: true };
+        ServerMovementMilliseconds = 0;
         if(packet is NpcEntityPacket {PetDecorationJson.Length:>0 and <=1024} npc)
         {
             try {_petDecoration=Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>(npc.PetDecorationJson);}
@@ -632,6 +635,7 @@ public partial class Entity : IEntity
 
     public virtual void Dispose()
     {
+        Intersect.Client.Interface.Game.FishingWorldPresentation.Remove(Id);
         if (RenderList != null)
         {
             _ = RenderList.Remove(this);
@@ -643,8 +647,10 @@ public partial class Entity : IEntity
     }
 
     //Returns the amount of time required to traverse 1 tile
+    internal int ServerMovementMilliseconds { get; set; }
     public virtual float GetMovementTime()
     {
+        if (ServerMovementMilliseconds > 0) return ServerMovementMilliseconds;
         var time = 1000f / (float)(1 + Math.Log(Stat[(int)Enums.Stat.Speed]));
         if (DirectionFacing > Direction.Right)
         {
@@ -1265,6 +1271,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
+        using var cinematicCapture = Graphics.CaptureCinematicEntity(this);
         if (Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
@@ -1327,6 +1334,8 @@ public partial class Entity : IEntity
         }
 
         if (texture == default)
+            texture = RenderedMount is { IntegratedRider: true } mount ? Globals.ContentManager?.GetTexture(TextureType.Image, mount.Idle) : null;
+        if (texture == default)
         {
             // We don't have a texture to render, but we still want this to be targetable.
             WorldPos = new FloatRect(
@@ -1358,19 +1367,24 @@ public partial class Entity : IEntity
             srcRectangle.Width, srcRectangle.Height, TileWidth, TileHeight);
         _spriteAnchorOffset = new Vector2(destRectangle.X - framePosition.X, destRectangle.Y - framePosition.Y);
 
-        WorldPos = destRectangle;
-        IncludeVisibleGraphicTop(texture, srcRectangle, destRectangle);
+        var mountBounds = BeginMountDraw(texture, srcRectangle, destRectangle, renderColor);
+        var riderBounds = MountedRiderRectangle(destRectangle);
+        WorldPos = JoustSeated ? riderBounds : _integratedMountRider ? mountBounds : _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
+            Math.Max(mountBounds.Right, riderBounds.Right) - Math.Min(mountBounds.X, riderBounds.X), Math.Max(mountBounds.Bottom, riderBounds.Bottom) - Math.Min(mountBounds.Y, riderBounds.Y));
+        IncludeVisibleGraphicTop(texture, srcRectangle, riderBounds);
 
         //Order the layers of paperdolls and sprites
-        for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection].Count; z++)
+        var cinematicDirection = Graphics.CinematicDrawDirection(_lastDirection);
+        DrawFishingEquipment(false, renderColor);
+        for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection].Count; z++)
         {
-            var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection][z];
+            var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection][z];
             var equipSlot = Options.Instance.Equipment.Slots.IndexOf(paperdoll);
 
             //Check for player
             if (string.Equals("Player", paperdoll, StringComparison.Ordinal))
             {
-                Graphics.DrawGameTexture(texture, srcRectangle, destRectangle, renderColor);
+                DrawRiderLayer(texture, srcRectangle, destRectangle, renderColor);
             }
             else if (equipSlot > -1)
             {
@@ -1397,7 +1411,7 @@ public partial class Entity : IEntity
                         var itemPaperdoll = Gender == 0
                             ? itemDescriptor.MalePaperdoll
                             : itemDescriptor.FemalePaperdoll;
-                        DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
+                        if (!IsFishingEquipment(itemId)) DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
                         drewEquipment = true;
                     }
 
@@ -1412,6 +1426,8 @@ public partial class Entity : IEntity
                 }
             }
         }
+        DrawFishingEquipment(true, renderColor);
+        EndMountDraw(renderColor);
         if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
             Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
                 new FloatRect(destRectangle.X+destRectangle.Width/2-decoration.Size/2+decoration.OffsetX,
@@ -1422,7 +1438,7 @@ public partial class Entity : IEntity
     {
         get
         {
-            var frame = WalkFrame;
+            var frame = this is Player { ActiveMount: not null } && string.IsNullOrEmpty(TransformedSprite) ? Math.Min(1, SpriteFrames - 1) : WalkFrame;
 
             if (IsBlocking)
             {
@@ -1449,7 +1465,8 @@ public partial class Entity : IEntity
         }
     }
 
-    private int PickSpriteRow(Direction direction)
+    private int PickSpriteRow(Direction direction) => Graphics.CinematicSpriteRow(PickWorldSpriteRow(direction));
+    private int PickWorldSpriteRow(Direction direction)
     {
         switch (direction)
         {
@@ -1612,8 +1629,8 @@ public partial class Entity : IEntity
         var destRectangle = new FloatRect(position.X, position.Y, srcRectangle.Width, srcRectangle.Height);
 
         // Draw the paperdoll texture using: source and destination rectangles along with the render color.
-        Graphics.DrawGameTexture(paperdollTex, srcRectangle, destRectangle, renderColor);
-        IncludeEquipmentGraphicTop(paperdollTex, srcRectangle, destRectangle);
+        DrawRiderLayer(paperdollTex, srcRectangle, destRectangle, renderColor);
+        IncludeEquipmentGraphicTop(paperdollTex, srcRectangle, MountedRiderRectangle(destRectangle));
     }
 
     protected virtual FloatRect SpriteDestination(IGameTexture texture, FloatRect source)
@@ -1723,7 +1740,7 @@ public partial class Entity : IEntity
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = position == 2
-            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2 * NameplateScale
+            ? GetLabelLocation(LabelType.Afk)
             : position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
 
         if (backgroundColor != Color.Transparent)
@@ -1834,7 +1851,7 @@ public partial class Entity : IEntity
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
             ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
 
-    protected float NameplateScale => 1f / Math.Clamp(Globals.Database?.WorldZoom ?? 1f, 0.25f, 16f);
+    protected float NameplateScale => 1f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
 
     public float GetLabelLocation(LabelType type)
     {
@@ -1858,6 +1875,7 @@ public partial class Entity : IEntity
             LabelType.Name => layout.Name,
             LabelType.Header => layout.Header,
             LabelType.Guild => layout.Guild,
+            LabelType.Afk => layout.Afk,
             LabelType.ChatBubble => layout.ChatBubble,
             _ => layout.Name,
         };
@@ -2262,6 +2280,7 @@ public partial class Entity : IEntity
                 SpriteFrameTimer = timingMilliseconds;
             }
         }
+        ApplyFishingBodyAnimation();
     }
 
     public void ResetSpriteFrame()
@@ -2502,6 +2521,8 @@ public partial class Entity : IEntity
             }
 
             tmpMapId = Globals.MapGrid[gridX, gridY];
+            if ((this is Player || GetType() == typeof(Entity)) &&
+                Intersect.Client.Interface.Interface.InGameUiOrNull?.CampfireBlocks(tmpMapId, tmpX, tmpY, z) == true) return -2;
 
             foreach (var en in Globals.Entities)
             {

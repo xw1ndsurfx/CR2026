@@ -286,6 +286,10 @@ public static partial class Input
                             }
                             continue;
 
+                        case Control.ToggleMount:
+                            Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.MountRequestPacket { Action = Intersect.Network.Packets.Client.MountAction.Toggle });
+                            break;
+
                         case Control.OpenInventory:
                             Interface.Interface.GameUi.GameMenu?.ToggleInventoryWindow();
                             break;
@@ -447,6 +451,11 @@ public static partial class Input
         {
             return;
         }
+
+        // Only world clicks reach this point: interface clicks have already returned above.
+        // Collapse before targeting/pickup so those world actions keep their normal behavior.
+        if (mouseButton is MouseButton.Left or MouseButton.Right)
+            Interface.Interface.InGameUiOrNull?.GameMenu?.CollapseForWorldClick();
 
         if (modifier == Keys.None && mouseButton == MouseButton.Left && Globals.Me.TryTarget())
         {

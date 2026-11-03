@@ -91,6 +91,15 @@ internal static class AchievementRuntime
         if (amount <= 0)
             return;
 
+        var contractObjective = objectiveType switch
+        {
+            AchievementObjectiveType.DungeonCompletions => Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.DungeonsCompleted,
+            AchievementObjectiveType.InvasionCompletions => Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.InvasionsCompleted,
+            AchievementObjectiveType.QuestCompletions => Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.QuestsCompleted,
+            _ => (Intersect.Framework.Core.RoyalContracts.RoyalContractObjective?)null,
+        };
+        if (contractObjective.HasValue)
+            Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(player, contractObjective.Value, targetId, (int)Math.Min(int.MaxValue, amount));
         var changed = false;
         foreach (var definition in AchievementConfigurationRuntime.Current.Achievements)
         {
@@ -100,7 +109,10 @@ internal static class AchievementRuntime
             if (definition.TargetId != Guid.Empty && definition.TargetId != targetId)
                 continue;
 
-            if (!string.IsNullOrWhiteSpace(definition.TargetKey) &&
+            // NPC deaths supply a descriptor ID, never a custom counter key.
+            // A leftover editor key must not silently disable kill missions.
+            if (objectiveType != AchievementObjectiveType.NpcKills &&
+                !string.IsNullOrWhiteSpace(definition.TargetKey) &&
                 !string.Equals(definition.TargetKey, targetKey ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 continue;
 

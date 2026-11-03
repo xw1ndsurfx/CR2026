@@ -16,7 +16,7 @@ public partial class MapEntityMovements
             {
                 mMovements.Add(id, new List<EntityMovePacket>());
             }
-            mMovements[id].Add(new EntityMovePacket(en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction));
+            mMovements[id].Add(new EntityMovePacket(en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction, en.ScriptedMovementMilliseconds));
         }
     }
 

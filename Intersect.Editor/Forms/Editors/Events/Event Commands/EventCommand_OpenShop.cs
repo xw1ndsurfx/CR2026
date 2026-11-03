@@ -19,7 +19,7 @@ public partial class EventCommandOpenShop : UserControl
         mEventEditor = editor;
         InitLocalization();
         cmbShop.Items.Clear();
-        cmbShop.Items.AddRange(ShopDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ShopDescriptor>(cmbShop);
         cmbShop.SelectedIndex = ShopDescriptor.ListIndex(mMyCommand.ShopId);
     }
 

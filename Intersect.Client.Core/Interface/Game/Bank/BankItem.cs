@@ -265,12 +265,12 @@ public partial class BankItem : SlotItem
             _quantityLabel.Text = Strings.FormatQuantityAbbreviated(bankSlot.Quantity);
         }
 
-        if (Icon.TextureFilename == descriptor.Icon)
+        if (Icon.Texture == Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor))
         {
             return;
         }
 
-        var itemTexture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, descriptor.DisplayIcon);
+        var itemTexture = Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor);
         if (itemTexture != default)
         {
             Icon.Texture = itemTexture;

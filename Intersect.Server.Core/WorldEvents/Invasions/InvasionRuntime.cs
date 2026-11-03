@@ -113,7 +113,11 @@ internal static partial class InvasionRuntime
             foreach (var pending in PendingStarts.ToArray())
             {
                 if (nowMs < pending.Value.StartAtMs)
+                {
+                    if (pending.Value.StartAtMs - nowMs <= 300_000 && !PreparingInvasions.ContainsKey(pending.Key))
+                        BroadcastPrelude(pending.Value.Definition, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     continue;
+                }
 
                 PendingStarts.Remove(pending.Key);
                 if (!Sessions.ContainsKey(pending.Key))
@@ -161,7 +165,8 @@ internal static partial class InvasionRuntime
             }
 
             var nowMs = Timing.Global.Milliseconds;
-            BroadcastPrelude(definition, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            if (!definition.PreStartCinematicEnabled || definition.PreStartCinematicLeadSeconds <= 300)
+                BroadcastPrelude(definition, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             if (TryLaunchCinematic(definition))
             {
                 PendingStarts[definition.Id] = new PendingStart(
@@ -335,7 +340,7 @@ internal static partial class InvasionRuntime
             if (!definition.TryGetPreludeOccurrence(now, out var start)) continue;
             if (LastScheduleKeys.TryGetValue(definition.Id, out var used) && used == start.ToString("yyyy-MM-dd-HH-mm")) continue;
             wanted.Add(definition.Id);
-            var environmentAt = start.AddSeconds(-Math.Max(definition.FirstReminderMinutes * 60, definition.PreStartCinematicEnabled ? definition.PreStartCinematicLeadSeconds : 0) - definition.EnvironmentLeadSeconds).ToUnixTimeMilliseconds();
+            var environmentAt = start.AddMinutes(-5).ToUnixTimeMilliseconds();
             var nowMs = now.ToUnixTimeMilliseconds();
             if (!Preludes.TryGetValue(definition.Id, out var previous) || previous.ScheduledAt != start.ToUnixTimeMilliseconds() || nowMs - previous.LastBroadcastAt >= 5000)
             {
@@ -457,8 +462,7 @@ internal static partial class InvasionRuntime
             .Replace("{time}", scheduledStart.ToString("HH:mm"));
 
         PacketSender.SendGlobalMsg($"[Invasion] {text}");
-        // Ensure newly connected recipients receive the ambience before the warning too.
-        BroadcastPrelude(definition, Preludes.TryGetValue(definition.Id, out var prelude) ? prelude.EnvironmentAt : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        // Earlier reminders announce the invasion without changing the environment.
         var alert = new InvasionAlertPacket
         {
             InvasionId = definition.Id, Name = definition.Name, Message = message,

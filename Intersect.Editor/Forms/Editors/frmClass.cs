@@ -292,9 +292,7 @@ public partial class FrmClass : EditorForm
 
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
         cmbAttackSprite.Items.Clear();
         cmbAttackSprite.Items.Add(Strings.General.None);
@@ -313,22 +311,20 @@ public partial class FrmClass : EditorForm
     {
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
         cmbFace.Items.Clear();
         cmbFace.Items.Add(Strings.General.None);
-        cmbFace.Items.AddRange(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Face));
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbFace, GameContentManager.TextureType.Face);
         cmbSpawnItem.Items.Clear();
         cmbSpawnItem.Items.Add(Strings.General.None);
-        cmbSpawnItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbSpawnItem);
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
         nudLevel.Maximum = Options.Instance.Player.MaxLevel;
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
-        cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAttackAnimation);
         cmbScalingStat.Items.Clear();
         for (var x = 0; x < ((int)Stat.Speed) + 1; x++)
         {

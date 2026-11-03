@@ -13,6 +13,8 @@ public partial class PlayAnimationCommand : EventCommand
 
     //Entity Spawn Variables (Will spawn on/around entity if entityId is not empty)
     public Guid EntityId { get; set; }
+    // Empty preserves historical Event-map resolution for existing content.
+    public Guid TargetMapId { get; set; }
 
     //Map Coords or Coords Centered around player to spawn at
     public sbyte X { get; set; }

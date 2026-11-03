@@ -55,7 +55,7 @@ public partial class RecipeItem
 
         if (item != null)
         {
-            var itemTex = Globals.ContentManager.GetTexture(item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item.DisplayIcon);
+            var itemTex = Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
             if (itemTex != null)
             {
                 Pnl.Texture = itemTex;

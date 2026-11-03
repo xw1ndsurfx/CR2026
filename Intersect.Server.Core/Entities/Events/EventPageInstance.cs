@@ -62,7 +62,8 @@ public partial class EventPageInstance : Entity
         Guid mapId,
         Guid mapInstanceId,
         Event eventIndex,
-        Player player
+        Player player,
+        bool sendInitial = true
     ) : base()
     {
         Descriptor = eventDescriptor;
@@ -126,7 +127,7 @@ public partial class EventPageInstance : Entity
         Face = MyPage.FaceGraphic;
         mPageNum = Descriptor.Pages.IndexOf(MyPage);
         Player = player;
-        SendToPlayer();
+        if (sendInitial) SendToPlayer();
     }
 
     public EventPageInstance(

@@ -48,7 +48,7 @@ public partial class FrmResource : EditorForm
         cmbToolType.Items.AddRange(Options.Instance.Equipment.ToolTypes.ToArray());
         cmbEvent.Items.Clear();
         cmbEvent.Items.Add(Strings.General.None);
-        cmbEvent.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbEvent);
 
         lstDrops.DataSource = _dropList;
         lstDrops.DisplayMember = nameof(NotifiableDrop.DisplayName);
@@ -203,10 +203,10 @@ public partial class FrmResource : EditorForm
 
         cmbDeathAnimation.Items.Clear();
         cmbDeathAnimation.Items.Add(Strings.General.None);
-        cmbDeathAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbDeathAnimation);
         cmbDropItem.Items.Clear();
         cmbDropItem.Items.Add(Strings.General.None);
-        cmbDropItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbDropItem);
         InitLocalization();
         UpdateEditor();
     }
@@ -454,7 +454,7 @@ public partial class FrmResource : EditorForm
             cmbTextureSource.Enabled = false;
             picResource.Visible = false;
             cmbAnimation.Enabled = true;
-            cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
             cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(currentState.AnimationId) + 1;
             return;
         }

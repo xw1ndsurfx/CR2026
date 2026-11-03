@@ -24,7 +24,7 @@ public partial class EventMoveRouteAnimationSelector : UserControl
         InitializeComponent();
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         if (!newAction)
         {
             cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(action.AnimationId) + 1;

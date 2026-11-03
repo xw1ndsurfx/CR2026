@@ -585,13 +585,11 @@ public partial class MapController : MapDescriptor
     {
         lock (GetMapLock())
         {
-            if (mInstances[mapInstanceId] != null)
+            // Cleanup can be requested again after another path has already removed the layer.
+            if (mInstances.TryRemove(mapInstanceId, out var removedInstance) && removedInstance != null)
             {
-                if (mInstances.TryRemove(mapInstanceId, out var removedInstance))
-                {
-                    removedInstance.Dispose();
-                    ApplicationContext.Context.Value?.Logger.LogDebug($"Cleaning up Instance {mapInstanceId} for map: {Name}");
-                }
+                removedInstance.Dispose();
+                ApplicationContext.Context.Value?.Logger.LogDebug($"Cleaning up Instance {mapInstanceId} for map: {Name}");
             }
         }
     }

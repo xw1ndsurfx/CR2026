@@ -6,12 +6,14 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject]
 public partial class EntityMovePacket : IntersectPacket
 {
+    // Optional native interpolation time for server-scripted movement; zero preserves ordinary movement.
+    [Key(7)] public int ScriptedDurationMs { get; set; }
     //Parameterless Constructor for MessagePack
     public EntityMovePacket()
     {
     }
 
-    public EntityMovePacket(Guid id, EntityType type, Guid mapId, byte x, byte y, byte dir, bool correction)
+    public EntityMovePacket(Guid id, EntityType type, Guid mapId, byte x, byte y, byte dir, bool correction, int scriptedDurationMs = 0)
     {
         Id = id;
         Type = type;
@@ -20,6 +22,7 @@ public partial class EntityMovePacket : IntersectPacket
         Y = y;
         Direction = dir;
         Correction = correction;
+        ScriptedDurationMs = scriptedDurationMs;
     }
 
     [Key(0)]

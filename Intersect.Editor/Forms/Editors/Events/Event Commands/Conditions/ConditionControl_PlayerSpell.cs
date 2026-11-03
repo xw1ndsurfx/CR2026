@@ -36,7 +36,7 @@ public partial class ConditionControl_PlayerSpell : UserControl
     public new void Show()
     {
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
         base.Show();
     }
 }

@@ -32,7 +32,7 @@ public partial class EventCommandChangeItems : UserControl
         mCurrentPage = refPage;
         InitLocalization();
         cmbItem.Items.Clear();
-        cmbItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItem);
         cmbAction.SelectedIndex = mMyCommand.Add ? 0 : 1;
         cmbItem.SelectedIndex = ItemDescriptor.ListIndex(mMyCommand.ItemId);
         cmbMethod.SelectedIndex = (int)mMyCommand.ItemHandling;

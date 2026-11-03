@@ -797,6 +797,7 @@ internal sealed partial class PacketHandler
         }
 
         var entityMap = MapInstance.Get(en.MapId);
+        en.ServerMovementMilliseconds = packet.ScriptedDurationMs is >= 20 and <= 30000 ? packet.ScriptedDurationMs : 0;
         if (entityMap == null)
         {
             return;
@@ -1239,6 +1240,7 @@ internal sealed partial class PacketHandler
     //EntityDiePacket
     public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
     {
+        Intersect.Client.Interface.Interface.InGameUiOrNull?.OnWorldBossNpcDied(packet.Id);
         var id = packet.Id;
         var type = packet.Type;
         var mapId = packet.MapId;
@@ -1289,6 +1291,7 @@ internal sealed partial class PacketHandler
         }
 
         ed.EventId = packet.EventId;
+        ed.DialogueToken = packet.DialogueToken;
         Globals.EventDialogs.Add(ed);
     }
 
@@ -1679,6 +1682,7 @@ internal sealed partial class PacketHandler
                 {
                     positionedAnimation.ParentOffsetX = packet.OffsetX;
                     positionedAnimation.ParentOffsetY = packet.OffsetY;
+                    positionedAnimation.SetTimedLifetime(packet.DurationMilliseconds);
                 }
 
                 break;
@@ -1810,6 +1814,7 @@ internal sealed partial class PacketHandler
             {
                 Globals.EventHolds.Remove(eventId);
             }
+            Cinematics.CinematicCamera.Release(eventId);
         }
     }
 

@@ -30,6 +30,24 @@ internal static class WorldMapTests
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var assembly = typeof(GameInterface).Assembly;
         var type = assembly.GetType("Intersect.Client.Interface.Game.WorldMapWindow+WorldMapCanvas", true)!;
+        var renderPasses = type.GetMethod("RenderPreviewLayers", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var customLayers = new Intersect.Config.LayerOptions();
+        customLayers.LowerLayers.Clear(); customLayers.LowerLayers.Add("Custom ground");
+        customLayers.MiddleLayers.Clear(); customLayers.MiddleLayers.Add("Custom roof");
+        customLayers.UpperLayers.Clear(); customLayers.UpperLayers.Add("Custom canopy"); customLayers.Validate();
+        var pixels = new int[3]; var resourcePasses = 0;
+        Func<string, bool> drawLayer = layer => {
+            if (layer == "Custom ground") Array.Fill(pixels, 1);
+            if (layer == "Custom roof") pixels[1] = 3;
+            if (layer == "Custom canopy") pixels[2] = 4;
+            return true;
+        };
+        Func<bool> drawResources = () => { ++resourcePasses; Array.Fill(pixels, 2); return true; };
+        Check((bool)renderPasses.Invoke(null, [customLayers, drawLayer, drawResources])! && pixels.SequenceEqual(new[] { 2, 3, 4 }) && resourcePasses == 1,
+            "World/minimap resource silhouettes must remain behind custom Fringe/upper tiles while uncovered resources remain visible");
+        customLayers.LowerLayers.Clear(); customLayers.Validate(); resourcePasses = 0;
+        Check((bool)renderPasses.Invoke(null, [customLayers, new Func<string, bool>(_ => false), drawResources])! && resourcePasses == 1,
+            "Missing tile textures and maps without lower layers still render resources exactly once");
         var oldOptions = Options.Instance;
         var oldContent = Globals.ContentManager;
         var oldMe = Globals.Me;

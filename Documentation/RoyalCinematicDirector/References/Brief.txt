@@ -1,0 +1,403 @@
+# BRIEF DE DÉVELOPPEMENT — ROYAL CINEMATIC DIRECTOR
+
+**Projet :** Corps Royaux — CR2026  
+**Dépôt :** `xw1ndsurfx/CR2026`  
+**Branche de référence :** `main`  
+**Moteur :** Intersect personnalisé  
+**Objectif :** Créer un éditeur cinématographique WYSIWYG intégré au Game Editor, capable de produire des cinématiques 2D/2.5D directement dans le jeu.
+
+## 1. Mission générale
+
+Développer un nouvel outil nommé **Royal Cinematic Director**.
+
+Cet outil doit permettre aux développeurs et créateurs de contenu de réaliser des cinématiques immersives, avec mouvements de caméra, zooms, acteurs, dialogues, animations, effets visuels, musiques et événements scénarisés.
+
+Il doit prendre en charge les cinématiques des quêtes, les introductions de nouveaux joueurs, les rencontres de boss, les batailles navales, les grands champs de bataille et les sagas narratives organisées en plusieurs chapitres.
+
+**Exigence fondamentale :** utiliser autant que possible les systèmes déjà disponibles dans CR2026, notamment l'Event Editor, Move Route, Animation Editor, Quest Editor, les systèmes navals et les fonctionnalités de rendu 2.5D déjà présentes.
+
+Ne pas créer de systèmes concurrents lorsque les fonctionnalités existantes peuvent être étendues proprement.
+
+## 2. Analyse préalable obligatoire
+
+Avant toute implémentation :
+
+1. Inspecter le contenu actuel de `main`.
+2. Étudier le fonctionnement complet de l'Event Editor et du système Move Route.
+3. Analyser l'Animation Editor et la façon dont les animations sont jouées dans le client.
+4. Examiner les systèmes navals, le canon et toute projection ou tout effet 2.5D existant.
+5. Étudier les mécanismes de caméra, de zoom, de déplacement, de rendu et de chargement des maps.
+6. Vérifier les structures des quêtes, événements, conditions, joueurs et NPCs.
+7. Identifier les composants réutilisables et les limitations techniques.
+
+L'architecture doit conserver la compatibilité des événements et des contenus existants.
+
+## 3. Interface générale WYSIWYG
+
+Ajouter le Cinematic Director à l'Editor Hub et prévoir une entrée dans les menus appropriés.
+
+Reproduire au plus près la maquette finale fournie dans cette conversation en conservant l'identité visuelle du Game Editor CR2026.
+
+L'interface comprend :
+
+- Un explorateur hiérarchique à gauche.
+- Une vue centrale affichant la vraie map et les entités du jeu.
+- Un inspecteur de propriétés à droite.
+- Une timeline multipiste en bas.
+- Une bibliothèque de commandes visuelles et d'éléments réutilisables.
+- Des contrôles Play, Pause, Stop, Step, Preview et Test in Game.
+- Une bibliothèque de modèles cinématographiques.
+
+Prévoir des panneaux redimensionnables et masquables afin de préserver l'espace de travail.
+
+Le viewport doit offrir une visualisation fidèle au rendu du client, en utilisant autant que possible les mêmes composants graphiques.
+
+## 4. Movement Director — Move Route WYSIWYG
+
+Créer une nouvelle interface visuelle reposant sur le fonctionnement existant de Move Route.
+
+Fonctions obligatoires :
+
+- Sélectionner le joueur, un NPC, un Event ou un acteur cinématographique.
+- Dessiner sa trajectoire directement sur la map avec la souris.
+- Ajouter, déplacer, supprimer et réordonner les points du parcours.
+- Afficher les directions et les positions de départ et d'arrivée.
+- Configurer les déplacements par tuiles ou par trajectoire fluide si le moteur le permet.
+- Proposer un mode grille avec magnétisme.
+- Configurer vitesse, direction, pauses et répétitions.
+- Prévisualiser les déplacements.
+- Vérifier les collisions et la validité du parcours.
+- Permettre de modifier les commandes individuellement.
+
+Chaque point de parcours peut comporter des actions :
+
+- Se déplacer.
+- Regarder un personnage ou une position.
+- Attendre.
+- Changer de vitesse.
+- Jouer une animation.
+- Déclencher un effet.
+- Lancer un dialogue.
+- Déclencher une action de caméra.
+- Définir un événement de gameplay.
+
+Conserver un mode **Commandes avancées** donnant accès aux commandes historiques Move Route.
+
+Les trajets créés visuellement doivent utiliser les commandes existantes lorsqu'elles sont compatibles, tout en permettant des commandes cinématographiques supplémentaires.
+
+## 5. Camera Director — Cinématiques 2.5D
+
+Créer un véritable système de réalisation cinématographique.
+
+Fonctionnalités :
+
+- Zoom In / Zoom Out.
+- Panoramique horizontal et vertical.
+- Travelling.
+- Suivi d'un personnage.
+- Suivi d'un bateau.
+- Focus sur un point de la map.
+- Focus sur plusieurs personnages.
+- Mouvements de caméra par points-clés.
+- Transitions entre caméras.
+- Tremblements.
+- Fondu et effets de transition.
+- Bandes noires cinématographiques.
+- Courbes de mouvement (Linear, Ease In, Ease Out, Ease In Out).
+- Décalage de cadrage et composition du plan.
+
+Créer des presets : Wide Shot, Medium Shot, Close-Up, Hero Shot, Boss Reveal, Establishing Shot et Battle Overview.
+
+Explorer la réutilisation des capacités 2.5D du système de canon/naval.
+
+Les effets de profondeur, parallax, rotations simulées et autres transformations doivent être implémentés selon les possibilités réelles du moteur. Ne pas présumer de l'existence d'une caméra 3D complète.
+
+## 6. Actor Director
+
+Permettre d'ajouter à une scène :
+
+- Le joueur.
+- Des NPCs.
+- Des Events.
+- Des personnages temporaires.
+- Des figurants.
+- Des ennemis.
+- Des navires.
+- Des objets de scène.
+
+Chaque acteur doit posséder une timeline indépendante.
+
+Actions : déplacement, orientation, animation, interaction, dialogue, disparition, apparition, attaque et déplacement synchronisé avec un autre acteur.
+
+Prévoir une fonction **Look At** permettant à un personnage de se tourner vers une cible.
+
+Les animations doivent provenir des ressources du jeu. Utiliser l'Animation Editor pour les animations compatibles et les effets, et identifier séparément les animations propres aux entités ou personnages.
+
+## 7. Timeline professionnelle
+
+Créer une timeline avec pistes distinctes :
+
+- Caméra.
+- Acteurs.
+- Mouvement.
+- Animations.
+- Dialogues.
+- Effets visuels.
+- Audio / Voix.
+- Musique.
+- Environnement.
+- Gameplay.
+- Conditions.
+- Événements de quête.
+
+Chaque piste doit prendre en charge des clips, leur durée, leur position et leurs propriétés.
+
+Ajouter :
+
+- Déplacement des clips par glisser-déposer.
+- Redimensionnement.
+- Copie et duplication.
+- Annuler/Rétablir.
+- Images-clés.
+- Marqueurs.
+- Zoom temporel.
+- Lecture image par image ou par pas de simulation appropriés.
+- Prévisualisation à partir d'un point sélectionné.
+- Synchronisation des actions entre pistes.
+
+## 8. Dialogues et narration
+
+Créer des dialogues cinématographiques intégrés.
+
+Prévoir :
+
+- Noms des personnages.
+- Portraits et artworks optionnels.
+- Sous-titres.
+- Narration.
+- Voix importées.
+- Synchronisation entre voix et sous-titres.
+- Choix de réponses.
+- Conditions selon les choix antérieurs.
+- Localisation FR/EN.
+- Avance automatique ou manuelle.
+- Possibilité de passer les dialogues.
+
+Les dialogues doivent pouvoir interagir avec les systèmes existants de quêtes et variables.
+
+## 9. Animation Editor et effets visuels
+
+Permettre de sélectionner directement les animations et effets compatibles déjà créés dans le Game Editor.
+
+Exemples :
+
+- Sorts magiques.
+- Explosions.
+- Effets de feu.
+- Fumée.
+- Foudre.
+- Éclaboussures.
+- Projectiles.
+- Animations de combat.
+- Effets météorologiques.
+
+Les effets peuvent être positionnés sur la map, attachés à des acteurs ou déclenchés à des instants précis.
+
+Prévoir des réglages de taille, position, durée, répétition, vitesse et profondeur d'affichage lorsque disponibles.
+
+## 10. Naval Cinematic Director
+
+Créer un mode spécialisé pour les scènes de bataille navale, en réutilisant le système naval existant.
+
+Fonctions recherchées :
+
+- Sélection de navires.
+- Trajectoires dessinées sur l'eau.
+- Suivi caméra d'un navire.
+- Formation de flotte.
+- Apparition de navires ennemis.
+- Déclenchement synchronisé des canons.
+- Impacts et explosions.
+- Fumée.
+- Navires endommagés.
+- Séquences d'abordage.
+- Transitions vers les phases jouables.
+- Plans d'ensemble de la flotte.
+
+Les séquences doivent pouvoir être entièrement cinématiques ou servir d'introduction à un véritable combat naval.
+
+## 11. Battlefield Cinematic Director
+
+Créer un mode permettant de mettre en scène de grands affrontements terrestres.
+
+Fonctionnalités :
+
+- Groupes de figurants.
+- Formations de soldats.
+- Trajectoires collectives.
+- Charges de cavalerie si les assets et systèmes le permettent.
+- Apparitions de renforts.
+- Animations de combats synchronisées.
+- Catapultes et projectiles.
+- Explosions et poussière.
+- Mouvements de caméra au-dessus du champ de bataille.
+- Focus sur un commandant.
+- Introduction de boss ou de général.
+- Passage de la cinématique au gameplay.
+
+Optimiser les scènes de masse pour éviter des centaines de NPCs dotés d'une IA complète si ce n'est pas nécessaire. Utiliser des figurants simplifiés, animations groupées, techniques de culling ou représentations visuelles légères selon les capacités du moteur.
+
+## 12. Story & Chapter Director
+
+Créer une organisation narrative :
+
+**Projet → Saga → Chapitre → Séquence → Scène → Timeline**
+
+Chaque chapitre peut avoir :
+
+- Conditions de déblocage.
+- Quêtes associées.
+- Cinématiques.
+- Dialogues.
+- Choix et conséquences.
+- Conditions de fin.
+- Récompenses gérées par le système de quêtes existant.
+- Transitions vers le chapitre suivant.
+
+L'objectif est de faciliter la création de longues sagas narratives, inspirées dans leur structure de la quête *Recover the Black Pearl* de TLOPO.
+
+Ce gestionnaire doit orchestrer les quêtes existantes plutôt que les remplacer.
+
+## 13. Intégration aux Events et Quests
+
+Créer au minimum les commandes suivantes, ou leurs équivalents compatibles :
+
+- Play Cinematic
+- Stop Cinematic
+- Wait For Cinematic
+- Start Cinematic Chapter
+- Play Camera Sequence
+- Follow Actor
+- Start Actor Path
+- Play Linked Animation
+- Set Cinematic Variable
+- Trigger Cinematic Choice
+
+Le Cinematic Director doit également pouvoir déclencher des événements et des changements de progression de quête.
+
+Prévoir des déclencheurs :
+
+- Première connexion.
+- Interaction avec un Event ou NPC.
+- Acceptation de quête.
+- Progression d'une quête.
+- Entrée dans une zone.
+- Apparition de boss.
+- Début d'invasion.
+- Fin de donjon.
+- Début d'une bataille navale.
+- Condition définie dans l'Event Editor.
+
+## 14. Sécurité, multijoueur et récupération
+
+Les cinématiques individuelles ne doivent pas bloquer les autres joueurs.
+
+Prévoir :
+
+- Isolation des scènes personnelles.
+- Synchronisation des cinématiques collectives lorsque nécessaire.
+- Restauration du HUD et des contrôles.
+- Gestion des déconnexions.
+- Possibilité de passer les cinématiques autorisées.
+- Reprise ou validation appropriée en cas d'interruption.
+- Sauvegarde des choix et de la progression.
+- Vérification des récompenses côté serveur.
+- Prévention des doubles récompenses.
+
+Le passage d'une cinématique ne doit jamais permettre de contourner une condition de quête ou un objectif obligatoire.
+
+## 15. Modèles de cinématiques
+
+Inclure une bibliothèque de modèles personnalisables :
+
+- Introduction du jeu.
+- Présentation d'une ville.
+- Début de quête.
+- Audience royale.
+- Rencontre de boss.
+- Victoire.
+- Défaite.
+- Flashback.
+- Vision magique.
+- Bataille navale.
+- Grand champ de bataille.
+- Invasion.
+- Conclusion de chapitre.
+
+## 16. Projet narratif d'exemple
+
+Créer, si les ressources disponibles le permettent, un exemple intitulé **L'Héritage d'Alector**.
+
+Personnages et lore de référence :
+
+- Gisabelle : princesse du Royaume de Corps Royaux.
+- Xeham : magicien.
+- Alector : chevalier légendaire ayant fondé Elof il y a 300 ans.
+- Elof : grande île de guerriers.
+- Herbonia : puissance ennemie.
+- Azrakel le Déchu : sorcier ennemi déjà défini dans l'univers.
+
+Ne pas inventer de noms définitifs pour les rois ni ajouter du lore permanent sans validation.
+
+L'exemple de démonstration doit mettre en scène une conversation entre Gisabelle, Xeham et le joueur avec déplacements, animations, caméra dynamique et déclenchement de quête.
+
+Créer également, si possible, une démonstration de bataille navale et une démonstration de bataille terrestre avec des ressources existantes.
+
+## 17. Priorités d'implémentation
+
+### Phase 1 — Fondations fonctionnelles
+
+Créer l'interface, le modèle de données, le WYSIWYG, les trajectoires de personnages, les mouvements de caméra, la timeline, les animations liées, les dialogues et l'intégration de base avec les Events.
+
+**Livrable :** une cinématique entièrement fonctionnelle dans le client CR2026.
+
+### Phase 2 — Cinéma avancé
+
+Ajouter les effets visuels, transitions, modèles, voix, chapitres, effets 2.5D compatibles et options de mise en scène.
+
+### Phase 3 — Batailles spectaculaires
+
+Ajouter les outils spécialisés navals et terrestres, les trajectoires de groupes, formations et optimisations de scènes de masse.
+
+### Phase 4 — Production et finition
+
+Améliorer la stabilité, l'ergonomie, les performances, les systèmes de prévisualisation, la documentation et les outils de test.
+
+## 18. Critères d'acceptation
+
+La première version ne sera considérée fonctionnelle que si :
+
+1. Une cinématique peut être créée et sauvegardée visuellement.
+2. Une trajectoire peut être dessinée directement sur la vraie map.
+3. Un acteur peut suivre cette trajectoire dans le client.
+4. Une caméra peut se déplacer et zoomer de manière synchronisée.
+5. Une animation existante compatible peut être déclenchée.
+6. Un dialogue peut être joué.
+7. La timeline permet de modifier le déroulement de la scène.
+8. La cinématique peut être déclenchée depuis un Event.
+9. Le joueur récupère correctement le contrôle à la fin.
+10. Les Event Move Routes existantes continuent de fonctionner.
+11. Les scènes peuvent être testées et reproduites sans erreurs bloquantes.
+12. Aucun contenu ou système existant n'est cassé par les modifications.
+
+## 19. Consignes de développement
+
+Respecter les conventions de CR2026 et la structure existante du dépôt.
+
+Procéder par phases avec des modifications vérifiables. Effectuer les builds et tests adaptés aux projets impactés. Ajouter des tests lorsque pertinent.
+
+Prévoir la documentation technique et utilisateur, idéalement en français et en anglais.
+
+Créer des commits cohérents et une Pull Request pour révision, sans fusionner automatiquement dans `main`.
+
+**Priorité absolue : obtenir un véritable studio WYSIWYG utilisable avec le moteur CR2026, et non une simple maquette graphique ou un lecteur de vidéos.**

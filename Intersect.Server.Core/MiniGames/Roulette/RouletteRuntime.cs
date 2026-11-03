@@ -77,7 +77,7 @@ internal static class RouletteRuntime
 
         lock (player.EntityLock)
         {
-            if (PokerRuntime.HasSeat(player.Id) || BlackjackRuntime.Contains(player.Id))
+            if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id) || PokerRuntime.HasSeat(player.Id) || BlackjackRuntime.Contains(player.Id))
                 return false;
 
             lock (Gate)

@@ -118,6 +118,24 @@ public partial class Npc : Entity
     private Task mPathfindingTask;
 
     public byte Range;
+    private volatile bool _boardingCombatant;
+    private byte CombatMovement => _boardingCombatant ? (byte)NpcMovement.StandStill : Descriptor.Movement;
+
+    internal void ConfigureBoardingCombat(bool enabled = true)
+    {
+        if (PetOwner != null || Descriptor.IsPet) return;
+        if (!enabled)
+        {
+            _boardingCombatant = false;
+            Range = (byte)Math.Clamp(Descriptor.SightRange, 0, byte.MaxValue);
+            return;
+        }
+        _boardingCombatant = true;
+        Range = (byte)Math.Min(byte.MaxValue, Math.Ceiling(Math.Sqrt(
+            (double)Options.Instance.Map.MapWidth * Options.Instance.Map.MapWidth +
+            (double)Options.Instance.Map.MapHeight * Options.Instance.Map.MapHeight)));
+    }
+
 
     //Respawn/Despawn
     public long RespawnTime;
@@ -232,7 +250,7 @@ public partial class Npc : Entity
             AggroCenterY = 0;
             AggroCenterZ = 0;
 
-            if (Descriptor.IsBoss && Descriptor.DeathAnimationId != Guid.Empty)
+            if (Descriptor.DeathAnimationId != Guid.Empty)
             {
                 PacketSender.SendAnimationToProximity(
                     Descriptor.DeathAnimationId,
@@ -242,10 +260,12 @@ public partial class Npc : Entity
                     X,
                     Y,
                     Direction.None,
-                    MapInstanceId
+                    MapInstanceId,
+                    durationMilliseconds: Math.Clamp(Descriptor.DeathAnimationDurationSeconds, 0, 600) * 1000
                 );
             }
 
+            Intersect.Server.WorldEvents.WorldBosses.WorldBossRuntime.OnNpcDied(this);
             DungeonRunRuntime.OnNpcDied(this,killer);
 
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
@@ -636,7 +656,7 @@ public partial class Npc : Entity
     {
         entityType = default;
 
-        if (PetOwner == null && Descriptor.Movement == (byte)NpcMovement.Static)
+        if (PetOwner == null && CombatMovement == (byte)NpcMovement.Static)
         {
             blockerType = MovementBlockerType.MapAttribute;
             return false;
@@ -1006,7 +1026,7 @@ public partial class Npc : Entity
                     //TODO Clear Damage Map if out of combat (target is null and combat timer is to the point that regen has started)
                     if (InvasionSessionId == Guid.Empty &&
                         tempTarget != null &&
-                        (Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
+                        (!_boardingCombatant && Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
                     {
                         if (CheckForResetLocation(true))
                         {
@@ -1148,7 +1168,7 @@ public partial class Npc : Entity
                     }
 
                     if (mPathFinder.GetTarget() != null &&
-                        (invasionNpc || Descriptor.Movement != (int)NpcMovement.Static))
+                        (invasionNpc || CombatMovement != (int)NpcMovement.Static))
                     {
                         TryCastSpells();
                         // TODO: Make resetting mobs actually return to their starting location.
@@ -1408,7 +1428,7 @@ public partial class Npc : Entity
                                 return;
                             }
 
-                            switch (Descriptor.Movement)
+                            switch (CombatMovement)
                             {
                                 case (int)NpcMovement.StandStill:
                                     LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
@@ -1464,7 +1484,7 @@ public partial class Npc : Entity
     {
         if (target.MapId != MapId ||
             target.MapInstanceId != MapInstanceId ||
-            Descriptor.Movement == (byte)NpcMovement.Static)
+            CombatMovement == (byte)NpcMovement.Static)
         {
             return ResolveCombatMovementMode() == NpcCombatMovementMode.HoldPosition;
         }
@@ -1588,6 +1608,9 @@ public partial class Npc : Entity
         )
             ? (NpcCombatMovementMode)Descriptor.CombatMovementMode
             : NpcCombatMovementMode.Auto;
+
+        if (_boardingCombatant && configured == NpcCombatMovementMode.HoldPosition)
+            return NpcCombatMovementMode.Melee;
 
         if (configured != NpcCombatMovementMode.Auto)
         {
@@ -2211,6 +2234,8 @@ public partial class Npc : Entity
 
     private bool CheckForResetLocation(bool forceDistance = false)
     {
+        if (_boardingCombatant) return false;
+
         // Check if we've moved out of our range we're allowed to move from after being "aggro'd" by something.
         // If so, remove target and move back to the origin point.
         if (Options.Instance.Npc.AllowResetRadius && AggroCenterMap != null && (GetDistanceTo(AggroCenterMap, AggroCenterX, AggroCenterY) > Math.Max(Options.Instance.Npc.ResetRadius, Math.Min(Descriptor.ResetRadius, Math.Max(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight))) || forceDistance))
@@ -2294,6 +2319,9 @@ public partial class Npc : Entity
     public bool CanPlayerAttack(Player en)
     {
         //Check to see if the npc is a friend/protector...
+        if (_boardingCombatant)
+            return en.InGame && !en.IsDead && !en.HasPendingDeath && en.MapInstanceId == MapInstanceId;
+
         if (IsAllyOf(en))
         {
             return false;
@@ -2311,6 +2339,7 @@ public partial class Npc : Entity
 
     public override bool IsAllyOf(Entity otherEntity)
     {
+        if (_boardingCombatant && otherEntity is Player) return false;
         if (PetOwner is { } owner)
             return otherEntity switch
             {
@@ -2346,6 +2375,9 @@ public partial class Npc : Entity
 
     public bool ShouldAttackPlayerOnSight(Player en)
     {
+        if (_boardingCombatant)
+            return en.InGame && !en.IsDead && !en.HasPendingDeath && en.MapInstanceId == MapInstanceId;
+
         if (IsAllyOf(en))
         {
             return false;
@@ -2505,7 +2537,7 @@ public partial class Npc : Entity
                 }
             }
         }
-        else if (Target == null && Descriptor.Aggressive && closestIndex != -1)
+        else if (Target == null && (_boardingCombatant || Descriptor.Aggressive) && closestIndex != -1)
         {
             // Aggressively attack closest person!
             AssignTarget(possibleTargets[closestIndex]);

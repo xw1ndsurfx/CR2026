@@ -42,6 +42,7 @@ public static partial class GameContentManager
         Gui,
 
         Misc,
+        Ocean,
 
     }
 
@@ -54,6 +55,8 @@ public static partial class GameContentManager
 
     //MonoGame Content Manager
     private static ContentManager sContentManger;
+
+    static IDictionary<string, Texture> sOceanDict = new Dictionary<string, Texture>();
 
     static IDictionary<string, Texture> sEntityDict = new Dictionary<string, Texture>();
 
@@ -122,6 +125,7 @@ public static partial class GameContentManager
 
         sContentManger = new ContentManager(container, "");
         LoadEntities();
+        LoadTextureGroup("ocean",sOceanDict);
         LoadSpells();
         LoadAnimations();
         LoadImages();
@@ -467,6 +471,9 @@ public static partial class GameContentManager
                 textureDict = sGuiDict;
 
                 break;
+            case TextureType.Ocean:
+                textureDict = sOceanDict;
+                break;
             case TextureType.Misc:
                 textureDict = sMiscDict;
 
@@ -594,6 +601,9 @@ public static partial class GameContentManager
             case TextureType.Gui:
                 textureDict = sGuiDict;
 
+                break;
+            case TextureType.Ocean:
+                textureDict = sOceanDict;
                 break;
             case TextureType.Misc:
                 textureDict = sMiscDict;

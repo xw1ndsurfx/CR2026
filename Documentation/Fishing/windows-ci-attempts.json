@@ -1,0 +1,102 @@
+{
+  "runs": [
+    {
+      "run_id": 41573497632,
+      "commit": "a12763bdc42ff0473e9eabfef0d29db6db3adb1f",
+      "url": "https://github.com/xw1ndsurfx/CR2026/actions/runs/41573497632/job/125711596241",
+      "conclusion": "failure",
+      "started_at_utc": "2026-11-03T03:39:27Z",
+      "completed_at_utc": "2026-11-03T03:43:36Z",
+      "passed": [
+        "Network build: 0 errors",
+        "Server build: 0 errors",
+        "Client build: 0 errors",
+        "Editor build: 0 errors",
+        "Fishing rules: 269 checks passed",
+        "Native editor startup prerequisite"
+      ],
+      "failed": "FishingEditorTests accessed SelectedTab before native window/handle creation.",
+      "assets_step": "Not executed after editor test failure."
+    },
+    {
+      "run_id": 41574340297,
+      "job_id": 125714257331,
+      "workflow": "Fishing profession",
+      "job": "native-fishing",
+      "commit": "7f4bbc9c9d6cbeb8e05429154defa6eac47f65b9",
+      "url": "https://github.com/xw1ndsurfx/CR2026/actions/runs/41574340297/job/125714257331",
+      "conclusion": "failure",
+      "started_at_utc": "2026-11-03T03:49:58Z",
+      "completed_at_utc": "2026-11-03T03:54:48Z",
+      "passed": [
+        "Network build: 0 errors",
+        "Server build: 0 errors",
+        "Client build: 0 errors",
+        "Editor build: 0 errors",
+        "Fishing rules: 269 checks passed.",
+        "Native editor startup prerequisite"
+      ],
+      "build_results": [
+        { "project": "Intersect.Network", "errors": 0, "observed_at_utc": "2026-11-03T03:52:07.3442177Z" },
+        { "project": "Intersect.Server", "errors": 0, "observed_at_utc": "2026-11-03T03:53:20.2043804Z" },
+        { "project": "Intersect.Client", "errors": 0, "observed_at_utc": "2026-11-03T03:53:36.6997241Z" },
+        { "project": "Intersect.Editor", "errors": 0, "observed_at_utc": "2026-11-03T03:54:12.0846543Z" }
+      ],
+      "domain_checks": {
+        "status": "success",
+        "passed_count": 269,
+        "observed_at_utc": "2026-11-03T03:54:28.0542881Z",
+        "log_output": "Fishing rules: 269 checks passed."
+      },
+      "editor_checks": {
+        "status": "failure",
+        "passed_count": null,
+        "prerequisite_output": "PASS editor login creates map layers before server options; resource brush initializes once after configuration",
+        "exception": "System.InvalidOperationException: Sequence contains no elements",
+        "observed_at_utc": "2026-11-03T03:54:43.2316026Z",
+        "stack": [
+          "FishingEditorTests.Input<T>: Utilities/InterfaceEditorTests/FishingEditorTests.cs:33",
+          "FishingEditorTests.Run: Utilities/InterfaceEditorTests/FishingEditorTests.cs:79",
+          "Program.Run: Utilities/InterfaceEditorTests/Program.cs:43"
+        ],
+        "diagnosis": "The real off-screen Show/DoEvents lifecycle created the native handles and selected the Zones tab; the assertion checking that initial selection passed. The next Input<T> lookup failed because the selected page contained no TableLayoutPanel. The initial production page was therefore not built during this observed native lifecycle.",
+        "source_explanation": "FrmFishing calls BuildSelectedPage before native tab selection exists; that method returns for SelectedIndex < 0. Native selection during Show did not populate the initial page in this run.",
+        "required_correction": "Initialize the first production page deterministically while retaining the real native lifecycle and all editor assertions."
+      },
+      "failed": "The initial Zones page was selected but its controls were absent after the native WinForms Show lifecycle.",
+      "assets_step": "Not executed: Verify-Fishing.ps1 stopped at line 17 after the editor test failure. This run does not validate any resource count.",
+      "exit_code": 1,
+      "exit_observed_at_utc": "2026-11-03T03:54:43.7590762Z"
+    }
+  ],
+  "correction_applies_to_run": 41573497632,
+  "correction": "The fixture now shows the real WinForms editor off-screen, pumps pending UI messages, checks initial native handles and selection, and switches tabs through the actual SelectedIndexChanged event. No production behavior or domain assertion is removed.",
+  "related_workflow_failures": [
+    {
+      "run_id": 41574340187,
+      "job_id": 125714256814,
+      "workflow": "Poker production validation",
+      "job": "functional-inventory",
+      "commit": "7f4bbc9c9d6cbeb8e05429154defa6eac47f65b9",
+      "url": "https://github.com/xw1ndsurfx/CR2026/actions/runs/41574340187/job/125714256814",
+      "conclusion": "failure",
+      "started_at_utc": "2026-11-03T03:49:55Z",
+      "completed_at_utc": "2026-11-03T03:52:47Z",
+      "observed_at_utc": "2026-11-03T03:52:41.9067440Z",
+      "exception": "System.ArgumentNullException: Value cannot be null.",
+      "stack": [
+        "System.Threading.Monitor.ReliableEnter(Object obj, Boolean& lockTaken)",
+        "Intersect.Server.Entities.Player.EndFishing: Intersect.Server.Core/Entities/Player.Fishing.cs:443",
+        "Intersect.Server.Entities.Player.Die: Intersect.Server.Core/Entities/Player.cs:1254",
+        "DeathSystemTests.RunCore: Utilities/PokerInventoryTests/DeathSystemTests.cs:54",
+        "DeathSystemTests.Run: Utilities/PokerInventoryTests/DeathSystemTests.cs:18"
+      ],
+      "diagnosis": "The existing death idempotence fixture creates an uninitialized Player with a pending death and no fishing session. EntityLock is null in that fixture. The new Die hook enters EndFishing, which attempts lock(EntityLock) before checking whether a fishing session exists.",
+      "required_correction": "Make EndFishing a no-op before acquiring the lock when no fishing session exists, retaining its session check under the lock for active sessions and preserving the existing death test.",
+      "exit_code": 1,
+      "exit_observed_at_utc": "2026-11-03T03:52:41.9078967Z",
+      "gate_conclusion": "The dependent Poker production gate also failed; this is not a separate compiler failure."
+    }
+  ],
+  "evidence_scope": "API job conclusions and downloaded job logs for the exact commits above. Diagnostics combine those logs with the corresponding source. Both Fishing attempts failed; neither reached the asset verification step. Production corrections require a subsequent run before success can be claimed."
+}

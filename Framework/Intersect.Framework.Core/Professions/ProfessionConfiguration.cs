@@ -95,7 +95,7 @@ public sealed class ProfessionConfiguration
     public ProfessionDefinition[] Professions { get; set; } = [];
 
     public bool IsStructurallyValid =>
-        (Professions ?? []).Length <= 512 &&
+        (Professions ?? []).Count(profession => profession == null || !NativeProfessions.IsNative(profession.Id)) <= 512 &&
         (Professions ?? []).Count(profession => profession?.PotionExperience == true) <= 1 &&
         (Professions ?? []).All(profession => profession is { IsStructurallyValid: true }) &&
         (Professions ?? []).Select(profession => profession.Id).Distinct().Count() == (Professions ?? []).Length &&

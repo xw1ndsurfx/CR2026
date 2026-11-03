@@ -42,7 +42,7 @@ public partial class EventCommandSpawnNpc : UserControl
         mCurrentMap = currentMap;
         InitLocalization();
         cmbNpc.Items.Clear();
-        cmbNpc.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpc);
         cmbNpc.SelectedIndex = NPCDescriptor.ListIndex(mMyCommand.NpcId);
         if (mMyCommand.MapId != Guid.Empty)
         {

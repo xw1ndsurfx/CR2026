@@ -18,7 +18,7 @@ public partial class EventCommandStartCommonEvent : UserControl
         InitLocalization();
 
         cmbEvent.Items.Clear();
-        cmbEvent.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbEvent);
 
         cmbEvent.SelectedIndex = EventDescriptor.ListIndex(refCommand.EventId);
         chkAllInInstance.Checked = refCommand.AllInInstance;

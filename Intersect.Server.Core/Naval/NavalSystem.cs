@@ -54,6 +54,7 @@ internal static partial class NavalSystem
         internal long RespawnAt, AvoidUntil;
         internal Guid BoardingMap;
         internal int BoardingX, BoardingY;
+        internal DockLanding Mooring;
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
@@ -182,27 +183,22 @@ internal static partial class NavalSystem
                 if (player.CaptainedShipId != Guid.Empty)
                 {
                     if (!Ships.TryGetValue(player.CaptainedShipId, out var active)) return;
-                    var d = active.Definition; var s = active.State;
+                    var s = active.State;
                     if (Math.Abs(s.Speed) > .1)
                     { Notice(player, "Anchor with Space and stop the ship before disembarking."); return; }
                     if (active.SunkUntil > 0) { Notice(player, "Your ship has sunk. Return to the harbour to repair it."); return; }
-                    var attributes = MapController.Get(s.MapId)?.Attributes;
-                    bool ExitClear(int x, int y) => ClearTile(player, s.MapId, x, y) &&
-                        !HullTiles(active, ocean, s.MapId, s.X, s.Y).Contains((s.MapId, x, y)) &&
-                        !Ships.Values.Any(other => other != active && HullTiles(other, ocean, other.State.MapId,
-                            other.State.X, other.State.Y).Contains((s.MapId, x, y)));
-                    var painted = ShipDock.Tiles(attributes).Any();
-                    // A painted quay is an explicit safe shore: never choose unmarked sea around it.
-                    var exit = painted ? ShipDock.FindLanding(attributes, s.X, s.Y, 5, ExitClear) :
-                        ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,ExitClear);
+                    var exit = FindDockLanding(player, active);
                     if (exit == null)
                     { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
+                    returnPoint = player.NavalFleet.FirstOrDefault(v => v.Id == s.Id);
+                    if (returnPoint != null && !SaveDockingReturn(player, returnPoint, exit))
+                    { Notice(player, "Docking could not be saved. Stay aboard and try again."); return; }
+                    returnPoint ??= new OwnedShip { ReturnMapId=exit.MapId, ReturnX=exit.X, ReturnY=exit.Y,
+                        ReturnDockX=exit.DockX, ReturnDockY=exit.DockY };
                     Emit(NavalEffectKind.Disembark,s.MapId,s.X,s.Y,s.Heading,Timing.Global.Milliseconds);
-                    returnPoint = player.NavalFleet.FirstOrDefault(v => v.Id == s.Id) ?? new OwnedShip {
-                        ReturnMapId=active.BoardingMap, ReturnX=active.BoardingX, ReturnY=active.BoardingY,
-                        ReturnDockX=d.DockX, ReturnDockY=d.DockY };
+                    active.Mooring = exit;
                     ReleaseLocked(player);
-                    dock = (s.MapId,exit.Value.X,exit.Value.Y);
+                    dock = (exit.MapId,exit.X,exit.Y);
                 }
                 else
                 {
@@ -215,6 +211,7 @@ internal static partial class NavalSystem
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
                     vessel.BoardingMap=player.MapId; vessel.BoardingX=player.X; vessel.BoardingY=player.Y;
+                    vessel.Mooring = null;
                     vessel.LeftLaunchDock=false;vessel.LaunchedAt=Timing.Global.Milliseconds;
                     vessel.State.CaptainId = player.Id;
                     vessel.LastStep = 0; vessel.Controls.Reset(); vessel.Anchored = false;

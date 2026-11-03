@@ -88,6 +88,8 @@ internal static class UiDesignerRuntime
         }
         if(rest.HasValues)control.LoadJson(rest);
         if(properties["DesignerText"] is {} text && control is Label label && control is not TextBox && control is not MultilineTextBox) label.Text=text.Value<string>();
+        if (!_enabled && control is Label compact && Intersect.Client.Interface.Game.HudPlacement.IsCompactTextHud(compact))
+            Intersect.Client.Interface.Game.HudPlacement.FitTextHud(compact, compact.X, compact.Y);
     }
     internal static void Update(Canvas? canvas)
     {

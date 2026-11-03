@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -98,6 +98,8 @@ public partial class CharacterWindow
     int ManaStealAmount = 0;
 
     private PlayerProfessionProfilePacket[] _professionDetails = [];
+    private PlayerMasteryProfilePacket[] _masteryDetails = [];
+    private bool _masteriesAvailable;
 
     //Init
     public CharacterWindow(Canvas gameCanvas)
@@ -182,71 +184,7 @@ public partial class CharacterWindow
         _detailsScroll.SetBounds(20, 48, 610, 445);
         _detailsWindow.IsHidden = true;
 
-        // Create Achievements after JSON layout is loaded. This prevents legacy
-        // CharacterWindow JSON/font data from leaving the dynamically-added button
-        // with stale text geometry (which could render as only a single glyph).
-        _achievementsButton = new Button(mCharacterWindow, nameof(_achievementsButton))
-        {
-            // The button's internal Text control can collapse to a single glyph with
-            // the global Empire 7 bitmap override. Keep the clickable button textless
-            // and render its caption with a normal Label child instead.
-            Text = string.Empty,
-        };
-        _achievementsButton.Clicked += (_, _) =>
-            PacketSender.SendRequestAchievementState(openWindow: true);
-
-        _petsButton = new Button(mCharacterWindow, nameof(_petsButton)) { Text = string.Empty };
-        _petsButton.Clicked += (_, _) => PacketSender.SendRequestPetState(openWindow: true);
-        var petsCaption = new Label(_petsButton, "PetsCaption")
-        {
-            AutoSizeToContents = false,
-            Font = _detailsButton.Font,
-            FontSize = _detailsButton.FontSize,
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Pets"),
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-        };
-
-        var achievementsCaption = new Label(_achievementsButton, "AchievementsCaption")
-        {
-            AutoSizeToContents = false,
-            Font = _detailsButton.Font,
-            FontSize = _detailsButton.FontSize,
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Achievements"),
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-        };
-
-        // Keep all three actions evenly spaced within the character window.
-        // Fixed 132px buttons exceeded the window width and clipped Pets.
-        const int actionButtonMargin = 12;
-        const int actionButtonGap = 6;
-        var actionButtonWidth = Math.Max(60, (mCharacterWindow.Width - actionButtonMargin * 2 - actionButtonGap * 2) / 3);
-        var actionButtonHeight = Math.Max(24, _detailsButton.Height);
-        var actionButtonsX = actionButtonMargin;
-        _detailsButton.FontSize = 9;
-        var actionButtonsY = _detailsButton.Y;
-
-        _detailsButton.SetBounds(
-            actionButtonsX,
-            actionButtonsY,
-            actionButtonWidth,
-            actionButtonHeight
-        );
-        _achievementsButton.SetBounds(
-            actionButtonsX + actionButtonWidth + actionButtonGap,
-            actionButtonsY,
-            actionButtonWidth,
-            actionButtonHeight
-        );
-        _petsButton.SetBounds(actionButtonsX + 2 * (actionButtonWidth + actionButtonGap),
-            actionButtonsY, actionButtonWidth, actionButtonHeight);
-        petsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
-        petsCaption.BringToFront();
-        achievementsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
-        achievementsCaption.BringToFront();
+        BuildCharacterActions();
     }
 
     //Update Button Event Handlers
@@ -627,6 +565,17 @@ public partial class CharacterWindow
         Row("Cooldown Reduction", $"{CooldownAmount}%");
 
         y += 10;
+        Heading(ClientLanguages.Text("Weapon Masteries"));
+        if (!_masteriesAvailable)
+            Row(ClientLanguages.Text("Weapon Masteries"), ClientLanguages.Text("Unavailable"));
+        foreach (var mastery in _masteryDetails)
+        {
+            Row(ClientLanguages.ContentText(ClientLanguages.Text(mastery.Name)), ClientLanguages.Format("Level {0}/{1}", mastery.Level, mastery.MaximumLevel));
+            Row(ClientLanguages.Text("Mastery damage bonus"), $"+{mastery.DamageBonusPercent:0.##}%");
+            Row(ClientLanguages.Text("Mastery attack speed bonus"), $"+{mastery.AttackSpeedBonusPercent:0.##}%");
+            Row(ClientLanguages.Text("Mastery critical chance bonus"), $"+{mastery.CritChanceBonus}%");
+        }
+        y += 10;
         Heading("Professions");
         if (_professionDetails.Length == 0)
         {
@@ -636,7 +585,7 @@ public partial class CharacterWindow
         {
             foreach (var profession in _professionDetails.OrderBy(entry => entry.Name))
             {
-                Row((Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name),
+                Row((Intersect.Framework.Core.Professions.NativeProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Professions.NativeProfessions.Caption(profession.ProfessionId,ClientLanguages.Current):profession.Name),
                     $"Lv {profession.Level}/{profession.MaximumLevel}");
                 Row("Experience to next",
                     profession.ExperienceToNextLevel < 0 ? "MAX" :
@@ -695,6 +644,8 @@ public partial class CharacterWindow
             return;
 
         _professionDetails = packet.Professions ?? [];
+        _masteryDetails = packet.Masteries ?? [];
+        _masteriesAvailable = packet.MasteriesAvailable;
         if (!_detailsWindow.IsHidden)
             RefreshDetails();
     }

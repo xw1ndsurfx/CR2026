@@ -12,17 +12,25 @@ namespace Intersect.Tests.Server.Naval;
 
 public sealed partial class NavalTests
 {
+    private sealed class BoardingTestPlayer : Intersect.Server.Entities.Player
+    {
+        public override long GetMaxVital(int vital) => vital == (int)Vital.Health ? 100000 : base.GetMaxVital(vital);
+    }
+
     [Test]
     public void AutomaticBoardingBuildsAnIsolatedPlayableDeckWithoutChangingAuthoredNpcs()
     {
         using var world = new EnemyTestWorld();
-        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2 };
+        var formulas = typeof(Intersect.Server.General.Formulas).GetField("_formulas", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+        var previousFormulas = formulas.GetValue(null);
+        formulas.SetValue(null, new Intersect.Server.General.Formulas { PhysicalDamage = "BaseDamage", MagicDamage = "BaseDamage", TrueDamage = "BaseDamage" });
+        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2, Movement = (byte)NpcMovement.Static };
         NPCDescriptor.Lookup.Set(source.Id, source);
         MapController? deck = null;
         Guid crewId = default;
         try
         {
-            var result = NavalSystem.CreateBoardingDeck(new HerboniaPatrol { Level = 10, BoardingCrewNpcId = source.Id, BoardingCrewCount = 4 }, 1000);
+            var result = NavalSystem.CreateBoardingDeck(new HerboniaPatrol { Level = 10, BoardingCrewNpcId = source.Id, BoardingCrewCount = 12 }, 1000);
             Assert.That(result.HasValue, Is.True);
             var generated = result!.Value;
             deck = generated.Map;
@@ -32,8 +40,8 @@ public sealed partial class NavalTests
             Assert.That(generated.Dungeon.MinimumPartySize, Is.EqualTo(1));
             Assert.That(generated.Dungeon.NpcRespawnEnabled, Is.False);
             Assert.That(layout.Walkable(generated.X, generated.Y), Is.True);
-            Assert.That(deck.Spawns.Count, Is.EqualTo(4));
-            Assert.That(deck.Spawns.Select(spawn => (spawn.X, spawn.Y)).Distinct().Count(), Is.EqualTo(4));
+            Assert.That(deck.Spawns.Count, Is.EqualTo(12));
+            Assert.That(deck.Spawns.Select(spawn => (spawn.X, spawn.Y)).Distinct().Count(), Is.EqualTo(12));
             foreach (var spawn in deck.Spawns)
             {
                 Assert.That(layout.Walkable(spawn.X, spawn.Y), Is.True);
@@ -45,7 +53,59 @@ public sealed partial class NavalTests
             Assert.That(crew.Level, Is.EqualTo(10));
             Assert.That(crew.Damage, Is.EqualTo(20));
             Assert.That(crew.MaxVitals[(int)Vital.Health], Is.EqualTo(160));
+            Assert.That(crew.Movement, Is.Not.EqualTo((byte)NpcMovement.Static), "Generated sailors must be able to pursue boarders.");
+            Assert.That(crew.Aggressive, Is.True);
+            var instanceId = Guid.NewGuid();
+            var instance = new MapInstance(deck, instanceId, null!);
+            var instances = (System.Collections.IDictionary)typeof(MapController)
+                .GetField("mInstances", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(deck)!;
+            instances.Add(instanceId, instance);
+            var boarder = new BoardingTestPlayer { Id = Guid.NewGuid(), MapId = deck.Id,
+                MapInstanceId = instanceId, InGame = true, X = (byte)generated.X, Y = (byte)generated.Y };
+            GC.SuppressFinalize(boarder);
+            boarder.SetMaxVital(Vital.Health, 100000); boarder.SetVital(Vital.Health, 100000);
+            instance.AddEntity(boarder);
+            instance.CacheMapBlocks();
+            try
+            {
+                foreach (var spawn in deck.Spawns)
+                {
+                    var sailor = new Intersect.Server.Entities.Npc(crew) { MapId = deck.Id, MapInstanceId = instanceId,
+                        X = (byte)spawn.X, Y = (byte)spawn.Y };
+                    GC.SuppressFinalize(sailor); sailor.ConfigureBoardingCombat(); instance.AddEntity(sailor);
+                    try
+                    {
+                        sailor.TryFindNewTarget(long.MaxValue);
+                        Assert.That(sailor.Target, Is.SameAs(boarder), "Every sailor detects the player at the boarding entry.");
+                        var before = (sailor.X, sailor.Y);
+                        for (var tick = 0; tick < 100 && (Math.Abs(sailor.X - boarder.X) + Math.Abs(sailor.Y - boarder.Y) > 1); tick++)
+                        {
+                            sailor.MoveTimer = 0;
+                            var finder = typeof(Intersect.Server.Entities.Npc).GetField("mPathFinder", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(sailor)!;
+                            finder.GetType().GetField("mWaitTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(finder, 0L);
+                            sailor.Update(Timing.Global.Milliseconds + 1);
+                        }
+                        sailor.AttackTimer = 0; sailor.Dir = sailor.GetDirectionTo(boarder);
+                        sailor.TryAttack(boarder);
+                        Assert.That(sailor.GetDistanceTo(boarder), Is.LessThanOrEqualTo(1), "Crew reaches melee range through real update ticks.");
+                        Assert.That((sailor.X, sailor.Y), Is.Not.EqualTo(before), "Actual combat ticks pursue the boarder.");
+
+                    }
+                    finally { instance.RemoveEntity(sailor); }
+                }
+            }
+            finally { instance.RemoveEntity(boarder); }
+            Assert.That(boarder.GetVital(Vital.Health), Is.LessThan(100000), "Crew attacks and damages the boarder at melee range.");
+            var passiveCrew = new Intersect.Server.Entities.Npc(source) { MapId = deck.Id, MapInstanceId = instanceId, X = (byte)layout.EntryX, Y = (byte)(layout.EntryY - 1) };
+            GC.SuppressFinalize(passiveCrew);
+            passiveCrew.ConfigureBoardingCombat();
+            Assert.That(passiveCrew.ShouldAttackPlayerOnSight(boarder), Is.True, "A passive source NPC becomes hostile only for the boarding encounter.");
+            Assert.That(passiveCrew.CanMoveInDirection(Direction.Up, out _, out _), Is.True, "A static source NPC can pursue boarders after runtime configuration.");
+            passiveCrew.ConfigureBoardingCombat(false);
+            Assert.That(passiveCrew.ShouldAttackPlayerOnSight(boarder), Is.False, "Finishing the encounter restores authored aggression.");
+            Assert.That(passiveCrew.CanMoveInDirection(Direction.Up, out _, out _), Is.False, "Finishing the encounter restores authored static movement.");
             Assert.That(source.Level, Is.EqualTo(2));
+            Assert.That(source.Movement, Is.EqualTo((byte)NpcMovement.Static), "The authored NPC keeps its original movement behavior.");
             Assert.That(crew.Id, Is.Not.EqualTo(source.Id));
             var index = deck.MapGrid;
             Assert.That(index, Is.LessThan(0));
@@ -68,6 +128,7 @@ public sealed partial class NavalTests
                 world.Invoke("PruneGeneratedBoardingDecks", long.MaxValue);
             }
             NPCDescriptor.Lookup.DeleteAt(source.Id);
+            formulas.SetValue(null, previousFormulas);
         }
     }
 

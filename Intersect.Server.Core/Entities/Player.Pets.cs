@@ -10,6 +10,10 @@ namespace Intersect.Server.Entities;
 
 public sealed class PetCollection
 {
+    public Intersect.Framework.Core.RoyalContracts.RoyalContractProfile RoyalContracts { get; set; } = new();
+    public Intersect.Server.Archery.PaidMasteryRespec? MasteryRespec { get; set; }
+    public Intersect.Framework.Core.Jousting.JoustCareer Jousting { get; set; } = new();
+    public MountCollection Mounts { get; set; } = new();
     public Intersect.Framework.Core.QualityOfLife.PremiumConvenienceProfile Convenience {get;set;}=new();
     public Guid ActivePetId { get; set; }
     public Dictionary<Guid, PetProgress> OwnedPets { get; set; } = [];
@@ -36,8 +40,11 @@ public partial class Player
     public string PetsJson
     {
         get => JsonConvert.SerializeObject(PetCollection);
-        set => PetCollection = string.IsNullOrWhiteSpace(value) ? new PetCollection() :
-            JsonConvert.DeserializeObject<PetCollection>(value) ?? new PetCollection();
+        set
+        {
+            PetCollection = string.IsNullOrWhiteSpace(value) ? new PetCollection() : JsonConvert.DeserializeObject<PetCollection>(value) ?? new PetCollection();
+            PetCollection.Mounts ??= new(); PetCollection.Mounts.Owned ??= [];
+        }
     }
 
     [NotMapped, JsonIgnore]

@@ -31,6 +31,7 @@ internal static partial class DungeonRunRuntime
                 }
             }
 
+            if (lastParticipant && run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
             DungeonStatisticsRuntime.RecordFailure(player, run.Dungeon.Id);
             if (run.Dungeon.FailureCommonEventId != Guid.Empty &&
                 EventDescriptor.Get(run.Dungeon.FailureCommonEventId) is { } failureEvent)

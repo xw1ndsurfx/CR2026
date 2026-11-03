@@ -36,6 +36,9 @@ internal static class DungeonConfigurationRuntime
         var configuration = DungeonConfiguration.FromJson(json);
         foreach(var dungeon in configuration.Dungeons)
         {
+            if(dungeon.CompletionRequirements.HasFlag(DungeonCompletionRequirement.CompleteQuest) &&
+                Intersect.GameObjects.QuestDescriptor.Get(dungeon.CompletionQuestId)==null)
+                throw new InvalidDataException("A dungeon objective quest no longer exists.");
             if(dungeon.Chest.Drops.Any(drop=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(drop.ItemId)==null))
                 throw new InvalidDataException("A chest reward item no longer exists.");
             foreach(var animation in new[]{dungeon.Chest.AnimationId,dungeon.Chest.CompletionAnimationId})

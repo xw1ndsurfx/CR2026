@@ -24,9 +24,10 @@ internal static class Program
         ItemDescriptor.Lookup[equipment.Id] = equipment;
         var tests = new (string Name, Action Run)[]
         {
-            ("Shared mini-game catalog exposes Poker, Blackjack, Potions, Roulette, Cooking and Lockpicking", () =>
+            ("Shared mini-game catalog preserves existing games and includes solo archery", () =>
             {
-                Check(MiniGameCatalog.All.Count == 8);
+                Check(MiniGameCatalog.All.Select(g => g.Type).Order().SequenceEqual(Enum.GetValues<MiniGameType>().Order()));
+                Check(MiniGameCatalog.Get(MiniGameType.Archery) is { MinimumPlayers: 1, MaximumPlayers: 1 });
                 var poker = MiniGameCatalog.Get(MiniGameType.Poker);
                 var blackjack = MiniGameCatalog.Get(MiniGameType.Blackjack);
                 var potions = MiniGameCatalog.Get(MiniGameType.Potions);

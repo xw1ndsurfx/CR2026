@@ -20,7 +20,7 @@ public partial class EventCommandSetClass : UserControl
         mEventEditor = editor;
         InitLocalization();
         cmbClass.Items.Clear();
-        cmbClass.Items.AddRange(ClassDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ClassDescriptor>(cmbClass);
         cmbClass.SelectedIndex = ClassDescriptor.ListIndex(mMyCommand.ClassId);
     }
 
