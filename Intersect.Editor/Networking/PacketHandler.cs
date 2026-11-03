@@ -68,6 +68,10 @@ internal sealed partial class PacketHandler
 
     public static GameObjectUpdated GameObjectUpdatedDelegate;
 
+    // Separate from the historical single-editor delegate: staged saves must not
+    // lose their exact object receipts when another editor installs its hooks.
+    internal static event Action<GameObjectPacket>? GameObjectReceived;
+
     public static MapUpdated MapUpdatedDelegate;
 
     public IApplicationContext Context { get; }
@@ -470,6 +474,11 @@ internal sealed partial class PacketHandler
     //GameObjectPacket
     public void HandlePacket(IPacketSender packetSender, GameObjectPacket packet)
     {
+        if (!string.IsNullOrEmpty(packet.CreationError))
+        {
+            GameObjectReceived?.Invoke(packet);
+            return;
+        }
         var id = packet.Id;
         var deleted = packet.Deleted;
         var json = string.Empty;
@@ -766,6 +775,7 @@ internal sealed partial class PacketHandler
                 throw new ArgumentOutOfRangeException();
         }
 
+        GameObjectReceived?.Invoke(packet);
         GameObjectUpdatedDelegate?.Invoke(packet.Type);
     }
 

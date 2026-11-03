@@ -1,0 +1,224 @@
+{
+  "Entries": {
+    "Automatic resumption cancelled. Accept the challenge to fish manually.": {
+      "en": "Automatic resumption cancelled. Accept the challenge to fish manually.",
+      "fr": "Reprise automatique annulée. Accepte le défi pour pêcher manuellement.",
+      "es": "Reanudación automática cancelada. Acepta el desafío para pescar manualmente."
+    },
+    "The legendary creature escaped. Automatic fishing will resume.": {
+      "en": "The legendary creature escaped. Automatic fishing will resume.",
+      "fr": "La créature légendaire s’est échappée. La pêche automatique va reprendre.",
+      "es": "La criatura legendaria escapó. La pesca automática se reanudará."
+    },
+    "Fishing": {
+      "en": "Fishing",
+      "fr": "Pêche",
+      "es": "Pesca"
+    },
+    "Fishing is unavailable here.": {
+      "en": "Fishing is unavailable here.",
+      "fr": "La pêche n’est pas disponible ici.",
+      "es": "La pesca no está disponible aquí."
+    },
+    "Equip a compatible fishing tool.": {
+      "en": "Equip a compatible fishing tool.",
+      "fr": "Équipe un outil de pêche compatible.",
+      "es": "Equipa una herramienta de pesca compatible."
+    },
+    "Finish your current activity before fishing.": {
+      "en": "Finish your current activity before fishing.",
+      "fr": "Termine ton activité actuelle avant de pêcher.",
+      "es": "Termina tu actividad actual antes de pescar."
+    },
+    "Fishing stopped because your position or equipment changed.": {
+      "en": "Fishing stopped because your position or equipment changed.",
+      "fr": "La pêche s’est arrêtée car ta position ou ton équipement a changé.",
+      "es": "La pesca se detuvo porque cambió tu posición o tu equipo."
+    },
+    "No eligible catch is available with this tool and these conditions.": {
+      "en": "No eligible catch is available with this tool and these conditions.",
+      "fr": "Aucune prise n’est disponible avec cet outil dans ces conditions.",
+      "es": "No hay capturas disponibles con esta herramienta en estas condiciones."
+    },
+    "Your bait is missing.": {
+      "en": "Your bait is missing.",
+      "fr": "Tu n’as pas les appâts nécessaires.",
+      "es": "Te falta el cebo necesario."
+    },
+    "Your inventory is full. Make room and cast again.": {
+      "en": "Your inventory is full. Make room and cast again.",
+      "fr": "Ton inventaire est plein. Libère de la place et relance.",
+      "es": "Tu inventario está lleno. Libera espacio y vuelve a lanzar."
+    },
+    "Fishing could not be saved. Please try again.": {
+      "en": "Fishing could not be saved. Please try again.",
+      "fr": "La pêche n’a pas pu être sauvegardée. Réessaie.",
+      "es": "No se pudo guardar la pesca. Inténtalo de nuevo."
+    },
+    "Fishing configuration saved.": {
+      "en": "Fishing configuration saved.",
+      "fr": "Configuration de la pêche enregistrée.",
+      "es": "Configuración de pesca guardada."
+    },
+    "Fishing draft saved.": {
+      "en": "Fishing draft saved.",
+      "fr": "Brouillon de la pêche enregistré.",
+      "es": "Borrador de pesca guardado."
+    },
+    "The saved fishing draft is invalid. It was preserved and was not applied.": {
+      "en": "The saved fishing draft is invalid. It was preserved and was not applied.",
+      "fr": "Le brouillon de pêche enregistré n’est pas valide. Il a été conservé et n’a pas été appliqué.",
+      "es": "El borrador de pesca guardado no es válido. Se ha conservado y no se ha aplicado."
+    },
+    "Fishing configuration could not be saved. The active configuration was not changed.": {
+      "en": "Fishing configuration could not be saved. The active configuration was not changed.",
+      "fr": "La configuration de pêche n’a pas pu être enregistrée. La configuration active n’a pas été modifiée.",
+      "es": "No se pudo guardar la configuración de pesca. La configuración activa no se ha modificado."
+    },
+    "Fishing configuration could not be read. Existing files were preserved.": {
+      "en": "Fishing configuration could not be read. Existing files were preserved.",
+      "fr": "La configuration de pêche n’a pas pu être lue. Les fichiers existants ont été conservés.",
+      "es": "No se pudo leer la configuración de pesca. Se han conservado los archivos existentes."
+    },
+    "Invalid fishing configuration.": {
+      "en": "Invalid fishing configuration.",
+      "fr": "La configuration de la pêche n’est pas valide.",
+      "es": "La configuración de pesca no es válida."
+    },
+    "Fishing configuration references a missing item, map, profession or animation.": {
+      "en": "Fishing configuration references a missing item, map, profession or animation.",
+      "fr": "La configuration de la pêche référence un objet, une carte, un métier ou une animation absent ou incompatible.",
+      "es": "La configuración de pesca hace referencia a un objeto, mapa, profesión o animación inexistente o incompatible."
+    },
+    "Your line broke.": {
+      "en": "Your line broke.",
+      "fr": "Ta ligne a cassé.",
+      "es": "Se rompió tu sedal."
+    },
+    "The catch escaped.": {
+      "en": "The catch escaped.",
+      "fr": "La prise s’est échappée.",
+      "es": "La presa escapó."
+    },
+    "A legendary creature appeared. Take control before time runs out.": {
+      "en": "A legendary creature appeared. Take control before time runs out.",
+      "fr": "Une créature légendaire est apparue. Reprends le contrôle avant la fin du délai.",
+      "es": "Ha aparecido una criatura legendaria. Toma el control antes de que se agote el tiempo."
+    },
+    "The legendary creature escaped. Choose a mode to resume fishing.": {
+      "en": "The legendary creature escaped. Choose a mode to resume fishing.",
+      "fr": "La créature légendaire s’est échappée. Choisis un mode pour reprendre la pêche.",
+      "es": "La criatura legendaria escapó. Elige un modo para seguir pescando."
+    },
+    "Complete the sequence to subdue this creature.": {
+      "en": "Complete the sequence to subdue this creature.",
+      "fr": "Complète la séquence pour maîtriser cette créature.",
+      "es": "Completa la secuencia para dominar a esta criatura."
+    },
+    "Catch secured.": {
+      "en": "Catch secured.",
+      "fr": "Prise capturée.",
+      "es": "Captura conseguida."
+    },
+    "Automatic fishing started.": {
+      "en": "Automatic fishing started.",
+      "fr": "Pêche automatique activée.",
+      "es": "Pesca automática activada."
+    },
+    "Manual fishing selected.": {
+      "en": "Manual fishing selected.",
+      "fr": "Pêche manuelle sélectionnée.",
+      "es": "Pesca manual seleccionada."
+    },
+    "Fishing interrupted.": {
+      "en": "Fishing interrupted.",
+      "fr": "Pêche interrompue.",
+      "es": "Pesca interrumpida."
+    },
+    "Change fishing mode between catches.": {
+      "en": "Change fishing mode between catches.",
+      "fr": "Change de mode entre deux prises.",
+      "es": "Cambia de modo entre capturas."
+    },
+    "Native profession {0} cannot be used for fishing. Select a custom profession or automatic detection / built-in progression.": {
+      "en": "Native profession {0} cannot be used for fishing. Select a custom profession or automatic detection / built-in progression.",
+      "fr": "Le métier natif {0} ne peut pas être utilisé pour la pêche. Sélectionnez un métier personnalisé ou la détection automatique / progression intégrée.",
+      "es": "La profesión nativa {0} no se puede usar para la pesca. Selecciona una profesión personalizada o la detección automática / progresión integrada."
+    },
+    "Fishing profession {0} does not exist on the server. Save it in the Profession Editor or select automatic detection / built-in progression.": {
+      "en": "Fishing profession {0} does not exist on the server. Save it in the Profession Editor or select automatic detection / built-in progression.",
+      "fr": "Le métier de pêche {0} n’existe pas sur le serveur. Enregistrez-le dans l’éditeur de métiers ou sélectionnez la détection automatique / progression intégrée.",
+      "es": "La profesión de pesca {0} no existe en el servidor. Guárdala en el editor de profesiones o selecciona la detección automática / progresión integrada."
+    },
+    "Fishing tool #{0}: equipment item {1} does not exist on the server. Select an existing equipment item.": {
+      "en": "Fishing tool #{0}: equipment item {1} does not exist on the server. Select an existing equipment item.",
+      "fr": "Équipement de pêche n°{0} : l’objet équipable {1} n’existe pas sur le serveur. Sélectionnez un objet équipable existant.",
+      "es": "Herramienta de pesca n.º {0}: el objeto equipable {1} no existe en el servidor. Selecciona un objeto equipable existente."
+    },
+    "Fishing tool #{0}: item {1} is not equipment. Choose an equipment item.": {
+      "en": "Fishing tool #{0}: item {1} is not equipment. Choose an equipment item.",
+      "fr": "Équipement de pêche n°{0} : l’objet {1} n’est pas équipable. Choisissez un objet équipable.",
+      "es": "Herramienta de pesca n.º {0}: el objeto {1} no es equipable. Elige un objeto equipable."
+    },
+    "Fishing tool #{0}: item {1} uses equipment slot {2}, but the server defines {3} slots. Correct its slot in the Item Editor.": {
+      "en": "Fishing tool #{0}: item {1} uses equipment slot {2}, but the server defines {3} slots. Correct its slot in the Item Editor.",
+      "fr": "Équipement de pêche n°{0} : l’objet {1} utilise l’emplacement d’équipement {2}, mais le serveur définit {3} emplacements. Corrigez son emplacement dans l’éditeur d’objets.",
+      "es": "Herramienta de pesca n.º {0}: el objeto {1} usa el espacio de equipo {2}, pero el servidor define {3} espacios. Corrige su espacio en el editor de objetos."
+    },
+    "Fishing tool #{0} ({1}): bait item {2} does not exist on the server.": {
+      "en": "Fishing tool #{0} ({1}): bait item {2} does not exist on the server.",
+      "fr": "Équipement de pêche n°{0} ({1}) : l’objet d’appât {2} n’existe pas sur le serveur.",
+      "es": "Herramienta de pesca n.º {0} ({1}): el objeto de cebo {2} no existe en el servidor."
+    },
+    "Fishing tool #{0} ({1}): bait item {2} must be stackable. Correct the item or choose another bait.": {
+      "en": "Fishing tool #{0} ({1}): bait item {2} must be stackable. Correct the item or choose another bait.",
+      "fr": "Équipement de pêche n°{0} ({1}) : l’objet d’appât {2} doit être empilable. Corrigez l’objet ou choisissez un autre appât.",
+      "es": "Herramienta de pesca n.º {0} ({1}): el objeto de cebo {2} debe ser apilable. Corrige el objeto o elige otro cebo."
+    },
+    "Fishing tool #{0} ({1}): cast animation {2} does not exist on the server.": {
+      "en": "Fishing tool #{0} ({1}): cast animation {2} does not exist on the server.",
+      "fr": "Équipement de pêche n°{0} ({1}) : l’animation de lancer {2} n’existe pas sur le serveur.",
+      "es": "Herramienta de pesca n.º {0} ({1}): la animación de lanzamiento {2} no existe en el servidor."
+    },
+    "Fishing tool #{0} ({1}): use animation {2} does not exist on the server.": {
+      "en": "Fishing tool #{0} ({1}): use animation {2} does not exist on the server.",
+      "fr": "Équipement de pêche n°{0} ({1}) : l’animation d’utilisation {2} n’existe pas sur le serveur.",
+      "es": "Herramienta de pesca n.º {0} ({1}): la animación de uso {2} no existe en el servidor."
+    },
+    "Fishing tool #{0} ({1}): catch animation {2} does not exist on the server.": {
+      "en": "Fishing tool #{0} ({1}): catch animation {2} does not exist on the server.",
+      "fr": "Équipement de pêche n°{0} ({1}) : l’animation de capture {2} n’existe pas sur le serveur.",
+      "es": "Herramienta de pesca n.º {0} ({1}): la animación de captura {2} no existe en el servidor."
+    },
+    "Fishing zone {0}: map {1} does not exist on the server. Remove or replace that map selection.": {
+      "en": "Fishing zone {0}: map {1} does not exist on the server. Remove or replace that map selection.",
+      "fr": "Zone de pêche {0} : la carte {1} n’existe pas sur le serveur. Retirez ou remplacez cette carte dans la sélection.",
+      "es": "Zona de pesca {0}: el mapa {1} no existe en el servidor. Quita o reemplaza ese mapa de la selección."
+    },
+    "Fishing zone {0}: tile center ({1}, {2}) is outside the server map dimensions ({3} by {4}). Correct the coordinates or use whole maps.": {
+      "en": "Fishing zone {0}: tile center ({1}, {2}) is outside the server map dimensions ({3} by {4}). Correct the coordinates or use whole maps.",
+      "fr": "Zone de pêche {0} : le centre en cases ({1}, {2}) dépasse les dimensions des cartes du serveur ({3} par {4}). Corrigez les coordonnées ou utilisez les cartes entières.",
+      "es": "Zona de pesca {0}: el centro en casillas ({1}, {2}) queda fuera de las dimensiones de los mapas del servidor ({3} por {4}). Corrige las coordenadas o usa mapas completos."
+    },
+    "Fishing zone {0}, catch {1}: reward item {2} does not exist on the server.": {
+      "en": "Fishing zone {0}, catch {1}: reward item {2} does not exist on the server.",
+      "fr": "Zone de pêche {0}, prise {1} : l’objet de récompense {2} n’existe pas sur le serveur.",
+      "es": "Zona de pesca {0}, captura {1}: el objeto de recompensa {2} no existe en el servidor."
+    },
+    "Fishing zone {0}, catch {1}: reward item {2} must be stackable and cannot be equipment or a bag.": {
+      "en": "Fishing zone {0}, catch {1}: reward item {2} must be stackable and cannot be equipment or a bag.",
+      "fr": "Zone de pêche {0}, prise {1} : l’objet de récompense {2} doit être empilable et ne peut être ni un équipement ni un sac.",
+      "es": "Zona de pesca {0}, captura {1}: el objeto de recompensa {2} debe ser apilable y no puede ser equipo ni una bolsa."
+    },
+    "Fishing zone {0}, catch {1}: reward item {2} has maximum inventory stack {3}. Set a value greater than zero.": {
+      "en": "Fishing zone {0}, catch {1}: reward item {2} has maximum inventory stack {3}. Set a value greater than zero.",
+      "fr": "Zone de pêche {0}, prise {1} : l’objet de récompense {2} a une pile maximale d’inventaire de {3}. Définissez une valeur supérieure à zéro.",
+      "es": "Zona de pesca {0}, captura {1}: el objeto de recompensa {2} tiene una pila máxima de inventario de {3}. Establece un valor mayor que cero."
+    },
+    "Fishing zone {0}, catch {1}: required player variable {2} does not exist on the server.": {
+      "en": "Fishing zone {0}, catch {1}: required player variable {2} does not exist on the server.",
+      "fr": "Zone de pêche {0}, prise {1} : la variable de joueur requise {2} n’existe pas sur le serveur.",
+      "es": "Zona de pesca {0}, captura {1}: la variable de jugador requerida {2} no existe en el servidor."
+    }
+  }
+}

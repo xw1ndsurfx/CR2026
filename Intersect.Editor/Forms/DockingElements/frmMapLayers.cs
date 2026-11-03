@@ -1,4 +1,4 @@
-using Intersect.Config;
+﻿using Intersect.Config;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.General;
@@ -58,7 +58,19 @@ public partial class FrmMapLayers : DockContent
     public FrmMapLayers()
     {
         InitializeComponent();
+        picTileset.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        picTileset.Dock = DockStyle.None;
+        void SyncTilesetScroll() => pnlTilesetContainer.AutoScrollMinSize = picTileset.Size;
+        picTileset.SizeChanged += (_, _) => SyncTilesetScroll();
+        SyncTilesetScroll();
+        // Scroll each page: the outer dock only sees the fill-sized panels.
+        foreach (var page in new[] { pnlNpcs, pnlAttributes, pnlLights, pnlEvents })
+        {
+            page.AutoScroll = true;
+            page.Padding = new Padding(0, 0, 12, 12);
+        }
         Icon = Program.Icon;
+        InitializeDockLandingEditor();
 
         mMapLayers.Add(picLayer1);
         mMapLayers.Add(picLayer2);
@@ -338,6 +350,8 @@ public partial class FrmMapLayers : DockContent
         {
             if (File.Exists("resources/tilesets/" + tSet.Name))
             {
+                pnlTilesetContainer.AutoScrollPosition = System.Drawing.Point.Empty;
+                picTileset.Location = System.Drawing.Point.Empty;
                 picTileset.Show();
                 Globals.CurrentTileset = tSet;
                 Globals.CurSelX = 0;
@@ -467,6 +481,8 @@ public partial class FrmMapLayers : DockContent
         grpAnimation.Visible = false;
         grpSlide.Visible = false;
         grpCritter.Visible = false;
+        if (_dockLandingGroup != null) _dockLandingGroup.Visible = false;
+        Globals.MapEditorWindow?.CancelDockLandingSelection();
     }
 
     // Used for returning an integer value depending on which radio button is selected on the forms. This is merely used to make PlaceAtrribute less messy.
@@ -530,10 +546,13 @@ public partial class FrmMapLayers : DockContent
 
         switch (selectedType)
         {
+            case MapAttributeType.Dock:
+                ShowDockLandingEditor();
+                break;
             case MapAttributeType.Item:
                 grpItem.Visible = true;
                 cmbItemAttribute.Items.Clear();
-                cmbItemAttribute.Items.AddRange(ItemDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItemAttribute);
                 if (cmbItemAttribute.Items.Count > 0)
                 {
                     cmbItemAttribute.SelectedIndex = 0;
@@ -568,7 +587,7 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Resource:
                 grpResource.Visible = true;
                 cmbResourceAttribute.Items.Clear();
-                cmbResourceAttribute.Items.AddRange(ResourceDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ResourceDescriptor>(cmbResourceAttribute);
                 if (cmbResourceAttribute.Items.Count > 0)
                 {
                     cmbResourceAttribute.SelectedIndex = 0;
@@ -578,7 +597,7 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Animation:
                 grpAnimation.Visible = true;
                 cmbAnimationAttribute.Items.Clear();
-                cmbAnimationAttribute.Items.AddRange(AnimationDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimationAttribute);
                 if (cmbAnimationAttribute.Items.Count > 0)
                 {
                     cmbAnimationAttribute.SelectedIndex = 0;
@@ -593,13 +612,11 @@ public partial class FrmMapLayers : DockContent
                 grpCritter.Visible = true;
                 cmbCritterAnimation.Items.Clear();
                 cmbCritterAnimation.Items.Add(Strings.General.None);
-                cmbCritterAnimation.Items.AddRange(AnimationDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbCritterAnimation);
                 cmbCritterAnimation.SelectedIndex = 0;
                 cmbCritterSprite.Items.Clear();
                 cmbCritterSprite.Items.Add(Strings.General.None);
-                cmbCritterSprite.Items.AddRange(
-                    GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-                );
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbCritterSprite, GameContentManager.TextureType.Entity);
                 cmbCritterSprite.SelectedIndex = 0;
                 if (nudCritterMoveFrequency.Value == 0)
                 {
@@ -644,11 +661,14 @@ public partial class FrmMapLayers : DockContent
         {
             case MapAttributeType.Walkable:
             case MapAttributeType.RainPuddle:
-            case MapAttributeType.Dock:
             case MapAttributeType.Blocked:
             case MapAttributeType.GrappleStone:
             case MapAttributeType.NpcAvoid:
                 return MapAttribute.CreateAttribute(attributeType);
+
+            case MapAttributeType.Dock:
+                return new MapDockAttribute { HasLandingPoint = _dockCustomLanding.Checked,
+                    LandingX = (int)_dockLandingX.Value, LandingY = (int)_dockLandingY.Value };
 
             case MapAttributeType.Item:
                 return CreateItemAttribute();
@@ -787,7 +807,7 @@ public partial class FrmMapLayers : DockContent
     {
         // Update the list incase npcs have been modified since form load.
         cmbNpc.Items.Clear();
-        cmbNpc.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpc);
 
         // Add the map NPCs
         lstMapNpcs.Items.Clear();
@@ -962,7 +982,7 @@ public partial class FrmMapLayers : DockContent
             MapList.OrderedMaps[cmbWarpMap.SelectedIndex].MapId, (int) nudWarpX.Value, (int) nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             cmbWarpMap.Items.Clear();
@@ -1172,6 +1192,7 @@ public partial class FrmMapLayers : DockContent
 
     private void ChangeTab()
     {
+        Globals.MapEditorWindow?.CancelDockLandingSelection();
         btnTileHeader.BackColor = Styling.EditorTheme.Input;
         btnAttributeHeader.BackColor = Styling.EditorTheme.Input;
         btnLightsHeader.BackColor = Styling.EditorTheme.Input;
@@ -1232,6 +1253,8 @@ public partial class FrmMapLayers : DockContent
         CurrentTab = LayerTabs.Lights;
         pnlLights.Show();
     }
+
+    public void ActivateEvents() => btnEventsHeader_Click(this, EventArgs.Empty);
 
     private void btnEventsHeader_Click(object sender, EventArgs e)
     {
@@ -1332,7 +1355,7 @@ public partial class FrmMapLayers : DockContent
         NpcPulseColor = ColorTranslator.FromHtml(Preferences.LoadPreference("NpcPulseColor"));
         npcColorPulseDialog.Color = NpcPulseColor == default ? System.Drawing.Color.Red : NpcPulseColor;
         npcColorPulseDialog.FullOpen = true;
-        npcColorPulseDialog.ShowDialog();
+        npcColorPulseDialog.ShowDialog(this);
         Preferences.SavePreference("NpcPulseColor", npcColorPulseDialog.Color.ToArgb().ToString());
         NpcPulseColor = ColorTranslator.FromHtml(Preferences.LoadPreference("NpcPulseColor"));
     }

@@ -11,12 +11,18 @@ public partial class CreateGameObjectPacket : EditorPacket
     {
     }
 
-    public CreateGameObjectPacket(GameObjectType type)
+    public CreateGameObjectPacket(GameObjectType type, Guid requestedId = default)
     {
         Type = type;
+        RequestedId = requestedId;
     }
 
     [Key(0)]
     public GameObjectType Type { get; set; }
+
+    // Optional identity for editor workflows that must await this exact creation.
+    // Empty preserves the historical server-assigned identity.
+    [Key(1)]
+    public Guid RequestedId { get; set; }
 
 }

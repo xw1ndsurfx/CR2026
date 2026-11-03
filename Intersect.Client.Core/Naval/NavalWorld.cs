@@ -21,7 +21,7 @@ internal static partial class NavalWorld
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime,_voyageReturnUntil;
     private static bool _lastAboard,_lastAboardSinking;
-    internal static void Clear() {ClearGunnery();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {ClearCinematicFleet();ClearGunnery();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipSnapshot? ShoreCargo {get;private set;}
     internal static ShipCrewState CrewState {get;private set;}=new();
     internal static Guid Driver(ShipSnapshot ship)=>ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
@@ -134,10 +134,10 @@ internal static partial class NavalWorld
 
     internal static void DrawRow(int row)
     {
-        if (!Fresh || Graphics.Renderer == null) return;
+        if (Graphics.Renderer == null || !Fresh && CurrentCinematicFleet == null) return;
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         DrawCannonballs(row);
-        foreach (var view in _ships.Values)
+        foreach (var view in RenderedShipViews())
         {
             if (!Position(view, out var x, out var y, out var heading)) continue;
             // Same world-row ordering as ordinary entities, before the fringe layers.

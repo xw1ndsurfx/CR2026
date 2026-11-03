@@ -48,6 +48,10 @@ public sealed partial class NavalTests
             var state = CampfireRuntime.Snapshot(player, before.AddSeconds(1)).Single();
             Assert.That(state.AnimationId, Is.EqualTo(fireAnimation.Id)); Assert.That(state.Burning, Is.True);
             Assert.That(state.X, Is.EqualTo(8)); Assert.That(state.Y, Is.EqualTo(9));
+            Assert.That(CampfireRuntime.Blocks(player.MapId, player.MapInstanceId, 8, 9, player.Z), Is.True);
+            Assert.That(CampfireRuntime.Blocks(player.MapId, Guid.NewGuid(), 8, 9, player.Z), Is.False);
+            Assert.That(CampfireRuntime.Blocks(player.MapId, player.MapInstanceId, 8, 9, player.Z + 1), Is.False);
+            Assert.That(CampfireRuntime.Blocks(player.MapId, player.MapInstanceId, 8, 10, player.Z), Is.False);
             Assert.That(CampfireRuntime.CanCook(player, state.Id), Is.True);
             player.X = 11; Assert.That(CampfireRuntime.CanCook(player, state.Id), Is.False); player.X = 8;
             var second = CargoPlayer(); second.MapId = player.MapId; second.MapInstanceId = Guid.NewGuid();
@@ -58,6 +62,7 @@ public sealed partial class NavalTests
             var burnt = CampfireRuntime.Snapshot(player, before.AddSeconds(25)).Single();
             Assert.That(burnt.AnimationId, Is.EqualTo(ashes.Id)); Assert.That(burnt.Burning, Is.False);
             Assert.That(CampfireRuntime.Snapshot(player, before.AddSeconds(35)), Is.Empty);
+            Assert.That(CampfireRuntime.Blocks(player.MapId, player.MapInstanceId, 8, 9, player.Z), Is.False);
             Assert.That(CampfireRuntime.CanCook(player, state.Id), Is.False);
         }
         finally

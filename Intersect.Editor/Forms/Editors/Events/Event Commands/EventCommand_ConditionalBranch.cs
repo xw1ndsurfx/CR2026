@@ -30,6 +30,8 @@ public partial class EventCommandConditionalBranch : UserControl
     private readonly ConditionControl_PlayerSpell _playerSpellControl;
     private readonly ConditionControl_PlayerStat _playerStatControl;
     private readonly ConditionControl_Profession _professionControl;
+    private readonly ConditionControl_WeaponMastery _masteryControl;
+    private static string MasteryConditionTitle => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Weapon mastery level", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     private readonly ConditionControl_Premium _premiumControl;
     private readonly ConditionControl_Invasion _invasionControl;
     private readonly ConditionControl_QuestCanStart _questCanStartControl;
@@ -69,6 +71,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerSpellControl = new();
         _playerStatControl = new();
         _professionControl = new();
+        _masteryControl = new();
         _premiumControl = new();
         _invasionControl = new();
         _questCanStartControl = new();
@@ -92,6 +95,7 @@ public partial class EventCommandConditionalBranch : UserControl
         pnlConditionControl.Controls.Add(_playerSpellControl);
         pnlConditionControl.Controls.Add(_playerStatControl);
         pnlConditionControl.Controls.Add(_professionControl);
+        pnlConditionControl.Controls.Add(_masteryControl);
         pnlConditionControl.Controls.Add(_premiumControl);
         pnlConditionControl.Controls.Add(_invasionControl);
         pnlConditionControl.Controls.Add(_questCanStartControl);
@@ -119,6 +123,8 @@ public partial class EventCommandConditionalBranch : UserControl
 
         if (Condition.Type == ConditionType.Invasion)
             cmbConditionType.SelectedItem = "Invasion...";
+        else if (Condition.Type == ConditionType.WeaponMasteryLevel)
+            cmbConditionType.SelectedItem = MasteryConditionTitle;
         else if (Condition.Type == ConditionType.ProfessionLevel)
             cmbConditionType.SelectedItem = "Profession Level";
         else if (Condition.Type == ConditionType.PremiumStatus)
@@ -147,6 +153,7 @@ public partial class EventCommandConditionalBranch : UserControl
             cmbConditionType.Items.Add(itm.Value);
         }
         cmbConditionType.Items.Add("Profession Level");
+        cmbConditionType.Items.Add(MasteryConditionTitle);
         cmbConditionType.Items.Add("Premium...");
         cmbConditionType.Items.Add("Invasion...");
         cmbConditionType.Items.Add("Time Phase...");
@@ -237,6 +244,10 @@ public partial class EventCommandConditionalBranch : UserControl
 
             case ConditionType.LevelOrStat:
                 _playerStatControl.Show();
+                break;
+
+            case ConditionType.WeaponMasteryLevel:
+                _masteryControl.Show();
                 break;
 
             case ConditionType.ProfessionLevel:
@@ -343,6 +354,10 @@ public partial class EventCommandConditionalBranch : UserControl
 
             case LevelOrStatCondition playerStatCondition:
                 _playerStatControl.SetupFormValues(playerStatCondition);
+                break;
+
+            case WeaponMasteryLevelCondition masteryCondition:
+                _masteryControl.SetupFormValues(masteryCondition);
                 break;
 
             case ProfessionLevelCondition professionCondition:
@@ -455,6 +470,10 @@ public partial class EventCommandConditionalBranch : UserControl
                 _playerStatControl.SaveFormValues(playerStatCondition);
                 break;
 
+            case WeaponMasteryLevelCondition masteryCondition:
+                _masteryControl.SaveFormValues(masteryCondition);
+                break;
+
             case ProfessionLevelCondition professionCondition:
                 _professionControl.SaveFormValues(professionCondition);
                 break;
@@ -543,7 +562,7 @@ public partial class EventCommandConditionalBranch : UserControl
 
     private void cmbConditionType_SelectedIndexChanged(object sender, EventArgs e)
     {
-        var conditionType = cmbConditionType.Text switch
+        var conditionType = cmbConditionType.Text == MasteryConditionTitle ? ConditionType.WeaponMasteryLevel : cmbConditionType.Text switch
         {
             "Profession Level" => ConditionType.ProfessionLevel,
             "Premium..." => ConditionType.PremiumStatus,
@@ -612,6 +631,10 @@ public partial class EventCommandConditionalBranch : UserControl
 
                 case ConditionType.LevelOrStat:
                     Condition = new LevelOrStatCondition();
+                    break;
+
+                case ConditionType.WeaponMasteryLevel:
+                    Condition = new WeaponMasteryLevelCondition();
                     break;
 
                 case ConditionType.ProfessionLevel:

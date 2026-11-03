@@ -76,6 +76,7 @@ public partial class FrmMapEditor : DockContent
 
     private void Globals_ToolChanged(object? sender, EventArgs e)
     {
+        CancelSmartStroke();
         SetCursorSpriteInGrid();
     }
 
@@ -155,6 +156,7 @@ public partial class FrmMapEditor : DockContent
             return;
         }
 
+        CancelSmartStroke();
         picMap.Visible = false;
         ResetUndoRedoStates();
     }
@@ -193,6 +195,8 @@ public partial class FrmMapEditor : DockContent
     private void picMap_MouseDown(object sender, MouseEventArgs e)
     {
         if (BeginMapPan(e)) return;
+        if (PickDockLanding(LogicalMapMouse(e))) return;
+        if (BeginSmartStroke(LogicalMapMouse(e))) return;
         Globals.MapLayersWindow.BeginResourceStroke();
         e = LogicalMapMouse(e);
         if (!Globals.MapEditorWindow.DockPanel.Focused)
@@ -569,6 +573,10 @@ public partial class FrmMapEditor : DockContent
             Globals.CurTileY = Options.Instance.Map.MapHeight - 1;
         }
 
+        if (oldx != Globals.CurTileX || oldy != Globals.CurTileY) Core.Graphics.TilePreviewUpdated = true;
+        if (_dockLandingSelected != null || _dockLandingConsumeRelease) return;
+        if (MoveSmartStroke()) return;
+
         if (Globals.CurrentLayer == LayerOptions.Attributes)
         {
             var hoveredAttribute = Globals.CurrentMap?.Attributes[Globals.CurTileX, Globals.CurTileY];
@@ -804,6 +812,8 @@ public partial class FrmMapEditor : DockContent
 
     public void picMap_MouseUp(object sender, MouseEventArgs e)
     {
+        if (_dockLandingConsumeRelease) { _dockLandingConsumeRelease = false; return; }
+        if (EndSmartStroke(e)) return;
         if (_panReleaseButton != MouseButtons.None)
         {
             if (e.Button == _panReleaseButton)
@@ -1206,7 +1216,7 @@ public partial class FrmMapEditor : DockContent
                         };
 
                         tmpEventEditor.InitEditor(false, false, false);
-                        tmpEventEditor.ShowDialog();
+                        tmpEventEditor.ShowDialog(this);
                         mMapChanged = true;
                     }
                     else
@@ -1215,7 +1225,7 @@ public partial class FrmMapEditor : DockContent
                         { MyEvent = tmpEvent, MyMap = Globals.CurrentMap };
 
                         tmpEventEditor.InitEditor(false, false, false);
-                        tmpEventEditor.ShowDialog();
+                        tmpEventEditor.ShowDialog(this);
                     }
 
                     break;

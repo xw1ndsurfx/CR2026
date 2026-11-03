@@ -103,19 +103,19 @@ public partial class FrmSpell : EditorForm
     private void frmSpell_Load(object sender, EventArgs e)
     {
         cmbProjectile.Items.Clear();
-        cmbProjectile.Items.AddRange(ProjectileDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ProjectileDescriptor>(cmbProjectile);
         cmbCastAnimation.Items.Clear();
         cmbCastAnimation.Items.Add(Strings.General.None);
-        cmbCastAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbCastAnimation);
         cmbHitAnimation.Items.Clear();
         cmbHitAnimation.Items.Add(Strings.General.None);
-        cmbHitAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbHitAnimation);
         cmbEvent.Items.Clear();
         cmbEvent.Items.Add(Strings.General.None);
-        cmbEvent.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbEvent);
         cmbTickAnimation.Items.Clear();
         cmbTickAnimation.Items.Add(Strings.General.None);
-        cmbTickAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbTickAnimation);
 
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
@@ -730,7 +730,7 @@ public partial class FrmSpell : EditorForm
     private void btnDynamicRequirements_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.CastingRequirements, RequirementType.Spell);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbCastSprite_SelectedIndexChanged(object sender, EventArgs e)
@@ -765,7 +765,7 @@ public partial class FrmSpell : EditorForm
             MapList.OrderedMaps[cmbWarpMap.SelectedIndex].MapId, (int)nudWarpX.Value, (int)nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)

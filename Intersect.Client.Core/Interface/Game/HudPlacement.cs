@@ -6,6 +6,23 @@ using Intersect.Client.Localization;
 namespace Intersect.Client.Interface.Game;
 internal static class HudPlacement
 {
+    internal static bool IsCompactTextHud(Base control) => control is DayPhaseHud or ExperienceEventHud;
+
+    internal static void FitTextHud(Label label, int defaultX, int defaultY)
+    {
+        var size = label.Skin.Renderer.MeasureText(label.Font ?? label.Skin.DefaultFont, label.FontSize, label.Text);
+        label.Padding = new Intersect.Client.Framework.Gwen.Padding(4, 2, 26, 2);
+        label.TextAlign = Intersect.Client.Framework.Gwen.Pos.Left | Intersect.Client.Framework.Gwen.Pos.CenterV;
+        label.SetSize(Math.Min(size.X + 30, Math.Max(1, (label.Parent?.Width ?? size.X + 46) - 16)),
+            Math.Max(16, size.Y + 4));
+        if (!HasSavedPosition(label)) label.SetPosition(defaultX, defaultY);
+        label.SetPosition(Math.Clamp(label.X, 0, Math.Max(0, (label.Parent?.Width ?? label.Width) - label.Width)),
+            Math.Clamp(label.Y, 0, Math.Max(0, (label.Parent?.Height ?? label.Height) - label.Height)));
+        if (Positions.TryGetValue(label, out var state) && state.Handle is { } handle) ArrangeGrip(label, handle);
+    }
+
+    private static void ArrangeGrip(Base control, Grip handle) => handle.SetBounds(
+        Math.Max(0, control.Width - (IsCompactTextHud(control) ? 24 : 54)), 2, 22, Math.Min(14, Math.Max(1, control.Height - 4)));
     private sealed class Position
     {
         internal bool Moved;
@@ -50,7 +67,7 @@ internal static class HudPlacement
                 };
                 return position;
             });
-            state.Handle!.SetBounds(Math.Max(0,control.Width-54),2,22,14);
+            ArrangeGrip(control, state.Handle!);
             state.Handle.BringToFront();
             if(state.Moved)
             {

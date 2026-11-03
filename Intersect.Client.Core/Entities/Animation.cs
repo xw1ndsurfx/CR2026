@@ -23,6 +23,8 @@ public partial class Animation : IAnimation
     private bool _disposed = false;
 
     public bool Hidden { get; set; }
+    /// <summary>Per-instance weather fade; the authored animation remains unchanged.</summary>
+    internal float OpacityMultiplier { get; set; } = 1f;
 
     public bool InfiniteLoop { get; set; }
 
@@ -36,6 +38,23 @@ public partial class Animation : IAnimation
 
     /// <summary>Opt-in overhead effects sit above the visible head; other effects remain body-centered.</summary>
     public bool AboveParent { get; set; }
+    public bool DrawAsWorldEntity { get; set; }
+    public bool AlignToTileBase { get; set; }
+    private bool _worldEntityPass;
+    public void DrawWorldEntity()
+    {
+        if (Descriptor == null || IsDisposed) return;
+        _worldEntityPass = true;
+        try { Draw(false, Descriptor.Lower.AlternateRenderLayer); Draw(true, Descriptor.Upper.AlternateRenderLayer); }
+        finally { _worldEntityPass = false; }
+    }
+    private long _expiresAt;
+    public void SetTimedLifetime(int milliseconds)
+    {
+        if (milliseconds <= 0) return;
+        InfiniteLoop = true;
+        _expiresAt = Environment.TickCount64 + Math.Clamp(milliseconds, 1, 600_000);
+    }
     internal const float OverheadGap = 4f;
 
     private bool mDisposeNextDraw;
@@ -121,6 +140,16 @@ public partial class Animation : IAnimation
     public void DrawEventBehind() => DrawEventLayer(EventAnimationLayer.BehindCharacter);
     public void DrawEventAtCharacter(bool upper) => DrawEventLayer(EventAnimationLayer.SameAsCharacter, upper);
 
+    internal void DrawCinematicPerspective()
+    {
+        if (IsDisposed || Hidden || Descriptor == null || mParent is Entity entity && !entity.ShouldDraw) return;
+        var anchor = mParent is Entity parent ? parent.Origin : new System.Numerics.Vector2(mRenderX,mRenderY);
+        using var capture = Graphics.CaptureCinematicWorld(anchor);
+        if (DrawAsWorldEntity) { DrawWorldEntity(); return; }
+        Draw(false,Descriptor.Lower.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
+        Draw(true,Descriptor.Upper.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
+    }
+
     private void DrawEventLayer(EventAnimationLayer layer, bool? upper = null)
     {
         if (mParent is not Events.Event evt || evt.AnimationRenderLayer != layer || !evt.ShouldDraw || Descriptor == null || IsDisposed) return;
@@ -130,6 +159,7 @@ public partial class Animation : IAnimation
 
     public void Draw(bool upper = false, bool alternate = false, bool eventPass = false, bool aboveLabelsPass = false)
     {
+        if (DrawAsWorldEntity && !_worldEntityPass) return;
         if(DrawsAboveLabels && !aboveLabelsPass)return;
         // Attached event effects have their own foreground pass after the map decor.
         // Other animations retain their ordinary lower/upper layer behavior.
@@ -228,7 +258,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         FrameBounds(Descriptor.Lower, drawWidth, drawHeight),
-                        new Color(Descriptor.Lower.Opacity, 255, 255, 255),
+                        new Color((byte)(Descriptor.Lower.Opacity * Math.Clamp(OpacityMultiplier, 0f, 1f)), 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,
@@ -243,7 +273,7 @@ public partial class Animation : IAnimation
                 new Point(offsetX, offsetY), new Point(0, 0), rotationDegrees + 180
             );
 
-            Graphics.AddLight(
+            if (!Graphics.CapturingCinematicSprites) Graphics.AddLight(
                 (int)mRenderX + Descriptor.Lower.OffsetX - offset.X, (int)lightY + Descriptor.Lower.OffsetY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
                 Descriptor.Lower.Lights[mLowerFrame].Intensity, Descriptor.Lower.Lights[mLowerFrame].Expand,
                 Descriptor.Lower.Lights[mLowerFrame].Color
@@ -281,7 +311,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         FrameBounds(Descriptor.Upper, drawWidth, drawHeight),
-                        new Color(Descriptor.Upper.Opacity, 255, 255, 255),
+                        new Color((byte)(Descriptor.Upper.Opacity * Math.Clamp(OpacityMultiplier, 0f, 1f)), 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,
@@ -296,7 +326,7 @@ public partial class Animation : IAnimation
                 new Point(offsetX, offsetY), new Point(0, 0), rotationDegrees + 180
             );
 
-            Graphics.AddLight(
+            if (!Graphics.CapturingCinematicSprites) Graphics.AddLight(
                 (int)mRenderX + Descriptor.Upper.OffsetX - offset.X, (int)lightY + Descriptor.Upper.OffsetY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
                 Descriptor.Upper.Lights[mUpperFrame].Intensity, Descriptor.Upper.Lights[mUpperFrame].Expand,
                 Descriptor.Upper.Lights[mUpperFrame].Color
@@ -332,6 +362,9 @@ public partial class Animation : IAnimation
 
     private FloatRect FrameBounds(AnimationLayer layer, float width, float height)
     {
+        if (AlignToTileBase)
+            return new FloatRect(mRenderX - width / 2 + layer.OffsetX,
+                mRenderY + Options.Instance.Map.TileHeight / 2f - height + layer.OffsetY, width, height);
         // Entity.Center already follows the visible body. Only legacy map effects
         // retain a tile-specific vertical anchor; never shift attached spells again.
         var tileOffset = mParent == null ? -16f : 0f;
@@ -402,6 +435,7 @@ public partial class Animation : IAnimation
 
     public void Update()
     {
+        if (_expiresAt > 0 && Environment.TickCount64 >= _expiresAt) { Dispose(); return; }
         if (_disposed)
         {
             return;

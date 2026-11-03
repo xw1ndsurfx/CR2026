@@ -1,0 +1,791 @@
+{
+  "all_passed": true,
+  "asset_count": 32,
+  "checks": [
+    "PCM WAV 16-bit, 44100 Hz",
+    "mono SFX; stereo ambience",
+    "peak headroom >= 6 dB",
+    "no clipped samples",
+    "zero first/last sample for one-shots",
+    "loop seam step under 0.008 full scale and ordinary adjacent-step bound"
+  ],
+  "auditory_review": "Not performed. Validation is numerical; final game mix and hearing review required.",
+  "assets": [
+    {
+      "file": "fishing_ui_open.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.34,
+      "frames": 14994,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -16.315,
+      "dc_per_channel": [
+        8.533890444198513e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.033905029296875
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "8a6d72a42320628e9ea62c733bbf698822b7708f7a060283e0d174cf9320f5ef",
+      "passed": true
+    },
+    {
+      "file": "fishing_ui_close.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.28,
+      "frames": 12348,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -14.384,
+      "dc_per_channel": [
+        1.0296099001356495e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.03724792480468747
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "98d579980018bc8790b432069801f21496990b0362e306b68725adb09046eec7",
+      "passed": true
+    },
+    {
+      "file": "fishing_ui_select.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.11,
+      "frames": 4851,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -20.442,
+      "dc_per_channel": [
+        0.0001861880523989899
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.04943908691406251
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "3efd4978f768ad34f196d1fc5b108a9b4b2eef3eadbd9bfca12fcaa6f9df9613",
+      "passed": true
+    },
+    {
+      "file": "fishing_ui_confirm.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.42,
+      "frames": 18522,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -15.763,
+      "dc_per_channel": [
+        8.717660396251755e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.048370361328125
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "f42eda61a87682a8832cc94be4c90b438d756e8cb992980b24b1154c7334721d",
+      "passed": true
+    },
+    {
+      "file": "fishing_ui_error.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.36,
+      "frames": 15876,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -18.516,
+      "dc_per_channel": [
+        -0.00038080847392487087
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.0128173828125
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "540faf0db20a13d1bf766d8dd48307836dc1623046a848b2ea6c532e5f6ad024",
+      "passed": true
+    },
+    {
+      "file": "fishing_cast_rod.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.75,
+      "frames": 33075,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -22.382,
+      "dc_per_channel": [
+        4.825606457860922e-07
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.17674377441406253
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "59e4cc61fbc637e5552fe5e7a206e56b5a471ecf66eb5bf688eca21686da2b57",
+      "passed": true
+    },
+    {
+      "file": "fishing_cast_net.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.95,
+      "frames": 41895,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -20.929,
+      "dc_per_channel": [
+        -3.642150390858098e-08
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.13126464843749996
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "2369dcf5862f27d8314373dddf8cf85813a25a0f068b01b2bf70049b6eb08a31",
+      "passed": true
+    },
+    {
+      "file": "fishing_cast_cage.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 1.0,
+      "frames": 44100,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -24.898,
+      "dc_per_channel": [
+        -0.00032998982470592404
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.13145141601562305
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "38f91d4aed70cba62721515968aa76fa2140cfc3e88bd571bfd9d38d3b082fea",
+      "passed": true
+    },
+    {
+      "file": "fishing_splash.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.65,
+      "frames": 28665,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -24.242,
+      "dc_per_channel": [
+        -2.649860525139543e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.1467047119140623
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "39b218820a502d6563f147f639b5059ab99192e7d5a3abef42b936da73f46f5d",
+      "passed": true
+    },
+    {
+      "file": "fishing_bite.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.42,
+      "frames": 18522,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -20.281,
+      "dc_per_channel": [
+        2.1369883829027644e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.1348693847656247
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "579447abc865979eb2f69ed0a4077d3ef4890bb3c7a5c4b50bee7516085b9473",
+      "passed": true
+    },
+    {
+      "file": "fishing_reel_loop.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 2.0,
+      "frames": 88200,
+      "peak_dbfs": -12.0,
+      "rms_dbfs": -25.342,
+      "dc_per_channel": [
+        -6.158876310941044e-08
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.02752685546875
+      ],
+      "loop_seam_ok": true,
+      "oneshot_endpoints_zero": null,
+      "sha256": "934b2db626398b1acb1140c5b8f3a02c04ea5d7e000efda83c355b03e5b5e2c4",
+      "passed": true
+    },
+    {
+      "file": "fishing_tension_loop.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 2.4,
+      "frames": 105840,
+      "peak_dbfs": -12.0,
+      "rms_dbfs": -18.622,
+      "dc_per_channel": [
+        5.478401212915722e-09
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.0072021484375
+      ],
+      "loop_seam_ok": true,
+      "oneshot_endpoints_zero": null,
+      "sha256": "1cc7ef7b59ac8fa0098d53bf2d24fdebdbd90d1088495cc79e9833be7425c5e1",
+      "passed": true
+    },
+    {
+      "file": "fishing_line_break.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.42,
+      "frames": 18522,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -22.346,
+      "dc_per_channel": [
+        9.709539352695443e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.06144409179687493
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "954b7389288571e55cc631dcc31e68246da482f2668debda48a01bcbf19647c9",
+      "passed": true
+    },
+    {
+      "file": "fishing_escape.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.7,
+      "frames": 30870,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -25.333,
+      "dc_per_channel": [
+        -1.0617388696550049e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.12440795898437496
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "38d69c90e8a4a23f0419cf4252ac7a456c28e3b95d7def70c606dd53af90c2cd",
+      "passed": true
+    },
+    {
+      "file": "fishing_catch.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.9,
+      "frames": 39690,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -21.918,
+      "dc_per_channel": [
+        -2.4758528990299823e-07
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.115264892578125
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "44cb0f5bf7d806eeabe63f61c97fd2e160b19c80e31cda054d26cdb247ea047f",
+      "passed": true
+    },
+    {
+      "file": "fishing_crate_raise.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 1.3,
+      "frames": 57330,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -24.254,
+      "dc_per_channel": [
+        7.906996432387058e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.087615966796875
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "dcbf54faeb14b68e0a8200855a3aeaea6be99a2c4d772cf992f2032384e95c2e",
+      "passed": true
+    },
+    {
+      "file": "fishing_net_retrieve.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 1.05,
+      "frames": 46305,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -22.054,
+      "dc_per_channel": [
+        -5.068138986745492e-07
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.09619049072265629
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "45b9e4bc1fff5ed5340c140ebf5bd979c720598f6564c3d168bc3cb6cf909305",
+      "passed": true
+    },
+    {
+      "file": "fishing_skill_stabilize.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.5,
+      "frames": 22050,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -17.682,
+      "dc_per_channel": [
+        4.1519130438633785e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.023040771484375
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "174ccc37edaabb129bfa700aa045b5275f0c153ee61eb53c0de0b8f30ae0b9ef",
+      "passed": true
+    },
+    {
+      "file": "fishing_skill_pull.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.45,
+      "frames": 19845,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -21.755,
+      "dc_per_channel": [
+        -8.531696822247417e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.16180847167968748
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "18b724b931e4b9fc6ea9c601e71c7db5c4c91245cbd87a10aba64bc6a61bc886",
+      "passed": true
+    },
+    {
+      "file": "fishing_skill_repair.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.7,
+      "frames": 30870,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -18.042,
+      "dc_per_channel": [
+        2.0024750971817297e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.0328369140625
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "add4092da9938f7359a108016abaccca46e05ef89d7c0c37076d580c160369e5",
+      "passed": true
+    },
+    {
+      "file": "fishing_skill_sink.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.65,
+      "frames": 28665,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -20.825,
+      "dc_per_channel": [
+        7.4768864877681845e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.03058990478515622
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "b5796df8aa6ff5023ca0211f9730a1044587dae56883de02987fa9173a7c007d",
+      "passed": true
+    },
+    {
+      "file": "fishing_auto_start.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.45,
+      "frames": 19845,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -15.971,
+      "dc_per_channel": [
+        9.153428081301966e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.02961944580078124
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "299afab6888170a314322f2c7ea59660cce1ca4ed1cd77acf1c8babadcc7261a",
+      "passed": true
+    },
+    {
+      "file": "fishing_auto_stop.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.42,
+      "frames": 18522,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -16.141,
+      "dc_per_channel": [
+        8.778623056365403e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.028192138671874978
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "59404e8065bb7a3db01493d6cfaa42591574acd50c1ec75719e4b4aa8464bc94",
+      "passed": true
+    },
+    {
+      "file": "fishing_auto_pause.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.5,
+      "frames": 22050,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -15.401,
+      "dc_per_channel": [
+        0.00010060559054350908
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.029648437500000013
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "a092c21e446d618c9997d0bdfbd75a3578e75b8adb6c8d101ea75debce60ddd1",
+      "passed": true
+    },
+    {
+      "file": "fishing_legendary_appear.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 2.1,
+      "frames": 92610,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -21.246,
+      "dc_per_channel": [
+        -1.1467570659216067e-07
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.09027099609375
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "699964e6bec98f5f98d032deba2b8342652c81922dfb3353c68c9f956203f48e",
+      "passed": true
+    },
+    {
+      "file": "fishing_legendary_challenge_cue.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.36,
+      "frames": 15876,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -15.81,
+      "dc_per_channel": [
+        9.332504522352923e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.05474853515625
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "bcccbf2a33d6f545cdbb6bc2ba13e950e17dcc2c0115ec271cca403773dced78",
+      "passed": true
+    },
+    {
+      "file": "fishing_legendary_challenge_success.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.7,
+      "frames": 30870,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -18.633,
+      "dc_per_channel": [
+        3.766503811345967e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.037933349609375
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "d9921c6f84003deac45f6d512ee772a6479a2391fe8882ff1453b6ad95f34613",
+      "passed": true
+    },
+    {
+      "file": "fishing_legendary_challenge_fail.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.62,
+      "frames": 27342,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -19.28,
+      "dc_per_channel": [
+        -0.00010381244756807292
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.015979003906249956
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "9b3aedef738e2c83ab220aad6ad324747fce2fb177b4afe3193d7afeacfddf88",
+      "passed": true
+    },
+    {
+      "file": "fishing_legendary_catch.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 2.2,
+      "frames": 97020,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -28.462,
+      "dc_per_channel": [
+        -2.2144274376417235e-07
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.058502197265625
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "c64baf17ac8b71ce323235681f163abc0aa8f4dc0e19ba10b2c22b58ea865239",
+      "passed": true
+    },
+    {
+      "file": "fishing_xp_gain.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 0.28,
+      "frames": 12348,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -16.44,
+      "dc_per_channel": [
+        9.868536560829688e-06
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.04547119140625
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "8a7bf3dbccd88b4a094d825c53abaf79fd7b3a7f941a7c42773bb3b285f9634b",
+      "passed": true
+    },
+    {
+      "file": "fishing_level_up.wav",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "pcm_bits": 16,
+      "duration_seconds": 1.45,
+      "frames": 63945,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -19.511,
+      "dc_per_channel": [
+        1.9379580810413245e-05
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.031829833984375
+      ],
+      "loop_seam_ok": null,
+      "oneshot_endpoints_zero": true,
+      "sha256": "5bb295beb83a212c6c0b6af3a4cbadc700b61436c43b7bff7763f77de5687ff3",
+      "passed": true
+    },
+    {
+      "file": "fishing_ambience_sea_loop.wav",
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "pcm_bits": 16,
+      "duration_seconds": 12.0,
+      "frames": 529200,
+      "peak_dbfs": -18.001,
+      "rms_dbfs": -34.5,
+      "dc_per_channel": [
+        2.3124619856623204e-08,
+        -2.0760257227891156e-09
+      ],
+      "clipped_samples": 0,
+      "seam_step_per_channel": [
+        0.0,
+        3.0517578125e-05
+      ],
+      "adjacent_step_p99_per_channel": [
+        0.021942138671875,
+        0.022064208984375
+      ],
+      "loop_seam_ok": true,
+      "oneshot_endpoints_zero": null,
+      "sha256": "bcb15940567a44317cf6514bc7ccbd57dd05dfa35435dfd10141b0575010a934",
+      "passed": true
+    }
+  ],
+  "reproducibility_same_environment": {
+    "verified": true,
+    "wav_count": 32,
+    "differences": []
+  }
+}

@@ -36,6 +36,7 @@ public partial class FrmNpc : EditorForm
     private readonly DarkCheckBox _chkIsBoss = new();
     private readonly DarkComboBox _cmbBossAnimation = new();
     private readonly DarkComboBox _cmbBossDeathAnimation = new();
+    private readonly DarkNumericUpDown _npcDeathSeconds = new() { Name = "NpcDeathAnimationSeconds", Minimum = 0, Maximum = 600 };
     private readonly DarkNumericUpDown _nudBossAnimationOffsetY = new();
 
     private readonly DarkGroupBox _grpCombatAi = new();
@@ -149,12 +150,12 @@ public partial class FrmNpc : EditorForm
 
     private void BuildBossControls()
     {
-        _grpBoss.Text = "Boss";
+        _grpBoss.Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Boss and death effects", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
         _grpBoss.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
         _grpBoss.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
         _grpBoss.ForeColor = System.Drawing.Color.Gainsboro;
         _grpBoss.Location = new System.Drawing.Point(536, 724);
-        _grpBoss.Size = new Size(298, 190);
+        _grpBoss.Size = new Size(298, 246);
         _grpBoss.TabStop = false;
 
         _chkIsBoss.Text = "This NPC is a boss";
@@ -217,7 +218,7 @@ public partial class FrmNpc : EditorForm
 
         var lblDeathAnimation = new Label
         {
-            Text = "Animation played on death:",
+            Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("NPC death animation", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),
             AutoSize = true,
             Location = new System.Drawing.Point(12, 137),
             ForeColor = System.Drawing.Color.Gainsboro,
@@ -246,6 +247,11 @@ public partial class FrmNpc : EditorForm
         _grpBoss.Controls.Add(_nudBossAnimationOffsetY);
         _grpBoss.Controls.Add(lblDeathAnimation);
         _grpBoss.Controls.Add(_cmbBossDeathAnimation);
+        var deathDuration = new Label { AutoSize = false, Location = new(12, 187), Size = new(272, 20),
+            Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Duration in seconds (0 = natural)", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName) };
+        _npcDeathSeconds.SetBounds(12, 209, 272, 24);
+        _npcDeathSeconds.ValueChanged += (_, _) => { if (mEditorItem != null) mEditorItem.DeathAnimationDurationSeconds = (int)_npcDeathSeconds.Value; };
+        _grpBoss.Controls.Add(deathDuration); _grpBoss.Controls.Add(_npcDeathSeconds);
         pnlContainer.Controls.Add(_grpBoss);
 
         UpdateBossControlState();
@@ -256,7 +262,7 @@ public partial class FrmNpc : EditorForm
         var enabled = _chkIsBoss.Checked;
         _cmbBossAnimation.Enabled = enabled;
         _nudBossAnimationOffsetY.Enabled = enabled;
-        _cmbBossDeathAnimation.Enabled = enabled;
+        _cmbBossDeathAnimation.Enabled = true;
     }
 
     private void BuildCombatAiControls()
@@ -641,9 +647,7 @@ public partial class FrmNpc : EditorForm
         {
             cmbSprite.Items.Clear();
             cmbSprite.Items.Add(Strings.General.None);
-            cmbSprite.Items.AddRange(
-                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-            );
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
             var index = cmbSprite.FindStringExact(selected);
             if (index >= 0)
@@ -663,35 +667,33 @@ public partial class FrmNpc : EditorForm
         // cmbSprite events before the rest of the NPC editor controls are initialized.
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
         cmbHostileNPC.Items.Clear();
-        cmbHostileNPC.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbHostileNPC);
         cmbDropItem.Items.Clear();
         cmbDropItem.Items.Add(Strings.General.None);
-        cmbDropItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbDropItem);
         _cmbPetItem.Items.Clear();
         _cmbPetItem.Items.Add(Strings.General.None);
-        _cmbPetItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(_cmbPetItem);
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
-        cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAttackAnimation);
         _cmbBossAnimation.Items.Clear();
         _cmbBossAnimation.Items.Add(Strings.General.None);
-        _cmbBossAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(_cmbBossAnimation);
         _cmbBossDeathAnimation.Items.Clear();
         _cmbBossDeathAnimation.Items.Add(Strings.General.None);
-        _cmbBossDeathAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(_cmbBossDeathAnimation);
         cmbOnDeathEventKiller.Items.Clear();
         cmbOnDeathEventKiller.Items.Add(Strings.General.None);
-        cmbOnDeathEventKiller.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbOnDeathEventKiller);
         cmbOnDeathEventParty.Items.Clear();
         cmbOnDeathEventParty.Items.Add(Strings.General.None);
-        cmbOnDeathEventParty.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbOnDeathEventParty);
         cmbScalingStat.Items.Clear();
         for (var x = 0; x < Enum.GetValues<Stat>().Length; x++)
         {
@@ -869,6 +871,7 @@ public partial class FrmNpc : EditorForm
                 (int)_nudBossAnimationOffsetY.Minimum,
                 (int)_nudBossAnimationOffsetY.Maximum
             );
+            _npcDeathSeconds.Value = Math.Clamp(mEditorItem.DeathAnimationDurationSeconds, 0, 600);
             UpdateBossControlState();
 
             _chkSmartCombatMovement.Checked = mEditorItem.SmartCombatMovement;
@@ -1497,8 +1500,7 @@ public partial class FrmNpc : EditorForm
     private void btnPlayerFriendProtectorCond_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.PlayerFriendConditions, RequirementType.NpcFriend);
-        frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void btnAttackOnSightCond_Click(object sender, EventArgs e)
@@ -1508,18 +1510,14 @@ public partial class FrmNpc : EditorForm
             var frm = new FrmDynamicRequirements(
                 mEditorItem.AttackOnSightConditions, RequirementType.NpcDontAttackOnSight
             );
-
-            frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
         else
         {
             var frm = new FrmDynamicRequirements(
                 mEditorItem.AttackOnSightConditions, RequirementType.NpcAttackOnSight
             );
-
-            frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
     }
 
@@ -1528,9 +1526,7 @@ public partial class FrmNpc : EditorForm
         var frm = new FrmDynamicRequirements(
             mEditorItem.PlayerCanAttackConditions, RequirementType.NpcCanBeAttacked
         );
-
-        frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbOnDeathEventKiller_SelectedIndexChanged(object sender, EventArgs e)

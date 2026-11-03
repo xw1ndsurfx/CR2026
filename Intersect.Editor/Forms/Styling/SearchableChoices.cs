@@ -1,10 +1,12 @@
 using System.Globalization;
+using Intersect.Models;
 using System.Runtime.CompilerServices;
 
 namespace Intersect.Editor.Forms.Styling;
 
 internal sealed record EditorChoice(int Index, object Item, string Text)
 {
+    internal IDatabaseObject? Descriptor { get; init; }
     internal string Extension { get; } = Path.GetExtension(Text).ToLowerInvariant();
 }
 
@@ -15,6 +17,7 @@ internal static class SearchableChoices
         internal bool Enabled = true;
         internal bool Pending;
         internal string? Directory;
+        internal readonly Dictionary<int, (object Item, IDatabaseObject Descriptor)> Descriptors = [];
         internal readonly List<object> Recent = [];
     }
 
@@ -57,12 +60,48 @@ internal static class SearchableChoices
         Attach(box); States.GetValue(box, _ => new State()).Directory = directory;
     }
 
+    internal static void SetDescriptor(ComboBox box, int index, IDatabaseObject descriptor)
+    {
+        Attach(box);
+        States.GetValue(box, _ => new State()).Descriptors[index] = (box.Items[index], descriptor);
+    }
+
+    internal static void AddNames<T>(ComboBox box) where T : DatabaseObject<T>
+    {
+        Attach(box);
+        var state = States.GetValue(box, _ => new State());
+        if (box.Items.Count <= state.Descriptors.Keys.DefaultIfEmpty(-1).Max()) state.Descriptors.Clear();
+        foreach (var pair in DatabaseObject<T>.Lookup.OrderBy(pair => pair.Value?.Name))
+        {
+            var index = box.Items.Add(pair.Value?.Name ?? DatabaseObject<T>.Deleted);
+            if (pair.Value != null) state.Descriptors[index] = (box.Items[index], pair.Value);
+        }
+    }
+
+    internal static void AddTextureNames(ComboBox box, Content.GameContentManager.TextureType type)
+    {
+        var folder = type switch
+        {
+            Content.GameContentManager.TextureType.Entity => "entities",
+            Content.GameContentManager.TextureType.Misc => "misc",
+            Content.GameContentManager.TextureType.Gui => "gui",
+            _ => type.ToString().ToLowerInvariant() + "s",
+        };
+        SetResourceDirectory(box, Path.Combine("resources", folder));
+        box.Items.AddRange(Content.GameContentManager.GetSmartSortedTextureNames(type));
+    }
+
     internal static bool ShouldSearch(ComboBox box) =>
         States.TryGetValue(box, out var state) && state.Enabled &&
-        (state.Directory != null || box.Items.Count >= 12 || Snapshot(box).Any(entry => MediaExtensions.Contains(entry.Extension)));
+        (state.Directory != null || state.Descriptors.Count > 0 || box.Items.Count >= 12 || Snapshot(box).Any(entry => MediaExtensions.Contains(entry.Extension)));
 
     internal static EditorChoice[] Snapshot(ComboBox box) => Enumerable.Range(0, box.Items.Count)
-        .Select(index => new EditorChoice(index, box.Items[index], box.GetItemText(box.Items[index]) ?? string.Empty)).ToArray();
+        .Select(index => new EditorChoice(index, box.Items[index], box.GetItemText(box.Items[index]) ?? string.Empty)
+        {
+            Descriptor = box.Items[index] as IDatabaseObject ??
+                (States.TryGetValue(box, out var state) && state.Descriptors.TryGetValue(index, out var captured) &&
+                 ReferenceEquals(captured.Item, box.Items[index]) ? captured.Descriptor : null),
+        }).ToArray();
 
     internal static EditorChoice[] Filter(IEnumerable<EditorChoice> entries, string query, string? extension, int sort, bool recentOnly, IReadOnlyCollection<object> recent)
     {
@@ -82,6 +121,7 @@ internal static class SearchableChoices
     {
         if (box.IsDisposed || !box.Enabled || choice.Index < 0 || choice.Index >= box.Items.Count) return false;
         var item = box.Items[choice.Index];
+        if (choice.Descriptor != null && Snapshot(box)[choice.Index].Descriptor?.Id != choice.Descriptor.Id) return false;
         // Never select another item after a refresh, even when display names are duplicated.
         if (!ReferenceEquals(item, choice.Item) && !(item is string text && choice.Item is string captured && text == captured)) return false;
         Attach(box);

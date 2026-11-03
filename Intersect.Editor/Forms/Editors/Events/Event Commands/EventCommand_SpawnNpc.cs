@@ -42,7 +42,7 @@ public partial class EventCommandSpawnNpc : UserControl
         mCurrentMap = currentMap;
         InitLocalization();
         cmbNpc.Items.Clear();
-        cmbNpc.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpc);
         cmbNpc.SelectedIndex = NPCDescriptor.ListIndex(mMyCommand.NpcId);
         if (mMyCommand.MapId != Guid.Empty)
         {
@@ -231,7 +231,7 @@ public partial class EventCommandSpawnNpc : UserControl
             MapList.OrderedMaps[cmbMap.SelectedIndex].MapId, (int)nudWarpX.Value, (int)nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)

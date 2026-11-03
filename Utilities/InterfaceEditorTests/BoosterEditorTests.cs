@@ -20,12 +20,16 @@ internal static class BoosterEditorTests
             var item=new ItemDescriptor(Guid.NewGuid());typeof(FrmItem).GetField("mEditorItem",flags)!.SetValue(editor,item);
             typeof(FrmItem).GetMethod("InitLocalization",flags)!.Invoke(editor,null);
             var choice=(ComboBox)typeof(FrmItem).GetField("cmbConsume",flags)!.GetValue(editor)!;
-            if(choice.Items.Count!=4)throw new Exception("EXP boost potion must appear as a fourth consumable effect");
+            if(choice.Items.Count!=Enum.GetValues<ConsumableType>().Length || (int)ConsumableType.ExperienceBoost!=3 || (int)ConsumableType.Grog!=4)throw new Exception("Every consumable effect is selectable while EXP boost and Grog retain their IDs");
             choice.SelectedIndex=(int)ConsumableType.ExperienceBoost;
             var seconds=(NumericUpDown)typeof(FrmItem).GetField("nudInterval",flags)!.GetValue(editor)!;
             var percent=(NumericUpDown)typeof(FrmItem).GetField("nudIntervalPercentage",flags)!.GetValue(editor)!;
             seconds.Value=1800;percent.Value=50;
             if(seconds.Maximum!=604800 || percent.Maximum!=1000 || item.Consumable.Value!=1800 || item.Consumable.Percentage!=50)throw new Exception("EXP potion editor must store duration and percentage independently");
+            choice.SelectedIndex=(int)ConsumableType.Grog;
+            if(seconds.Minimum!=5 || seconds.Maximum!=120 || percent.Enabled)throw new Exception("Grog uses bounded duration and disables the unused percentage");
+            choice.SelectedIndex=(int)ConsumableType.ExperienceBoost;
+            if(seconds.Maximum!=604800 || !percent.Enabled)throw new Exception("Switching back from Grog restores EXP boost controls");
         }
         var flavors=typeof(FrmItem).Assembly.GetType("Intersect.Editor.Forms.Editors.ItemFlavorDescription",true)!;var build=flavors.GetMethod("Build",BindingFlags.Static|BindingFlags.NonPublic)!;
         foreach(var name in new[]{"Sword of Oak","Iron Axe","Hunter Bow","Staff of Dawn","Shield","Boots","Helmet","Golden Ring","Tunic"})

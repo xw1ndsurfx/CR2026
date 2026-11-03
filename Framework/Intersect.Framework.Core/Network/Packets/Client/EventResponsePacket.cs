@@ -21,5 +21,6 @@ public partial class EventResponsePacket : IntersectPacket
 
     [Key(1)]
     public byte Response { get; set; }
+    [Key(2)] public Guid DialogueToken { get; set; }
 
 }

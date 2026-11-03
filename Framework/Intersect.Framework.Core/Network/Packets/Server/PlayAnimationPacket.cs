@@ -7,6 +7,7 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject]
 public partial class PlayAnimationPacket : IntersectPacket
 {
+    [Key(11)] public int DurationMilliseconds { get; set; }
     //Parameterless Constructor for MessagePack
     public PlayAnimationPacket()
     {

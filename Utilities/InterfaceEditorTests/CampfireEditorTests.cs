@@ -7,6 +7,60 @@ internal static class CampfireEditorTests
     internal static void Run()
     {
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        using (var tableEditor = new FrmCraftingTables())
+        {
+            var table = new CraftingTableDescriptor(Guid.NewGuid()) { Name = "Empty fire table" };
+            typeof(FrmCraftingTables).GetField("mEditorItem", flags)!.SetValue(tableEditor, table);
+            typeof(FrmCraftingTables).GetMethod("UpdateEditor", flags)!.Invoke(tableEditor, null);
+            var fireCheck = (CheckBox)typeof(FrmCraftingTables).GetField("_campfireCreator", flags)!.GetValue(tableEditor)!;
+            fireCheck.Checked = true; tableEditor.UpdateList();
+            if (!fireCheck.Checked || !table.CampfireCreator) throw new Exception("Campfire checkbox must remain checked even without a configured recipe.");
+            var restored = new CraftingTableDescriptor(Guid.NewGuid());
+            typeof(CraftingTableDescriptor).GetProperty("CraftsJson")!.SetValue(restored, table.CraftsJson);
+            if (!restored.CampfireCreator) throw new Exception("Empty campfire creator flag must persist through the existing database column.");
+            var laterRecipe = new CraftingRecipeDescriptor(Guid.NewGuid()) { Campfire = new() { FireAnimationId = Guid.NewGuid(), AshesAnimationId = Guid.NewGuid() } };
+            CraftingRecipeDescriptor.Lookup.Set(laterRecipe.Id, laterRecipe);
+            try
+            {
+                if (!restored.AvailableCrafts().Contains(laterRecipe.Id)) throw new Exception("A saved creator must include valid campfire recipes configured later.");
+            }
+            finally { CraftingRecipeDescriptor.Lookup.DeleteAt(laterRecipe.Id); }
+            restored.MakeBackup(); restored.CampfireCreator = false; restored.RestoreBackup();
+            if (!restored.CampfireCreator) throw new Exception("Undo/cancel must restore the campfire creator setting.");
+            typeof(CraftingTableDescriptor).GetProperty("CraftsJson")!.SetValue(restored, "[]");
+            if (restored.CampfireCreator || restored.Crafts.Count != 0) throw new Exception("Legacy crafting table lists must remain readable.");
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(tableEditor);
+            tableEditor.ShowInTaskbar = false; tableEditor.Show(); Application.DoEvents();
+            foreach (var size in new[] { new Size(700, 560), new Size(1920, 1000) })
+            {
+                tableEditor.ClientSize = size; tableEditor.PerformLayout(); Application.DoEvents();
+                Control Field(string name) => (Control)typeof(FrmCraftingTables).GetField(name, flags)!.GetValue(tableEditor)!;
+                var tablePanel = Field("pnlContainer");
+                if (tablePanel.Right > tableEditor.ClientSize.Width || tablePanel.Bottom > tableEditor.ClientSize.Height - 30 || tablePanel.Width < size.Width / 2)
+                    throw new Exception($"Crafting editor content must expand with the window and leave room for Save/Cancel: requested={size}, client={tableEditor.ClientSize}, panel={tablePanel.Bounds}.");
+                if (Field("btnSave").Bottom > tableEditor.ClientSize.Height || Field("btnCancel").Right > tableEditor.ClientSize.Width)
+                    throw new Exception("Crafting editor action buttons left the window.");
+                if (size.Width > 1000 && Field("grpCrafts").Width < 1000) throw new Exception("Recipe pane still uses the original narrow fixed width.");
+                if (size.Width < 1000)
+                {
+                    var scrollPanel = (Panel)tablePanel;
+                    scrollPanel.AutoScrollPosition = new Point(0, 120); Application.DoEvents();
+                    var beforeScroll = scrollPanel.AutoScrollPosition;
+                    tableEditor.PerformLayout(); Application.DoEvents();
+                    if (beforeScroll.Y >= 0 || scrollPanel.AutoScrollPosition.Y != beforeScroll.Y) throw new Exception("Crafting editor layout resets the scrollbar before lower controls can be reached.");
+                    scrollPanel.AutoScrollPosition = Point.Empty;
+                }
+                if (Environment.GetEnvironmentVariable("CODEX_EDITOR_BATCH_PREVIEW") is { Length: > 0 } craftingOutput)
+                {
+                    Directory.CreateDirectory(craftingOutput); using var image = new Bitmap(tableEditor.Width, tableEditor.Height);
+                    tableEditor.DrawToBitmap(image, new Rectangle(Point.Empty, image.Size)); image.Save(Path.Combine(craftingOutput, $"crafting-table-{size.Width}.png"));
+                }
+            }
+            fireCheck.Checked = false;
+            if (table.CampfireCreator) throw new Exception("Campfire checkbox cannot be switched off.");
+            tableEditor.Hide();
+        }
+        Console.WriteLine("PASS responsive crafting table editor, persistent empty campfire creator flag, legacy database compatibility and undo");
         using var editor = new FrmCrafts();
         var recipe = new CraftingRecipeDescriptor(Guid.NewGuid()) { Name = "Campfire",
             Campfire = new() { FireAnimationId = Guid.NewGuid(), AshesAnimationId = Guid.NewGuid() } };

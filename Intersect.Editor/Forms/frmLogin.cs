@@ -299,7 +299,7 @@ public partial class FrmLogin : Form
     {
         if (e.KeyCode == Keys.F1)
         {
-            new FrmOptions().ShowDialog();
+            new FrmOptions().ShowDialog(this);
         }
     }
 

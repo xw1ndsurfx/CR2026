@@ -46,6 +46,12 @@ public partial class Sound : ISound
         }
     }
 
+    public float Volume
+    {
+        get => mSound?.Volume ?? 0;
+        set { if (mSound != null) mSound.Volume = (int)Math.Round(Math.Clamp(value, 0, 100)); }
+    }
+
     public bool Loop
     {
         get => mLoop;

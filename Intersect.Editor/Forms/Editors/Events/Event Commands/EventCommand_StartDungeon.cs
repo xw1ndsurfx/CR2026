@@ -262,7 +262,7 @@ public sealed class EventCommand_StartDungeon : UserControl
 
         using var selection = new FrmWarpSelection();
         selection.SelectTile(selectedMap.Id, (int)_x.Value, (int)_y.Value);
-        selection.ShowDialog();
+        selection.ShowDialog(this);
 
         if (!selection.GetResult())
             return;

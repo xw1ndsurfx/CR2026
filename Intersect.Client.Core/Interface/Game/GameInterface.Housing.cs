@@ -13,13 +13,28 @@ public partial class GameInterface
 {
     private readonly Dictionary<Guid, FurnitureUseHotspot> _furnitureUseTargets = [];
     private HousingWindow? _housingWindow;
+    private HousingWindow? _furnitureShopWindow;
     private HousePlacementOverlay? _housePlacement;
-    private Button? _houseButton, _houseExit;
+    private Button? _houseExit;
+    internal bool CanOpenHouse => Globals.Me != null && !_houseBlockedByDungeon && Naval.NavalWorld.OwnShip == null;
+    internal void OpenHouseFromMenu()
+    {
+        if (!CanOpenHouse) return;
+        EnsureHousing();
+        PacketSender.SendHouseAction(HouseAction.Open, Globals.Me!.Id);
+    }
     public void ApplyHouse(HouseStatePacket packet)
     {
         HouseView? view = string.IsNullOrWhiteSpace(packet.Json) ? null : JsonConvert.DeserializeObject<HouseView>(packet.Json);
         HousingWorld.View = string.IsNullOrWhiteSpace(packet.WorldJson) ? null : JsonConvert.DeserializeObject<HouseView>(packet.WorldJson);
         EnsureHousing();
+        if (packet.FurnitureShop)
+        {
+            _furnitureShopWindow ??= new HousingWindow(GameCanvas, true);
+            _furnitureShopWindow.Apply(view, packet.Message);
+            if (packet.OpenWindow) { _furnitureShopWindow.Show(); _furnitureShopWindow.BringToFront(); }
+            return;
+        }
         _housingWindow!.Apply(view, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(packet.Message,ClientLanguages.Current));
         if (packet.OpenWindow) { _housingWindow.Show(); _housingWindow.BringToFront(); }
         if (HousingWorld.View == null) { _housePlacement!.Cancel(); if (!packet.OpenWindow) _housingWindow.Hide(); }
@@ -30,16 +45,13 @@ public partial class GameInterface
         _housingWindow = new HousingWindow(GameCanvas);
         _housePlacement = new HousePlacementOverlay(GameCanvas);
         _housingWindow.PlaceRequested += (id, placement, definition) => _housePlacement.Begin(id, placement, definition);
-        _houseButton = new Button(GameCanvas, "MyHouse") { Text = ClientLanguages.Text("My house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
-        _houseButton.SetBounds(8, 28, 110, 24); _houseButton.Clicked += (_, _) => { if (!_houseButton.IsDisabled) PacketSender.SendHouseAction(HouseAction.Open, Globals.Me?.Id ?? Guid.Empty); };
         _houseExit = new Button(GameCanvas, "ExitHouse") { Text = ClientLanguages.Text("Leave house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
-        _houseExit.SetBounds(124, 28, 120, 24); _houseExit.Clicked += (_, _) => PacketSender.SendHouseAction(HouseAction.Leave);
+        _houseExit.SetBounds(8, 28, 120, 24); _houseExit.Clicked += (_, _) => PacketSender.SendHouseAction(HouseAction.Leave);
     }
     private void UpdateHousing()
     {
         EnsureHousing();
-        _houseButton!.IsDisabled=_houseBlockedByDungeon || Naval.NavalWorld.OwnShip!=null;
-        if (_houseButton.IsDisabled) _housingWindow!.Hide();
+        if (!CanOpenHouse) _housingWindow!.Hide();
         _houseExit!.IsHidden = HousingWorld.View is not { Inside: true };
         _housePlacement!.SetSize(GameCanvas.Width, GameCanvas.Height);
         if (_housePlacement.IsHidden || HousingWorld.View is not { Inside: true, IsOwner: true }) _housePlacement.Cancel();

@@ -34,7 +34,9 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
     }
 
-    public MapInstance(MapDescriptor mapStruct) : base(mapStruct)
+    public MapInstance(MapDescriptor mapStruct) : this(mapStruct, false) { }
+
+    internal MapInstance(MapDescriptor mapStruct, bool reuseAutotileCache) : base(mapStruct)
     {
         lock (MapLock)
         {
@@ -45,7 +47,17 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 MapGridY = ((MapInstance)mapStruct).MapGridY;
             }
 
-            InitAutotiles();
+            if (reuseAutotileCache && mapStruct.Autotiles?.Layers is { } cached)
+            {
+                Autotiles.Layers = new();
+                foreach (var (name, source) in cached)
+                {
+                    var layer = new Autotile[source.GetLength(0), source.GetLength(1)];
+                    for (var y = 0; y < source.GetLength(1); y++) for (var x = 0; x < source.GetLength(0); x++) layer[x, y] = source[x, y].Copy();
+                    Autotiles.Layers[name] = layer;
+                }
+            }
+            else InitAutotiles();
         }
     }
 

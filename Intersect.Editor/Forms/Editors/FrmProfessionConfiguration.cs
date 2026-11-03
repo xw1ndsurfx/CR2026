@@ -218,7 +218,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
 
         remove.Click += (_, _) =>
         {
-            if (_selected == null || Intersect.Framework.Core.Naval.NavalProfessions.IsNative(_selected.Id)) return;
+            if (_selected == null || NativeProfessions.IsNative(_selected.Id)) return;
 
             var result = MessageBox.Show(
                 this,
@@ -709,7 +709,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
     }
 
     private static void FormatNativeProfession(object? sender,ListControlConvertEventArgs e)
-    {if(e.ListItem is ProfessionDefinition p && Intersect.Framework.Core.Naval.NavalProfessions.IsNative(p.Id))e.Value=Intersect.Framework.Core.Naval.NavalSetupText.Get(p.Name,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);}
+    {if(e.ListItem is ProfessionDefinition p && NativeProfessions.IsNative(p.Id))e.Value=NativeProfessions.Caption(p.Id,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);}
     private void LoadSelected()
     {
         if (_selected == null)
@@ -718,11 +718,13 @@ public sealed class FrmProfessionConfiguration : DarkForm
             return;
         }
 
-        var naval=Intersect.Framework.Core.Naval.NavalProfessions.IsNative(_selected.Id);
+        var naval=NativeProfessions.IsNative(_selected.Id);
         foreach(Control control in new Control[]{_name,_description,_potionExperience,_maxLevel,_baseXp,_growth})control.Enabled=!naval;
         _potionExperience.Checked = _selected.PotionExperience;
-        _name.Text = _selected.Name;
-        _description.Text = naval?Intersect.Framework.Core.Naval.NavalSetupText.Get("Naval profession settings are in Naval System Editor.",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName):_selected.Description;
+        _name.Text = NativeProfessions.IsNative(_selected.Id) ? NativeProfessions.Caption(_selected.Id, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName) : _selected.Name;
+        _description.Text = Intersect.Framework.Core.Jousting.JoustProfession.IsNative(_selected.Id)
+            ? Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Jousting progression", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)
+            : naval ? Intersect.Framework.Core.Naval.NavalSetupText.Get("Naval profession settings are in Naval System Editor.",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName) : _selected.Description;
         _maxLevel.Value = Math.Clamp(_selected.MaximumLevel, 1, 500);
         _baseXp.Value = Math.Clamp(_selected.BaseExperience, 1, 2_000_000_000);
         _growth.Value = (decimal)Math.Clamp(_selected.ExperienceGrowth * 100d, 100d, 1000d);
@@ -743,7 +745,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
 
     private void CommitSelected()
     {
-        if (_selected == null || Intersect.Framework.Core.Naval.NavalProfessions.IsNative(_selected.Id)) return;
+        if (_selected == null || NativeProfessions.IsNative(_selected.Id)) return;
 
         _selected.Name = string.IsNullOrWhiteSpace(_name.Text)
             ? "Profession"

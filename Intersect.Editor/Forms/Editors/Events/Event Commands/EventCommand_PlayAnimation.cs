@@ -53,7 +53,7 @@ public partial class EventCommandPlayAnimation : UserControl
         mCurrentMap = currentMap;
         InitLocalization();
         cmbAnimation.Items.Clear();
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(mMyCommand.AnimationId);
         if (mMyCommand.MapId != Guid.Empty)
         {
@@ -353,7 +353,7 @@ public partial class EventCommandPlayAnimation : UserControl
             MapList.OrderedMaps[cmbMap.SelectedIndex].MapId, (int) nudWarpX.Value, (int) nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)

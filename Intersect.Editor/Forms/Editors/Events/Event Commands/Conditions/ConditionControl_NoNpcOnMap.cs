@@ -50,7 +50,7 @@ public partial class ConditionControl_NoNpcOnMap : UserControl
     public new void Show()
     {
         cmbNpcs.Items.Clear();
-        cmbNpcs.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpcs);
 
         chkNpc.Checked = false;
         cmbNpcs.Hide();

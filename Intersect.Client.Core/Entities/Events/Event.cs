@@ -137,6 +137,7 @@ public partial class Event : Entity
 
     public override void Draw()
     {
+        using var cinematicCapture = Graphics.CaptureCinematicEntity(this);
         if (!ShouldDraw) return;
         WorldPos.Reset();
         RenderedGraphicTop = null;

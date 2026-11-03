@@ -14,6 +14,12 @@ public partial class FrmNpc
 {
     // Only base combat stats are generated. Special NPC behavior, pet configuration,
     // scripted encounters, spells, drops, events and immunities are not rewritten.
+    internal static int NpcPresetRespawnMilliseconds(int difficulty,decimal level)
+    {
+        var seconds=difficulty switch {3=>300+level*3,2=>60+level,0=>15,_=>30+level/2};
+        return (int)Math.Clamp(seconds*1000m,1000m,int.MaxValue);
+    }
+
     private void BuildNpcAutoCreator()
     {
         var button = new DarkButton
@@ -192,6 +198,8 @@ public partial class FrmNpc
         var advanced = BuildNpcAutoAdvancedOptions(dialog);
         dialog.CancelButton = cancel;
         dialog.AcceptButton = apply;
+        var spritePicker = AutoCreatorAssetPicker.Insert(dialog, "NpcSpritePicker", "NPC sprite", "entities",
+            cmbSprite.Items.Cast<object>().Skip(1).Select(asset => asset.ToString() ?? ""), mEditorItem.Sprite);
 
         // Initial numbers supply a stable starting point. The actual HP and
         // damage calibration is delegated to the Balance Lab's combat simulator.
@@ -390,6 +398,7 @@ public partial class FrmNpc
         }
 
         txtName.Text = name.Text;
+        spritePicker.ApplyTo(cmbSprite);
         Assign(nudLevel, level.Value);
         Assign(nudHp, calibration!.Health);
         Assign(nudMana, result.mana);
@@ -402,7 +411,7 @@ public partial class FrmNpc
             Math.Max(2, result.damage / 3)));
         Assign(nudExp, Math.Max(0,(long)Math.Round(result.exp*0.8)));
         Assign(_experienceMaximum, Math.Max(0,(long)Math.Round(result.exp*1.2)));
-        Assign(nudSpawnDuration,difficulty.SelectedIndex switch {3=>300+level.Value*3,2=>60+level.Value,0=>15,_=>30+level.Value/2});
+        Assign(nudSpawnDuration,NpcPresetRespawnMilliseconds(difficulty.SelectedIndex,level.Value));
         chkIndividualLoot.Checked=true;
         // Handcrafted crit, scaling, speed and animation remain unchanged
         // when Auto Combat is disabled.

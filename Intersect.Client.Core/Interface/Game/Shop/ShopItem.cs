@@ -141,7 +141,7 @@ public partial class ShopItem : SlotItem
             return;
         }
 
-        var itemTex = Globals.ContentManager?.GetTexture(itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon);
+        var itemTex = Intersect.Client.Interface.Game.ItemIconTexture.Get(itemDescriptor);
         if (itemTex != null)
         {
             Icon.Texture = itemTex;

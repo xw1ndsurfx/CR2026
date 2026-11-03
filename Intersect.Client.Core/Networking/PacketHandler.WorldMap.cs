@@ -7,6 +7,9 @@ namespace Intersect.Client.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(IPacketSender packetSender, WorldMapExplorationPacket packet) =>
+        Intersect.Client.Interface.Game.WorldMapExploration.Receive(packet);
+
     public void HandlePacket(IPacketSender packetSender, WorldMapStatePacket packet)
     {
         var legend = WorldMapLegend.FromJson(packet.LegendJson);

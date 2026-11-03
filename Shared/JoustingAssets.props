@@ -1,0 +1,18 @@
+<Project>
+  <!-- Preserve the directory names used by mount definitions and texture lookups.
+       These files must stay outside the single-file executable. -->
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/images/jousting/**/*.png">
+      <Link>resources/images/jousting/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/tilesets/Jousting_Objects_16.*">
+      <Link>resources/tilesets/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+</Project>

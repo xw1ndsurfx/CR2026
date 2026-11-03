@@ -149,11 +149,15 @@ internal sealed partial class PacketHandler
             .ToArray();
 
         var rankingTitle = LeaderboardTitleRuntime.GetStatus(target.Id);
+        PlayerMasteryProfilePacket[] masteries = []; var masteriesAvailable = false;
+        try { masteries = Intersect.Server.Archery.RoyalCombatRuntime.PublicMasteries(target.Id); masteriesAvailable = true; }
+        catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException) { /* Other profile sections remain available. */ }
 
         client.Send(
             new PlayerProfilePacket
             {
                 Found = true,
+                Masteries = masteries, MasteriesAvailable = masteriesAvailable,
                 OpenWindow = packet.OpenWindow,
                 PlayerId = target.Id,
                 Name = target.Name,

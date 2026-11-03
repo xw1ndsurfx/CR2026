@@ -33,11 +33,7 @@ internal static partial class NavalWorld
             if(effects.Count>=1024) effects.Remove(effects.MinBy(e=>e.Value.Born).Key);
             effects.Add(effect.Id,new(effect,now-Math.Clamp(effect.AgeMilliseconds,0,20000)));
             if(!effect.PlaySound || effect.AgeMilliseconds>350) continue;
-            var sound=effect.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireSound,NavalEffectKind.HullImpact=>Presentation.HullImpactSound,
-                NavalEffectKind.WaterImpact=>Presentation.WaterImpactSound,NavalEffectKind.ObstacleImpact=>Presentation.ObstacleImpactSound,
-                NavalEffectKind.Sinking=>Presentation.SinkingSound,NavalEffectKind.Anchor=>Presentation.AnchorSound,NavalEffectKind.Launch=>Presentation.LaunchSound,
-                NavalEffectKind.Disembark=>Presentation.DisembarkSound,NavalEffectKind.LevelUp=>Presentation.LevelUpSound,_=>""};
-            if(AnimationDescriptor.Get(effect.AnimationId)?.Sound is {Length:>0} nativeSound) sound=nativeSound;
+            var sound=NavalEffectSound(effect,Presentation);
             if(NavalPresentation.SafeAsset(sound) && sound.Length>0 && Globals.ContentManager!=null)
                 Audio.AddMapSound(sound.ToLowerInvariant(),(int)Math.Floor(effect.X),(int)Math.Floor(effect.Y),effect.MapId,false,0,16);
         }
@@ -48,28 +44,22 @@ internal static partial class NavalWorld
         if(!NavalPresentation.SafeAsset(filename) || filename.Length==0) return null;
         if(!_effectAtlases.TryGetValue(filename,out var atlas))
         {
-            try
-            {
-                var path=Path.Combine(ClientConfiguration.ResourcesDirectory,"ocean",filename+".effects.json");
-                if(File.Exists(path) && new FileInfo(path).Length<=131072)
-                    atlas=JsonConvert.DeserializeObject<NavalEffectAtlas>(File.ReadAllText(path),new JsonSerializerSettings {MaxDepth=12,TypeNameHandling=TypeNameHandling.None});
-            }
-            catch(Exception e) when(e is IOException or UnauthorizedAccessException or JsonException or ArgumentException) {atlas=null;}
-            if(atlas?.IsValid(width,height)!=true) atlas=null;
+            atlas=Intersect.Rendering.ShipAtlasResources.LoadEffect(ClientConfiguration.ResourcesDirectory,filename,width,height);
             _effectAtlases[filename]=atlas;
         }
         return atlas?.ImageWidth==width && atlas.ImageHeight==height?atlas:null;
     }
-    private static bool DrawEffectAsset(string filename,string clip,float x,float y,long elapsed,double rotation=0,bool hold=false)
+    private static bool DrawEffectAsset(string filename,string clip,float x,float y,long elapsed,double rotation=0,bool hold=false,NavalPresentation? style=null)
     {
+        var settings=style??Presentation;
         if(!NavalPresentation.SafeAsset(filename) || filename.Length==0) return false;
         var texture=Globals.ContentManager?.GetTexture(TextureType.Ocean,filename);if(texture==null) return false;
         var atlas=EffectAtlas(filename,texture.Width,texture.Height);
         if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames)) return false;
-        if(!hold && elapsed>=frames.Length*Presentation.EffectFrameMilliseconds) return true;
-        var frame=atlas.Frame(clip,elapsed,Presentation.EffectFrameMilliseconds)!;
+        if(!hold && elapsed>=frames.Length*settings.EffectFrameMilliseconds) return true;
+        var frame=atlas.Frame(clip,elapsed,settings.EffectFrameMilliseconds)!;
         rotation+=frame.RotationDegrees;
-        var scale=Options.Instance.Map.TileWidth/Presentation.EffectPixelsPerTile;
+        var scale=Options.Instance.Map.TileWidth/settings.EffectPixelsPerTile;
         foreach(var part in NavalSpriteGeometry.Parts(frame)) Graphics.DrawGameTexture(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),
             NavalEffectGeometry.Destination(part,x,y,scale,rotation),Color.White,rotationDegrees:(float)rotation);
         return true;
@@ -77,7 +67,7 @@ internal static partial class NavalWorld
     private static void DrawNavalEffects(int row)
     {
         var current=Globals.Me?.MapInstance;if(current==null) return;
-        foreach(var view in _effects.Values)
+        foreach(var (view,settings) in RenderedNavalEffects())
         {
             var e=view.Event;var elapsed=Environment.TickCount64-view.Born;
             if(!Maps.MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(e.MapId)) continue;
@@ -85,17 +75,17 @@ internal static partial class NavalWorld
             if(row!=(int)Math.Floor((y-current.Y)/Options.Instance.Map.TileHeight)+Options.Instance.Map.MapHeight*2) continue;
             if(e.AnimationId!=Guid.Empty && AnimationDescriptor.Get(e.AnimationId)!=null)
             {
-                foreach(var frame in NativeImpactFrames(e.AnimationId,elapsed))
+                foreach(var frame in NativeImpactFrames(e.AnimationId,elapsed,e.LoopAnimation))
                     Graphics.DrawGameTexture(frame.Texture,frame.Source,
-                        new FloatRect(x-frame.Width/2+frame.Layer.OffsetX,y-frame.Height/2+frame.Layer.OffsetY,frame.Width,frame.Height),
-                        new Color(frame.Layer.Opacity,255,255,255));
+                        new FloatRect(x-frame.Width/2+frame.Layer.OffsetX,y-e.Elevation*Options.Instance.Map.TileHeight-frame.Height/2+frame.Layer.OffsetY,frame.Width,frame.Height),
+                        new Color(frame.Layer.Opacity,255,255,255),rotationDegrees:e.RotateAnimation && !frame.Layer.DisableRotations ? (float)e.Heading : 0);
                 continue;
             }
             switch(e.Kind)
             {
-                case NavalEffectKind.Fire:DrawEffectAsset(Presentation.CannonFireGraphic,"Fire",x,y,elapsed,e.Heading-270);break;
-                case NavalEffectKind.WaterImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?Presentation.WaterImpactGraphic:e.Graphic,"WaterImpact",x,y,elapsed);break;
-                case NavalEffectKind.HullImpact:case NavalEffectKind.ObstacleImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?Presentation.HullImpactGraphic:e.Graphic,"HullImpact",x,y,elapsed);break;
+                case NavalEffectKind.Fire:DrawEffectAsset(settings.CannonFireGraphic,"Fire",x,y,elapsed,e.Heading-270,style:settings);break;
+                case NavalEffectKind.WaterImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?settings.WaterImpactGraphic:e.Graphic,"WaterImpact",x,y,elapsed,style:settings);break;
+                case NavalEffectKind.HullImpact:case NavalEffectKind.ObstacleImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?settings.HullImpactGraphic:e.Graphic,"HullImpact",x,y,elapsed,style:settings);break;
             }
         }
     }
@@ -107,7 +97,7 @@ internal static partial class NavalWorld
             .Select(l=>(long)Math.Clamp(l.FrameCount,1,10000)*Math.Clamp(l.FrameSpeed,1,60000)*(Math.Clamp(l.LoopCount,0,100)+1)).DefaultIfEmpty(minimum).Max(),minimum,20000);
     }
     private sealed record ImpactFrame(Intersect.Client.Framework.Graphics.IGameTexture Texture,FloatRect Source,float Width,float Height,AnimationLayer Layer);
-    private static IEnumerable<ImpactFrame> NativeImpactFrames(Guid animationId,long elapsed)
+    private static IEnumerable<ImpactFrame> NativeImpactFrames(Guid animationId,long elapsed,bool loop=false)
     {
         if(AnimationDescriptor.Get(animationId) is not {} descriptor) yield break;
         foreach(var layer in new[]{descriptor.Lower,descriptor.Upper})
@@ -116,7 +106,7 @@ internal static partial class NavalWorld
                 !NavalPresentation.SafeAsset(layer.Sprite) || Globals.ContentManager?.GetTexture(TextureType.Animation,layer.Sprite) is not {} texture) continue;
             var count=(int)Math.Min(layer.FrameCount,Math.Min(int.MaxValue,(long)layer.XFrames*layer.YFrames));
             var index=Math.Max(0,elapsed)/layer.FrameSpeed;
-            if(count<=0 || index>=(long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
+            if(count<=0 || !loop && index>=(long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
             var frame=(int)(index%count);var w=texture.Width/layer.XFrames;var h=texture.Height/layer.YFrames;
             if(w<=0 || h<=0 || layer.Opacity==0) continue;
             var scale=Math.Clamp(layer.ScalePercent,1,1000)/100f;

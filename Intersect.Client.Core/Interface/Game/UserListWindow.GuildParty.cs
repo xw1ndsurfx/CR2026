@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.File_Management;
+﻿using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments.InputSubmissionEvent;
@@ -21,6 +21,9 @@ internal sealed partial class UserListWindow
 
     private void DrawGuild()
     {
+        if (Globals.Me?.AccessLevel is Intersect.Framework.Core.GameObjects.Events.Access.Moderator or Intersect.Framework.Core.GameObjects.Events.Access.Admin)
+            AddAction(_footer, "GuildEmblem", GuildText("Guild emblem"), 374, 13, 92, 42,
+                () => Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Guilds.GuildEmblemRequestPacket { Action = Intersect.Network.Packets.Guilds.GuildEmblemAction.Manage }));
         var player = Globals.Me;
         if (player == null || string.IsNullOrWhiteSpace(player.Guild))
         {

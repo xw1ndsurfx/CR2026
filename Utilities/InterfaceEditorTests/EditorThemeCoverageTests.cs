@@ -35,6 +35,13 @@ internal static class EditorThemeCoverageTests
             form.Opacity = 0; form.ShowInTaskbar = false;
             apply.Invoke(null, [form]); apply.Invoke(null, [form]);
             form.Show(); Application.DoEvents();
+            Check(EditorWindows.SupportsFullscreen(form) && form.MaximizeBox,
+                form.GetType().Name + " exposes maximize and shared fullscreen.");
+            var originalBounds = form.Bounds;
+            EditorWindows.ToggleFullscreen(form);
+            Check(form.Bounds == Screen.FromControl(form).Bounds, form.GetType().Name + " fills its monitor.");
+            EditorWindows.ToggleFullscreen(form);
+            Check(form.Bounds == originalBounds, form.GetType().Name + " restores its previous bounds.");
             form.PerformLayout();
             var controls = Descendants(form).ToArray();
             foreach (var control in controls)

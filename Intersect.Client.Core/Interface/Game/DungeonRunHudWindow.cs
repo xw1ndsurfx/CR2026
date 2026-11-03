@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface.Shared;
@@ -14,19 +15,21 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class DungeonRunHudWindow : Base
 {
+    private readonly HudDisclosure _disclosure;
+    private readonly StatusHudPlacement _placement;
     private readonly Label _title;
     private readonly Label _objective;
     private readonly Label _lives;
     private readonly Label _timer;
     private readonly Button _abandon;
-    private bool _confirmingAbandon;
+    private DungeonAbandonConfirmationWindow? _abandonConfirmation;
 
     private DungeonRunStatePacket? _state;
     private long _resultHideAt;
 
     public DungeonRunHudWindow(Canvas parent) : base(parent, nameof(DungeonRunHudWindow))
     {
-        SetSize(430, 162);
+        SetSize(430, 170);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
 
@@ -70,24 +73,31 @@ internal sealed class DungeonRunHudWindow : Base
         };
         _timer.SetBounds(10, 88, 410, 22);
 
-        _abandon = new Button(this, "DungeonRunAbandon")
+        _abandon = new AbandonButton(this)
         {
             Text = ClientLanguages.Text("Abandon dungeon"),
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 10,
+            TextColorOverride = Color.White,
         };
-        _abandon.SetBounds(115, 122, 200, 28);
+        _abandon.SetBounds(85, 122, 260, 36);
         _abandon.Clicked += (_, _) => ConfirmAbandon();
 
+        _disclosure = new HudDisclosure(this, _title, "DungeonHudCollapsed");
+        _placement = new StatusHudPlacement(this, _title);
         Hide();
     }
 
     public void Apply(DungeonRunStatePacket state)
     {
+        if (_abandonConfirmation != null && (_state?.RunId != state.RunId || state.Status != DungeonRunStatus.Active))
+            _abandonConfirmation.Close();
         _state = state;
         _resultHideAt = 0;
-        _abandon.IsHidden = state.Status != DungeonRunStatus.Active || state.RunId == Guid.Empty;
+        var canAbandon = state.Status == DungeonRunStatus.Active && state.RunId != Guid.Empty;
+        _disclosure.SetContentVisible(_abandon, canAbandon);
         _abandon.Text = ClientLanguages.Text("Abandon dungeon");
-        Height = _abandon.IsHidden ? 126 : 162;
+        _disclosure.Resize(canAbandon ? 170 : 126);
 
         _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;
@@ -110,12 +120,14 @@ internal sealed class DungeonRunHudWindow : Base
         }
 
         PositionAtTop();
-        Show();
+        Update();
         BringToFront();
     }
 
     public void Update()
     {
+        IsHidden = _state == null || Globals.Database?.ShowDungeonHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
+        PositionAtTop();
         if (_state == null)
             return;
 
@@ -135,23 +147,21 @@ internal sealed class DungeonRunHudWindow : Base
 
     private void ConfirmAbandon()
     {
-        if (_confirmingAbandon || _state is not { Status: DungeonRunStatus.Active } state || state.RunId == Guid.Empty)
+        if (_abandonConfirmation != null)
+        {
+            _abandonConfirmation.Show();
+            _abandonConfirmation.BringToFront();
             return;
-
+        }
+        if (_state is not { Status: DungeonRunStatus.Active } state || state.RunId == Guid.Empty)
+            return;
         var runId = state.RunId;
-        _confirmingAbandon = true;
-        var confirmation = new InputBox(
-            ClientLanguages.Text("Abandon dungeon"),
-            ClientLanguages.Text("Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue."),
-            InputType.YesNo,
-            onSubmit: (_, _) =>
-            {
-                _confirmingAbandon = false;
-                if (_state is { Status: DungeonRunStatus.Active } current && current.RunId == runId)
-                    PacketSender.SendAbandonDungeon(runId);
-            },
-            onCancel: (_, _) => _confirmingAbandon = false);
-        confirmation.Closed += (_, _) => _confirmingAbandon = false;
+        _abandonConfirmation = new DungeonAbandonConfirmationWindow(Canvas!, () =>
+        {
+            if (_state is { Status: DungeonRunStatus.Active } current && current.RunId == runId)
+                PacketSender.SendAbandonDungeon(runId);
+        });
+        _abandonConfirmation.Closed += (_, _) => _abandonConfirmation = null;
     }
 
     private static string BuildTimeText(long endTimeUnixMilliseconds)
@@ -171,8 +181,26 @@ internal sealed class DungeonRunHudWindow : Base
 
     private void PositionAtTop()
     {
-        X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
-        Y = 142;
+        _placement.Arrange(Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2), 142);
+    }
+
+    // This HUD has no external skin JSON. Draw an opaque, contrasting button
+    // rather than inheriting a skin's default foreground/background combination.
+    private sealed class AbandonButton(Base parent) : Button(parent, "DungeonRunAbandon")
+    {
+        protected override void Render(SkinBase skin)
+        {
+            ShouldDrawBackground = false;
+            var renderer = skin.Renderer;
+            var previous = renderer.DrawColor;
+            renderer.DrawColor = new Color(255, 194, 151, 72);
+            renderer.DrawFilledRect(RenderBounds);
+            renderer.DrawColor = IsActive ? new Color(255, 61, 28, 24)
+                : IsHovered ? new Color(255, 107, 50, 40) : new Color(255, 80, 37, 31);
+            renderer.DrawFilledRect(new Rectangle(1, 1, Width - 2, Height - 2));
+            renderer.DrawColor = previous;
+            base.Render(skin);
+        }
     }
 
     protected override void Render(SkinBase skin)

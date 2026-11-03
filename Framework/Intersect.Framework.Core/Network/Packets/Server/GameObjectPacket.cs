@@ -36,4 +36,14 @@ public partial class GameObjectPacket : IntersectPacket
     [Key(4)]
     public string Data { get; set; }
 
+    // A failed requested-ID creation is delivered only to its requesting editor.
+    // This is a localization key, never authored content or an object update.
+    [Key(5)]
+    public string CreationError { get; set; } = "";
+
+    // Only the requesting editor receives this receipt. Ordinary broadcasts must
+    // never be mistaken for ownership of a locally requested new identity.
+    [Key(6)]
+    public bool CreationSucceeded { get; set; }
+
 }

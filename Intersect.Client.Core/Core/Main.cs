@@ -324,6 +324,8 @@ internal static partial class Main
 
         //Dump Game Objects
         Globals.Me = null;
+        Intersect.Client.Interface.Game.WorldMapExploration.Clear();
+        Globals.WorldMapMapData.Clear();
         Globals.WorldMapSocialMarkers = [];
         Intersect.Client.Interface.Game.WorldMapShips.Clear();
         Intersect.Client.Maps.MapWeatherClock.SetForcedRain(0,0);

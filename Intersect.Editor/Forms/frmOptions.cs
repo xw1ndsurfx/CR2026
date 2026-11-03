@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Intersect.Editor.Core;
 using Intersect.Editor.Localization;
 
@@ -117,7 +117,7 @@ public partial class FrmOptions : Form
 
         using (dialogue)
         {
-            if (dialogue.ShowDialog() == DialogResult.OK)
+            if (dialogue.ShowDialog(this) == DialogResult.OK)
             {
                 txtGamePath.Text = dialogue.FileName;
             }

@@ -40,7 +40,7 @@ public sealed partial class FrmRewardConfiguration
         };
         _navigation.Items.Add(new NavigationChoice(null, "Daily rewards"));
         foreach (var game in MiniGameCatalog.All)
-            _navigation.Items.Add(new NavigationChoice(game.Type, game.Type == MiniGameType.Cooking ? "Cooking" : game.Type.ToString()));
+            _navigation.Items.Add(new NavigationChoice(game.Type, game.Type == MiniGameType.RollTheDice ? "Roll the Dice" : game.Type == MiniGameType.Cooking ? "Cooking" : game.Type.ToString()));
         _navigation.SelectedIndexChanged += (_, _) =>
         {
             if (_navigation.SelectedItem is NavigationChoice choice) NavigateGame(choice.Game);
@@ -76,7 +76,7 @@ public sealed partial class FrmRewardConfiguration
         foreach (var index in indexes) _tabs.TabPages.Add(_pages[index]);
         if (game != null) { _tabs.TabPages.Add(_eventsPage); RefreshGameEvents(); }
         _heading.Text = game == null ? "Daily rewards" : MiniGameCatalog.Get(game.Value).DisplayName;
-        Text = game == null ? "Daily Rewards Editor" : "Mini-Game Editor - " + game;
+        Text = game == MiniGameType.RollTheDice ? "Roll the Dice" : game == null ? "Daily Rewards Editor" : "Mini-Game Editor - " + game;
         var selected = _navigation.Items.Cast<NavigationChoice>().First(c => c.Game == game);
         if (_navigation.SelectedItem != selected) _navigation.SelectedItem = selected;
     }

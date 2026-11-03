@@ -14,6 +14,7 @@ namespace Intersect.Client.Interface.Game;
 public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
 {
     private readonly Func<SettingsWindow> _settingsWindowProvider;
+    private readonly MenuItem _skipPresentation;
     private readonly MenuItem _settings;
     private readonly MenuItem _character;
     private readonly MenuItem _logout;
@@ -27,6 +28,10 @@ public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
 
         ClearChildren();
 
+        _skipPresentation = AddItem(Cinematics.CinematicControls.SkipLabel);
+        _skipPresentation.IsVisibleInParent = false;
+        _skipPresentation.SetToolTipText(Cinematics.CinematicControls.SkipTooltip);
+        _skipPresentation.Clicked += (_, _) => { Cinematics.CinematicControls.RequestSkip(); Close(); };
         _settings = AddItem(Strings.EscapeMenu.Settings);
         _character = AddItem(Strings.EscapeMenu.CharacterSelect);
         _logout = AddItem(Strings.EscapeMenu.Logout);
@@ -42,6 +47,7 @@ public sealed partial class SimplifiedEscapeMenu : Framework.Gwen.Control.Menu
 
     public void ToggleHidden(Button? target)
     {
+        _skipPresentation.IsVisibleInParent = Cinematics.CinematicControls.CanSkip;
         var settingsWindow = _settingsWindowProvider();
         if (!settingsWindow.IsHidden || target == null)
         {

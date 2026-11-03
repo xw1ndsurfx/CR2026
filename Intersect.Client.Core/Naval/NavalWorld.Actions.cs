@@ -83,7 +83,7 @@ internal static partial class NavalWorld
     {
         var current=Globals.Me?.MapInstance;if(current==null) return;
         var tw=Options.Instance.Map.TileWidth;var th=Options.Instance.Map.TileHeight;
-        foreach(var ball in _balls.Values)
+        foreach(var (ball,style) in RenderedCannonballs())
         {
             if(!Maps.MapInstance.TryGet(ball.Current.MapId,out var map) || !Globals.GridMaps.ContainsKey(ball.Current.MapId)) continue;
             var x=map.X+(float)ball.Current.X*tw;var y=map.Y+(float)ball.Current.Y*th;
@@ -95,7 +95,7 @@ internal static partial class NavalWorld
             }
             if(row!=(int)Math.Floor((y-current.Y)/th)+Options.Instance.Map.MapHeight*2) continue;
             var age=ball.Current.AgeMilliseconds+Math.Max(0,Environment.TickCount64-ball.Received);
-            if(DrawEffectAsset(string.IsNullOrEmpty(ball.Current.Graphic)?Presentation.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(ball.Current.Heading),x,y,age,hold:true)) continue;
+            if(DrawEffectAsset(string.IsNullOrEmpty(ball.Current.Graphic)?style.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(ball.Current.Heading),x,y,age,hold:true,style:style)) continue;
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-3,y-3,6,6),new Color(255,210,160,60));
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-2,y-2,4,4),new Color(255,30,30,35));
         }

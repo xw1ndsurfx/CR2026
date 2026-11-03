@@ -36,7 +36,7 @@ public partial class ConditionControl_EquippedItem : UserControl
     public new void Show()
     {
         cmbEquippedItem.Items.Clear();
-        cmbEquippedItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbEquippedItem);
         base.Show();
     }
 }

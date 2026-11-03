@@ -22,8 +22,7 @@ public partial class EventCommandChangeSprite : UserControl
         InitLocalization();
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity));
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
         cmbSprite.SelectedIndex = Math.Max(0, cmbSprite.Items.IndexOf(TextUtils.NullToNone(mMyCommand.Sprite)));
         UpdatePreview();
     }

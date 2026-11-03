@@ -33,6 +33,7 @@ public partial class FrmProjectile : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        BuildProjectileAutoCreator();
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
     private void AssignEditorItem(Guid id)
@@ -93,15 +94,15 @@ public partial class FrmProjectile : EditorForm
         mDirectionGrid = new Bitmap("resources/misc/directions.png");
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
 
         cmbItem.Items.Clear();
         cmbItem.Items.Add(Strings.General.None);
-        cmbItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItem);
 
         cmbSpell.Items.Clear();
         cmbSpell.Items.Add(Strings.General.None);
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
 
         InitLocalization();
         UpdateEditor();

@@ -75,7 +75,7 @@ public partial class ConditionControl_QuestInProgress : UserControl
     public new void Show()
     {
         cmbQuestInProgress.Items.Clear();
-        cmbQuestInProgress.Items.AddRange(QuestDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<QuestDescriptor>(cmbQuestInProgress);
         base.Show();
     }
 

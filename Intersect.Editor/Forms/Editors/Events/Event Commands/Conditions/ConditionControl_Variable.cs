@@ -141,22 +141,22 @@ public partial class ConditionControl_Variable : UserControl
     public new void Show()
     {
         cmbCompareGlobalVar.Items.Clear();
-        cmbCompareGlobalVar.Items.AddRange(ServerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbCompareGlobalVar);
         cmbComparePlayerVar.Items.Clear();
-        cmbComparePlayerVar.Items.AddRange(PlayerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbComparePlayerVar);
         cmbCompareGuildVar.Items.Clear();
-        cmbCompareGuildVar.Items.AddRange(GuildVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbCompareGuildVar);
         cmbCompareUserVar.Items.Clear();
-        cmbCompareUserVar.Items.AddRange(UserVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbCompareUserVar);
 
         cmbBooleanGlobalVariable.Items.Clear();
-        cmbBooleanGlobalVariable.Items.AddRange(ServerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbBooleanGlobalVariable);
         cmbBooleanPlayerVariable.Items.Clear();
-        cmbBooleanPlayerVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbBooleanPlayerVariable);
         cmbBooleanGuildVariable.Items.Clear();
-        cmbBooleanGuildVariable.Items.AddRange(GuildVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbBooleanGuildVariable);
         cmbBooleanUserVariable.Items.Clear();
-        cmbBooleanUserVariable.Items.AddRange(UserVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbBooleanUserVariable);
 
         base.Show();
     }
@@ -171,22 +171,22 @@ public partial class ConditionControl_Variable : UserControl
         cmbVariable.Items.Clear();
         if (rdoPlayerVariable.Checked)
         {
-            cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = PlayerVariableDescriptor.ListIndex(variableId);
         }
         else if (rdoGlobalVariable.Checked)
         {
-            cmbVariable.Items.AddRange(ServerVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = ServerVariableDescriptor.ListIndex(variableId);
         }
         else if (rdoGuildVariable.Checked)
         {
-            cmbVariable.Items.AddRange(GuildVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = GuildVariableDescriptor.ListIndex(variableId);
         }
         else if (rdoUserVariable.Checked)
         {
-            cmbVariable.Items.AddRange(UserVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = UserVariableDescriptor.ListIndex(variableId);
         }
 

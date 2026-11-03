@@ -1,0 +1,46 @@
+name: Royal Contracts integration
+on:
+  pull_request:
+    paths:
+      - '**/*RoyalContract*'
+      - 'Framework/Intersect.Framework.Core/RoyalContracts/**'
+      - 'Intersect.Server.Core/RoyalContracts/**'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Intersect.Server.Core/Entities/Player.Pets.cs'
+      - 'Intersect.Server.Core/Maps/MapInstance.cs'
+      - 'Utilities/RoyalContractsTests/**'
+      - 'Utilities/RoyalContractsUiTests/**'
+      - 'resources/gui/royal-contracts/**'
+      - '.github/workflows/royal-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Compile server, client and editor with the same network-key configuration
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Server.Core/Intersect.Server.Core.csproj -c Debug -p:IntersectConfiguration=Debug
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug -p:IntersectConfiguration=Debug
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:IntersectConfiguration=Debug
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Rotation, native inventory, persistence and authority checks
+        run: dotnet run --project Utilities/RoyalContractsTests/RoyalContractsTests.csproj -c Debug -p:BuildProjectReferences=false -p:IntersectConfiguration=Debug
+      - name: Native UI layout, languages and visual previews
+        run: dotnet run --project Utilities/RoyalContractsUiTests/RoyalContractsUiTests.csproj -c Debug -p:BuildProjectReferences=false -p:IntersectConfiguration=Debug -- "${{ github.workspace }}" "${{ github.workspace }}/artifacts/royal-contracts"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: royal-contracts-previews
+          path: artifacts/royal-contracts/*.png

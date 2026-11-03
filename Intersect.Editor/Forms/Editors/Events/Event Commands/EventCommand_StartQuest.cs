@@ -23,7 +23,7 @@ public partial class EventCommandStartQuest : UserControl
         mEventEditor = editor;
         InitLocalization();
         cmbQuests.Items.Clear();
-        cmbQuests.Items.AddRange(QuestDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<QuestDescriptor>(cmbQuests);
         cmbQuests.SelectedIndex = QuestDescriptor.ListIndex(refCommand.QuestId);
         chkShowOfferWindow.Checked = refCommand.Offer;
     }

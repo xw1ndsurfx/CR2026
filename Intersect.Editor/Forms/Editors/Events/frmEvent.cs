@@ -269,7 +269,9 @@ public partial class FrmEvent : Form
 
     public void CloseGraphicSelector(EventGraphicSelector graphicSelector)
     {
-        Controls.Remove(graphicSelector);
+        graphicSelector.Parent?.Controls.Remove(graphicSelector);
+        graphicSelector.Hide();
+        graphicSelector.Dispose();
         UpdateEventPreview();
     }
 
@@ -798,6 +800,12 @@ public partial class FrmEvent : Form
                 tmpCommand=new GrantLootBonusCommand();break;
             case EventCommandType.OpenAdventureLobby:
                 tmpCommand=new OpenAdventureLobbyCommand();break;
+            case EventCommandType.OpenStable:
+                tmpCommand=new OpenStableCommand();break;
+            case EventCommandType.OpenFurnitureShop:
+                tmpCommand=new OpenFurnitureShopCommand();break;
+            case EventCommandType.OpenHouseDirectory:
+                tmpCommand=new OpenHouseDirectoryCommand();break;
             case EventCommandType.OpenNavalAmmoShop:
                 tmpCommand=new OpenNavalAmmoShopCommand();
                 break;
@@ -808,9 +816,27 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenQuestShopCommand();
 
                 break;
+            case EventCommandType.PlayCinematic:
+                tmpCommand = new PlayCinematicCommand();
+                break;
+            case EventCommandType.StopCinematic:
+                tmpCommand = new StopCinematicCommand();
+                break;
+            case EventCommandType.WaitForCinematic:
+                tmpCommand = new WaitForCinematicCommand();
+                break;
+            case EventCommandType.StartCinematicChapter:
+                tmpCommand = new StartCinematicChapterCommand();
+                break;
             case EventCommandType.OpenRoyalStylist:
                 tmpCommand = new OpenRoyalStylistCommand();
 
+                break;
+            case EventCommandType.OpenRoyalContracts:
+                tmpCommand = new OpenRoyalContractsCommand();
+                break;
+            case EventCommandType.OpenFishing:
+                tmpCommand = new OpenFishingCommand();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -836,7 +862,7 @@ public partial class FrmEvent : Form
     private void btnEditConditions_Click(object sender, EventArgs e)
     {
         var editForm = new FrmDynamicRequirements(CurrentPage.ConditionLists, RequirementType.Event);
-        editForm.ShowDialog();
+        editForm.ShowDialog(this);
     }
 
     private void txtCommand_TextChanged(object sender, EventArgs e)
@@ -851,8 +877,17 @@ public partial class FrmEvent : Form
         InitializeComponent();
         AddMarketplaceCommand();
         AddQuestShopCommand();
+        AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
+        var fishingNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "interface")
+            ?? lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        fishingNode?.Nodes.Add(new TreeNode(Intersect.Editor.Localization.FishingEditorText.Get("Open Fishing"))
+            { Name = "openfishing", Tag = (int)EventCommandType.OpenFishing });
+        var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        contractsNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+            { Name = "openroyalcontracts", Tag = (int)EventCommandType.OpenRoyalContracts });
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
@@ -893,7 +928,7 @@ public partial class FrmEvent : Form
         var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         if(shops!=null)
         {
-            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby")})
+            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby"),(EventCommandType.OpenStable,"Open Stable"),(EventCommandType.OpenFurnitureShop,"Open furniture shop"),(EventCommandType.OpenHouseDirectory,"Open house directory")})
                 if(!shops.Nodes.Cast<TreeNode>().Any(n=>n.Tag is int value && value==(int)id))
                     shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(caption,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name=id.ToString(),Tag=(int)id});
         }
@@ -1284,13 +1319,11 @@ public partial class FrmEvent : Form
 
         cmbPreviewFace.Items.Clear();
         cmbPreviewFace.Items.Add(Strings.General.None);
-        cmbPreviewFace.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Face)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbPreviewFace, GameContentManager.TextureType.Face);
 
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         chkParallelRun.Checked = MyEvent.CanRunInParallel;
 
         _questArrowSupported = !MyEvent.CommonEvent && !questEvent;
@@ -1313,7 +1346,7 @@ public partial class FrmEvent : Form
 
             cmbTriggerVal.Items.Clear();
             cmbTriggerVal.Items.Add(Strings.General.None);
-            cmbTriggerVal.Items.AddRange(ProjectileDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ProjectileDescriptor>(cmbTriggerVal);
         }
 
         chkIsGlobal.Checked = Convert.ToBoolean(MyEvent.Global);
@@ -1478,6 +1511,21 @@ public partial class FrmEvent : Form
         switch (command.Type)
         {
             case EventCommandType.Null:
+                break;
+            case EventCommandType.PlayCinematic:
+            case EventCommandType.BeginCinematic:
+            case EventCommandType.CinematicCamera:
+            case EventCommandType.CinematicActor:
+            case EventCommandType.AwaitCinematicCondition:
+            case EventCommandType.CinematicQuestTask:
+            case EventCommandType.CinematicEnvironment:
+            case EventCommandType.CinematicVesselMove:
+            case EventCommandType.CinematicVesselAction:
+            case EventCommandType.CinematicEffectPath:
+            case EventCommandType.StopCinematic:
+            case EventCommandType.WaitForCinematic:
+            case EventCommandType.StartCinematicChapter:
+                cmdWindow = new EventCommandCinematic(command, this);
                 break;
             case EventCommandType.ShowText:
                 cmdWindow = new EventCommandText((ShowTextCommand)command, this);
@@ -1711,6 +1759,10 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenMarketplace:
                 break;
+            case EventCommandType.OpenStable:
+            case EventCommandType.OpenFurnitureShop:
+            case EventCommandType.OpenHouseDirectory:
+                break;
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
@@ -1728,6 +1780,11 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenRoyalStylist:
                 cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
+                break;
+            case EventCommandType.OpenRoyalContracts:
+                break;
+            case EventCommandType.OpenFishing:
+                cmdWindow = new EventCommandFishing((OpenFishingCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -2191,7 +2248,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = PlayerVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2200,7 +2257,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(ServerVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = ServerVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2209,7 +2266,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(GuildVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = GuildVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2218,7 +2275,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(UserVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = UserVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;

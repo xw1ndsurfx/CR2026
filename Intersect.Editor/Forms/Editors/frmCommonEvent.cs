@@ -1,4 +1,4 @@
-﻿using DarkUI.Forms;
+using DarkUI.Forms;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
@@ -187,7 +187,7 @@ public partial class FrmCommonEvent : EditorForm
         };
 
         editor.InitEditor(false, false, false);
-        editor.ShowDialog();
+        editor.ShowDialog(this);
         InitEditor();
         Globals.MainForm.BringToFront();
         BringToFront();

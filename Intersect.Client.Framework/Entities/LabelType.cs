@@ -2,6 +2,7 @@
 
 public enum LabelType
 {
+    Afk = 100,
 
     Header = 0,
 

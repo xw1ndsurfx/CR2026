@@ -138,7 +138,7 @@ public partial class FrmSpell
 
         var keepArt = new CheckBox
         {
-            Text = "Keep existing icon, cast sprite and animations",
+            Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Keep existing cast and hit animations", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),
             ForeColor = System.Drawing.Color.Gainsboro,
             Checked = true,
             Location = new System.Drawing.Point(20, 345),
@@ -194,6 +194,8 @@ public partial class FrmSpell
             keepArt, keepRequirements, description, preview, apply, cancel
         });
         wizard.CancelButton = cancel;
+        var iconPicker = AutoCreatorAssetPicker.Insert(wizard, "SpellIconPicker", "Spell icon", "spells",
+            cmbSprite.Items.Cast<object>().Skip(1).Select(asset => asset.ToString() ?? ""), mEditorItem.Icon);
 
         SpellAutoEstimate Calculate()
         {
@@ -374,6 +376,8 @@ public partial class FrmSpell
             }
             if (!keepArt.Checked)
                 SuggestSpellArtwork(role, name.Text);
+            iconPicker.ApplyTo(cmbSprite);
+            mEditorItem.Icon = iconPicker.SelectedAsset;
 
             // Do not clear mEditorItem.CastingRequirements or modify Warp/Dash
             // data, which can still be edited independently.
@@ -423,17 +427,6 @@ public partial class FrmSpell
             var index = AnimationDescriptor.ListIndex(hit.Id) + 1;
             if (index > 0 && index < cmbHitAnimation.Items.Count)
                 cmbHitAnimation.SelectedIndex = index;
-        }
-        // Icons from sprites are chosen only when the library contains a
-        // relevant name, never silently replacing a good custom icon.
-        for (var i = 1; i < cmbSprite.Items.Count; i++)
-        {
-            if (cmbSprite.Items[i]?.ToString()?.Contains(keyword,
-                    StringComparison.OrdinalIgnoreCase) == true)
-            {
-                cmbSprite.SelectedIndex = i;
-                break;
-            }
         }
     }
 }

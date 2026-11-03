@@ -456,6 +456,13 @@ public partial class GameInterface : MutableInterface
 
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        UpdateTutorialGuide();
+        _royalContractsWindow?.Update();
+        UpdateContractJournal();
+        GuildEmblems.Update();
+        UpdateIntoxicationOverlay();
+        _archeryWindow?.CheckClosed();
+        UpdateWeaponSkills();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {
             PlayerBox?.SetEntity(Globals.Me);
@@ -486,6 +493,8 @@ public partial class GameInterface : MutableInterface
         UpdateCooking();
         UpdatePoker();
         UpdateRoulette();
+        UpdateDice();
+        UpdateFishing();
         UpdateLockpicking();
         UpdateQuestGuidance();
 
@@ -717,11 +726,17 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
+        var royalWasOpen = _archeryWindow is { IsVisibleInTree: true } || _masteriesWindow is { IsVisibleInTree: true } || _ammunitionWindow is { IsVisibleInTree: true };
+        if (_ammunitionWindow is { IsVisibleInTree: true }) _ammunitionWindow.Hide();
+        if (_archeryWindow is { IsVisibleInTree: true }) _archeryWindow.Hide();
+        if (_masteriesWindow is { IsVisibleInTree: true }) _masteriesWindow.Hide();
         var cannonWasOpen=Naval.NavalWorld.CannonViewOpen;
         Naval.NavalWorld.CannonViewOpen=false;
-        var closedWindows = ClosePotionWindow() || cannonWasOpen;
+        var closedWindows = ClosePotionWindow() || cannonWasOpen || royalWasOpen;
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
+        closedWindows = CloseDiceWindow() || closedWindows;
+        closedWindows = CloseFishingWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -782,6 +797,8 @@ public partial class GameInterface : MutableInterface
         DisposeCooking();
         DisposePoker();
         DisposeRoulette();
+        DisposeDice();
+        DisposeFishing();
         DisposeLockpicking();
         DisposeQuestGuidance();
         DisposeSoundSequence();

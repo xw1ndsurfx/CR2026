@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core.Naval;
+using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -15,6 +15,8 @@ internal sealed class PartyLobbyWindow : Window
     private readonly ScrollControl _rows;
     private readonly Label _message, _summary, _dungeonLabel;
     private readonly Button _create, _closeListing, _leaveParty;
+    private readonly Button _joustTraining;
+    private readonly Label _joustHint;
     private PartyLobbyStatePacket _state = new();
     private bool _applying;
     private bool _titleRequired;
@@ -24,8 +26,8 @@ internal sealed class PartyLobbyWindow : Window
     internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.PvP?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("PvP",ClientLanguages.Current):activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
-        LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
-        LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", _ => "All activities" });
+        LobbyActivity.RollTheDice => "Roll the Dice", LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
+        LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", LobbyActivity.Jousting => "Royal Jousting", _ => "All activities" });
     internal PartyLobbyWindow(Canvas canvas) : base(canvas,ClientLanguages.Text("Adventure lobbies"),false,nameof(PartyLobbyWindow))
     {
         SetSize(Math.Min(890,canvas.Width-20),Math.Min(650,canvas.Height-35));
@@ -38,7 +40,8 @@ internal sealed class PartyLobbyWindow : Window
         _search.PlaceholderText=ClientLanguages.Text("Search host, lobby or dungeon");
         _search.SetBounds(199,14,width-295,28); _search.SetToolTipText(ClientLanguages.Text("Search host, lobby or dungeon"));
         Button(this,"Refresh",Width-110,14,94,()=>Request(LobbyAction.Browse));
-        _summary=Label(this,"LobbySummary",16,49,width,26,Gold);
+        _summary=Label(this,"LobbySummary",16,49,width-180,26,Gold);
+        Button(this,"Royal Jousting",Width-178,45,160,()=>{Hide();JoustWindow.Open();});
         _rows=new ScrollControl(this,"LobbyRows") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
         _rows.SetBounds(16,81,width,Height-328);
         var baseY=Height-238;
@@ -50,6 +53,9 @@ internal sealed class PartyLobbyWindow : Window
         _title.SetBounds(199,baseY+29,width-183,28); _title.SetToolTipText(ClientLanguages.Text("Optional lobby title"));
         _dungeonLabel=Label(this,"DungeonCaption",16,baseY+65,175,26,Cream); _dungeonLabel.Text=ClientLanguages.Text("Dungeon");
         _dungeon=Combo(this,"DungeonChoice",199,baseY+65,width-183);
+        _joustTraining=Button(this,"Train against AI",16,baseY+65,175,()=>{Hide();JoustWindow.Open();});
+        _joustHint=Label(this,"JoustTrainingHint",199,baseY+65,width-183,30,Cream);
+        _joustHint.Text=ClientLanguages.Text("Stand at the arena start to train.");
         _create=Button(this,"Create lobby",16,baseY+101,175,Create);
         _title.TextChanged+=(_,_)=>{if(!_applying)UpdateCreation();};
         _closeListing=Button(this,"Close my lobby",199,baseY+101,175,()=>Request(LobbyAction.Close,_state.CurrentLobbyId));
@@ -83,6 +89,8 @@ internal sealed class PartyLobbyWindow : Window
     private void UpdateCreation()
     {
         var dungeon=(_activity.SelectedItem?.UserData as int? ?? 0)==(int)LobbyActivity.Dungeon;
+        var jousting=(_activity.SelectedItem?.UserData as int? ?? 0)==(int)LobbyActivity.Jousting;
+        _joustTraining.IsHidden=_joustHint.IsHidden=!jousting;
         _dungeon.IsHidden=_dungeonLabel.IsHidden=!dungeon;
         _create.IsDisabled=_state.CurrentLobbyId!=Guid.Empty || Globals.Me?.Party is {Count:>0} party && party[0].Id!=Globals.Me.Id || dungeon && _dungeon.SelectedItem==null;
         _create.IsDisabled|=_titleRequired && string.IsNullOrWhiteSpace(_title.Text);
@@ -124,10 +132,13 @@ internal sealed class PartyLobbyWindow : Window
         foreach(var lobby in entries)
         {
             var card=new LobbyCard(_rows,"Lobby"+lobby.Id,lobby.Id==_state.CurrentLobbyId); card.SetBounds(0,y,width,94);
-            var textWidth=actionX-20;
-            Label(card,"Host",10,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
-            var title=Label(card,"Title",10,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
-            var activity=Label(card,"Activity",10,54,textWidth,30,Cream);
+            var image = string.IsNullOrWhiteSpace(lobby.Image) ? null : GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Gui,lobby.Image);
+            var imageOffset = image == null ? 0 : 92;
+            if (image != null) { var portrait = new ImagePanel(card) { Texture=image, MaintainAspectRatio=true, MouseInputEnabled=false }; portrait.SetBounds(6,6,82,82); }
+            var textWidth=actionX-20-imageOffset;
+            Label(card,"Host",10+imageOffset,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
+            var title=Label(card,"Title",10+imageOffset,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
+            var activity=Label(card,"Activity",10+imageOffset,54,textWidth,30,Cream);
             activity.Text=ActivityName(lobby.Activity)+(string.IsNullOrEmpty(lobby.DungeonName)?"":" - "+ClientLanguages.ContentText(lobby.DungeonName));
             card.SetToolTipText(string.Join(", ",lobby.Members)+"\n"+lobby.Title+"\n"+activity.Text);
             var mine=lobby.Id==_state.CurrentLobbyId;

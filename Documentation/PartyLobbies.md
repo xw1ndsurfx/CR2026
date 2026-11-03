@@ -1,5 +1,7 @@
 # Adventure lobbies
 
+Roll the Dice is also available for recruiting a party, with a six-player ceiling (subject to lower server/party limits). Players meet the host, then open the same configured table event. Each player rolls independently and sees the other participants' latest results; joining the lobby does not automatically reserve a buy-in. See [Roll the Dice](MiniGames/Roll-the-Dice.md).
+
 Open User List > Party > Adventure lobbies. The directory refreshes every ten seconds and supports manual refresh, an activity filter and host/title/dungeon search. Players may advertise Dungeon (with selection of an available configured dungeon), Invasion, World Boss, Alchemy, Poker, Blackjack, Roulette, Lumberjack, House Party, Looting or Cooking. A short title is optional. These are public recruitment listings and use the existing party roster, leader, kick/leave controls and party chat. They do not create a second group or automatically buy into a mini-game.
 
 Only the party leader (or a solo player) may create a listing. Joining requires leaving any other group/lobby first and returning to the open world. Capacity comes from the party configuration, limited by the selected dungeon's maximum party size. Dungeon recruits must meet level, Premium and prerequisite quest requirements. The existing dungeon gate continues to validate all entry requirements and availability when starting the actual run.

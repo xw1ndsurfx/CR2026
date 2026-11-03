@@ -437,6 +437,18 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
+        try { return ProcessPacketCore(packet, client); }
+        catch (Exception exception)
+        {
+            // Record identifiers and the operation only, never authentication/chat packet contents.
+            ServerCrashLog.Record($"Packet processing failed; packet={packet?.GetType().Name}; " +
+                $"clientId={client?.Id}; mapId={client?.Entity?.MapId}", exception);
+            throw;
+        }
+    }
+
+    private bool ProcessPacketCore(IPacket packet, Client client)
+    {
         if (client.Entity is { NavalShipId: var shipId } navalPlayer && shipId != Guid.Empty &&
             !(navalPlayer.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld && Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(navalPlayer)) &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
@@ -760,23 +772,10 @@ internal sealed partial class PacketHandler
         PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
 
         // Send dedicated World Map data instead of normal gameplay MapPackets.
-        // This keeps the complete grid independent from the normal 3x3 gameplay map lifecycle.
+        // Discovered maps stay independent from the normal 3x3 gameplay map lifecycle.
         foreach (var mapId in grid.MapIds)
         {
-            if (!MapController.TryGet(mapId, out var map))
-            {
-                continue;
-            }
-
-            client.Send(
-                new WorldMapMapDataPacket(
-                    map.Id,
-                    map.JsonData,
-                    map.TileData,
-                    map.GetAttributeData(),
-                    map.Revision
-                )
-            );
+            PacketSender.SendDiscoveredWorldMapData(client, mapId);
         }
     }
 
@@ -1276,13 +1275,19 @@ internal sealed partial class PacketHandler
     //AttackPacket
     public void HandlePacket(Client client, AttackPacket packet)
     {
+        if (client?.Entity is not { } player) return;
+        lock (player.EntityLock) HandleWeaponAttack(client, packet);
+    }
+
+    private void HandleWeaponAttack(Client client, AttackPacket packet)
+    {
         var player = client?.Entity;
         if (player == null)
         {
             return;
         }
 
-        if (player.IsDead || player.HasPendingDeath) return;
+        if (player.IsDead || player.HasPendingDeath || !player.CanFireWorldWeapon) return;
         var unequippedAttack = false;
         var target = packet.Target;
 
@@ -1405,17 +1410,13 @@ internal sealed partial class PacketHandler
                 );
             }
 
-            var projectileBase = ProjectileDescriptor.Get(weaponItem?.ProjectileId ?? Guid.Empty);
+            var projectileBase = player.SelectedWeaponProjectile(weaponItem);
 
             if (projectileBase != null)
             {
                 if (projectileBase.AmmoItemId != Guid.Empty)
                 {
-                    var itemSlot = player.FindInventoryItemSlot(
-                        projectileBase.AmmoItemId, projectileBase.AmmoRequired
-                    );
-
-                    if (itemSlot == null)
+                    if (projectileBase.AmmoRequired <= 0 || !player.CanTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
                     {
                         PacketSender.SendChatMsg(
                             player,
@@ -1431,7 +1432,7 @@ internal sealed partial class PacketHandler
                                 Strings.Get("items", "notenough", $"REGISTERED_AMMO ({projectileBase.Ammo}:'{ItemBase.GetName(projectileBase.Ammo)}':{projectileBase.AmmoRequired})"),
                                 ChatMessageType.Inventory, CustomColors.NoAmmo);
 #endif
-                    if (!player.TryTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
+                    if (!player.TryConsumeProjectileAmmunition(projectileBase))
                     {
 #if INTERSECT_DIAGNOSTIC
                                 PacketSender.SendPlayerMsg(client,
@@ -1441,6 +1442,7 @@ internal sealed partial class PacketHandler
                                     Strings.Get("items", "notenough", $"FAILED_TO_DEDUCT_AMMO {client.Entity.CountItems(projectileBase.Ammo)}"),
                                     ChatMessageType.Inventory, CustomColors.NoAmmo);
 #endif
+                        return; // A failed deduction must never create a free world projectile.
                     }
                 }
 #if INTERSECT_DIAGNOSTIC
@@ -1549,7 +1551,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.RespondToEvent(packet.EventId, packet.Response);
+        player.RespondToEvent(packet.EventId, packet.Response, packet.DialogueToken);
     }
 
     //EventInputVariablePacket
@@ -2053,7 +2055,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.SellItem(packet.Slot, packet.Quantity);
+        player.SellItem(packet.Slot, packet.Quantity, packet.AllCopies);
     }
 
     //CloseShopPacket

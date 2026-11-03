@@ -1,4 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><EmbeddedResource Include="RoyalContracts/Text.json" LogicalName="Intersect.RoyalContracts.Text" /></ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Fishing/Text.json" LogicalName="Intersect.Fishing.Text" />
+    <EmbeddedResource Include="Fishing/UiText.json" LogicalName="Intersect.Fishing.UiText" />
+  </ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Tutorials/Text.json" LogicalName="Intersect.Tutorial.Text" /></ItemGroup>
 
     <PropertyGroup>
         <Nullable>warnings</Nullable>

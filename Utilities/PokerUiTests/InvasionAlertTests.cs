@@ -18,16 +18,23 @@ internal static class InvasionAlertTests
     {
         var date = new DateTimeOffset(2026, 10, 20, 0, 30, 0, TimeSpan.FromHours(-4));
         var definition = new InvasionDefinition { Enabled = true, StartHour = 0, StartMinute = 30, ScheduleDays = InvasionScheduleDays.Tuesday, EnvironmentLeadSeconds = 60 };
-        Check(!definition.TryGetPreludeOccurrence(date.AddMinutes(-61).AddSeconds(-1), out _), "Prelude must not start before its configured lead");
-        Check(definition.TryGetPreludeOccurrence(date.AddMinutes(-61), out var occurrence) && occurrence == date, "Environment begins before the one-hour warning across midnight");
-        Check(definition.TryGetPreludeOccurrence(date.AddMinutes(-60), out _), "Environment is already active at the first alert");
-        definition.EnvironmentLeadSeconds = 0;
-        Check(!definition.TryGetPreludeOccurrence(date.AddMinutes(-60).AddSeconds(-1), out _) && definition.TryGetPreludeOccurrence(date.AddMinutes(-60), out _), "Zero lead starts ambience exactly at the first alert");
-        definition.EnvironmentLeadSeconds = 60;
-        Check(!definition.TryGetPreludeOccurrence(date, out _), "Prelude ends at the invasion start boundary");
-        definition.Reminder60Enabled = false; definition.Reminder30Enabled = false; definition.Reminder15Enabled = false;
-        Check(definition.FirstReminderMinutes == 5 && definition.TryGetPreludeOccurrence(date.AddMinutes(-6), out _), "Lead follows the first enabled warning");
-        definition.Enabled = false; Check(!definition.TryGetPreludeOccurrence(date.AddMinutes(-6), out _), "Disabled invasions do not apply ambience");
+        foreach (var lead in new[] { 0, 60, 3600 })
+        {
+            definition.EnvironmentLeadSeconds = lead;
+            definition.PreStartCinematicEnabled = true;
+            definition.PreStartCinematicLeadSeconds = 900;
+            Check(!definition.TryGetPreludeOccurrence(date.AddMinutes(-60), out _), "One-hour reminders never start ambience");
+            Check(!definition.TryGetPreludeOccurrence(date.AddMinutes(-5).AddSeconds(-1), out _), "Ambience never starts earlier than five minutes");
+            Check(definition.TryGetPreludeOccurrence(date.AddMinutes(-5), out var occurrence) && occurrence == date, "Ambience starts exactly five minutes before the scheduled invasion");
+            Check(!definition.TryGetPreludeOccurrence(date, out _), "Prelude ends at invasion start");
+        }
+        definition.Reminder60Enabled = false; definition.Reminder30Enabled = false; definition.Reminder15Enabled = false; definition.Reminder5Enabled = false;
+        Check(definition.TryGetPreludeOccurrence(date.AddMinutes(-5), out _), "Ambience does not depend on enabled warning messages");
+        var midnight = date.AddMinutes(-30);
+        definition.StartMinute = 0;
+        Check(definition.TryGetPreludeOccurrence(midnight.AddMinutes(-5), out var nextDay) && nextDay == midnight, "Five-minute preparation crosses midnight correctly");
+        definition.Enabled = false;
+        Check(!definition.TryGetPreludeOccurrence(midnight.AddMinutes(-5), out _), "Disabled invasions do not apply ambience");
         var status = MessagePackSerializer.Deserialize<InvasionStatusPacket>(MessagePackSerializer.Serialize(new InvasionStatusPacket { Active = true, Prelude = true, Music = "royal.ogg" }));
         Check(status.Prelude && status.Music == "royal.ogg", "Prelude flag and music survive packet transport");
         var oldContext = ApplicationContext.Context.Value; var oldDatabase = Globals.Database;

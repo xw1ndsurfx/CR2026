@@ -1,0 +1,170 @@
+{
+  "recorded_at_utc": "2026-11-03T07:18:57.893729+00:00",
+  "base_commit": "1bfdcf6be2aefbcbbd4444aea6b55b9cfa49d316",
+  "branch": "fix/fishing-activation-feedback",
+  "shared_rules": {
+    "command": "python3 Utilities/FishingRulesTests/run-standalone.py --dotnet <dotnet8-host>",
+    "checks": 431,
+    "exit_code": 0
+  },
+  "native_server": {
+    "command": "python3 Utilities/FishingRulesTests/run-native.py --dotnet <dotnet8-host>",
+    "checks": 659,
+    "exit_code": 0,
+    "includes_shared_checks": true,
+    "matches_rebuilt_server_and_framework": true
+  },
+  "builds": {
+    "server": "PASS",
+    "editor_windows_cross_compile": "PASS",
+    "editor_tests_windows_cross_compile": "PASS",
+    "sdk": "8.0.427",
+    "method": "Direct MSBuild host; the existing key-generation task runs in process with an external temporary override. No keys or generated binaries are included."
+  },
+  "localization": {
+    "editor_entries": 246,
+    "server_entries": 44,
+    "new_server_diagnostics": 16,
+    "languages": [
+      "en",
+      "fr",
+      "es"
+    ],
+    "placeholder_parity": "PASS"
+  },
+  "provided_json_check": {
+    "configurations": 2,
+    "shared_strict_validation": "PASS",
+    "enabled_preserved_after_round_trip": "PASS",
+    "production_reference_existence": "NOT VERIFIED: production item/map/profession registries and file identities were not supplied.",
+    "data_in_repository": false
+  },
+  "protocol": {
+    "existing_field_keys_preserved": "0–7",
+    "new_field_key": 8,
+    "new_field": "ConfigurationAction (nullable FishingAction)",
+    "legacy_missing_field": null,
+    "existing_action_values_preserved": "0–10",
+    "messagepack_tests": "PASS"
+  },
+  "windows_execution": {
+    "workflow": ".github/workflows/fishing.yml",
+    "script": "scripts/Verify-Fishing.ps1",
+    "ui_suites": [
+      "--fishing-only",
+      "--hub-only"
+    ],
+    "result_location": "GitHub Actions checks for the pull-request revision. Local cross-compilation is not native WinForms execution."
+  },
+  "coverage": [
+    "Actual server handler: disabled active zone and enabled saved draft stay separate during refused activation.",
+    "Sixteen resource validation failures produce exact diagnostics in EN/FR/ES with English fallback.",
+    "Successful activation persists custom profession, supplied net profile, normal and legendary catches and Enabled=true in both stores.",
+    "The Event configuration endpoint and a fresh runtime load return the same enabled zone.",
+    "Configuration responses identify read versus write; old seven/eight-field MessagePack payloads remain readable.",
+    "Windows suite keeps the actual Event dialog open through checkbox edit, typed read failure during pending write and successful activation.",
+    "Windows suite preserves the complete refusal across edits and draft saves, distinguishes timeout, and tests a successful retry.",
+    "Windows suite uses the real themed editor opening and verifies a long diagnostic at minimum size and 1180x790.",
+    "Windows suite checks scrollable Event diagnostics with actions remaining visible."
+  ],
+  "limits": [
+    "No connection to the production server or its databases.",
+    "No live deployment or manual multiplayer/audio validation.",
+    "Windows UI execution must be read from the matching CI run.",
+    "Existing compiler and dependency warnings are unchanged."
+  ],
+  "sources": [
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/Text.json",
+      "bytes": 15043,
+      "sha256": "85f9952d0ed985c4bcc19f7b6b8d0aef5f8f9dfa05822d6e299bcb4209d7ef0a"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Network/Packets/Server/FishingStatePacket.cs",
+      "bytes": 682,
+      "sha256": "c7aaa13baaf6e13449d6ed38bce5ac8f0d51784e96e78a0993a3546bc8f3a4ea"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/Events/EventCommandFishing.cs",
+      "bytes": 5585,
+      "sha256": "544e1707cd6f9cd70103b5e20c86e59b9cd18d9dd3b5ed14c48e6996b57a0104"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FishingEditorState.cs",
+      "bytes": 2626,
+      "sha256": "eb5ecbb3836936d41631dedb99b699449396ecbb4d03360de8d238d46d20f3a8"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FrmFishing.Feedback.cs",
+      "bytes": 7863,
+      "sha256": "0c23ee09f448b1408b88c328727a96c7a7f77256d8af81c51652c3b1b5a1f84b"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FrmFishing.cs",
+      "bytes": 31161,
+      "sha256": "5f2db757dca6b066f57f6bbf635f4ca8eae152418def152077720f55cfdec0c8"
+    },
+    {
+      "path": "Intersect.Editor/Forms/frmMain.Fishing.cs",
+      "bytes": 3329,
+      "sha256": "7e20c5b25d3250bd8557eb88cdede688273131f6a91d89f86ecb189d70af7154"
+    },
+    {
+      "path": "Intersect.Editor/Localization/FishingEditorText.json",
+      "bytes": 46562,
+      "sha256": "e874245b45d96a40c5c055775ea4108f797037e31ff6a0b323aae185632f1937"
+    },
+    {
+      "path": "Intersect.Server.Core/Fishing/FishingRuntime.cs",
+      "bytes": 11734,
+      "sha256": "977cdad53f9209ec51f727e14cab151ed206cdec8975e29e54b617577e274a19"
+    },
+    {
+      "path": "Intersect.Server.Core/Fishing/FishingValidationDiagnostic.cs",
+      "bytes": 1231,
+      "sha256": "f6e36f5b0e099c4c894417eafe3248601fca9f331cb3d6241cd77fd39a37ab29"
+    },
+    {
+      "path": "Intersect.Server.Core/Networking/PacketHandler.Fishing.cs",
+      "bytes": 3284,
+      "sha256": "a871d2acbd6140c109c8cee9f72bc94e83cda59e36b08a67f4aca0c3175ad45e"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/ServerDraftChecks.cs",
+      "bytes": 31329,
+      "sha256": "1acec5ceba3d51484640410dc3c12c564aabbae79cc434c2fcd34bf30f7432f5"
+    },
+    {
+      "path": "Utilities/InterfaceEditorTests/FishingEditorTests.cs",
+      "bytes": 36623,
+      "sha256": "ee5b0a106bab8efaa4f135adcd1c74d70d0f9f05220d9954bfcdb44683a72654"
+    }
+  ],
+  "assemblies": [
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
+      "bytes": 94720,
+      "sha256": "59c860e183113245af81a079c78ed4f6fb5b3fa1aedb6a577d8c9699278d13db"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Server.Core.dll",
+      "bytes": 13682176,
+      "sha256": "19d512f23e47925815ba54e287b3211d7e17762de19ee3920abc92d6f6cc28ac"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Framework.Core.dll",
+      "bytes": 2687488,
+      "sha256": "50148732cf5ed91f24f8c0f1b1fac8d49c2717eb764793c19d253fadafc0da20"
+    },
+    {
+      "path": "Intersect.Editor/bin/Debug/net8.0-windows/win-x64/Logiklik 2D Engine.dll",
+      "bytes": 8192000,
+      "sha256": "d814fab41fa9bad5828a4ebfdf936636cc786e05e602b34cc1a76621f407d6c0"
+    },
+    {
+      "path": "Utilities/InterfaceEditorTests/bin/Debug/net8.0-windows/win-x64/Intersect.Tests.Editor.dll",
+      "bytes": 847360,
+      "sha256": "ea2bc775eaa10ff509e14b79404bf24150e1abc5e33bc97d0439ba586da17d0d"
+    }
+  ]
+}

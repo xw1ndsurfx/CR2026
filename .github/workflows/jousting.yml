@@ -1,0 +1,42 @@
+name: Royal Jousting
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/Jousting/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/**/Joust*'
+      - 'Intersect.Server.Core/**/Joust*'
+      - 'Intersect.Server.Core/Entities/Player.Joust*'
+      - 'Intersect.Client.Core/Interface/Game/Joust*.cs'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.Jousting.cs'
+      - 'Intersect.Editor/Forms/Editors/FrmJoust*'
+      - 'Intersect.Tests*/Joust*'
+      - 'Utilities/InterfaceEditorTests/Joust*'
+      - 'Utilities/PokerUiTests/Joust*'
+      - 'scripts/Verify-Jousting.ps1'
+      - '.github/workflows/jousting.yml'
+  workflow_dispatch:
+jobs:
+  jousting:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build native projects and verify simulation, world, economy and protocol
+        shell: pwsh
+        run: ./scripts/Verify-Jousting.ps1
+      - name: Verify named selectors and native cinematic editing in three languages
+        shell: pwsh
+        run: |
+          $key = Join-Path $PWD 'Intersect.Network/bin/Debug/keys/network.handshake.bkey.pub'
+          dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$key" -- --jousting-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify invitation, expiry and PvP results in the game UI
+        shell: pwsh
+        run: |
+          $key = Join-Path $PWD 'Intersect.Network/bin/Debug/keys/network.handshake.bkey.pub'
+          dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj -c Debug -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$key"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

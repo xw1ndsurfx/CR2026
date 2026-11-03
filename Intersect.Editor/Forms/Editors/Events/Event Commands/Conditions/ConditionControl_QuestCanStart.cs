@@ -36,7 +36,7 @@ public partial class ConditionControl_QuestCanStart : UserControl
     public new void Show()
     {
         cmbStartQuest.Items.Clear();
-        cmbStartQuest.Items.AddRange(QuestDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<QuestDescriptor>(cmbStartQuest);
         base.Show();
     }
 }

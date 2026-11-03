@@ -170,6 +170,7 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     [Column("DeathAnimation")]
     public Guid DeathAnimationId { get; set; }
+    public int DeathAnimationDurationSeconds { get; set; }
 
     [NotMapped]
     [JsonIgnore]

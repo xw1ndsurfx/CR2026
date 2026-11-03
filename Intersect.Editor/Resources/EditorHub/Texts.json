@@ -1,0 +1,656 @@
+{
+  "Smart.CreateWaterConnection": { "en": "Connect selected water", "fr": "Raccorder l’eau sélectionnée", "es": "Conectar el agua seleccionada" },
+  "Smart.ConnectWater": { "en": "Connect existing water (Ground)", "fr": "Raccorder l’eau existante (Ground)", "es": "Conectar agua existente (Ground)" },
+  "Smart.WaterConnectionHelp": { "en": "1. Capture surrounding water in Library. 2. Select the other water in the tileset palette (same VX/XP format). 3. Connect selected water, then click that water on the map. Replaces all matching tiles on Ground only, including with preservation enabled. Right-click restores; Undo cancels the whole edit. Decoration variants do not connect terrain.", "fr": "1. Capturez l’eau environnante dans Bibliothèque. 2. Sélectionnez l’autre eau dans la palette (même format VX/XP). 3. Raccordez l’eau sélectionnée, puis cliquez cette eau sur la map. Remplace les tuiles identiques sur Ground seulement, même avec la préservation activée. Clic droit : restaurer ; Annuler : toute l’action. Les variantes de décoration ne raccordent pas les terrains.", "es": "1. Capture el agua circundante en Biblioteca. 2. Seleccione la otra agua en la paleta (mismo formato VX/XP). 3. Conecte el agua seleccionada y haga clic en esa agua del mapa. Reemplaza las celdas iguales solo en Ground, incluso con conservación. Clic derecho: restaurar; Deshacer: toda la acción. Las variantes decorativas no conectan terrenos." },
+  "Smart.WaterConnectionRequired": { "en": "Capture the surrounding water first, then select the water to connect in the palette. Both must use the same native VX/XP format and animation mode.", "fr": "Capturez d’abord l’eau environnante, puis sélectionnez l’eau à raccorder dans la palette. Les deux doivent avoir le même format VX/XP et le même mode d’animation.", "es": "Capture primero el agua circundante y seleccione el agua que desea conectar en la paleta. Ambas deben tener el mismo formato VX/XP y modo de animación." },
+  "Smart.WaterConnectionReady": { "en": "Ready: click the selected water on the map to connect its matching Ground tiles. Other terrain and layers are preserved. Save the preset and distribute its generated PNG to clients.", "fr": "Prêt : cliquez l’eau choisie sur la map pour raccorder ses tuiles Ground identiques. Les autres terrains et calques sont conservés. Enregistrez le preset et distribuez son PNG aux clients.", "es": "Listo: haga clic en el agua elegida del mapa para conectar sus celdas Ground iguales. Se conservan los otros terrenos y capas. Guarde el preset y distribuya su PNG a los clientes." },
+  "Latest": { "en": "Recent additions", "fr": "Ajouts récents", "es": "Novedades" },
+  "LatestModules": { "en": "Recently added modules", "fr": "Derniers modules ajoutés", "es": "Módulos añadidos recientemente" },
+  "Home": {
+    "en": "Home",
+    "fr": "Accueil",
+    "es": "Inicio"
+  },
+  "Game": {
+    "en": "Game",
+    "fr": "Game",
+    "es": "Juego"
+  },
+  "System": {
+    "en": "System",
+    "fr": "Système",
+    "es": "Sistema"
+  },
+  "MiniGames": {
+    "en": "Mini-Games",
+    "fr": "Mini-Jeux",
+    "es": "Minijuegos"
+  },
+  "Events": {
+    "en": "Events",
+    "fr": "Événements",
+    "es": "Eventos"
+  },
+  "Tools": {
+    "en": "Tools",
+    "fr": "Outils",
+    "es": "Herramientas"
+  },
+  "Favorites": {
+    "en": "Favorites",
+    "fr": "Favoris",
+    "es": "Favoritos"
+  },
+  "All": {
+    "en": "All",
+    "fr": "Tous",
+    "es": "Todos"
+  },
+  "Gameplay": {
+    "en": "Gameplay",
+    "fr": "Gameplay",
+    "es": "Jugabilidad"
+  },
+  "Interface": {
+    "en": "Interface",
+    "fr": "Interface",
+    "es": "Interfaz"
+  },
+  "Economy": {
+    "en": "Economy",
+    "fr": "Économie",
+    "es": "Economía"
+  },
+  "World": {
+    "en": "World",
+    "fr": "Monde",
+    "es": "Mundo"
+  },
+  "Advanced": {
+    "en": "Advanced",
+    "fr": "Avancé",
+    "es": "Avanzado"
+  },
+  "Welcome": {
+    "en": "Welcome to Logiklik 2D Engine",
+    "fr": "Bienvenue dans Logiklik 2D Engine",
+    "es": "Bienvenido a Logiklik 2D Engine"
+  },
+  "Subtitle": {
+    "en": "Create, edit and bring your 2D RPG to life with powerful, accessible tools.",
+    "fr": "Créez, éditez et donnez vie à votre RPG 2D avec des outils puissants et accessibles.",
+    "es": "Crea, edita y da vida a tu RPG 2D con herramientas potentes y accesibles."
+  },
+  "Search": {
+    "en": "Search for an editor, a tool or a feature…",
+    "fr": "Rechercher un éditeur, un outil ou une fonctionnalité…",
+    "es": "Buscar un editor, una herramienta o una función…"
+  },
+  "MainEditors": {
+    "en": "Main editors",
+    "fr": "Éditeurs principaux",
+    "es": "Editores principales"
+  },
+  "Results": {
+    "en": "Editors and tools",
+    "fr": "Éditeurs et outils",
+    "es": "Editores y herramientas"
+  },
+  "QuickActions": {
+    "en": "Quick actions",
+    "fr": "Actions rapides",
+    "es": "Acciones rápidas"
+  },
+  "Recent": {
+    "en": "Recently opened",
+    "fr": "Derniers éléments ouverts",
+    "es": "Abiertos recientemente"
+  },
+  "SeeAll": {
+    "en": "See all →",
+    "fr": "Voir tout →",
+    "es": "Ver todo →"
+  },
+  "BackToMap": {
+    "en": "Back to map",
+    "fr": "Retour à la carte",
+    "es": "Volver al mapa"
+  },
+  "NoResults": {
+    "en": "No matching editors. Try another term or filter.",
+    "fr": "Aucun éditeur correspondant. Essayez un autre terme ou filtre.",
+    "es": "No hay editores coincidentes. Prueba otro término o filtro."
+  },
+  "NoRecent": {
+    "en": "Open an editor to find it here.",
+    "fr": "Ouvrez un éditeur pour le retrouver ici.",
+    "es": "Abre un editor para encontrarlo aquí."
+  },
+  "NoFavorites": {
+    "en": "Use the star on a card to add a favorite.",
+    "fr": "Utilisez l’étoile d’une carte pour ajouter un favori.",
+    "es": "Usa la estrella de una tarjeta para añadir un favorito."
+  },
+  "JustNow": {
+    "en": "Just now",
+    "fr": "À l’instant",
+    "es": "Ahora"
+  },
+  "MinutesAgo": {
+    "en": "{0} min ago",
+    "fr": "Il y a {0} min",
+    "es": "Hace {0} min"
+  },
+  "HoursAgo": {
+    "en": "{0} h ago",
+    "fr": "Il y a {0} h",
+    "es": "Hace {0} h"
+  },
+  "NewMap": {
+    "en": "New map",
+    "fr": "Nouvelle carte",
+    "es": "Nuevo mapa"
+  },
+  "NewEvent": {
+    "en": "New map event",
+    "fr": "Nouvel événement",
+    "es": "Nuevo evento"
+  },
+  "SaveMap": {
+    "en": "Save map",
+    "fr": "Sauvegarder la carte",
+    "es": "Guardar mapa"
+  },
+  "CommonEvents": {
+    "en": "Common events",
+    "fr": "Événements communs",
+    "es": "Eventos comunes"
+  },
+  "Dashboard": {
+    "en": "Editor dashboard",
+    "fr": "Tableau de bord",
+    "es": "Panel de editores"
+  },
+  "GameHint": {
+    "en": "Heroes, items and worlds",
+    "fr": "Héros, objets et mondes",
+    "es": "Héroes, objetos y mundos"
+  },
+  "SystemHint": {
+    "en": "Rules, variables and settings",
+    "fr": "Règles, variables et paramètres",
+    "es": "Reglas, variables y ajustes"
+  },
+  "MiniGamesHint": {
+    "en": "Dedicated game settings",
+    "fr": "Configurations dédiées",
+    "es": "Configuraciones dedicadas"
+  },
+  "EventsHint": {
+    "en": "Visual scripts and world events",
+    "fr": "Scripts visuels et événements",
+    "es": "Guiones visuales y eventos"
+  },
+  "ToolsHint": {
+    "en": "Resources, sounds and production",
+    "fr": "Ressources, sons et production",
+    "es": "Recursos, sonidos y producción"
+  },
+  "Hub": {
+    "en": "Editor Hub",
+    "fr": "Centre des éditeurs",
+    "es": "Centro de editores"
+  },
+  "Collapse": {
+    "en": "Collapse navigation",
+    "fr": "Réduire la navigation",
+    "es": "Contraer navegación"
+  },
+  "Expand": {
+    "en": "Expand navigation",
+    "fr": "Développer la navigation",
+    "es": "Expandir navegación"
+  },
+  "Unavailable": {
+    "en": "This tool is currently unavailable.",
+    "fr": "Cet outil est actuellement indisponible.",
+    "es": "Esta herramienta no está disponible actualmente."
+  },
+  "MissingArt": {
+    "en": "Illustration unavailable",
+    "fr": "Illustration indisponible",
+    "es": "Ilustración no disponible"
+  },
+  "ViewTools": {
+    "en": "Explore all editors",
+    "fr": "Explorer tous les éditeurs",
+    "es": "Explorar todos los editores"
+  },
+  "MapEventHint": {
+    "en": "Choose a tile on the map to create or edit its event.",
+    "fr": "Choisissez une case sur la carte pour créer ou modifier son événement.",
+    "es": "Elige una casilla del mapa para crear o editar su evento."
+  },
+  "EconomyAndCommerce": {
+    "en": "Economy and commerce",
+    "fr": "Économie et commerces",
+    "es": "Economía y comercio"
+  },
+  "WorldAndProgression": {
+    "en": "World and progression",
+    "fr": "Monde et progression",
+    "es": "Mundo y progresión"
+  },
+  "CharactersAndCombat": {
+    "en": "Characters and combat",
+    "fr": "Personnages et combat",
+    "es": "Personajes y combate"
+  },
+  "Production": {
+    "en": "Production tools",
+    "fr": "Outils de production",
+    "es": "Herramientas de producción"
+  },
+  "WorldEvents": {
+    "en": "World events and scripts",
+    "fr": "Événements du monde et scripts",
+    "es": "Eventos del mundo y guiones"
+  },
+  "Configuration": {
+    "en": "Game configuration",
+    "fr": "Configuration du jeu",
+    "es": "Configuración del juego"
+  },
+  "MiniGameSettings": {
+    "en": "Mini-game settings",
+    "fr": "Paramètres des mini-jeux",
+    "es": "Ajustes de minijuegos"
+  },
+  "Smart.Title": {
+    "en": "Smart Map Builder",
+    "fr": "Smart Map Builder",
+    "es": "Smart Map Builder"
+  },
+  "Smart.Enable": {
+    "en": "Enable smart painting",
+    "fr": "Activer la peinture intelligente",
+    "es": "Activar pintura inteligente"
+  },
+  "Smart.Help": {
+    "en": "Choose a tileset, native mode and source in Map Layers, then capture it. Drag to preview; release to apply. Right button erases; Esc cancels. Switch tools to return to classic editing.",
+    "fr": "Choisissez le tileset, le mode natif et la source dans Calques, puis capturez. Tracez pour prévisualiser; relâchez pour appliquer. Bouton droit : gomme. Échap : annuler. Changez d’outil pour le mode classique.",
+    "es": "Elija tileset, modo nativo y origen en Capas; capture la selección. Arrastre para previsualizar y suelte para aplicar. Botón derecho: borrar. Esc: cancelar. Cambie de herramienta para volver al modo clásico."
+  },
+  "Smart.Preserve": {
+    "en": "Preserve existing graphics",
+    "fr": "Préserver les tuiles existantes",
+    "es": "Conservar mosaicos existentes"
+  },
+  "Smart.Round": {
+    "en": "Round footprint",
+    "fr": "Empreinte ronde",
+    "es": "Huella circular"
+  },
+  "Smart.Search": {
+    "en": "Search presets or categories",
+    "fr": "Rechercher des presets ou catégories",
+    "es": "Buscar presets o categorías"
+  },
+  "Smart.All": {
+    "en": "All presets",
+    "fr": "Tous les presets",
+    "es": "Todos los presets"
+  },
+  "Smart.Favorites": {
+    "en": "Favorites",
+    "fr": "Favoris",
+    "es": "Favoritos"
+  },
+  "Smart.Recent": {
+    "en": "Recently used",
+    "fr": "Récemment utilisés",
+    "es": "Usados recientemente"
+  },
+  "Smart.Name": {
+    "en": "Preset name",
+    "fr": "Nom du preset",
+    "es": "Nombre del preset"
+  },
+  "Smart.Category": {
+    "en": "Brush category",
+    "fr": "Catégorie de pinceau",
+    "es": "Categoría de pincel"
+  },
+  "Smart.Terrain": {
+    "en": "Terrain",
+    "fr": "Terrain",
+    "es": "Terreno"
+  },
+  "Smart.Road": {
+    "en": "Road",
+    "fr": "Route",
+    "es": "Camino"
+  },
+  "Smart.River": {
+    "en": "River",
+    "fr": "Rivière",
+    "es": "Río"
+  },
+  "Smart.Cliff": {
+    "en": "Cliff",
+    "fr": "Falaise",
+    "es": "Acantilado"
+  },
+  "Smart.Decoration": {
+    "en": "Decoration",
+    "fr": "Décoration",
+    "es": "Decoración"
+  },
+  "Smart.Building": {
+    "en": "Building",
+    "fr": "Bâtiment",
+    "es": "Edificio"
+  },
+  "Smart.Capture": {
+    "en": "Capture source",
+    "fr": "Capturer la source",
+    "es": "Capturar origen"
+  },
+  "Smart.Save": {
+    "en": "Save preset",
+    "fr": "Enregistrer",
+    "es": "Guardar preset"
+  },
+  "Smart.Duplicate": {
+    "en": "Duplicate",
+    "fr": "Dupliquer",
+    "es": "Duplicar"
+  },
+  "Smart.Favorite": {
+    "en": "Favorite ★",
+    "fr": "Favori ★",
+    "es": "Favorito ★"
+  },
+  "Smart.Delete": {
+    "en": "Delete preset",
+    "fr": "Supprimer le preset",
+    "es": "Eliminar preset"
+  },
+  "Smart.Import": {
+    "en": "Import presets",
+    "fr": "Importer des presets",
+    "es": "Importar presets"
+  },
+  "Smart.Export": {
+    "en": "Export preset",
+    "fr": "Exporter le preset",
+    "es": "Exportar preset"
+  },
+  "Smart.Shape": {
+    "en": "Painting tool",
+    "fr": "Outil de peinture",
+    "es": "Herramienta de pintura"
+  },
+  "Smart.Brush": {
+    "en": "Freehand path",
+    "fr": "Tracé libre",
+    "es": "Trazo libre"
+  },
+  "Smart.Line": {
+    "en": "Straight line",
+    "fr": "Ligne droite",
+    "es": "Línea recta"
+  },
+  "Smart.Rectangle": {
+    "en": "Rectangle",
+    "fr": "Rectangle",
+    "es": "Rectángulo"
+  },
+  "Smart.Ellipse": {
+    "en": "Circle / ellipse",
+    "fr": "Cercle / ellipse",
+    "es": "Círculo / elipse"
+  },
+  "Smart.Fill": {
+    "en": "Connected fill",
+    "fr": "Remplissage contigu",
+    "es": "Relleno contiguo"
+  },
+  "Smart.Replace": {
+    "en": "Replace matching terrain",
+    "fr": "Remplacer le terrain identique",
+    "es": "Reemplazar terreno coincidente"
+  },
+  "Smart.Stamp": {
+    "en": "Building stamp",
+    "fr": "Tampon de bâtiment",
+    "es": "Sello de edificio"
+  },
+  "Smart.Radius": {
+    "en": "Radius (tiles)",
+    "fr": "Rayon (tuiles)",
+    "es": "Radio (mosaicos)"
+  },
+  "Smart.Density": {
+    "en": "Decoration density (%)",
+    "fr": "Densité de décoration (%)",
+    "es": "Densidad de decoración (%)"
+  },
+  "Smart.StampLayers": {
+    "en": "Layers included in building capture",
+    "fr": "Calques inclus dans le bâtiment",
+    "es": "Capas incluidas en el edificio"
+  },
+  "Smart.AnchorX": {
+    "en": "Stamp anchor X (tiles)",
+    "fr": "Ancrage X du tampon (tuiles)",
+    "es": "Anclaje X del sello (mosaicos)"
+  },
+  "Smart.AnchorY": {
+    "en": "Stamp anchor Y (tiles)",
+    "fr": "Ancrage Y du tampon (tuiles)",
+    "es": "Anclaje Y del sello (mosaicos)"
+  },
+  "Smart.CaptureStamp": {
+    "en": "Capture map selection",
+    "fr": "Capturer la sélection de map",
+    "es": "Capturar selección del mapa"
+  },
+  "Smart.AddVariant": {
+    "en": "Add selected variant",
+    "fr": "Ajouter la variante sélectionnée",
+    "es": "Añadir variante seleccionada"
+  },
+  "Smart.Transition": {
+    "en": "Add overlay rule",
+    "fr": "Ajouter une règle de surcouche",
+    "es": "Añadir regla de superposición"
+  },
+  "Smart.ClearRules": {
+    "en": "Clear rules / variants",
+    "fr": "Effacer règles / variantes",
+    "es": "Borrar reglas / variantes"
+  },
+  "Smart.TransitionHelp": {
+    "en": "Overlay rule: capture your terrain brush first. Hover the existing terrain to match on its layer; select an overlay autotile on another graphic layer, then add the rule. The native overlay draws edges over that terrain. Missing edge artwork must be supplied; presets never invent it. Disable preservation explicitly to replace occupied cells. Rules and variants can also be edited by exporting and importing JSON.",
+    "fr": "Règle de surcouche : capturez votre pinceau de terrain. Survolez le terrain existant à reconnaître sur son calque; sélectionnez un autotile de bordure sur un autre calque graphique, puis ajoutez la règle. La surcouche native dessine les bordures sur le terrain. Les raccords graphiques manquants doivent être fournis. Désactivez explicitement la préservation pour remplacer des cellules occupées. Règles et variantes sont aussi modifiables par export et import JSON.",
+    "es": "Regla de superposición: capture el pincel de terreno. Sitúe el cursor sobre el terreno existente en su capa; seleccione un autotile de borde en otra capa gráfica y añada la regla. La superposición nativa dibuja los bordes. Debe proporcionar los gráficos de unión que falten. Desactive la conservación explícitamente para reemplazar celdas ocupadas. También puede editar reglas y variantes exportando e importando JSON."
+  },
+  "Smart.Undo": {
+    "en": "Undo",
+    "fr": "Annuler",
+    "es": "Deshacer"
+  },
+  "Smart.Redo": {
+    "en": "Redo",
+    "fr": "Rétablir",
+    "es": "Rehacer"
+  },
+  "Smart.Error": {
+    "en": "Unable to complete this operation.",
+    "fr": "Impossible de terminer cette opération.",
+    "es": "No se pudo completar esta operación."
+  },
+  "Smart.ChooseSource": {
+    "en": "Select a graphic layer and a valid tileset source, then capture it.",
+    "fr": "Sélectionnez un calque graphique et une source valide, puis capturez-la.",
+    "es": "Seleccione una capa gráfica y un origen válido; después captúrelo."
+  },
+  "Smart.Captured": {
+    "en": "Captured. Save to keep this preset.",
+    "fr": "Capturé. Enregistrez pour conserver ce preset.",
+    "es": "Capturado. Guarde para conservar el preset."
+  },
+  "Smart.InvalidResource": {
+    "en": "Missing tileset, invalid layer or source rectangle. Choose an available resource and the correct native format; no replacement art has been generated.",
+    "fr": "Tileset manquant, calque invalide ou découpage hors image. Choisissez une ressource disponible et le bon format natif; aucun raccord graphique n’a été inventé.",
+    "es": "Falta un tileset, la capa no es válida o el recorte excede la imagen. Elija un recurso disponible y el formato nativo correcto; no se han inventado gráficos."
+  },
+  "Smart.Ready": {
+    "en": "Ready. The map preview uses the native animation clock.",
+    "fr": "Prêt. L’aperçu suit le rythme d’animation natif.",
+    "es": "Listo. La vista previa usa el ritmo de animación nativo."
+  },
+  "Smart.NoChanges": {
+    "en": "No cells changed. Check preservation, destination layer and stamp bounds.",
+    "fr": "Aucune cellule modifiée. Vérifiez la préservation, le calque et les limites du tampon.",
+    "es": "No se modificaron celdas. Revise la conservación, la capa y los límites del sello."
+  },
+  "Smart.Changed": {
+    "en": "{0} graphic cells changed in one undo action.",
+    "fr": "{0} cellules graphiques modifiées en une seule action Annuler.",
+    "es": "{0} celdas gráficas modificadas en una acción de deshacer."
+  },
+  "Smart.SelectStamp": {
+    "en": "Use the classic selection tool to select a map area, check the layers, then capture it.",
+    "fr": "Sélectionnez une zone avec l’outil classique de sélection, cochez les calques, puis capturez-la.",
+    "es": "Seleccione un área con la herramienta clásica de selección, marque las capas y capture."
+  },
+  "Smart.Cleared": {
+    "en": "Rules and variants cleared from the working preset. Save to keep changes.",
+    "fr": "Règles et variantes effacées du preset de travail. Enregistrez pour conserver les changements.",
+    "es": "Reglas y variantes borradas del preset de trabajo. Guarde los cambios."
+  },
+  "Smart.Library": {
+    "en": "Library",
+    "fr": "Bibliothèque",
+    "es": "Biblioteca"
+  },
+  "Smart.Painting": {
+    "en": "Painting",
+    "fr": "Peinture",
+    "es": "Pintura"
+  },
+  "Smart.Assemblies": {
+    "en": "Rules",
+    "fr": "Règles",
+    "es": "Reglas"
+  },
+  "Smart.Destination": {
+    "en": "Destination layer",
+    "fr": "Calque de destination",
+    "es": "Capa de destino"
+  },
+  "Smart.RemoveVariant": {
+    "en": "Remove variant",
+    "fr": "Retirer la variante",
+    "es": "Quitar variante"
+  },
+  "Smart.EditRule": {
+    "en": "Replace selected rule",
+    "fr": "Modifier la règle",
+    "es": "Editar regla"
+  },
+  "Smart.RemoveRule": {
+    "en": "Remove rule",
+    "fr": "Retirer la règle",
+    "es": "Quitar regla"
+  },
+  "Smart.SoftWater": {
+    "en": "Water → grass, no sand (optional)",
+    "fr": "Eau → gazon sans sable (optionnel)",
+    "es": "Agua → césped sin arena (opcional)"
+  },
+  "Smart.WaterFeather": {
+    "en": "Soft edge width (pixels)",
+    "fr": "Largeur du dégradé (pixels)",
+    "es": "Ancho del degradado (píxeles)"
+  },
+  "Smart.CreateSoftWater": {
+    "en": "Create soft water variant",
+    "fr": "Créer la variante sans sable",
+    "es": "Crear variante sin arena"
+  },
+  "Smart.SoftWaterHelp": {
+    "en": "Create a transparent water variant, then choose an empty layer above the grass. The original atlas stays intact. Distribute the generated PNG with the client resources, like any tileset. Changing the edge width requires recreating the variant.",
+    "fr": "Créez une variante d’eau transparente, puis choisissez un calque libre au-dessus du gazon. L’image originale est conservée. Distribuez le PNG créé avec les ressources du client, comme tout tileset. Recréez la variante après un changement de largeur.",
+    "es": "Cree una variante de agua transparente y elija una capa libre sobre el césped. La imagen original se conserva. Distribuya el PNG generado con los recursos del cliente, como cualquier tileset. Recree la variante al cambiar el ancho."
+  },
+  "Smart.SoftWaterRequired": {
+    "en": "Capture a VX/XP water autotile, create its soft variant and choose a layer above the ground. Use a separate preset without stamps, decoration or overlay rules.",
+    "fr": "Capturez un autotile d’eau VX/XP, créez sa variante sans sable et choisissez un calque au-dessus du sol. Utilisez un preset distinct, sans tampon, décoration ni règle de surcouche.",
+    "es": "Capture un autotile de agua VX/XP, cree su variante sin arena y elija una capa sobre el suelo. Use un preset separado, sin sellos, decoración ni reglas de superposición."
+  },
+  "Smart.SoftWaterRegistering": {
+    "en": "Registering the new native tileset…",
+    "fr": "Enregistrement du nouveau tileset natif…",
+    "es": "Registrando el nuevo tileset nativo…"
+  },
+  "Smart.EditGround": {
+    "en": "Edit selected ground…", "fr": "Modifier le sol sélectionné…", "es": "Editar suelo seleccionado…"
+  },
+  "Smart.PaintGround": {
+    "en": "Paint this ground", "fr": "Peindre ce sol", "es": "Pintar este suelo"
+  },
+  "Smart.GroundSelected": {
+    "en": "Custom ground:", "fr": "Sol personnalisé :", "es": "Suelo personalizado:"
+  },
+  "Smart.GroundEdited": {
+    "en": "Ground saved as a new tile. Paint it directly, or capture the existing water and prepare its Ground shoreline. The original image is preserved.",
+    "fr": "Sol enregistré comme nouvelle tuile. Peignez-le directement, ou capturez l’eau existante puis préparez sa rive sur Ground. L’image originale est conservée.",
+    "es": "Suelo guardado como nueva tesela. Píntelo directamente o capture el agua existente y prepare su orilla en Ground. La imagen original se conserva."
+  },
+  "Smart.GroundPaintHelp": {
+    "en": "Choose a color. Tint keeps texture details; Solid color replaces them. Click or drag on the enlarged tile to edit individual pixels. Cancel leaves the tile unchanged.",
+    "fr": "Choisissez une couleur. Teinter garde les détails de la texture; Couleur unie les remplace. Cliquez ou glissez sur la tuile agrandie pour retoucher ses pixels. Annuler conserve la tuile actuelle.",
+    "es": "Elija un color. Teñir conserva los detalles; Color uniforme los reemplaza. Haga clic o arrastre sobre la tesela ampliada para retocar píxeles. Cancelar conserva la tesela actual."
+  },
+  "Smart.GroundColor": { "en": "Brush color…", "fr": "Couleur du pinceau…", "es": "Color del pincel…" },
+  "Smart.GroundTint": { "en": "Tint texture", "fr": "Teinter la texture", "es": "Teñir textura" },
+  "Smart.GroundSolid": { "en": "Solid color", "fr": "Couleur unie", "es": "Color uniforme" },
+  "Smart.GroundReset": { "en": "Restore original", "fr": "Restaurer l’original", "es": "Restaurar original" },
+  "Smart.GroundGrid": { "en": "Pixel grid", "fr": "Grille des pixels", "es": "Cuadrícula de píxeles" },
+  "Smart.GroundUndo": { "en": "Undo last edit", "fr": "Annuler la retouche", "es": "Deshacer retoque" },
+  "Smart.GroundAccept": { "en": "Use this ground", "fr": "Utiliser ce sol", "es": "Usar este suelo" },
+  "Smart.GroundCancel": { "en": "Cancel", "fr": "Annuler", "es": "Cancelar" },
+  "Smart.GroundShore": {
+    "en": "Island and shoreline on Ground",
+    "fr": "Île et rive sur Ground",
+    "es": "Isla y orilla en Ground"
+  },
+  "Smart.CreateGroundShore": {
+    "en": "Prepare Ground island",
+    "fr": "Préparer l’île sur Ground",
+    "es": "Preparar isla en Ground"
+  },
+  "Smart.GroundShoreHelp": {
+    "en": "Capture the existing water in Library. Select the land fill in the palette, then prepare the island. Draw or fill: the land and bank are placed together on Ground. Mask layers stay free. Regenerate after changing the land or blend width.",
+    "fr": "Capturez l’eau existante dans Bibliothèque. Sélectionnez le sol dans la palette, puis préparez l’île. Dessinez ou remplissez : sol et rive sont placés ensemble sur Ground. Les calques Mask restent libres. Recréez la rive après un changement de sol ou de dégradé.",
+    "es": "Capture el agua existente en Biblioteca. Seleccione el suelo en la paleta y prepare la isla. Dibuje o rellene: el suelo y la orilla se colocan juntos en Ground. Las capas Mask quedan libres. Regenere al cambiar el suelo o el degradado."
+  },
+  "Smart.GroundShoreRequired": {
+    "en": "Capture the original VX/XP water, then choose an opaque, non-animated land tile. Prepare a Terrain preset without stamps or overlay rules.",
+    "fr": "Capturez l’eau VX/XP d’origine, puis choisissez une tuile de sol opaque et non animée. Préparez un preset Terrain sans tampon ni règle de surcouche.",
+    "es": "Capture el agua VX/XP original y elija una tesela de suelo opaca y sin animación. Prepare un preset Terreno sin sellos ni reglas de superposición."
+  },
+  "Smart.GroundShoreReady": {
+    "en": "Ground island ready. Paint the land; its bank follows automatically. Distribute the generated PNG and use updated clients for water connections across maps.",
+    "fr": "Île sur Ground prête. Peignez le sol : sa rive suit automatiquement. Distribuez le PNG généré et utilisez les clients mis à jour pour les raccords entre maps.",
+    "es": "Isla en Ground lista. Pinte el suelo: la orilla se adapta automáticamente. Distribuya el PNG generado y use clientes actualizados para conectar el agua entre mapas."
+  },
+  "Smart.SoftWaterReady": {
+    "en": "Soft water ready. Paint above grass; save the preset and distribute its new PNG to clients.",
+    "fr": "Eau sans sable prête. Peignez au-dessus du gazon; enregistrez le preset et distribuez son nouveau PNG aux clients.",
+    "es": "Agua sin arena lista. Pinte sobre el césped; guarde el preset y distribuya el nuevo PNG a los clientes."
+  }
+}

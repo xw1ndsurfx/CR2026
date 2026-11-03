@@ -1,5 +1,13 @@
 {
   "Entries": {
+    "This tile is blocked. Choose a walkable pier tile without Q or Block.": { "en": "This tile is blocked. Choose a walkable pier tile without Q or Block.", "fr": "Cette case est bloquée. Choisissez une case praticable du ponton, sans Q ni Block.", "es": "Esta casilla está bloqueada. Elija una casilla transitable del muelle, sin Q ni Block." },
+    "Disembarkation point": { "en": "Disembarkation point", "fr": "Point de débarquement", "es": "Punto de desembarco" },
+    "Choose the arrival tile": { "en": "Choose the arrival tile", "fr": "Choisir la case d’arrivée", "es": "Elegir la casilla de llegada" },
+    "Choose on the map": { "en": "Choose on the map", "fr": "Choisir sur la map", "es": "Elegir en el mapa" },
+    "Arrival selected. Paint or repaint the Q dock to save this point.": { "en": "Arrival selected. Paint or repaint the Q dock to save this point.", "fr": "Arrivée sélectionnée. Posez ou repeignez le quai Q pour y enregistrer ce point.", "es": "Llegada seleccionada. Coloque o vuelva a pintar el muelle Q para guardar este punto." },
+    "Selection cancelled.": { "en": "Selection cancelled.", "fr": "Sélection annulée.", "es": "Selección cancelada." },
+    "Click the arrival tile on this map. Right-click or Escape cancels.": { "en": "Click the arrival tile on this map. Right-click or Escape cancels.", "fr": "Cliquez la case d’arrivée sur cette map. Clic droit ou Échap pour annuler.", "es": "Haga clic en la casilla de llegada en este mapa. Clic derecho o Escape para cancelar." },
+    "Choose a walkable tile on the pier, then paint or repaint Q. Q remains a solid interaction marker. A blocked arrival refuses disembarkation. Uncheck to use automatic placement.": { "en": "Choose a walkable tile on the pier, then paint or repaint Q. Q remains a solid interaction marker. A blocked arrival refuses disembarkation. Uncheck to use automatic placement.", "fr": "Choisissez une case praticable sur le quai, puis posez ou repeignez Q. Q reste un repère d’interaction bloquant. Une arrivée bloquée refuse le débarquement. Décochez pour le placement automatique.", "es": "Elija una casilla transitable en el muelle y coloque o vuelva a pintar Q. Q sigue siendo un marcador de interacción sólido. Una llegada bloqueada impide desembarcar. Desmarque para usar la ubicación automática." },
     "Naval Patrol Auto Creator": {
       "en": "Naval Patrol Auto Creator",
       "fr": "Créateur auto de patrouilles",

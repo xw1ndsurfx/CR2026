@@ -9,4 +9,5 @@ public enum ConsumableType : byte
     Experience = 2,
 
     ExperienceBoost = 3,
+    Grog = 4,
 }

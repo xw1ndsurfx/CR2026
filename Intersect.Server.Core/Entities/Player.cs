@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -466,6 +466,7 @@ public partial class Player : Entity
         }
 
         CacheEquipmentTriggers();
+        SynchronizeMasterySpells();
     }
 
     public void SendPacket(IPacket packet, TransmissionMode mode = TransmissionMode.All)
@@ -475,6 +476,9 @@ public partial class Player : Entity
 
     public override void Dispose()
     {
+        EndFishing();
+        EndArchery();
+        EndJoust(true);
         if (IsDisposed)
         {
             return;
@@ -518,7 +522,10 @@ public partial class Player : Entity
 
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        EndFishing();
         CompleteConfiguredDeath();
+        EndArchery();
+        EndJoust(true);
         Intersect.Server.Housing.HousingRuntime.Disconnect(this);
         lock (_savingLock)
         {
@@ -777,6 +784,12 @@ public partial class Player : Entity
             Monitor.TryEnter(EntityLock, ref lockObtained);
             if (lockObtained)
             {
+                UpdateTutorial();
+                UpdateMount();
+                UpdateIntoxication();
+                UpdateJoust();
+                UpdateArchery();
+                UpdateFishing();
                 // Detect inactivity from authoritative player position, including map changes.
                 if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
                 {
@@ -826,7 +839,7 @@ public partial class Player : Entity
                 Intersect.Server.Campfires.CampfireRuntime.Update(this);
                 if (TryGetOpenCraftingTable(out var b) && CraftingState?.Id != default)
                 {
-                    if (CraftingState != default && b.Crafts.Contains(CraftingState.Id))
+                    if (CraftingState != default && b.AvailableCrafts().Contains(CraftingState.Id))
                     {
                         while (CraftingState?.NextCraftCompletionTime < timeMs)
                         {
@@ -1150,6 +1163,8 @@ public partial class Player : Entity
         packet = base.EntityPacket(packet, forPlayer);
 
         var pkt = (PlayerEntityPacket)packet;
+        pkt.MountJson = ActiveMount is { } riding ? new Intersect.Framework.Core.Mounts.MountConfiguration { Mounts = [riding] }.ToJson() : "";
+        pkt.JoustSeated = IsJoustSeated;
         pkt.PvpGrade=Intersect.Server.Pvp.PvpRuntime.Grade(this);pkt.PvpPoints=Intersect.Server.Pvp.PvpRuntime.Points(this);pkt.PvpMatchId=Intersect.Server.Pvp.PvpRuntime.MatchId(this);pkt.PvpTeam=Intersect.Server.Pvp.PvpRuntime.Team(this);
         pkt.IsAfk = _isAfk;
         pkt.PendingDeath = HasPendingDeath;
@@ -1236,6 +1251,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        EndFishing("Fishing interrupted.");
         Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
         if(Intersect.Server.Pvp.PvpRuntime.HandleDeath(this,killer))return;
@@ -1571,28 +1587,33 @@ public partial class Player : Entity
     [NotMapped, JsonIgnore]
     internal NpcExperienceGainBreakdown? PendingNpcExperienceGain { get; private set; }
 
-    public void GiveExperience(
+    public void GiveExperience(long amount, bool fromNpcKill = false, long npcBaseExperience = 0,
+        long npcPartyBonusExperience = 0, float npcPartyBonusPercent = 0f) =>
+        GiveExperienceAward(amount, fromNpcKill, npcBaseExperience, npcPartyBonusExperience, npcPartyBonusPercent);
+
+    internal long GiveExperienceAward(
         long amount,
         bool fromNpcKill = false,
         long npcBaseExperience = 0,
         long npcPartyBonusExperience = 0,
-        float npcPartyBonusPercent = 0f)
+        float npcPartyBonusPercent = 0f,
+        bool calculateAtLevelCap = false)
     {
         // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (amount == 0)
         {
-            return;
+            return 0;
         }
 
         if (amount < 0)
         {
             TakeExperience(-amount);
-            return;
+            return 0;
         }
 
         // EXP from NPC kills, quests, items, and bonuses must never be
         // banked by a player who has already reached the configured cap.
-        if (Level >= Options.Instance.Player.MaxLevel)
+        if (Level >= Options.Instance.Player.MaxLevel && !calculateAtLevelCap)
         {
             if (ClearExperienceAtLevelCap())
             {
@@ -1600,7 +1621,7 @@ public partial class Player : Entity
                 LeaderboardTitleRuntime.MarkRankingDirty();
             }
 
-            return;
+            return 0;
         }
 
         var equipmentBonusPercent = GetEquipmentBonusEffect(ItemEffect.EXP);
@@ -1619,6 +1640,17 @@ public partial class Player : Entity
         var potionPercent=PersonalExperienceBonus;
         var potionBonus=Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount,potionPercent);
         var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus+potionBonus);
+        // Weapon training still uses the NPC reward at the character cap;
+        // character EXP itself remains capped and never banks excess progress.
+        if (Level >= Options.Instance.Player.MaxLevel)
+        {
+            if (ClearExperienceAtLevelCap())
+            {
+                PacketSender.SendExperience(this);
+                LeaderboardTitleRuntime.MarkRankingDirty();
+            }
+            return totalAward;
+        }
         if (fromNpcKill || eventBonusPercent > 0 || potionPercent>0)
         {
             PendingNpcExperienceGain = new NpcExperienceGainBreakdown
@@ -1650,6 +1682,7 @@ public partial class Player : Entity
         {
             PendingNpcExperienceGain = null;
         }
+        return totalAward;
     }
 
     public void TakeExperience(long amount, bool enableLosingLevels = false, bool force = false)
@@ -1749,16 +1782,22 @@ public partial class Player : Entity
                             MidpointRounding.AwayFromZero)
                         : 0L;
 
-                    GiveExperience(
+                    var masteryExperience = GiveExperienceAward(
                         baseExperience + partyBonusExperience,
                         fromNpcKill: true,
                         npcBaseExperience: baseExperience,
                         npcPartyBonusExperience: partyBonusExperience,
-                        npcPartyBonusPercent: partyBonusPercent
+                        npcPartyBonusPercent: partyBonusPercent,
+                        calculateAtLevelCap: true
                     );
+
+                    AwardWeaponMastery(npc, masteryExperience);
 
                     // Credit kill tasks and achievements only to the killer.
                     UpdateQuestKillTasks(entity);
+                    if (!descriptor.IsPet)
+                        Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(this,
+                            Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.NpcKills, descriptor.Id);
                     AchievementRuntime.AddProgress(
                         this,
                         Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
@@ -2101,6 +2140,8 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        if (IsArcheryActive || IsJoustProtected || entity is JoustOpponent or JoustAudienceActor || entity is Player { IsJoustProtected: true }) return false;
+        Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
             if(Intersect.Server.Pvp.PvpRuntime.Protected(this) || Intersect.Server.Pvp.PvpRuntime.Protected(pvpTarget))return false;
@@ -2221,6 +2262,8 @@ public partial class Player : Entity
             }
         }
 
+        var masterySpeed = MasteryPassives(weapon).Speed;
+        if (masterySpeed > 0) attackTime = Math.Max(100, (int)Math.Round(attackTime * (1 - masterySpeed / 100)));
         return
             attackTime -
             60; //subtracting 60 to account for a moderate ping to the server so some attacks dont get cancelled.
@@ -3540,6 +3583,11 @@ public partial class Player : Entity
     /// <param name="toSlotIndex">the slot index to swap to</param>
     public void SwapItems(int fromSlotIndex, int toSlotIndex)
     {
+        lock (EntityLock) SwapItemsCore(fromSlotIndex, toSlotIndex);
+    }
+
+    private void SwapItemsCore(int fromSlotIndex, int toSlotIndex)
+    {
         TryGetSlot(fromSlotIndex, out var fromSlot, true);
         TryGetSlot(toSlotIndex, out var toSlot, true);
 
@@ -3742,6 +3790,7 @@ public partial class Player : Entity
             }
 
             var useEvent = itemBase.GetEventTrigger(ItemEventTrigger.OnUse);
+            if (TryActivateMountItem(itemBase.Id)) return;
             if (TryActivatePetItem(itemBase.Id)) return;
 
             switch (itemBase.ItemType)
@@ -3759,6 +3808,11 @@ public partial class Player : Entity
 
                     return;
                 case ItemType.Consumable:
+                    if (itemBase.Consumable.Type == ConsumableType.Grog)
+                    {
+                        if (TryTakeItem(Items[slot], 1)) { DrinkGrog(itemBase); if(useEvent != default) EnqueueStartCommonEvent(useEvent); }
+                        break;
+                    }
                     if(itemBase.Consumable.Type==ConsumableType.ExperienceBoost)
                     {
                         if(!ActivateExperienceBoost(slot,itemBase.Consumable.Percentage,itemBase.Consumable.Value))
@@ -4125,7 +4179,10 @@ public partial class Player : Entity
     /// <returns>The amount of the requested item the player has on them.</returns>
     public int FindInventoryItemQuantity(Guid itemId)
     {
-        if (Items == null)
+        var items = Items;
+        // A shop without a currency must not treat empty inventory slots as that currency.
+        // Deleted item definitions have no meaningful balance either.
+        if (items == null || itemId == Guid.Empty || ItemDescriptor.Get(itemId) is not { } descriptor)
         {
             return 0;
         }
@@ -4133,10 +4190,10 @@ public partial class Player : Entity
         long itemCount = 0;
         for (var i = 0; i < Options.Instance.Player.MaxInventory; i++)
         {
-            var item = Items[i];
-            if (item.ItemId == itemId)
+            var item = items[i];
+            if (item != null && item.ItemId == itemId)
             {
-                itemCount = item.Descriptor.Stackable ? itemCount += item.Quantity : itemCount += 1;
+                itemCount += descriptor.Stackable ? item.Quantity : 1;
             }
         }
 
@@ -4286,225 +4343,6 @@ public partial class Player : Entity
         {
             InShop = null;
             PacketSender.SendCloseShop(this);
-        }
-    }
-
-    public void SellItem(int slot, int amount)
-    {
-        var canSellItem = true;
-        var rewardItemId = Guid.Empty;
-        var rewardItemVal = 0;
-
-        TryGetSlot(slot, out var itemInSlot, true);
-        var sellItemNum = itemInSlot.ItemId;
-        var shop = InShop;
-        if (shop != null)
-        {
-            var itemDescriptor = Items[slot].Descriptor;
-            if (itemDescriptor != null)
-            {
-                if (!itemDescriptor.CanSell)
-                {
-                    PacketSender.SendChatMsg(this, Strings.Shops.Bound, ChatMessageType.Inventory, CustomColors.Items.Bound);
-
-                    return;
-                }
-
-                //Check if this is a bag with items.. if so don't allow sale
-                if (itemDescriptor.ItemType == ItemType.Bag)
-                {
-                    if (itemInSlot.TryGetBag(out var bag))
-                    {
-                        if (!bag.IsEmpty)
-                        {
-                            PacketSender.SendChatMsg(this, Strings.Bags.OnlySellEmpty, ChatMessageType.Inventory, CustomColors.Alerts.Error);
-                            return;
-                        }
-                    }
-                }
-
-                for (var i = 0; i < shop.BuyingItems.Count; i++)
-                {
-                    if (shop.BuyingItems[i].ItemId == sellItemNum)
-                    {
-                        if (!shop.BuyingWhitelist)
-                        {
-                            PacketSender.SendChatMsg(this, Strings.Shops.DoesNotAccept, ChatMessageType.Inventory, CustomColors.Alerts.Error);
-
-                            return;
-                        }
-                        else
-                        {
-                            rewardItemId = shop.BuyingItems[i].CostItemId;
-                            rewardItemVal = shop.BuyingItems[i].CostItemQuantity;
-
-                            break;
-                        }
-                    }
-                }
-
-                if (rewardItemId == Guid.Empty)
-                {
-                    if (shop.BuyingWhitelist)
-                    {
-                        PacketSender.SendChatMsg(this, Strings.Shops.DoesNotAccept, ChatMessageType.Inventory, CustomColors.Alerts.Error);
-
-                        return;
-                    }
-                    else
-                    {
-                        rewardItemId = shop.DefaultCurrencyId;
-                        rewardItemVal = itemDescriptor.Price;
-                    }
-                }
-
-                rewardItemVal=shop.BuybackPrice(rewardItemVal);
-                var amountInInventory = FindInventoryItemQuantity(itemInSlot.ItemId);
-
-                var amountRemaining = Math.Min(amountInInventory, amount);
-                var currentSlot = itemInSlot;
-                var currentSlotIndex = slot;
-                while (currentSlot != default && amountRemaining > 0)
-                {
-                    var amountFromSlot = Math.Min(currentSlot.Quantity, amountRemaining);
-                    if (amountFromSlot < currentSlot.Quantity)
-                    {
-                        //check if can get reward
-                        if (!CanGiveItem(rewardItemId, rewardItemVal))
-                        {
-                            canSellItem = false;
-                        }
-                        else
-                        {
-                            currentSlot.Quantity -= amountFromSlot;
-                        }
-                    }
-                    else
-                    {
-                        // Definitely can get reward.
-                        currentSlot.Set(Item.None);
-                        EquipmentProcessItemLoss(currentSlotIndex);
-                    }
-
-                    if (canSellItem)
-                    {
-                        TryGiveItem(rewardItemId, rewardItemVal * amountFromSlot);
-
-                        if (!TextUtils.IsNone(shop.SellSound))
-                        {
-                            PacketSender.SendPlaySound(this, shop.SellSound);
-                        }
-                    }
-
-                    PacketSender.SendInventoryItemUpdate(this, currentSlotIndex);
-
-                    amountRemaining -= amountFromSlot;
-                    if (amountRemaining > 0)
-                    {
-                        currentSlot = FindInventoryItemSlot(sellItemNum);
-                        currentSlotIndex = FindInventoryItemSlotIndex(currentSlot);
-                    }
-                }
-
-            }
-        }
-    }
-
-    public void BuyItem(int slot, int amount)
-    {
-        if (InShop == default)
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        if (slot < 0 || slot >= InShop.SellingItems.Count)
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        var boughtItem = InShop.SellingItems[slot];
-        var boughtItemBase = ItemDescriptor.Get(boughtItem.ItemId);
-        if (boughtItemBase == default)
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        var currencyBase = ItemDescriptor.Get(boughtItem.CostItemId);
-        if (currencyBase == default)
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        var boughtItemAmount = 1;
-        if (boughtItemBase.IsStackable)
-        {
-            boughtItemAmount = Math.Max(1, amount);
-        }
-
-        var currencyAmount = FindInventoryItemQuantity(currencyBase.Id);
-        var itemCostTotal = boughtItem.CostItemQuantity * boughtItemAmount;
-        if (currencyAmount < itemCostTotal)
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.CannotAfford, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        if (!CanGiveItem(boughtItemBase.Id, boughtItemAmount))
-        {
-            PacketSender.SendChatMsg(this, Strings.Shops.InventoryFull, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        bool success = true;
-        Dictionary<Guid, int> removedItems = new Dictionary<Guid, int>();
-
-        if (itemCostTotal > 0)
-        {
-            var currencySlots = FindInventoryItemSlots(currencyBase.Id);
-            int remainingCost = itemCostTotal;
-
-            foreach (var itemSlot in currencySlots)
-            {
-                int quantityToRemove = Math.Min(remainingCost, itemSlot.Quantity);
-                if (!TryTakeItem(itemSlot, quantityToRemove))
-                {
-                    success = false;
-                    ApplicationContext.Context.Value?.Logger.LogWarning(Strings.Shops.FailedToRemoveItem.ToString(itemSlot, Id, quantityToRemove, "BuyItem(int slot, int amount)"));
-                    break;
-                }
-
-                removedItems.Add(itemSlot.Id, quantityToRemove);
-                ApplicationContext.Context.Value?.Logger.LogWarning(Strings.Shops.SuccessfullyRemovedItem.ToString(quantityToRemove, itemSlot, Id, "BuyItem(int slot, int amount)"));
-                remainingCost -= quantityToRemove;
-
-                if (remainingCost <= 0)
-                {
-                    break;
-                }
-            }
-        }
-
-        if (!success)
-        {
-            //return all removed items because we failed to remove the rest
-            foreach (var removedItem in removedItems)
-            {
-                TryGiveItem(removedItem.Key, removedItem.Value);
-            }
-
-            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
-            return;
-        }
-
-        TryGiveItem(boughtItemBase.Id, boughtItemAmount);
-
-        if (!TextUtils.IsNone(InShop.BuySound))
-        {
-            PacketSender.SendPlaySound(this, InShop.BuySound);
         }
     }
 
@@ -4696,7 +4534,7 @@ public partial class Player : Entity
 
         var craftingStateId = CraftingState?.Id;
 
-        if (craftingStateId == null || !table.Crafts.Contains(craftingStateId.Value))
+        if (craftingStateId == null || !table.AvailableCrafts().Contains(craftingStateId.Value))
         {
             return true;
         }
@@ -5617,7 +5455,7 @@ public partial class Player : Entity
             }
         }
 
-        if (Party.Count >= Options.Instance.Party.MaximumMembers)
+        if (Party.Count >= Math.Min(Options.Instance.Party.MaximumMembers, Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
         {
             PacketSender.SendChatMsg(this, Strings.Parties.LimitReached, ChatMessageType.Party, CustomColors.Alerts.Error);
             return false;
@@ -5953,6 +5791,8 @@ public partial class Player : Entity
         out SpellCastFailureReason reason
     )
     {
+        if (!CanFireWorldWeapon || spell != null && !CanUseMasterySpell(spell.Id))
+        { reason = SpellCastFailureReason.ConditionsNotMet; return false; }
         // Do we fail our base class check? If so cancel out with a reason!
         if (!base.CanCastSpell(spell, target, checkVitalReqs, softRetargetOnSelfCast, out reason))
         {
@@ -6031,7 +5871,7 @@ public partial class Player : Entity
 
             if (projectileBase.AmmoItemId != Guid.Empty)
             {
-                if (FindInventoryItemSlot(projectileBase.AmmoItemId, projectileBase.AmmoRequired) == null)
+                if (projectileBase.AmmoRequired <= 0 || !CanTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
                 {
                     if (Options.Instance.Combat.EnableCombatChatMessages)
                     {
@@ -6173,8 +6013,13 @@ public partial class Player : Entity
 
     public override void CastSpell(Guid spellId, int spellSlot = -1)
     {
+        lock (EntityLock) CastSpellWithAmmunition(spellId, spellSlot);
+    }
+
+    private void CastSpellWithAmmunition(Guid spellId, int spellSlot)
+    {
         var spellBase = SpellDescriptor.Get(spellId);
-        if (spellBase == null)
+        if (spellBase == null || !CanCastSpell(spellBase, CastTarget, false, SoftRetargetOnSelfCast, out _))
         {
             return;
         }
@@ -6299,10 +6144,19 @@ public partial class Player : Entity
     //Equipment
     public void EquipItem(ItemDescriptor itemDescriptor, int slot = -1, bool updateCooldown = false)
     {
+        lock (EntityLock) EquipItemCore(itemDescriptor, slot, updateCooldown);
+    }
+
+    private void EquipItemCore(ItemDescriptor itemDescriptor, int slot, bool updateCooldown)
+    {
         if (itemDescriptor == null || itemDescriptor.ItemType != ItemType.Equipment)
         {
             return;
         }
+
+        // Event commands and direct equip requests must obey the same authored
+        // requirements as using the item from the inventory.
+        if (!Conditions.MeetsConditionLists(itemDescriptor.UsageRequirements, this, null)) return;
 
         // Find the appropriate slot if not passed in
         if (slot == -1)
@@ -6371,6 +6225,11 @@ public partial class Player : Entity
 
     public void UnequipItem(int equipmentSlot, bool sendUpdate = true)
     {
+        lock (EntityLock) UnequipItemCore(equipmentSlot, sendUpdate);
+    }
+
+    private void UnequipItemCore(int equipmentSlot, bool sendUpdate)
+    {
         if (equipmentSlot < 0 || equipmentSlot > Equipment.Length)
         {
             return;
@@ -6387,6 +6246,7 @@ public partial class Player : Entity
 
     public void ProcessEquipmentUpdated(bool sendPackets, bool ignoreEvents = false)
     {
+        ValidateFishingEquipment();
         FixVitals();
         if (!ignoreEvents)
         {
@@ -6831,10 +6691,13 @@ public partial class Player : Entity
                             PacketSender.SendChatMsg(this, Strings.Quests.TaskCompleted, ChatMessageType.Quest);
                             if (i == quest.Tasks.Count - 1)
                             {
-                                //Complete Quest
+                                // Complete the natural final task through the same authoritative achievement hook.
+                                var wasCompleted = questProgress.Completed;
                                 questProgress.Completed = true;
+                                if (!wasCompleted) AchievementRuntime.AddProgress(this, Intersect.Framework.Core.Achievements.AchievementObjectiveType.QuestCompletions, 1, questId);
                                 questProgress.TaskId = Guid.Empty;
                                 questProgress.TaskProgress = -1;
+                                Intersect.Server.Dungeons.DungeonRunRuntime.OnQuestCompleted(this,questId);
                                 if (quest.Tasks[i].CompletionEvent != null)
                                 {
                                     EnqueueStartCommonEvent(quest.Tasks[i].CompletionEvent);
@@ -6902,6 +6765,7 @@ public partial class Player : Entity
 
                 if (!wasAlreadyCompleted)
                 {
+                    Intersect.Server.Dungeons.DungeonRunRuntime.OnQuestCompleted(this,questId);
                     AchievementRuntime.AddProgress(
                         this,
                         Intersect.Framework.Core.Achievements.AchievementObjectiveType.QuestCompletions,
@@ -7191,7 +7055,7 @@ public partial class Player : Entity
         }
     }
 
-    public void RespondToEvent(Guid eventId, int responseId)
+    public void RespondToEvent(Guid eventId, int responseId, Guid dialogueToken = default)
     {
         StartMiniGameCommand? lockpickingCommand = null;
 
@@ -7208,6 +7072,14 @@ public partial class Player : Entity
                 var stackInfo = evt.Value.CallStack.Peek();
                 if (stackInfo.WaitingForResponse != CommandInstance.EventResponse.Dialogue)
                     return;
+
+                if (stackInfo.CinematicDialogueToken != dialogueToken) return;
+                if (stackInfo.WaitingOnCommand is ShowOptionsCommand options &&
+                    (responseId < 1 || responseId > options.Options.Length ||
+                     string.IsNullOrEmpty(options.Options[responseId - 1]) || stackInfo.BranchIds == null ||
+                     responseId > stackInfo.BranchIds.Length ||
+                     !stackInfo.Page.CommandLists.ContainsKey(stackInfo.BranchIds[responseId - 1]))) return;
+                stackInfo.CinematicDialogueToken = Guid.Empty;
 
                 if (stackInfo.WaitingOnCommand is StartMiniGameCommand miniGameCommand &&
                     miniGameCommand.Game == MiniGameType.Lockpicking)
@@ -7680,7 +7552,7 @@ public partial class Player : Entity
     {
         entityType = default;
 
-        if (IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
+        if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(Id) || IsArcheryActive || JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;
@@ -7693,7 +7565,7 @@ public partial class Player : Entity
         }
 
         // ReSharper disable once InvertIf
-        if (EventLookup.Values.Any(@event => @event.HoldingPlayer))
+        if (HasBlockingEventHold)
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;
@@ -7760,7 +7632,7 @@ public partial class Player : Entity
     {
         lock (EntityLock)
         {
-            if (NavalShipId != Guid.Empty) return;
+            if (JoustBlocksMovement || NavalShipId != Guid.Empty) return;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
 

@@ -1,0 +1,1790 @@
+{
+  "schema": "corps-royaux.fishing-audio-pack.v1",
+  "status": "proposed integration data; adapter required for current engine",
+  "provenance": "original procedural synthesis for this task",
+  "third_party_samples": false,
+  "generator": "render_audio.py",
+  "seed": 20261102,
+  "language_codes": [
+    "en",
+    "fr",
+    "es"
+  ],
+  "defaults": {
+    "master_gain": 0.8,
+    "allow_silent_events": true,
+    "null_sound_id_means": "silence",
+    "override_order": [
+      "global",
+      "zone",
+      "equipped_tool",
+      "catch_profile",
+      "exact_event"
+    ],
+    "loop_lifetime": "start once on entering state; stop on exiting state or closing/interruption"
+  },
+  "integration_notes": [
+    "All sound identifiers, gains, bus, pitch, cooldown, concurrency and spatial parameters are editable.",
+    "Paths are relative to this pack; rewrite with the engine sound resource resolver on import.",
+    "World SFX must be emitted once; do not double-play local and replicated sound.",
+    "Start loops on state transitions, not each network update; fade and stop all owned loops on cleanup.",
+    "Cast assets include a soft splash. Disable the separate splash event for that same contact to avoid doubling.",
+    "Catch assets include success tones. Batch XP reward sounds so catch and XP do not stack on every item.",
+    "Legendary cues must accompany visible challenge prompts and never be the only gameplay signal.",
+    "One sea ambience file is supplied. It is not an authored lake, river or storm ambience."
+  ],
+  "assets": [
+    {
+      "id": "ui_open",
+      "file": "wav/fishing_ui_open.wav",
+      "label_i18n": {
+        "fr": "Ouvrir",
+        "en": "Open",
+        "es": "Abrir"
+      },
+      "duration_seconds": 0.34,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 80,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.ui_open",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "8a6d72a42320628e9ea62c733bbf698822b7708f7a060283e0d174cf9320f5ef",
+      "runtime_path": "fishing/fishing_ui_open.wav"
+    },
+    {
+      "id": "ui_close",
+      "file": "wav/fishing_ui_close.wav",
+      "label_i18n": {
+        "fr": "Fermer",
+        "en": "Close",
+        "es": "Cerrar"
+      },
+      "duration_seconds": 0.28,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 80,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.ui_close",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "98d579980018bc8790b432069801f21496990b0362e306b68725adb09046eec7",
+      "runtime_path": "fishing/fishing_ui_close.wav"
+    },
+    {
+      "id": "ui_select",
+      "file": "wav/fishing_ui_select.wav",
+      "label_i18n": {
+        "fr": "Sélection",
+        "en": "Select",
+        "es": "Seleccionar"
+      },
+      "duration_seconds": 0.11,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.32,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 45,
+      "max_concurrent_voices": 2,
+      "concurrency_group": "fishing.ui_select",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "3efd4978f768ad34f196d1fc5b108a9b4b2eef3eadbd9bfca12fcaa6f9df9613",
+      "runtime_path": "fishing/fishing_ui_select.wav"
+    },
+    {
+      "id": "ui_confirm",
+      "file": "wav/fishing_ui_confirm.wav",
+      "label_i18n": {
+        "fr": "Confirmer",
+        "en": "Confirm",
+        "es": "Confirmar"
+      },
+      "duration_seconds": 0.42,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 100,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.ui_confirm",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "f42eda61a87682a8832cc94be4c90b438d756e8cb992980b24b1154c7334721d",
+      "runtime_path": "fishing/fishing_ui_confirm.wav"
+    },
+    {
+      "id": "ui_error",
+      "file": "wav/fishing_ui_error.wav",
+      "label_i18n": {
+        "fr": "Action indisponible",
+        "en": "Unavailable action",
+        "es": "Acción no disponible"
+      },
+      "duration_seconds": 0.36,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 300,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.ui_error",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "540faf0db20a13d1bf766d8dd48307836dc1623046a848b2ea6c532e5f6ad024",
+      "runtime_path": "fishing/fishing_ui_error.wav"
+    },
+    {
+      "id": "cast_rod",
+      "file": "wav/fishing_cast_rod.wav",
+      "label_i18n": {
+        "fr": "Lancer la canne",
+        "en": "Cast rod",
+        "es": "Lanzar la caña"
+      },
+      "duration_seconds": 0.75,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.7,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 500,
+      "max_concurrent_voices": 2,
+      "concurrency_group": "fishing.cast_rod",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "59e4cc61fbc637e5552fe5e7a206e56b5a471ecf66eb5bf688eca21686da2b57",
+      "runtime_path": "fishing/fishing_cast_rod.wav"
+    },
+    {
+      "id": "cast_net",
+      "file": "wav/fishing_cast_net.wav",
+      "label_i18n": {
+        "fr": "Lancer le filet",
+        "en": "Cast net",
+        "es": "Lanzar la red"
+      },
+      "duration_seconds": 0.95,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.7,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 500,
+      "max_concurrent_voices": 2,
+      "concurrency_group": "fishing.cast_net",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "2369dcf5862f27d8314373dddf8cf85813a25a0f068b01b2bf70049b6eb08a31",
+      "runtime_path": "fishing/fishing_cast_net.wav"
+    },
+    {
+      "id": "cast_cage",
+      "file": "wav/fishing_cast_cage.wav",
+      "label_i18n": {
+        "fr": "Immerger la cage",
+        "en": "Lower cage",
+        "es": "Sumergir la jaula"
+      },
+      "duration_seconds": 1.0,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.7,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 500,
+      "max_concurrent_voices": 2,
+      "concurrency_group": "fishing.cast_cage",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "38f91d4aed70cba62721515968aa76fa2140cfc3e88bd571bfd9d38d3b082fea",
+      "runtime_path": "fishing/fishing_cast_cage.wav"
+    },
+    {
+      "id": "splash",
+      "file": "wav/fishing_splash.wav",
+      "label_i18n": {
+        "fr": "Éclaboussure",
+        "en": "Splash",
+        "es": "Salpicadura"
+      },
+      "duration_seconds": 0.65,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.55,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 100,
+      "max_concurrent_voices": 3,
+      "concurrency_group": "fishing.splash",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "39b218820a502d6563f147f639b5059ab99192e7d5a3abef42b936da73f46f5d",
+      "runtime_path": "fishing/fishing_splash.wav"
+    },
+    {
+      "id": "bite",
+      "file": "wav/fishing_bite.wav",
+      "label_i18n": {
+        "fr": "Morsure",
+        "en": "Bite",
+        "es": "Picada"
+      },
+      "duration_seconds": 0.42,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.7,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 200,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.bite",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "579447abc865979eb2f69ed0a4077d3ef4890bb3c7a5c4b50bee7516085b9473",
+      "runtime_path": "fishing/fishing_bite.wav"
+    },
+    {
+      "id": "reel_loop",
+      "file": "wav/fishing_reel_loop.wav",
+      "label_i18n": {
+        "fr": "Moulinet en boucle",
+        "en": "Reel loop",
+        "es": "Bucle del carrete"
+      },
+      "duration_seconds": 2.0,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        0,
+        0
+      ],
+      "loop": true,
+      "loop_start_frame": 0,
+      "loop_end_frame_exclusive": 88200,
+      "fade_in_ms": 100,
+      "fade_out_ms": 160,
+      "crossfade_ms": 180,
+      "crossfade_baked_into_asset": true,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 0,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.reel_loop",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": true,
+      "peak_dbfs": -12.0,
+      "sha256": "934b2db626398b1acb1140c5b8f3a02c04ea5d7e000efda83c355b03e5b5e2c4",
+      "runtime_path": "fishing/fishing_reel_loop.wav"
+    },
+    {
+      "id": "tension_loop",
+      "file": "wav/fishing_tension_loop.wav",
+      "label_i18n": {
+        "fr": "Tension de ligne",
+        "en": "Line tension",
+        "es": "Tensión del sedal"
+      },
+      "duration_seconds": 2.4,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.35,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        0,
+        0
+      ],
+      "loop": true,
+      "loop_start_frame": 0,
+      "loop_end_frame_exclusive": 105840,
+      "fade_in_ms": 100,
+      "fade_out_ms": 160,
+      "crossfade_ms": 180,
+      "crossfade_baked_into_asset": true,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 0,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.tension_loop",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": true,
+      "peak_dbfs": -12.0,
+      "sha256": "1cc7ef7b59ac8fa0098d53bf2d24fdebdbd90d1088495cc79e9833be7425c5e1",
+      "runtime_path": "fishing/fishing_tension_loop.wav"
+    },
+    {
+      "id": "line_break",
+      "file": "wav/fishing_line_break.wav",
+      "label_i18n": {
+        "fr": "Ligne cassée",
+        "en": "Line break",
+        "es": "Rotura del sedal"
+      },
+      "duration_seconds": 0.42,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.65,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 200,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.line_break",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "954b7389288571e55cc631dcc31e68246da482f2668debda48a01bcbf19647c9",
+      "runtime_path": "fishing/fishing_line_break.wav"
+    },
+    {
+      "id": "escape",
+      "file": "wav/fishing_escape.wav",
+      "label_i18n": {
+        "fr": "Prise échappée",
+        "en": "Catch escaped",
+        "es": "Captura escapada"
+      },
+      "duration_seconds": 0.7,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.55,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 250,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.escape",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "38d69c90e8a4a23f0419cf4252ac7a456c28e3b95d7def70c606dd53af90c2cd",
+      "runtime_path": "fishing/fishing_escape.wav"
+    },
+    {
+      "id": "catch",
+      "file": "wav/fishing_catch.wav",
+      "label_i18n": {
+        "fr": "Prise réussie",
+        "en": "Catch landed",
+        "es": "Captura lograda"
+      },
+      "duration_seconds": 0.9,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.6,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 250,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.catch",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "44cb0f5bf7d806eeabe63f61c97fd2e160b19c80e31cda054d26cdb247ea047f",
+      "runtime_path": "fishing/fishing_catch.wav"
+    },
+    {
+      "id": "crate_raise",
+      "file": "wav/fishing_crate_raise.wav",
+      "label_i18n": {
+        "fr": "Remonter la cage",
+        "en": "Raise cage",
+        "es": "Recoger la jaula"
+      },
+      "duration_seconds": 1.3,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.65,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 500,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.crate_raise",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "dcbf54faeb14b68e0a8200855a3aeaea6be99a2c4d772cf992f2032384e95c2e",
+      "runtime_path": "fishing/fishing_crate_raise.wav"
+    },
+    {
+      "id": "net_retrieve",
+      "file": "wav/fishing_net_retrieve.wav",
+      "label_i18n": {
+        "fr": "Ramener le filet",
+        "en": "Retrieve net",
+        "es": "Recoger la red"
+      },
+      "duration_seconds": 1.05,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "world",
+      "enabled": true,
+      "gain": 0.65,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 500,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.net_retrieve",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": true,
+        "source": "world_fishing_position",
+        "distance_unit": "tiles",
+        "reference_distance": 2,
+        "maximum_distance": 12,
+        "rolloff": "linear"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "45b9e4bc1fff5ed5340c140ebf5bd979c720598f6564c3d168bc3cb6cf909305",
+      "runtime_path": "fishing/fishing_net_retrieve.wav"
+    },
+    {
+      "id": "skill_stabilize",
+      "file": "wav/fishing_skill_stabilize.wav",
+      "label_i18n": {
+        "fr": "Stabiliser",
+        "en": "Stabilize",
+        "es": "Estabilizar"
+      },
+      "duration_seconds": 0.5,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.5,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.skill_stabilize",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "174ccc37edaabb129bfa700aa045b5275f0c153ee61eb53c0de0b8f30ae0b9ef",
+      "runtime_path": "fishing/fishing_skill_stabilize.wav"
+    },
+    {
+      "id": "skill_pull",
+      "file": "wav/fishing_skill_pull.wav",
+      "label_i18n": {
+        "fr": "Traction",
+        "en": "Pull",
+        "es": "Tirar"
+      },
+      "duration_seconds": 0.45,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.55,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.skill_pull",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "18b724b931e4b9fc6ea9c601e71c7db5c4c91245cbd87a10aba64bc6a61bc886",
+      "runtime_path": "fishing/fishing_skill_pull.wav"
+    },
+    {
+      "id": "skill_repair",
+      "file": "wav/fishing_skill_repair.wav",
+      "label_i18n": {
+        "fr": "Réparer",
+        "en": "Repair",
+        "es": "Reparar"
+      },
+      "duration_seconds": 0.7,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.5,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.skill_repair",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "add4092da9938f7359a108016abaccca46e05ef89d7c0c37076d580c160369e5",
+      "runtime_path": "fishing/fishing_skill_repair.wav"
+    },
+    {
+      "id": "skill_sink",
+      "file": "wav/fishing_skill_sink.wav",
+      "label_i18n": {
+        "fr": "Plonger",
+        "en": "Sink",
+        "es": "Hundir"
+      },
+      "duration_seconds": 0.65,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.5,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.skill_sink",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "b5796df8aa6ff5023ca0211f9730a1044587dae56883de02987fa9173a7c007d",
+      "runtime_path": "fishing/fishing_skill_sink.wav"
+    },
+    {
+      "id": "auto_start",
+      "file": "wav/fishing_auto_start.wav",
+      "label_i18n": {
+        "fr": "Démarrer la pêche auto",
+        "en": "Start auto-fishing",
+        "es": "Iniciar pesca automática"
+      },
+      "duration_seconds": 0.45,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 200,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.auto_start",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "299afab6888170a314322f2c7ea59660cce1ca4ed1cd77acf1c8babadcc7261a",
+      "runtime_path": "fishing/fishing_auto_start.wav"
+    },
+    {
+      "id": "auto_stop",
+      "file": "wav/fishing_auto_stop.wav",
+      "label_i18n": {
+        "fr": "Arrêter la pêche auto",
+        "en": "Stop auto-fishing",
+        "es": "Detener pesca automática"
+      },
+      "duration_seconds": 0.42,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 200,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.auto_stop",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "59404e8065bb7a3db01493d6cfaa42591574acd50c1ec75719e4b4aa8464bc94",
+      "runtime_path": "fishing/fishing_auto_stop.wav"
+    },
+    {
+      "id": "auto_pause",
+      "file": "wav/fishing_auto_pause.wav",
+      "label_i18n": {
+        "fr": "Mettre la pêche auto en pause",
+        "en": "Pause auto-fishing",
+        "es": "Pausar pesca automática"
+      },
+      "duration_seconds": 0.5,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.45,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 200,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.auto_pause",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "a092c21e446d618c9997d0bdfbd75a3578e75b8adb6c8d101ea75debce60ddd1",
+      "runtime_path": "fishing/fishing_auto_pause.wav"
+    },
+    {
+      "id": "legendary_appear",
+      "file": "wav/fishing_legendary_appear.wav",
+      "label_i18n": {
+        "fr": "Apparition légendaire",
+        "en": "Legendary appearance",
+        "es": "Aparición legendaria"
+      },
+      "duration_seconds": 2.1,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.7,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 1000,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.legendary_appear",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "699964e6bec98f5f98d032deba2b8342652c81922dfb3353c68c9f956203f48e",
+      "runtime_path": "fishing/fishing_legendary_appear.wav"
+    },
+    {
+      "id": "legendary_challenge_cue",
+      "file": "wav/fishing_legendary_challenge_cue.wav",
+      "label_i18n": {
+        "fr": "Signal de défi",
+        "en": "Challenge cue",
+        "es": "Señal del desafío"
+      },
+      "duration_seconds": 0.36,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.6,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 100,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.legendary_challenge_cue",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "bcccbf2a33d6f545cdbb6bc2ba13e950e17dcc2c0115ec271cca403773dced78",
+      "runtime_path": "fishing/fishing_legendary_challenge_cue.wav"
+    },
+    {
+      "id": "legendary_challenge_success",
+      "file": "wav/fishing_legendary_challenge_success.wav",
+      "label_i18n": {
+        "fr": "Défi réussi",
+        "en": "Challenge success",
+        "es": "Desafío superado"
+      },
+      "duration_seconds": 0.7,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.55,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.legendary_challenge_success",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "d9921c6f84003deac45f6d512ee772a6479a2391fe8882ff1453b6ad95f34613",
+      "runtime_path": "fishing/fishing_legendary_challenge_success.wav"
+    },
+    {
+      "id": "legendary_challenge_fail",
+      "file": "wav/fishing_legendary_challenge_fail.wav",
+      "label_i18n": {
+        "fr": "Défi manqué",
+        "en": "Challenge failed",
+        "es": "Desafío fallido"
+      },
+      "duration_seconds": 0.62,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.55,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.legendary_challenge_fail",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "9b3aedef738e2c83ab220aad6ad324747fce2fb177b4afe3193d7afeacfddf88",
+      "runtime_path": "fishing/fishing_legendary_challenge_fail.wav"
+    },
+    {
+      "id": "legendary_catch",
+      "file": "wav/fishing_legendary_catch.wav",
+      "label_i18n": {
+        "fr": "Prise légendaire",
+        "en": "Legendary catch",
+        "es": "Captura legendaria"
+      },
+      "duration_seconds": 2.2,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "fishing",
+      "enabled": true,
+      "gain": 0.75,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 800,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.legendary_catch",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "c64baf17ac8b71ce323235681f163abc0aa8f4dc0e19ba10b2c22b58ea865239",
+      "runtime_path": "fishing/fishing_legendary_catch.wav"
+    },
+    {
+      "id": "xp_gain",
+      "file": "wav/fishing_xp_gain.wav",
+      "label_i18n": {
+        "fr": "Expérience gagnée",
+        "en": "Experience gained",
+        "es": "Experiencia obtenida"
+      },
+      "duration_seconds": 0.28,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.28,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 150,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.xp_gain",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "8a7bf3dbccd88b4a094d825c53abaf79fd7b3a7f941a7c42773bb3b285f9634b",
+      "runtime_path": "fishing/fishing_xp_gain.wav"
+    },
+    {
+      "id": "level_up",
+      "file": "wav/fishing_level_up.wav",
+      "label_i18n": {
+        "fr": "Niveau supérieur",
+        "en": "Level up",
+        "es": "Subida de nivel"
+      },
+      "duration_seconds": 1.45,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "bus": "ui",
+      "enabled": true,
+      "gain": 0.65,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        -0.12,
+        0.12
+      ],
+      "loop": false,
+      "loop_start_frame": null,
+      "loop_end_frame_exclusive": null,
+      "fade_in_ms": 0,
+      "fade_out_ms": 0,
+      "crossfade_ms": 0,
+      "crossfade_baked_into_asset": false,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 1000,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.level_up",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": false,
+      "peak_dbfs": -6.0,
+      "sha256": "5bb295beb83a212c6c0b6af3a4cbadc700b61436c43b7bff7763f77de5687ff3",
+      "runtime_path": "fishing/fishing_level_up.wav"
+    },
+    {
+      "id": "ambience_sea_loop",
+      "file": "wav/fishing_ambience_sea_loop.wav",
+      "label_i18n": {
+        "fr": "Ambiance de mer",
+        "en": "Sea ambience",
+        "es": "Ambiente marino"
+      },
+      "duration_seconds": 12.0,
+      "format": "PCM_S16LE_WAV",
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "bus": "ambience",
+      "enabled": true,
+      "gain": 0.6,
+      "pitch_semitones": 0,
+      "pitch_random_range_semitones": [
+        0,
+        0
+      ],
+      "loop": true,
+      "loop_start_frame": 0,
+      "loop_end_frame_exclusive": 529200,
+      "fade_in_ms": 100,
+      "fade_out_ms": 160,
+      "crossfade_ms": 750,
+      "crossfade_baked_into_asset": true,
+      "runtime_loop_crossfade_required": false,
+      "cooldown_ms": 0,
+      "max_concurrent_voices": 1,
+      "concurrency_group": "fishing.ambience_sea_loop",
+      "concurrency_policy": "replace_oldest",
+      "spatial": {
+        "enabled": false,
+        "source": "listener",
+        "distance_unit": "tiles",
+        "reference_distance": null,
+        "maximum_distance": null,
+        "rolloff": "none"
+      },
+      "stop_on_session_end": true,
+      "peak_dbfs": -18.001,
+      "sha256": "bcb15940567a44317cf6514bc7ccbd57dd05dfa35435dfd10141b0575010a934",
+      "runtime_path": "fishing/fishing_ambience_sea_loop.wav"
+    }
+  ],
+  "events": {
+    "ui_open": {
+      "sound_id": "ui_open",
+      "gain_override": null,
+      "enabled": true
+    },
+    "ui_close": {
+      "sound_id": "ui_close",
+      "gain_override": null,
+      "enabled": true
+    },
+    "ui_select": {
+      "sound_id": "ui_select",
+      "gain_override": null,
+      "enabled": true
+    },
+    "ui_confirm": {
+      "sound_id": "ui_confirm",
+      "gain_override": null,
+      "enabled": true
+    },
+    "ui_error": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "cast_rod": {
+      "sound_id": "cast_rod",
+      "gain_override": null,
+      "enabled": true
+    },
+    "cast_net": {
+      "sound_id": "cast_net",
+      "gain_override": null,
+      "enabled": true
+    },
+    "cast_cage": {
+      "sound_id": "cast_cage",
+      "gain_override": null,
+      "enabled": true
+    },
+    "splash": {
+      "sound_id": "splash",
+      "gain_override": null,
+      "enabled": true
+    },
+    "bite": {
+      "sound_id": "bite",
+      "gain_override": null,
+      "enabled": true
+    },
+    "reel_loop": {
+      "sound_id": "reel_loop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "tension_loop": {
+      "sound_id": "tension_loop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "line_break": {
+      "sound_id": "line_break",
+      "gain_override": null,
+      "enabled": true
+    },
+    "escape": {
+      "sound_id": "escape",
+      "gain_override": null,
+      "enabled": true
+    },
+    "catch": {
+      "sound_id": "catch",
+      "gain_override": null,
+      "enabled": true
+    },
+    "crate_raise": {
+      "sound_id": "crate_raise",
+      "gain_override": null,
+      "enabled": true
+    },
+    "net_retrieve": {
+      "sound_id": "net_retrieve",
+      "gain_override": null,
+      "enabled": true
+    },
+    "skill_stabilize": {
+      "sound_id": "skill_stabilize",
+      "gain_override": null,
+      "enabled": true
+    },
+    "skill_pull": {
+      "sound_id": "skill_pull",
+      "gain_override": null,
+      "enabled": true
+    },
+    "skill_repair": {
+      "sound_id": "skill_repair",
+      "gain_override": null,
+      "enabled": true
+    },
+    "skill_sink": {
+      "sound_id": "skill_sink",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_start": {
+      "sound_id": "auto_start",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_stop": {
+      "sound_id": "auto_stop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_pause": {
+      "sound_id": "auto_pause",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_appear": {
+      "sound_id": "legendary_appear",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_challenge_cue": {
+      "sound_id": "legendary_challenge_cue",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_challenge_success": {
+      "sound_id": "legendary_challenge_success",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_challenge_fail": {
+      "sound_id": "legendary_challenge_fail",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_catch": {
+      "sound_id": "legendary_catch",
+      "gain_override": null,
+      "enabled": true
+    },
+    "xp_gain": {
+      "sound_id": "xp_gain",
+      "gain_override": null,
+      "enabled": true
+    },
+    "level_up": {
+      "sound_id": "level_up",
+      "gain_override": null,
+      "enabled": true
+    },
+    "ambience_sea_loop": {
+      "sound_id": "ambience_sea_loop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "session_start": {
+      "sound_id": "ui_open",
+      "gain_override": null,
+      "enabled": true
+    },
+    "session_end": {
+      "sound_id": "ui_close",
+      "gain_override": null,
+      "enabled": true
+    },
+    "session_interrupted": {
+      "sound_id": "auto_stop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "tool_changed": {
+      "sound_id": "ui_select",
+      "gain_override": null,
+      "enabled": true
+    },
+    "tool_missing": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "tool_incompatible": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "bait_missing": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "inventory_full": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "zone_unavailable": {
+      "sound_id": "ui_error",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_hooked": {
+      "sound_id": "legendary_appear",
+      "gain_override": null,
+      "enabled": true
+    },
+    "challenge_timing_prompt": {
+      "sound_id": "legendary_challenge_cue",
+      "gain_override": null,
+      "enabled": true
+    },
+    "challenge_direction_prompt": {
+      "sound_id": "legendary_challenge_cue",
+      "gain_override": null,
+      "enabled": true
+    },
+    "challenge_reel_prompt": {
+      "sound_id": "legendary_challenge_cue",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_timeout": {
+      "sound_id": "legendary_challenge_fail",
+      "gain_override": null,
+      "enabled": true
+    },
+    "legendary_escape": {
+      "sound_id": "escape",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_bait_empty": {
+      "sound_id": "auto_pause",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_inventory_full": {
+      "sound_id": "auto_pause",
+      "gain_override": null,
+      "enabled": true
+    },
+    "auto_legendary_wait": {
+      "sound_id": "auto_pause",
+      "gain_override": null,
+      "enabled": true
+    },
+    "reward_item": {
+      "sound_id": "catch",
+      "gain_override": null,
+      "enabled": true
+    },
+    "reward_xp": {
+      "sound_id": "xp_gain",
+      "gain_override": null,
+      "enabled": true
+    },
+    "rod_cast": {
+      "sound_id": "cast_rod",
+      "gain_override": null,
+      "enabled": true
+    },
+    "net_cast": {
+      "sound_id": "cast_net",
+      "gain_override": null,
+      "enabled": true
+    },
+    "cage_cast": {
+      "sound_id": "cast_cage",
+      "gain_override": null,
+      "enabled": true
+    },
+    "cage_retrieve": {
+      "sound_id": "crate_raise",
+      "gain_override": null,
+      "enabled": true
+    },
+    "line_tension_enter": {
+      "sound_id": "tension_loop",
+      "gain_override": null,
+      "enabled": true
+    },
+    "reeling_start": {
+      "sound_id": "reel_loop",
+      "gain_override": null,
+      "enabled": true
+    }
+  },
+  "stop_events": {
+    "reeling_stop": [
+      "reel_loop"
+    ],
+    "line_tension_exit": [
+      "tension_loop"
+    ],
+    "session_end": [
+      "reel_loop",
+      "tension_loop",
+      "ambience_sea_loop"
+    ],
+    "session_interrupted": [
+      "reel_loop",
+      "tension_loop",
+      "ambience_sea_loop"
+    ]
+  },
+  "engine_copy_destination": "resources/sounds/fishing/",
+  "engine_playback_path_prefix": "fishing/"
+}

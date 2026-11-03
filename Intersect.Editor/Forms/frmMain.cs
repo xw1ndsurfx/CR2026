@@ -118,35 +118,9 @@ public partial class FrmMain : Form
         InitMapProperties();
         InitLocalization();
         InitExternalTools();
-        AddRewardConfigurationEditorMenu();
-        AddLogiCoinShopEditorMenu();
-        AddProfessionEditorMenu();
-        PacketSender.SendRequestProfessionConfiguration(openEditor: false);
-        AddAchievementEditorMenu();
-        PacketSender.SendRequestAchievementConfiguration(openEditor: false);
-        AddDungeonEditorMenu();
-        PacketSender.SendRequestDungeonConfiguration(openEditor: false);
-        AddQuestShopEditorMenu();
-        PacketSender.SendRequestQuestShopConfiguration(openEditor: false);
-        var housingEditor = new ToolStripMenuItem("Housing & Furniture Catalog");
-        housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
-        contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
-        AddRoyalStylistEditorMenu();
-        PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
-        AddCharacterGeneratorEditorMenu();
-        AddAnimationImportEditorMenu();
-        AddSoundImportEditorMenu();
-        AddBalanceLabEditorMenu();
-        AddWorldEventsEditorMenu();
-        AddSystemEditorMenu();
-        AddWorldMapEditorMenu();
-        var resourceBrush=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Resource brush",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="ResourceBrushTool"};
-        resourceBrush.Click+=(_,_)=>{Globals.MapLayersWindow.Show();Globals.MapLayersWindow.ActivateResourceBrush();};
-        toolsToolStripMenuItem.DropDownItems.Add(resourceBrush);
-        var uiDesigner=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("UI Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
-        uiDesigner.Click+=(_,_)=>new Intersect.Editor.Forms.Editors.FrmUiDesigner().Show(this);
-        toolsToolStripMenuItem.DropDownItems.Add(uiDesigner);
+        InitializeEditorNavigation();
         InitializeSaveProtection();
+        InitializeEditorHub();
         Text="Logiklik 2D Engine · "+Intersect.Framework.Core.BuildIdentity.Label;
         Show();
 
@@ -250,25 +224,37 @@ public partial class FrmMain : Form
 
     private void AddRewardConfigurationEditorMenu()
     {
-        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem")) return;
-        var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
-        daily.Click += (_, _) => RequestMiniGameEditor(null);
-        contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
-        var games = new ToolStripMenuItem("Mini-Game") { Name = "miniGameEditorsToolStripMenuItem" };
+        if (!contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        {
+            var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
+            daily.Click += (_, _) => RequestMiniGameEditor(null);
+            contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
+        }
+        var games = GetOrCreateMiniGameEditorsMenu();
         foreach (var game in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
         {
-            var entry = new ToolStripMenuItem(game.DisplayName);
+            var name = "miniGame." + game.Type;
+            if (games.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == name)) continue;
+            var entry = new ToolStripMenuItem(game.DisplayName) { Name = name };
             entry.Click += (_, _) => RequestMiniGameEditor(game.Type);
             games.DropDownItems.Add(entry);
         }
-        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, games);
+    }
+
+    private ToolStripMenuItem GetOrCreateMiniGameEditorsMenu()
+    {
+        if (menuStrip.Items.OfType<ToolStripMenuItem>().FirstOrDefault(item => item.Name == "miniGameEditorsToolStripMenuItem") is { } existing)
+            return existing;
+        var menu = new ToolStripMenuItem(EditorHub.HubText.T("MiniGames")) { Name = "miniGameEditorsToolStripMenuItem" };
+        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, menu);
+        return menu;
     }
 
     public void OpenRewardConfigurationEditor()
     {
         if (_rewardEditor == null || _rewardEditor.IsDisposed) _rewardEditor = new FrmRewardConfiguration();
         _rewardEditor.NavigateGame(_requestedMiniGame);
-        _rewardEditor.Show();
+        Styling.EditorWindows.Show(_rewardEditor, this);
         if (_rewardEditor.WindowState == FormWindowState.Minimized) _rewardEditor.WindowState = FormWindowState.Normal;
         _rewardEditor.BringToFront();
     }
@@ -294,7 +280,7 @@ public partial class FrmMain : Form
     public void OpenLogiCoinShopEditor()
     {
         var editor = new FrmLogiCoinShopConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 
@@ -317,7 +303,7 @@ public partial class FrmMain : Form
     public void OpenProfessionEditor()
     {
         var editor = new FrmProfessionConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 
@@ -340,7 +326,7 @@ public partial class FrmMain : Form
     public void OpenAchievementEditor()
     {
         var editor = new FrmAchievementConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 
@@ -362,7 +348,7 @@ public partial class FrmMain : Form
         balanceLab.Click += (_, _) =>
         {
             var editor = new FrmBalanceLab(OpenBalanceObjectEditor);
-            editor.Show(this);
+            Styling.EditorWindows.Show(editor, this);
             editor.BringToFront();
         };
 
@@ -507,7 +493,7 @@ public partial class FrmMain : Form
         animationImport.Click += (_, _) =>
         {
             var editor = new FrmAnimationImport(BeginGeneratedAnimationCreation);
-            editor.Show(this);
+            Styling.EditorWindows.Show(editor, this);
             editor.BringToFront();
         };
 
@@ -533,12 +519,12 @@ public partial class FrmMain : Form
         soundImport.Click += (_, _) =>
         {
             var editor = new FrmSoundImport();
-            editor.Show(this);
+            Styling.EditorWindows.Show(editor, this);
             editor.BringToFront();
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(soundImport);
-        var translations = new ToolStripMenuItem { Text = "Game Translations..." };
+        var translations = new ToolStripMenuItem { Name = "gameTranslationsEditor", Text = "Game Translations..." };
         translations.Click += (_, _) => new FrmTranslations().Show(this);
         contentEditorsToolStripMenuItem.DropDownItems.Add(translations);
     }
@@ -595,7 +581,7 @@ public partial class FrmMain : Form
                 RefreshOpenEntityEditors,
                 BeginGeneratedItemCreation
             );
-            editor.Show(this);
+            Styling.EditorWindows.Show(editor, this);
             editor.BringToFront();
         };
 
@@ -684,14 +670,14 @@ public partial class FrmMain : Form
     public void OpenWorldBossEditor()
     {
         var editor = new FrmWorldBossConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 
     public void OpenInvasionEditor()
     {
         var editor = new FrmInvasionConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 
@@ -781,6 +767,7 @@ public partial class FrmMain : Form
 
     private void FrmMain_KeyDown(object sender, KeyEventArgs e)
     {
+        if (_editorHub is { Visible: true }) return;
         switch (e.KeyData)
         {
             case Keys.Control | Keys.Z:
@@ -1584,7 +1571,7 @@ public partial class FrmMain : Form
         };
 
         //TODO Reimplement
-        //fileDialog.ShowDialog();
+        //fileDialog.ShowDialog(this);
         //var buff = new ByteBuffer();
         //buff.WriteString(Application.ProductVersion);
         //buff.WriteBytes(Globals.CurrentMap.SaveInternal());
@@ -1603,7 +1590,7 @@ public partial class FrmMain : Form
         };
 
         //TODO Reimplement
-        //fileDialog.ShowDialog();
+        //fileDialog.ShowDialog(this);
 
         //if (fileDialog.FileName != "")
         //{
@@ -1627,7 +1614,7 @@ public partial class FrmMain : Form
     private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
     {
         var optionsForm = new FrmOptions();
-        optionsForm.ShowDialog();
+        optionsForm.ShowDialog(this);
         UpdateRunState();
     }
 
@@ -1838,7 +1825,7 @@ public partial class FrmMain : Form
     private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
     {
         var aboutfrm = new FrmAbout();
-        aboutfrm.ShowDialog();
+        aboutfrm.ShowDialog(this);
     }
 
     //ToolStrip Functions
@@ -1854,7 +1841,9 @@ public partial class FrmMain : Form
 
     private void toolStripBtnUndo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapUndoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapUndoStates[Globals.MapEditorWindow.MapUndoStates.Count - 1]);
@@ -1865,13 +1854,16 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapUndoStates.RemoveAt(Globals.MapEditorWindow.MapUndoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }
 
     private void toolStripBtnRedo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapRedoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapRedoStates[Globals.MapEditorWindow.MapRedoStates.Count - 1]);
@@ -1882,6 +1874,7 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapRedoStates.RemoveAt(Globals.MapEditorWindow.MapRedoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }
@@ -1904,7 +1897,7 @@ public partial class FrmMain : Form
             Title = Strings.MainForm.screenshot
         };
 
-        fileDialog.ShowDialog();
+        fileDialog.ShowDialog(this);
 
         if (fileDialog.FileName != "")
         {
@@ -2104,6 +2097,20 @@ public partial class FrmMain : Form
     //Cross Threading Delegate Methods
     private void TryOpenEditorMethod(GameObjectType type)
     {
+        if (Globals.CurrentEditor == (int)type)
+        {
+            Form? existing = type switch
+            {
+                GameObjectType.Animation => mAnimationEditor, GameObjectType.Item => mItemEditor,
+                GameObjectType.Npc => mNpcEditor, GameObjectType.Resource => mResourceEditor,
+                GameObjectType.Spell => mSpellEditor, GameObjectType.CraftTables => mCraftingTablesEditor,
+                GameObjectType.Crafts => mCraftsEditor, GameObjectType.Class => mClassEditor,
+                GameObjectType.Quest => mQuestEditor, GameObjectType.Projectile => mProjectileEditor,
+                GameObjectType.Event => mCommonEventEditor, GameObjectType.PlayerVariable => mSwitchVariableEditor,
+                GameObjectType.Shop => mShopEditor, GameObjectType.Time => mTimeEditor, _ => null,
+            };
+            if (existing is { IsDisposed: false }) { Styling.EditorWindows.Show(existing, this); return; }
+        }
         if (Globals.CurrentEditor == -1)
         {
             switch (type)
@@ -2113,7 +2120,7 @@ public partial class FrmMain : Form
                     {
                         mAnimationEditor = new FrmAnimation();
                         mAnimationEditor.InitEditor();
-                        mAnimationEditor.Show();
+                        Styling.EditorWindows.Show(mAnimationEditor, this);
                     }
 
                     if (mPendingGeneratedAnimationRequest != null)
@@ -2131,7 +2138,7 @@ public partial class FrmMain : Form
                     {
                         mItemEditor = new FrmItem();
                         mItemEditor.InitEditor();
-                        mItemEditor.Show();
+                        Styling.EditorWindows.Show(mItemEditor, this);
                     }
 
                     if (mPendingGeneratedItemRequest != null)
@@ -2149,7 +2156,7 @@ public partial class FrmMain : Form
                     {
                         mNpcEditor = new FrmNpc();
                         mNpcEditor.InitEditor();
-                        mNpcEditor.Show();
+                        Styling.EditorWindows.Show(mNpcEditor, this);
                     }
 
                     break;
@@ -2158,7 +2165,7 @@ public partial class FrmMain : Form
                     {
                         mResourceEditor = new FrmResource();
                         mResourceEditor.InitEditor();
-                        mResourceEditor.Show();
+                        Styling.EditorWindows.Show(mResourceEditor, this);
                     }
 
                     break;
@@ -2167,7 +2174,7 @@ public partial class FrmMain : Form
                     {
                         mSpellEditor = new FrmSpell();
                         mSpellEditor.InitEditor();
-                        mSpellEditor.Show();
+                        Styling.EditorWindows.Show(mSpellEditor, this);
                     }
 
                     break;
@@ -2176,7 +2183,7 @@ public partial class FrmMain : Form
                     {
                         mCraftingTablesEditor = new FrmCraftingTables();
                         mCraftingTablesEditor.InitEditor();
-                        mCraftingTablesEditor.Show();
+                        Styling.EditorWindows.Show(mCraftingTablesEditor, this);
                     }
 
                     break;
@@ -2185,7 +2192,7 @@ public partial class FrmMain : Form
                     {
                         mCraftsEditor = new FrmCrafts();
                         mCraftsEditor.InitEditor();
-                        mCraftsEditor.Show();
+                        Styling.EditorWindows.Show(mCraftsEditor, this);
                     }
 
                     break;
@@ -2194,7 +2201,7 @@ public partial class FrmMain : Form
                     {
                         mClassEditor = new FrmClass();
                         mClassEditor.InitEditor();
-                        mClassEditor.Show();
+                        Styling.EditorWindows.Show(mClassEditor, this);
                     }
 
                     break;
@@ -2203,7 +2210,7 @@ public partial class FrmMain : Form
                     {
                         mQuestEditor = new FrmQuest();
                         mQuestEditor.InitEditor();
-                        mQuestEditor.Show();
+                        Styling.EditorWindows.Show(mQuestEditor, this);
                     }
 
                     break;
@@ -2212,7 +2219,7 @@ public partial class FrmMain : Form
                     {
                         mProjectileEditor = new FrmProjectile();
                         mProjectileEditor.InitEditor();
-                        mProjectileEditor.Show();
+                        Styling.EditorWindows.Show(mProjectileEditor, this);
                     }
 
                     break;
@@ -2220,7 +2227,7 @@ public partial class FrmMain : Form
                     if (mCommonEventEditor == null || mCommonEventEditor.Visible == false)
                     {
                         mCommonEventEditor = new FrmCommonEvent();
-                        mCommonEventEditor.Show();
+                        Styling.EditorWindows.Show(mCommonEventEditor, this);
                     }
 
                     break;
@@ -2229,7 +2236,7 @@ public partial class FrmMain : Form
                     {
                         mSwitchVariableEditor = new FrmSwitchVariable();
                         mSwitchVariableEditor.InitEditor();
-                        mSwitchVariableEditor.Show();
+                        Styling.EditorWindows.Show(mSwitchVariableEditor, this);
                     }
 
                     break;
@@ -2238,7 +2245,7 @@ public partial class FrmMain : Form
                     {
                         mShopEditor = new FrmShop();
                         mShopEditor.InitEditor();
-                        mShopEditor.Show();
+                        Styling.EditorWindows.Show(mShopEditor, this);
                     }
 
                     break;
@@ -2247,7 +2254,7 @@ public partial class FrmMain : Form
                     {
                         mTimeEditor = new FrmTime();
                         mTimeEditor.InitEditor(DaylightCycleDescriptor.Instance);
-                        mTimeEditor.Show();
+                        Styling.EditorWindows.Show(mTimeEditor, this);
                     }
 
                     break;
@@ -2487,7 +2494,7 @@ public partial class FrmMain : Form
                        ShowNewFolderButton = showNewFolderButton,
                    })
             {
-                var selectionDialogResult = folderBrowserDialog.ShowDialog();
+                var selectionDialogResult = folderBrowserDialog.ShowDialog(this);
                 switch (selectionDialogResult)
                 {
                     case DialogResult.OK:
@@ -2622,7 +2629,7 @@ public partial class FrmMain : Form
             Globals.PackingProgressForm.SetTitle(Strings.AssetPacking.title);
             var assetThread = new Thread(() => packAssets(sourceDirectory));
             assetThread.Start();
-            _ = Globals.PackingProgressForm.ShowDialog();
+            _ = Globals.PackingProgressForm.ShowDialog(this);
         }
 
         Globals.UpdateCreationProgressForm = new FrmProgress();
@@ -2630,7 +2637,7 @@ public partial class FrmMain : Form
         Globals.UpdateCreationProgressForm.SetProgress(Strings.UpdatePacking.Deleting, 10, false);
         var packingthread = new Thread(() => createUpdate(sourceDirectory, targetDirectory, existingUpdate));
         packingthread.Start();
-        _ = Globals.UpdateCreationProgressForm.ShowDialog();
+        _ = Globals.UpdateCreationProgressForm.ShowDialog(this);
     }
 
     private void createUpdate(string sourceDirectory, string targetDirectory, UpdateManifest? existingUpdate)

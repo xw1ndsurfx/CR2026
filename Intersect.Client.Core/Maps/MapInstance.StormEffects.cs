@@ -13,9 +13,21 @@ public partial class MapInstance
     private readonly List<(Animation Animation,long Started)> _stormAnimations=[];
     private long _nextStrike,_strikeAt;
     private float _strikeX,_strikeY;
-    internal bool WeatherIsActive=>WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
-    internal bool IsRaining=>RainActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
-    internal int EffectiveBrightness=>RainAdjustedBrightness(Brightness,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal bool WeatherIsActive=>Intersect.Client.Cinematics.CinematicEnvironment.WeatherActive(this) ?? WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal bool IsRaining=>RainIsConfigured && WeatherIsActive;
+    private readonly WeatherVisualTransition _weatherTransition = new();
+    internal float WeatherStrength => _weatherTransition.Update(
+        RainIsConfigured && WeatherIsActive ? WeatherAppearance.From(this) : null, Environment.TickCount64);
+    private WeatherAppearance RenderedWeather => _weatherTransition.Appearance ?? WeatherAppearance.From(this);
+    internal int TransitionBrightness(int normal)
+    {
+        var strength = WeatherStrength;
+        var weather = RenderedWeather;
+        return weather.OverrideBrightness
+            ? (int)Math.Round(normal + (Math.Clamp(weather.Brightness, 0, 100) - normal) * strength) : normal;
+    }
+    internal int EffectiveBrightness => IsIndoors && Intersect.Client.Cinematics.CinematicEnvironment.TryGetEnvironment(this,out var cinematic)
+        ? cinematic.NightBrightness : TransitionBrightness(Brightness);
     private void SpawnRainSplash(float x,float y)
     {
         if(_rainSplashes.Count+_stormAnimations.Count>=96)return;
@@ -33,7 +45,7 @@ public partial class MapInstance
     {
         UpdateRainSound();
         var now=Environment.TickCount64;
-        if(WeatherEffects.Flashes || WeatherEffects.Lightning || !string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound))
+        if(WeatherIsActive && WeatherStrength > .3f && (WeatherEffects.Flashes || WeatherEffects.Lightning || !string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound)))
         {
             if(_nextStrike==0)_nextStrike=now+Globals.Random.Next(10000,30001);
             if(now>=_nextStrike)

@@ -1,0 +1,300 @@
+{
+  "version": 1,
+  "shell": {
+    "file": "fishing/gui/fishing_shell.png",
+    "reference_size": [
+      1670,
+      941
+    ],
+    "scene": [
+      19,
+      119,
+      1184,
+      628
+    ],
+    "xp_track": [
+      590,
+      70,
+      575,
+      20
+    ],
+    "line_track": [
+      132,
+      827,
+      333,
+      22
+    ]
+  },
+  "components": {
+    "button_normal": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        35,
+        92,
+        315,
+        105
+      ]
+    },
+    "button_hover": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        419,
+        92,
+        315,
+        105
+      ]
+    },
+    "button_pressed": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        803,
+        92,
+        315,
+        105
+      ]
+    },
+    "button_disabled": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        1187,
+        92,
+        315,
+        105
+      ]
+    },
+    "primary_normal": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        35,
+        349,
+        315,
+        104
+      ]
+    },
+    "primary_hover": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        419,
+        349,
+        315,
+        104
+      ]
+    },
+    "primary_pressed": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        802,
+        349,
+        316,
+        104
+      ]
+    },
+    "primary_disabled": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        1187,
+        349,
+        315,
+        104
+      ]
+    },
+    "bar_green": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        35,
+        629,
+        315,
+        29
+      ]
+    },
+    "bar_amber": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        419,
+        629,
+        315,
+        29
+      ]
+    },
+    "bar_red": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        803,
+        629,
+        315,
+        29
+      ]
+    },
+    "bar_empty": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        1178,
+        620,
+        333,
+        48
+      ]
+    },
+    "slot_normal": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        116,
+        817,
+        153,
+        155
+      ]
+    },
+    "slot_selected": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        500,
+        817,
+        153,
+        155
+      ]
+    },
+    "alert": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        929,
+        817,
+        62,
+        155
+      ]
+    },
+    "legendary_star": {
+      "file": "fishing/gui/fishing_components.png",
+      "source": [
+        1266,
+        817,
+        156,
+        150
+      ]
+    }
+  },
+  "effects": {
+    "ripple": {
+      "file": "fishing/fx/fishing_effects.png",
+      "frames": [
+        [
+          0,
+          0,
+          314,
+          314
+        ],
+        [
+          314,
+          0,
+          313,
+          314
+        ],
+        [
+          627,
+          0,
+          313,
+          314
+        ],
+        [
+          940,
+          0,
+          314,
+          314
+        ]
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "splash": {
+      "file": "fishing/fx/fishing_effects.png",
+      "frames": [
+        [
+          0,
+          314,
+          314,
+          313
+        ],
+        [
+          314,
+          314,
+          313,
+          313
+        ],
+        [
+          627,
+          314,
+          313,
+          313
+        ],
+        [
+          940,
+          314,
+          314,
+          313
+        ]
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "bubbles": {
+      "file": "fishing/fx/fishing_effects.png",
+      "frames": [
+        [
+          0,
+          627,
+          314,
+          313
+        ],
+        [
+          314,
+          627,
+          313,
+          313
+        ],
+        [
+          627,
+          627,
+          313,
+          313
+        ],
+        [
+          940,
+          627,
+          314,
+          313
+        ]
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "legendary_glint": {
+      "file": "fishing/fx/fishing_effects.png",
+      "frames": [
+        [
+          0,
+          940,
+          314,
+          314
+        ],
+        [
+          314,
+          940,
+          313,
+          314
+        ],
+        [
+          627,
+          940,
+          313,
+          314
+        ],
+        [
+          940,
+          940,
+          314,
+          314
+        ]
+      ],
+      "fps": 8,
+      "loop": false
+    }
+  }
+}

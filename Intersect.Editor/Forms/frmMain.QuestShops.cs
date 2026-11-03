@@ -27,7 +27,7 @@ public partial class FrmMain
     public void OpenQuestShopEditor()
     {
         var editor = new FrmQuestShopConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 }
