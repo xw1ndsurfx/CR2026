@@ -68,8 +68,7 @@ internal sealed class ExportationWindow : Base
 
         Title("Title", "Exportation", 582, 54, 575, 65, 42);
         Title("Subtitle", "Cargo preparation", 613, 111, 470, 40, 25);
-        Title("Profession", "Level {0}", 1247, 80, 169, 34, 21);
-        _level = _translated.Last().Control as Label ?? throw new InvalidOperationException("Level label missing");
+        _level = Title("Profession", "Level {0}", 1247, 80, 169, 34, 21);
         Title("OrderTitle", "ORDER SLIP", 144, 193, 323, 47, 28, dark: true);
         Title("CrateTitle", "PACK THE CRATES", 549, 193, 494, 43, 28);
         Title("DeliveryTitle", "DELIVERY", 1144, 193, 331, 48, 27);

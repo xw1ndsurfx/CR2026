@@ -21,7 +21,16 @@ internal sealed class ExportationAudio
         if (now - _played.GetValueOrDefault(cue, long.MinValue / 2) < 160) return;
         _played[cue] = now;
         // Existing global game mixer owns playback through completion.
-        var sound = Audio.AddGameSound("exportation/" + cue + ".wav", false);
-        if (sound is { Loaded: true }) sound.Volume = cue == "cargo_lost" ? 70 : 65;
+        // Optional audio must never prevent the minigame's UI from opening.
+        try
+        {
+            var sound = Audio.AddGameSound("exportation/" + cue + ".wav", false);
+            if (sound is { Loaded: true }) sound.Volume = cue == "cargo_lost" ? 70 : 65;
+        }
+        catch (Exception error) when (error is IOException or InvalidOperationException or
+            UnauthorizedAccessException or NotSupportedException)
+        {
+            // Missing/unsupported device or sound file: continue the visual activity.
+        }
     }
 }

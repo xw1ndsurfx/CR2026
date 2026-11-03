@@ -1,19 +1,38 @@
-# Exportation — foundational implementation
+# Exportation — integration stage
 
-**Current status: code foundation, not playable in the live client.** No live client, quest, NPC, editor, or naval event integration has been wired yet.
+**Status: draft, NOT PLAYABLE yet.** This branch is a foundation, not a released feature.
 
-- Authored route configuration has source NPC/map, recipient NPC/map, existing Quest ID, profession minimum, requested goods grouped by cargo type and reward.
-- `ExportationRules` validates the order packing, sealed cargo, bound ship embarkation, verified docking and one-time delivery payout.
-- Death destroys sealed cargo until turn-in; sinking of the bound ship during the sea leg also destroys it. Failure returns the player to the *same* merchant and resets the packing.
-- `ExportationText` has EN/FR/ES translations embedded in the project.
-- `Intersect.Tests.Server/ExportationRulesTests.cs` adds NUnit regression tests for packing, wrong ship, transport, loss, retries, rewards and serialization.
+## Implemented in code
 
-## Runtime integration remaining
+- `ExportationRoute` and `ExportationConfiguration` define distinct source/destination maps, two NPCs, an authored quest, required profession level, per-good quantities and rewards.
+- `ExportationRules` guards packing, unique cargo seals, matching boat ID at embark and docking, one-time delivery, loss on death or sinking, and a retry at the original merchant.
+- `ExportationWindow` uses the **approved** pixel-art background and individual sprite files. It draws the requested goods, packed quantities, crate contents, route summary, level and progress. Current controls are **click-to-pack** and click-to-remove; drag/drop is still pending. Its callbacks intentionally await authoritative server changes, with no client-side award.
+- `ExportationAudio` plays one-shot WAV cues for pack/remove, complete order, seal, loss, delivery, open and close.
+- `FrmExportationAssets` is accessible via Mini-Game Editors / Editor Hub: previews all 13 PNGs, plays all 10 WAVs and clearly marks itself preview-only.
+- EN/FR/ES entries in the existing GameTextCatalog pattern.
+- `Shared/ExportationAssets.props` is imported by client and editor projects to copy PNGs and WAVs into both build and publish outputs.
+- NUnit rules tests were added, but not run in the current environment.
 
-1. Add network requests/state and a persisted player order. Construct actor context on the server only. Only one active order per player.
-2. At seal, persist quest activation and the run together. At completion, persist currency, profession XP and quest completion atomically; restore state on save failure. Use existing quest and economy APIs.
-3. Wire embarkation and actual docking from the naval system, and death/sinking signals. Prohibit inter-island teleport bypasses.
-4. Register Exportation into the native profession system after connecting its XP storage; no XP for packing alone.
-5. Implement the in-game preparation window, command editor, event hooks, and assets. The concept backplate, 4x3 sprite atlas, and ten WAV SFX are delivered separately and are **not yet committed to the repository**.
+## Install approved assets in the repository
 
-Do not merge as a playable feature until runtime integration and end-to-end tests pass.
+Download `Corps_Royaux_Exportation_GFX_Sons.zip` from the ChatGPT attachment and run from the repository root:
+
+```sh
+python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royaux_Exportation_GFX_Sons.zip" --check
+python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royaux_Exportation_GFX_Sons.zip"
+```
+
+The installer is standard-library-only, reads 23 explicitly allowlisted ZIP entries, verifies SHA-256 and asset types/dimensions, refuses bad packs, and writes only to:
+- `resources/gui/exportation/background.png`
+- `resources/gui/exportation/sprites/*.png`
+- `resources/sounds/exportation/*.wav`
+
+The GitHub connector cannot directly upload binary files from the ChatGPT filesystem in this session, so the **23 binary assets are not yet part of the PR**. Build/publish includes them once installed in a local checkout; to make CI/public builds reproducible they must be checked in to Git or distributed through an approved asset channel.
+
+## Outstanding, do not merge as playable
+
+- Wire event-command open, server-authoritative packets, session/replay protection, and persisted player `ExportationRun` state.
+- Link source merchant to quest activation on sealing; recipient to completion; revoke/restart on failure. Transactional state + economy + XP persistence and proper rollback are necessary.
+- Hook verified naval embark/dock and death/sinking notifications; prevent teleport shortcuts.
+- Add the actual Exportation profession XP store and route configuration editor (current editor only previews resources).
+- Finish drag-and-drop and gameplay integration tests; run a real .NET 8 client/editor/server build and test suite.
