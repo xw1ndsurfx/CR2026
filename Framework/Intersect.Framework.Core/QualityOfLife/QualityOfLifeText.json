@@ -4628,7 +4628,8 @@
       "fr": "Impossible d’enregistrer. Réessaie.",
       "es": "No se pudo guardar. Inténtalo de nuevo."
     },
-    "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"}
+    "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"},
+    "{0}'s house": {"en": "{0}'s house", "fr": "Maison de {0}", "es": "Casa de {0}"}
 
   }
 }

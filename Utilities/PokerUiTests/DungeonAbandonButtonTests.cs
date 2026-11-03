@@ -16,6 +16,8 @@ internal static class DungeonAbandonButtonTests
 
     private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 
+    private static IEnumerable<ControlBase> All(ControlBase node) => new[] { node }.Concat(node.Children.SelectMany(All));
+
     private static void Verify()
     {
         _ = new TestContentManager();
@@ -32,6 +34,26 @@ internal static class DungeonAbandonButtonTests
         apply.Invoke(hud, [state]);
         Check(!button.IsHidden && button.Bottom <= hud.Height && button.MouseInputEnabled,
             "Active dungeon exposes an accessible abandon button inside the HUD.");
+        Check(hud.GetComponentAt(button.X + button.Width / 2, button.Y + button.Height / 2) == button,
+            "An actual mouse hit reaches the abandon button.");
+        var uiField = typeof(Intersect.Client.Interface.Interface).GetField("_uiInGame", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var oldUi = uiField.GetValue(null);
+        var oldContext = Intersect.Core.ApplicationContext.Context.Value;
+        Intersect.Core.ApplicationContext.Context.Value = DispatchProxy.Create<Intersect.Core.IApplicationContext, ActivitiesLogProxy>();
+        var ui = (GameInterface)RuntimeHelpers.GetUninitializedObject(typeof(GameInterface));
+        typeof(Intersect.Client.Interface.MutableInterface).GetField("<Root>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(ui, canvas);
+        uiField.SetValue(null, ui);
+        try
+        {
+            type.GetMethod("ConfirmAbandon", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(hud, null);
+            var modal = canvas.Children.Single(c => c is Intersect.Client.Framework.Gwen.ControlInternal.Modal);
+            var confirmation = modal.Children.Single(c => c.Name == "DungeonAbandonConfirmationWindow");
+            Check(!confirmation.IsHidden, "Clicking abandon creates a visible confirmation.");
+            var cancel = All(confirmation).OfType<Button>().Single(c => c.Name == "CancelDungeonAbandon");
+            Check(cancel.Font != null && cancel.FontSize >= 12, "Confirmation actions have explicit readable fonts.");
+            typeof(Button).GetMethod("OnKeyReturn", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(cancel, [false]);
+        }
+        finally { uiField.SetValue(null, oldUi); Intersect.Core.ApplicationContext.Context.Value = oldContext; }
         foreach (var locale in new[] { "en", "fr", "es" })
         {
             button.Text = QualityOfLifeText.Get("Abandon dungeon", locale);
