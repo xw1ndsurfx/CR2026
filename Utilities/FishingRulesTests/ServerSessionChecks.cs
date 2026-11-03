@@ -52,6 +52,7 @@ internal static class ServerSessionChecks
             CheckOpening(check, withDialogue: true, holdPlayer: false, worldProfile: false);
             CheckOpening(check, withDialogue: true, holdPlayer: true, worldProfile: true);
             CheckConfiguredNet(check);
+            CheckAutomaticFailure(check);
             CheckRejections(check);
             CheckMovementInterruption(check);
             ServerConnectionChecks.Run(check);
@@ -121,6 +122,42 @@ internal static class ServerSessionChecks
         check(fixture.Player.IsFishingActive && state.Phase == FishingPhase.Ready && state.Level == 2 &&
                 state.Experience == 150 && state.ExperienceIntoLevel == 50 && state.ExperienceRequired == 100,
             "The following Ready update uses the registered custom profession and its stored progression");
+    }
+
+    private static void CheckAutomaticFailure(Action<bool, string> check)
+    {
+        // Exercise the actual server session with guaranteed failure, rather than relying
+        // on statistical outcomes. The whole automatic attempt consumes bait and time,
+        // but must not grant either the configured reward or profession XP.
+        using var fixture = new Fixture(withDialogue: true, worldProfile: false, customProfession: true);
+        var zone = fixture.Configuration.Zones.Single();
+        zone.AutomaticFailureChance = 1;
+        zone.AutomaticExperienceMultiplier = .20;
+        fixture.RunEvent(check, withDialogue: true);
+        var ready = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Single(p => p.Open).StateJson)!;
+        fixture.ClearPackets();
+        fixture.Player.HandleFishingRequest(new FishingRequestPacket
+        {
+            Action = FishingAction.SetMode, SessionId = ready.SessionId, Automatic = true, Sequence = 1,
+        });
+        var waiting = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
+        check(waiting.Phase == FishingPhase.Waiting && waiting.Automatic,
+            "Enabling automatic fishing casts from the native Event session");
+        check(fixture.Player.Items.Where(item => item.ItemId == fixture.BaitItemId).Sum(item => item.Quantity) == 16,
+            "An automatic attempt consumes its regular bait before determining success");
+        fixture.TickFishing(120_000);
+        var fighting = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
+        check(fighting.Phase == FishingPhase.Fighting && fighting.Automatic,
+            "The automatic attempt reaches the fishing phase before the failure roll");
+        fixture.ClearPackets();
+        fixture.TickFishing(150_000);
+        var failed = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
+        check(failed.Phase == FishingPhase.Failed && failed.Automatic && fixture.Player.IsFishingActive,
+            "An automatic miss does not end the session or disable idle fishing");
+        check(failed.ExperienceGained == 0 && failed.CatchesThisSession == 0 &&
+            fixture.Player.Items.All(item => item.ItemId != fixture.RewardItemId || item.Quantity == 0) &&
+            (fixture.Player.GetVariable(fixture.Configuration.ProfessionId)?.Value.Integer ?? 0) == 0,
+            "A failed automatic attempt gives neither fish nor profession experience");
     }
 
     private static void CheckRejections(Action<bool, string> check)
@@ -200,6 +237,8 @@ internal static class ServerSessionChecks
         internal readonly GameEvent Event;
         internal readonly FishingConfiguration Configuration;
         internal IPacket[] Packets => _queue.Select(entry => entry.Item1).ToArray();
+        internal Guid BaitItemId => _bait.Id;
+        internal Guid RewardItemId => _fish.Id;
 
         internal Fixture(bool withDialogue, bool worldProfile, bool customProfession = false, IConnection? connection = null)
         {
@@ -286,7 +325,8 @@ internal static class ServerSessionChecks
             Event.Update(Timing.Global.Milliseconds, Map);
         }
 
-        internal void TickFishing() => UpdateFishing.Invoke(Player, [(long?)(Environment.TickCount64 + 250)]);
+        internal void TickFishing() => TickFishing(250);
+        internal void TickFishing(long offsetMs) => UpdateFishing.Invoke(Player, [(long?)(Environment.TickCount64 + offsetMs)]);
         internal void ClearPackets() { while (_queue.TryDequeue(out _)) { } }
 
         public void Dispose()
