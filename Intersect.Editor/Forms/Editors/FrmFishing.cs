@@ -76,7 +76,11 @@ public sealed partial class FrmFishing : Form
         Disposed += (_, _) => { StopPreview(); _saveTimeout.Stop(); _saveTimeout.Dispose(); };
         _tool = _config.Tools.FirstOrDefault(); _zone = _config.Zones.FirstOrDefault();
         _catch = _zone?.Catches.FirstOrDefault();
-        RefreshZoneList(); RebuildPages();
+        RefreshZoneList();
+        // Native handle creation may select the first tab without raising SelectedIndexChanged.
+        // Select it explicitly after the draft selection exists, before building its controls.
+        _tabs.SelectedIndex = 0;
+        RebuildPages();
     }
 
     protected override bool ProcessCmdKey(ref Message message, Keys keys)

@@ -440,7 +440,13 @@ public partial class Player
 
     private void EndFishing(string message = "", string? soundCue = null)
     {
-        lock (EntityLock)
+        var entityLock = EntityLock;
+        // Constructor-free players can reach lifecycle cleanup without a lock or session.
+        // Initialized players must still acquire the gate, even when idle, to serialize
+        // cleanup with a concurrent session start. An active session always requires it.
+        if (entityLock is null && _fishing is null) return;
+        ArgumentNullException.ThrowIfNull(entityLock, nameof(EntityLock));
+        lock (entityLock)
         {
             if (_fishing is not { } s) return;
             s.State.Phase = FishingPhase.Closed; s.State.Automatic = s.State.Reeling = false;

@@ -1,5 +1,5 @@
 {
-  "recorded_at_utc": "2026-11-03T03:34:33.316794+00:00",
+  "recorded_at_utc": "2026-11-03T03:59:34.771520+00:00",
   "shared_rules": {
     "command": "python3 Utilities/FishingRulesTests/run-standalone.py --dotnet /workspace/scratch/8ec90a3cad52/tooling/dotnet/dotnet",
     "result": "Fishing rules: 236 checks passed.",
@@ -15,7 +15,8 @@
     "compiler_response": "Utilities/FishingRulesTests/bin/native/compile.rsp",
     "compiler_notes": [
       "CS1701 compatibility assumptions for the existing System.Linq.Async and System.Interactive.Async dependencies referencing System.Runtime 6 while targeting .NET 8. No errors."
-    ]
+    ],
+    "latest_run_log": "fishing-native-lifecycle-fix.log"
   },
   "coverage": [
     "Zone, equipped-tool, level, UTC-hour, depth and player-variable intersection",
@@ -63,17 +64,17 @@
   "native_tested_assemblies": [
     {
       "path": "Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
-      "sha256": "82e3649eeedbf7e807d62f805b3c36d65ea1f3104f7be8b4b64973e81063d36f",
+      "sha256": "f6cfb1f2f5248e069698914c612646337b64eb2a86e3f8e4b82f5e3420d2087a",
       "bytes": 40960
     },
     {
       "path": "Utilities/FishingRulesTests/bin/native/Intersect.Server.Core.dll",
-      "sha256": "85ea3a6b7e02750c06f6a0fd9f3cf3a22c1b4543068936bf6a76668638c853d0",
+      "sha256": "de665d5fe80a66040ae343c9cda8e6e8f103a23c6133cccf0c0feb38cf6e33b6",
       "bytes": 13672448
     },
     {
       "path": "Utilities/FishingRulesTests/bin/native/Intersect.Framework.Core.dll",
-      "sha256": "07375ff8545f6c32c5d8227b278da284a1c7a33116a1729ad47e262fa9032ed3",
+      "sha256": "29b5657e429090b46df970dc8472b588083c5f1e99862ab863dac75a4360f51f",
       "bytes": 2675712
     }
   ],
@@ -118,8 +119,8 @@
   "server_source_snapshot": [
     {
       "path": "Intersect.Server.Core/Entities/Player.Fishing.cs",
-      "sha256": "5ce38e6416509174f3d54b7c0ca2a0cf14fc6fa392f3ed671bf49d842759387c",
-      "bytes": 26163
+      "sha256": "cb71906166787a027ac63b7422160b8486fa587c6e0a0f99a2d6c66b1d395acd",
+      "bytes": 26605
     },
     {
       "path": "Intersect.Server.Core/Fishing/FishingRewards.cs",
@@ -132,5 +133,25 @@
       "bytes": 3999
     }
   ],
-  "native_server_matches_latest_build": true
+  "native_server_matches_latest_build": true,
+  "native_inventory_lifecycle_regression": {
+    "command": "/workspace/scratch/8ec90a3cad52/tooling/dotnet/dotnet Utilities/PokerInventoryTests/bin/Debug/net8.0/Intersect.PokerInventoryTests.dll",
+    "configuration": "Debug",
+    "exit_code": 0,
+    "recorded_at_utc": "2026-11-03T04:00:05.978823+00:00",
+    "result": "14/14 real inventory groups passed.",
+    "lifecycle_result": "PASS death configuration, timing, packet envelopes, corrupt-config fallback and shop currency suggestions",
+    "coverage": [
+      "Pending-death idempotence with an uninitialized idle player",
+      "Repeated cleanup without a fishing session or entity lock",
+      "Explicit rejection of a session missing its lock",
+      "Initialized reentrant cleanup preserves entity lock and death state"
+    ],
+    "assembly": "Utilities/PokerInventoryTests/bin/Debug/net8.0/Intersect.PokerInventoryTests.dll",
+    "assembly_sha256": "78ec70b1ab86711bcd62a206661766ac255a8b2d940a8780eda21ec74eab5940",
+    "source": "Utilities/PokerInventoryTests/DeathSystemTests.cs",
+    "source_sha256": "66f727376152a619bda36501bb9eb8bf657b1396d4f85c786991340143dec284",
+    "log": "poker-inventory-lifecycle-tests.log",
+    "scope_note": "Existing native inventory and module-initializer checks, executed locally against rebuilt server assemblies; no live production game connection."
+  }
 }

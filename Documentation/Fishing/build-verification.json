@@ -11,10 +11,10 @@
     {
       "project": "server",
       "output": "Intersect.Server/bin/Debug/net8.0/Intersect Server.dll",
-      "sha256": "482a76d17f9c2d45bfe775c6c8aa21cb159c52579050af62113037425e54e179",
-      "bytes": 10510336,
+      "sha256": "562739f02cbe25bec60d7881551ec4e314d8dfa7e27280ac802de83bf480f493",
+      "bytes": 10507725,
       "exit_code": 0,
-      "build_log": "server-final.log",
+      "build_log": "server-lifecycle-fix.log",
       "runtime_executed": false
     },
     {
@@ -42,7 +42,8 @@
       "bytes": 8155136,
       "exit_code": 0,
       "build_log": "editor-tests-build.log",
-      "runtime_executed": false
+      "runtime_executed": false,
+      "snapshot_note": "This local cross-build precedes the explicit initial-tab production fix; the Windows workflow verifies subsequent revisions."
     },
     {
       "project": "editor_tests",
@@ -51,9 +52,10 @@
       "bytes": 821760,
       "exit_code": 0,
       "build_log": "editor-fixture-restored.log",
-      "runtime_executed": false
+      "runtime_executed": false,
+      "snapshot_note": "This local cross-build precedes the explicit initial-tab production fix; the Windows workflow verifies subsequent revisions."
     }
   ],
   "note": "Build evidence only. Native reward test execution is recorded separately. GUI, audio listening and live multiplayer not executed.",
-  "recorded_at_utc": "2026-11-03T03:38:30.480327+00:00"
+  "recorded_at_utc": "2026-11-03T03:59:34.886384+00:00"
 }

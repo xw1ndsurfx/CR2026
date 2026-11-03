@@ -30,7 +30,10 @@ internal static class FishingEditorTests
     {
         var page = Field<TabControl>(form, "_tabs").SelectedTab
             ?? throw new InvalidOperationException("Show the fishing editor before accessing its selected tab.");
-        var table = page.Controls.OfType<TableLayoutPanel>().Single();
+        var layouts = page.Controls.OfType<TableLayoutPanel>().ToArray();
+        Check(layouts.Length == 1 && layouts[0].Controls.Count > 0,
+            "The selected fishing page must own its populated editor layout after activation: " + page.Text);
+        var table = layouts[0];
         var label = table.Controls.OfType<Label>().Single(l => l.Text == FishingEditorText.Get(source));
         return (T)table.GetControlFromPosition(1, table.GetPositionFromControl(label).Row)!;
     }
