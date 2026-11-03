@@ -114,6 +114,12 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
     public int Cooldown { get; set; }
 
     /// <summary>
+    /// Duration in seconds of temporary stat effects granted by this consumable.
+    /// Zero keeps the legacy duration fallback. Independent of item reuse cooldown.
+    /// </summary>
+    public int ConsumableStatDurationSeconds { get; set; }
+
+    /// <summary>
     /// Defines which cooldown group this item belongs to.
     /// </summary>
     public string? CooldownGroup { get; set; }

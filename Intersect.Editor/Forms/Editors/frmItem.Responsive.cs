@@ -50,6 +50,7 @@ public partial class FrmItem
             AddItemEditorTab("Equipment Slot", grpEquipment);
             AddItemEditorTab("Vital & Stat Bonuses", grpVitalBonuses,
                 grpRegen, grpStatBonuses, grpStatRanges, grpEffects);
+            AddItemEditorTab("Consumables", grpConsumable);
             AddItemEditorTab("Paperdolls", grpPaperdoll);
             AddItemEditorTab("Weapon & Shield", grpWeaponProperties, grpShieldProperties);
 

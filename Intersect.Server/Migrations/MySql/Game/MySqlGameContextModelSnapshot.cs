@@ -238,6 +238,9 @@ namespace Intersect.Server.Migrations.MySql.Game
                     b.Property<int>("Cooldown")
                         .HasColumnType("int");
 
+                    b.Property<int>("ConsumableStatDurationSeconds")
+                        .HasColumnType("int");
+
                     b.Property<string>("CooldownGroup")
                         .HasColumnType("longtext");
 

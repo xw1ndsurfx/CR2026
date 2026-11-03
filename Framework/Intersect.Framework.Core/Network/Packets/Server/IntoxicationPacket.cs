@@ -6,4 +6,5 @@ public partial class IntoxicationPacket : IntersectPacket
     [Key(0)] public Guid PlayerId { get; set; }
     [Key(1)] public int GreenMilliseconds { get; set; }
     [Key(2)] public bool Vomit { get; set; }
+    [Key(3)] public int Intensity { get; set; }
 }

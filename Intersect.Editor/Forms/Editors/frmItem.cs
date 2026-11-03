@@ -41,6 +41,7 @@ public partial class FrmItem : EditorForm
     {
         ApplyHooks();
         InitializeComponent();
+        InitializeConsumableStatEditor();
         Icon = Program.Icon;
 
         cmbEquipmentSlot.Items.Clear();

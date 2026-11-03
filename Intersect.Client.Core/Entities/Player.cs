@@ -2393,13 +2393,22 @@ public partial class Player : Entity, IPlayer
         }
 
         var dir = DirectionFacing;
-        var moveDir = DirectionMoving;
+        var intendedMoveDir = DirectionMoving;
+        var moveDir = ReferenceEquals(this, Globals.Me)
+            ? Intersect.Client.Interface.Game.IntoxicationVisuals.DistortMove(intendedMoveDir)
+            : intendedMoveDir;
 
         var enableCrossingDiagonalBlocks = Options.Instance.Map.EnableCrossingDiagonalBlocks;
 
         if (moveDir != Direction.None)
         {
-            List<Direction> possibleDirections = new(4) { moveDir };
+            List<Direction> possibleDirections = new(5) { moveDir };
+            // If staggering is blocked, allow the requested movement rather than trapping the player.
+            if (moveDir != intendedMoveDir)
+            {
+                possibleDirections.Add(intendedMoveDir);
+            }
+
             if (dir.IsAdjacent(moveDir))
             {
                 System.Console.WriteLine($"{dir} is adjacent to {moveDir}");

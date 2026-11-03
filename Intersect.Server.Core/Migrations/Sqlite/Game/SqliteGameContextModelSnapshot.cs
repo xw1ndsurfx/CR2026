@@ -222,6 +222,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Property<int>("Cooldown")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ConsumableStatDurationSeconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CooldownGroup")
                         .HasColumnType("TEXT");
 
