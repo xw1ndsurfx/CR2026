@@ -26,13 +26,15 @@ public partial class Player
             return;
         }
 
-        // The item's normal cooldown is also the effect duration. A zero-cooldown
-        // potion gets a short default; Grog uses its configured intoxication duration.
-        var durationMs = item.Cooldown > 0
-            ? Math.Clamp(item.Cooldown, 1000, 1800000)
-            : item.Consumable.Type == ConsumableType.Grog
-                ? (int)Math.Clamp(item.Consumable.Value == 0 ? 30 : item.Consumable.Value, 5, 120) * 1000
-                : 30000;
+        // Explicit effect duration is independent of item reuse cooldown.
+        // Zero preserves the behavior of older items that predate this setting.
+        var durationMs = item.ConsumableStatDurationSeconds > 0
+            ? Math.Clamp(item.ConsumableStatDurationSeconds, 1, 3600) * 1000
+            : item.Cooldown > 0
+                ? Math.Clamp(item.Cooldown, 1000, 1800000)
+                : item.Consumable.Type == ConsumableType.Grog
+                    ? (int)Math.Clamp(item.Consumable.Value == 0 ? 30 : item.Consumable.Value, 5, 120) * 1000
+                    : 30000;
 
         var flatStats = new int[Enum.GetValues<Stat>().Length];
         var percentageStats = new int[flatStats.Length];

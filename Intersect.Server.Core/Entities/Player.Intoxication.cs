@@ -27,15 +27,22 @@ public partial class Player
         _nextIntoxicationDecayAt = now + 15000;
         _nextVomitAt = now + 5000;
         _vomitAnimation = item.AnimationId;
-        SendIntoxicationState((int)durationSeconds * 1000);
+        SendIntoxicationState();
     }
 
-    private void SendIntoxicationState(int millisecondsRemaining)
+    private void SendIntoxicationState()
     {
+        var now = Environment.TickCount64;
+        // Match the HUD countdown to the earliest of full expiration and
+        // progressive dose recovery, rather than showing a stale end time.
+        var recoveryUntil = _nextIntoxicationDecayAt + Math.Max(0, _intoxicationDoses - 1) * 15000L;
+        var remainingMs = _intoxicationDoses > 0
+            ? (int)Math.Clamp(Math.Min(_intoxicatedUntil, recoveryUntil) - now, 0L, 120000L)
+            : 0;
         SendPacket(new IntoxicationPacket
         {
             PlayerId = Id,
-            GreenMilliseconds = Math.Max(0, millisecondsRemaining),
+            GreenMilliseconds = remainingMs,
             Intensity = Math.Clamp(_intoxicationDoses - 1, 0, 4),
         });
     }
@@ -51,7 +58,7 @@ public partial class Player
         if (now >= _intoxicatedUntil)
         {
             _intoxicationDoses = 0;
-            SendIntoxicationState(0);
+            SendIntoxicationState();
             return;
         }
 
@@ -59,7 +66,7 @@ public partial class Player
         {
             _intoxicationDoses = Math.Max(0, _intoxicationDoses - 1);
             _nextIntoxicationDecayAt = now + 15000;
-            SendIntoxicationState((int)Math.Max(0, _intoxicatedUntil - now));
+            SendIntoxicationState();
             if (_intoxicationDoses == 0)
             {
                 _intoxicatedUntil = now;

@@ -49,7 +49,7 @@ public partial class FrmItem
             MaximizeBox = false,
             MinimizeBox = false,
             ShowInTaskbar = false,
-            ClientSize = new Size(486, 344),
+            ClientSize = new Size(486, 410),
             BackColor = Color.FromArgb(45, 45, 48),
             ForeColor = Color.Gainsboro,
         };
@@ -107,29 +107,48 @@ public partial class FrmItem
             header.Controls.Add(percentageInputs[i], 2, i + 1);
         }
 
+        var durationLabel = new Label
+        {
+            Location = new Point(17, 261),
+            Size = new Size(272, 24),
+            Text = ConsumableText("Stat effect duration (seconds):", "Durée des bonus (secondes) :", "Duración de efectos (segundos):"),
+            ForeColor = Color.Gainsboro,
+        };
+        var durationInput = new NumericUpDown
+        {
+            Location = new Point(331, 260),
+            Size = new Size(127, 26),
+            Minimum = 0,
+            Maximum = 3600,
+            Value = Math.Clamp(mEditorItem.ConsumableStatDurationSeconds, 0, 3600),
+            BackColor = Color.FromArgb(65, 65, 69),
+            ForeColor = Color.White,
+        };
         var note = new Label
         {
-            Location = new Point(17, 260),
-            Size = new Size(452, 39),
+            Location = new Point(17, 297),
+            Size = new Size(452, 56),
             Text = ConsumableText(
-                "Duration follows item cooldown (ms); 0 = 30s default, or Grog duration.",
-                "Durée = cooldown de l'objet (ms); 0 = 30 s, ou durée du Grog.",
-                "Duración = espera del objeto (ms); 0 = 30 s, o duración del Grog."),
+                "0 seconds uses the previous item cooldown / Grog / 30s fallback. Otherwise, this duration is independent of item cooldown.",
+                "0 seconde conserve l'ancienne durée (cooldown / Grog / 30 s). Sinon, ce réglage est indépendant du cooldown.",
+                "0 segundos mantiene la duración anterior (espera / Grog / 30 s). Si no, es independiente de la espera."),
             ForeColor = Color.Silver,
         };
         var save = new Button
         {
             Text = ConsumableText("Apply", "Appliquer", "Aplicar"),
-            DialogResult = DialogResult.OK, Location = new Point(292, 308),
+            DialogResult = DialogResult.OK, Location = new Point(292, 368),
             Size = new Size(86, 29),
         };
         var cancel = new Button
         {
             Text = ConsumableText("Cancel", "Annuler", "Cancelar"),
-            DialogResult = DialogResult.Cancel, Location = new Point(387, 308),
+            DialogResult = DialogResult.Cancel, Location = new Point(387, 368),
             Size = new Size(86, 29),
         };
         dialog.Controls.Add(header);
+        dialog.Controls.Add(durationLabel);
+        dialog.Controls.Add(durationInput);
         dialog.Controls.Add(note);
         dialog.Controls.Add(save);
         dialog.Controls.Add(cancel);
@@ -146,5 +165,7 @@ public partial class FrmItem
             mEditorItem.StatsGiven[i] = (int)flatInputs[i].Value;
             mEditorItem.PercentageStatsGiven[i] = (int)percentageInputs[i].Value;
         }
+
+        mEditorItem.ConsumableStatDurationSeconds = (int)durationInput.Value;
     }
 }

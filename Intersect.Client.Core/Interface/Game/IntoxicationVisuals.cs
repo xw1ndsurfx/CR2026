@@ -9,18 +9,33 @@ internal static class IntoxicationVisuals
     internal static long GreenUntil;
     internal static long DrunkUntil;
     internal static int DrunkIntensity;
+    internal static int RemainingSeconds
+    {
+        get
+        {
+            var remainingMs = Math.Max(0L, DrunkUntil - Environment.TickCount64);
+            return (int)Math.Ceiling(remainingMs / 1000d);
+        }
+    }
     internal static float BlurStrength => DrunkUntil > Environment.TickCount64 ? DrunkIntensity / 4f : 0f;
     private static readonly Dictionary<Guid,long> VomitAt = [];
     internal static void Apply(IntoxicationPacket packet)
     {
         var now = Environment.TickCount64;
-        if (packet.GreenMilliseconds > 0) GreenUntil = Math.Max(GreenUntil,now+Math.Clamp(packet.GreenMilliseconds,0,120000));
+        var duration = Math.Clamp(packet.GreenMilliseconds, 0, 120000);
         if (!packet.Vomit)
         {
-            DrunkUntil = now + Math.Clamp(packet.GreenMilliseconds, 0, 120000);
-            DrunkIntensity = Math.Clamp(packet.Intensity, 0, 4);
+            // Server state packets can shorten intoxication as a dose wears off.
+            // Do not keep an older, longer green overlay after recovery.
+            GreenUntil = now + duration;
+            DrunkUntil = now + duration;
+            DrunkIntensity = duration > 0 ? Math.Clamp(packet.Intensity, 0, 4) : 0;
         }
-        if (packet.Vomit) VomitAt[packet.PlayerId] = now;
+        else
+        {
+            if (duration > 0) GreenUntil = Math.Max(GreenUntil, now + duration);
+            VomitAt[packet.PlayerId] = now;
+        }
     }
     private static readonly Direction[] Compass =
     [
@@ -79,10 +94,13 @@ internal sealed class IntoxicationOverlay(Base parent) : Base(parent, nameof(Int
 public partial class GameInterface
 {
     private IntoxicationOverlay? _intoxicationOverlay;
+    private IntoxicationStatusHud? _intoxicationHud;
     private void UpdateIntoxicationOverlay()
     {
         _intoxicationOverlay ??= new IntoxicationOverlay(GameCanvas) { MouseInputEnabled=false,KeyboardInputEnabled=false };
         _intoxicationOverlay.SetBounds(0,0,GameCanvas.Width,GameCanvas.Height);_intoxicationOverlay.SendToBack();
-        _intoxicationOverlay.IsHidden=IntoxicationVisuals.GreenUntil<=Environment.TickCount64;
+        _intoxicationOverlay.IsHidden = IntoxicationVisuals.GreenUntil <= Environment.TickCount64;
+        _intoxicationHud ??= new IntoxicationStatusHud(GameCanvas);
+        _intoxicationHud.Update(this);
     }
 }
