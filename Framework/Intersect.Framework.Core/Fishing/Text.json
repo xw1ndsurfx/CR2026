@@ -25,6 +25,11 @@
       "fr": "Équipe un outil de pêche compatible.",
       "es": "Equipa una herramienta de pesca compatible."
     },
+    "Equip a configured fishing tool: {0}. Keeping it in your inventory is not enough.": {
+      "en": "Equip a configured fishing tool: {0}. Keeping it in your inventory is not enough.",
+      "fr": "Équipe un outil de pêche configuré : {0}. Le posséder dans l’inventaire ne suffit pas.",
+      "es": "Equipa una herramienta de pesca configurada: {0}. Tenerla en el inventario no es suficiente."
+    },
     "Finish your current activity before fishing.": {
       "en": "Finish your current activity before fishing.",
       "fr": "Termine ton activité actuelle avant de pêcher.",

@@ -63,6 +63,18 @@ Validation locale sur la base `2a3d594edf501fb50ed8d192c77a53c0dde950c5` : **695
 
 ## GFX et audio
 
+### Suivi du blocage d’ouverture après la PR #222
+
+Les nouvelles captures montrent une zone confirmée active, un objet **Knife Wood** associé au type **Filet**, **Auragems** comme appât, **Aureons** comme prise et le métier personnalisé **Fishing**. Ces choix ne sont pas invalides du seul fait de leurs noms. Les captures ne montrent pas l’exécution du dialogue dans le client ni ses journaux : elles ne permettent donc pas d’attribuer le blocage à une cause certaine.
+
+Le correctif de suivi apporte des refus par le chat standard, avec le nom de l’objet attendu, et des traces entre l’appui d’interaction, l’activation, la commande serveur et l’affichage. Les exceptions de création ou de mise à jour de l’interface produisent un message visible ; le nettoyage libère les contrôles et envoie la sortie de session avant l’arrêt audio facultatif. La fermeture par Échap utilise également ce traitement. Aucun contrôle d’équipement, de zone ou d’admissibilité n’est contourné.
+
+Un défaut audio distinct a été confirmé : le chargeur des WAV ne parcourait que le premier niveau de `resources/sounds`, alors que les ressources de pêche sont livrées dans `sounds/fishing`. Il parcourt désormais les sous-dossiers en conservant le chemin relatif et le chemin réel du fichier. Les noms historiques, les sons vocaux et la priorité des fichiers ordinaires sur les packs restent couverts par les tests. Cette correction audio n’est pas présentée comme une preuve de résolution du blocage d’Event.
+
+La suite client couvre les sons absents, une exception de création sonore, une exception pendant la construction de la fenêtre et une erreur à l’arrêt d’une boucle déjà active. Elle vérifie le message, la sortie de session avec une séquence correcte, la libération des contrôles et la possibilité de rouvrir. Les tests restent exécutés sans GPU ; le diagnostic de l’installation réelle demande une interaction et les journaux décrits dans le [guide](README.fr.md#si-linteraction-nouvre-pas-la-fenêtre).
+
+Validation locale sur la base `1b8b4f4` : compilations serveur et client réussies, **729 contrôles serveur**, **23 tests client** et **698 contrôles de ressources** réussis. Le scénario serveur utilise l’initialisation native de l’inventaire à la connexion puis le véritable équipement d’un objet depuis la case 9, avec métier personnalisé et progression enregistrée. Les refus par le chat sont vérifiés en anglais, français, espagnol et avec une langue inconnue. Les 45 entrées du catalogue serveur et les 61 entrées du catalogue d’interface conservent leur couverture EN/FR/ES et leurs paramètres. La vérification Windows est déclenchée par la PR ; ces résultats locaux ne s’y substituent pas.
+
 Le [manifeste](../../resources/fishing/assets-manifest.json) répertorie **20 PNG de jeu** : les deux planches d’objets, les cinq décors, les neuf planches du filet et quatre nouveaux GFX. Les fichiers reçus sont conservés octet pour octet. L’archive originale du filet et la capture de référence sont également conservées dans ce dossier.
 
 Les quatre créations sont le cadre sans texte, l’atlas des composants d’interface, l’atlas d’effets et le premier plan transparent de coraux/ruines. Le client les utilise dans son rendu. Les libellés et les nombres sont dynamiques. Le [catalogue](../../resources/fishing/asset-catalog.json) décrit les variantes de décor, les 140 cellules des deux planches et les clips du filet ; les [rectangles d’atlas](../../resources/fishing/atlas-layout.json) sont fournis séparément.

@@ -105,6 +105,11 @@
       "fr": "Les données de pêche sont illisibles. Rouvre cette activité.",
       "es": "No se pudieron leer los datos de pesca. Vuelve a abrir la actividad."
     },
+    "The fishing window could not be displayed. Try again or contact an administrator.": {
+      "en": "The fishing window could not be displayed. Try again or contact an administrator.",
+      "fr": "Impossible d’afficher la fenêtre de pêche. Réessaie ou contacte un administrateur.",
+      "es": "No se pudo mostrar la ventana de pesca. Inténtalo de nuevo o contacta con un administrador."
+    },
     "Level {0}": {
       "en": "Level {0}",
       "fr": "Niveau {0}",

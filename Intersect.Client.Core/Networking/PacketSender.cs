@@ -173,6 +173,9 @@ public static partial class PacketSender
     public static void SendActivateEvent(Guid eventId)
     {
         Network.SendPacket(new ActivateEventPacket(eventId));
+        Core.ClientLoopDiagnostics.Note(
+            $"event-activate sent eventId={eventId}; mapId={Globals.Me?.MapId}; " +
+            $"x={Globals.Me?.X}; y={Globals.Me?.Y}");
     }
 
     public static void SendEventResponse(byte response, Dialog ed)

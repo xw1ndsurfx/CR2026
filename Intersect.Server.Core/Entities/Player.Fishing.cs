@@ -3,6 +3,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Fishing;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
@@ -49,14 +50,42 @@ public partial class Player
     {
         lock (EntityLock)
         {
-            if (!InGame || Client is not { IsEditor: false } || !Client.IsConnected() || source?.Descriptor == null || source.CallStack.Count == 0) return;
-            if (_fishing != null) { SendFishing(Environment.TickCount64, open: true); return; }
-            if (FishingOtherActivity(source)) { FishingError("Finish your current activity before fishing."); return; }
+            LogFishingOpening(source, zoneId, "requested");
+            if (!InGame || Client is not { IsEditor: false } || !Client.IsConnected() || source?.Descriptor == null || source.CallStack.Count == 0)
+            { LogFishingOpening(source, zoneId, "ignored", "invalid_player_or_event_context"); return; }
+            if (_fishing != null)
+            {
+                SendFishing(Environment.TickCount64, open: true);
+                LogFishingOpening(source, zoneId, "reopened");
+                return;
+            }
+            if (FishingOtherActivity(source))
+            {
+                LogFishingOpening(source, zoneId, "refused", "other_activity");
+                FishingError("Finish your current activity before fishing.");
+                return;
+            }
             var config = FishingRuntime.Current;
             var zone = config.Zones.FirstOrDefault(z => z.Id == zoneId && FishingRules.WithinZone(z, MapId, X, Y));
-            if (zone == null) { FishingError("Fishing is unavailable here.", "zone_unavailable"); return; }
+            if (zone == null)
+            {
+                LogFishingOpening(source, zoneId, "refused", "zone_unavailable");
+                FishingError("Fishing is unavailable here.", "zone_unavailable");
+                return;
+            }
             var tool = EquippedFishingTool(config);
-            if (tool == null) { FishingError("Equip a compatible fishing tool.", "tool_missing", zone); return; }
+            if (tool == null)
+            {
+                LogFishingOpening(source, zoneId, "refused", "tool_missing");
+                var toolLanguage = Client.LanguageCode ?? "en";
+                var names = config.Tools.Select(definition => ItemDescriptor.Get(definition.ItemId)?.Name)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Select(name => Localization.ContentTranslationRuntime.Translate(name!, toolLanguage)).Distinct().ToArray();
+                if (names.Length == 0) FishingError("Equip a compatible fishing tool.", "tool_missing", zone);
+                else FishingError("Equip a configured fishing tool: {0}. Keeping it in your inventory is not enough.",
+                    "tool_missing", zone, string.Join(", ", names));
+                return;
+            }
             var now = Environment.TickCount64;
             var language = Client.LanguageCode ?? "en";
             _fishing = new FishingSession
@@ -74,8 +103,15 @@ public partial class Player
             FishingCue("session_start");
             FishingWorld(FishingWorldAction.Idle, now);
             SendFishing(now, open: true);
+            LogFishingOpening(source, zoneId, "ready");
         }
     }
+
+    private void LogFishingOpening(Event? source, Guid zoneId, string outcome, string reason = "") =>
+        ApplicationContext.Context.Value?.Logger.LogInformation(
+            "Fishing opening {Outcome}: CharacterId={CharacterId} EventInstanceId={EventInstanceId} EventId={EventId} ZoneId={ZoneId} MapId={MapId} SessionId={SessionId} ToolItemId={ToolItemId} Reason={Reason}",
+            outcome, Id, source?.PageInstance?.Id ?? Guid.Empty, source?.Descriptor?.Id ?? Guid.Empty, zoneId, MapId,
+            _fishing?.State.SessionId ?? Guid.Empty, _fishing?.Tool.ItemId ?? Guid.Empty, reason);
 
     private FishingToolDefinition? EquippedFishingTool(FishingConfiguration config)
     {
@@ -432,11 +468,19 @@ public partial class Player
         finally { state.Message = originalMessage; }
     }
 
-    private void FishingError(string message, string cue = "ui_error", FishingZoneDefinition? zone = null) => SendPacket(new FishingStatePacket
+    private void FishingError(string message, string cue = "ui_error", FishingZoneDefinition? zone = null, params object[] arguments)
     {
-        Message = FishingText.Get(message, Client?.LanguageCode ?? "en"),
-        NoticeSoundJson = System.Text.Json.JsonSerializer.Serialize(FishingSoundCatalog.Resolve(FishingRuntime.Current, zone, null, null, cue), FishingConfiguration.JsonOptions),
-    });
+        var localized = FishingText.Get(message, Client?.LanguageCode ?? "en");
+        if (arguments.Length > 0) localized = string.Format(System.Globalization.CultureInfo.InvariantCulture, localized, arguments);
+        // Opening failures must remain visible even if the fishing UI or its optional audio
+        // cannot initialize. Do not repeat the message in the separate sound notification.
+        PacketSender.SendChatMsg(this, localized, ChatMessageType.Error, Color.Red);
+        SendPacket(new FishingStatePacket
+        {
+            NoticeSoundJson = System.Text.Json.JsonSerializer.Serialize(
+                FishingSoundCatalog.Resolve(FishingRuntime.Current, zone, null, null, cue), FishingConfiguration.JsonOptions),
+        });
+    }
 
     private void EndFishing(string message = "", string? soundCue = null)
     {
@@ -449,6 +493,10 @@ public partial class Player
         lock (entityLock)
         {
             if (_fishing is not { } s) return;
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Fishing closing: CharacterId={CharacterId} SessionId={SessionId} ZoneId={ZoneId} MapId={MapId} ToolItemId={ToolItemId} Reason={Reason}",
+                Id, s.State.SessionId, s.Zone.Id, MapId, s.Tool.ItemId,
+                string.IsNullOrEmpty(message) ? "leave" : message);
             s.State.Phase = FishingPhase.Closed; s.State.Automatic = s.State.Reeling = false;
             s.State.AutomaticResumePending = false;
             s.State.Message = message;

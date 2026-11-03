@@ -2,23 +2,29 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Intersect;
+using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Fishing;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.Professions;
 using Intersect.Network;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Database;
+using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Entities.Events;
 using Intersect.Server.Fishing;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 using MessagePack;
 using GameEvent = Intersect.Server.Entities.Events.Event;
+using ChatMsgPacket = Intersect.Network.Packets.Server.ChatMsgPacket;
 
 /// <summary>
 /// Exercises native event activation and dialogue acknowledgement, rather than calling the
@@ -45,6 +51,7 @@ internal static class ServerSessionChecks
             CheckOpening(check, withDialogue: false, holdPlayer: false, worldProfile: false);
             CheckOpening(check, withDialogue: true, holdPlayer: false, worldProfile: false);
             CheckOpening(check, withDialogue: true, holdPlayer: true, worldProfile: true);
+            CheckConfiguredNet(check);
             CheckRejections(check);
             CheckMovementInterruption(check);
         }
@@ -85,25 +92,79 @@ internal static class ServerSessionChecks
             "A valid stationary player receives no immediate close after the opening packet");
     }
 
+    private static void CheckConfiguredNet(Action<bool, string> check)
+    {
+        // Match the reported setup without using any live game IDs: an ordinary weapon
+        // configured as a fishing net, currency bait/reward, and a custom profession.
+        using var fixture = new Fixture(withDialogue: true, worldProfile: true, customProfession: true);
+        check(fixture.Player.TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot, out var equipped) &&
+                equipped.ItemId == fixture.Tool.Id && fixture.Player.Equipment[Options.Instance.Equipment.WeaponSlot] == 9,
+            "The configured net is equipped through the real equipment API from a nonzero inventory slot");
+        fixture.RunEvent(check, withDialogue: true);
+        var opening = fixture.Packets.OfType<FishingStatePacket>().Single(packet => packet.Open);
+        var state = FishingState.FromJson(opening.StateJson)!;
+        check(fixture.Player.IsFishingActive && state.Phase == FishingPhase.Ready && state.ToolType == FishingToolType.Net &&
+                state.ToolItemId == fixture.Tool.Id && state.RemainingBait == 17,
+            "A weapon named Knife Wood configured as a net opens with currency bait and a currency reward");
+        check(state.Level == 1 && state.Experience == 0 && state.MaximumLevel == 12 && state.ExperienceRequired == 100,
+            "A custom fishing profession opens at level one before it has a stored player variable");
+        check(FishingConfiguration.FromJson(opening.ConfigurationJson).ProfessionId == fixture.Configuration.ProfessionId,
+            "The opening packet retains the explicitly selected custom profession");
+
+        var variable = new PlayerVariable(fixture.Configuration.ProfessionId);
+        variable.Value.Integer = 151; // Custom professions persist total experience + the learned marker.
+        fixture.Player.Variables.Add(variable);
+        fixture.ClearPackets();
+        fixture.TickFishing();
+        state = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Single().StateJson)!;
+        check(fixture.Player.IsFishingActive && state.Phase == FishingPhase.Ready && state.Level == 2 &&
+                state.Experience == 150 && state.ExperienceIntoLevel == 50 && state.ExperienceRequired == 100,
+            "The following Ready update uses the registered custom profession and its stored progression");
+    }
+
     private static void CheckRejections(Action<bool, string> check)
     {
-        using (var fixture = new Fixture(withDialogue: true, worldProfile: false))
+        foreach (var language in new[] { "en", "fr", "es", "unsupported" })
         {
-            fixture.Player.Equipment[0] = -1;
+            using var fixture = new Fixture(withDialogue: true, worldProfile: true, customProfession: true);
+            fixture.Client.LanguageCode = language;
+            fixture.Player.UnequipItem(fixture.Tool.EquipmentSlot);
+            fixture.ClearPackets();
             fixture.RunEvent(check, withDialogue: true);
             var replies = fixture.Packets.OfType<FishingStatePacket>().ToArray();
+            var messages = fixture.Packets.OfType<ChatMsgPacket>().Where(packet => packet.Type == ChatMessageType.Error).ToArray();
+            var expected = string.Format(FishingText.Get(
+                "Equip a configured fishing tool: {0}. Keeping it in your inventory is not enough.", language), fixture.Tool.Name);
             check(!fixture.Player.IsFishingActive && replies.Length == 1 && !replies[0].Open &&
-                    replies[0].Message == FishingText.Get("Equip a compatible fishing tool.", "fr"),
-                "A reached Event without an equipped net returns an explicit localized error instead of disappearing");
+                    messages.Length == 1 && messages[0].Message == expected && replies[0].Message.Length == 0,
+                "An inventory-only tool returns one normal localized chat error naming Knife Wood (" + language + ")");
+            check(fixture.Player.Items.Any(item => item.ItemId == fixture.Tool.Id && item.Quantity == 1),
+                "Owning the configured net without equipping it cannot open the fishing session");
+            var notice = JsonSerializer.Deserialize<FishingSoundCue>(replies[0].NoticeSoundJson, FishingConfiguration.JsonOptions);
+            check(notice?.File == "fishing/fishing_ui_error.wav" && replies[0].StateJson.Length == 0,
+                "The optional error sound packet carries no duplicate refusal message (" + language + ")");
         }
         using (var fixture = new Fixture(withDialogue: true, worldProfile: false))
         {
             fixture.Configuration.Zones[0].Enabled = false;
             fixture.RunEvent(check, withDialogue: true);
             var replies = fixture.Packets.OfType<FishingStatePacket>().ToArray();
+            var messages = fixture.Packets.OfType<ChatMsgPacket>().Where(packet => packet.Type == ChatMessageType.Error).ToArray();
             check(!fixture.Player.IsFishingActive && replies.Length == 1 && !replies[0].Open &&
-                    replies[0].Message == FishingText.Get("Fishing is unavailable here.", "fr"),
-                "A reached Event for a disabled zone returns its localized rejection");
+                    replies[0].Message.Length == 0 && messages.Length == 1 &&
+                    messages[0].Message == FishingText.Get("Fishing is unavailable here.", "fr"),
+                "A disabled zone returns its localized rejection through normal chat independently of fishing UI");
+        }
+        using (var fixture = new Fixture(withDialogue: true, worldProfile: false))
+        {
+            fixture.Player.OpenCraftingTableId = Guid.NewGuid();
+            fixture.RunEvent(check, withDialogue: true);
+            var replies = fixture.Packets.OfType<FishingStatePacket>().ToArray();
+            var messages = fixture.Packets.OfType<ChatMsgPacket>().Where(packet => packet.Type == ChatMessageType.Error).ToArray();
+            check(!fixture.Player.IsFishingActive && replies.Length == 1 && !replies[0].Open &&
+                    replies[0].Message.Length == 0 && messages.Length == 1 &&
+                    messages[0].Message == FishingText.Get("Finish your current activity before fishing.", "fr"),
+                "A busy player receives a normal chat explanation without starting a fishing session");
         }
     }
 
@@ -129,6 +190,8 @@ internal static class ServerSessionChecks
         private readonly ItemDescriptor _bait, _fish;
         private readonly List<MapGrid> _grids;
         private readonly MapGrid _grid;
+        private readonly object? _previousProfessions;
+        private readonly string? _previousSharedProfessions;
         internal readonly MapController Map;
         internal readonly ItemDescriptor Tool;
         internal readonly Player Player;
@@ -137,7 +200,7 @@ internal static class ServerSessionChecks
         internal readonly FishingConfiguration Configuration;
         internal IPacket[] Packets => _queue.Select(entry => entry.Item1).ToArray();
 
-        internal Fixture(bool withDialogue, bool worldProfile)
+        internal Fixture(bool withDialogue, bool worldProfile, bool customProfession = false)
         {
             Map = new MapController(Guid.NewGuid()) { Name = "Fishing Event fixture", SurroundingMapIds = [], SurroundingMaps = [] };
             GC.SuppressFinalize(Map);
@@ -150,12 +213,23 @@ internal static class ServerSessionChecks
                 _grid = new MapGrid(Map.Id, _grids.Count);
                 _grids.Add(_grid);
             }
-            Tool = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing Event fixture net", ItemType = ItemType.Equipment, EquipmentSlot = 0 };
+            Tool = new ItemDescriptor(Guid.NewGuid()) { Name = customProfession ? "Knife Wood" : "Fishing Event fixture net",
+                ItemType = ItemType.Equipment, EquipmentSlot = customProfession ? Options.Instance.Equipment.WeaponSlot : 0 };
             _bait = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing Event fixture bait", ItemType = ItemType.Currency, MaxInventoryStack = 100 };
             _fish = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing Event fixture fish", ItemType = ItemType.Currency, MaxInventoryStack = 100 };
             foreach (var item in new[] { Tool, _bait, _fish }) ItemDescriptor.Lookup.Set(item.Id, item);
+            var professionId = Guid.Empty;
+            if (customProfession)
+            {
+                _previousProfessions = typeof(ProfessionConfigurationRuntime).GetField("_current", PrivateStatic)!.GetValue(null);
+                _previousSharedProfessions = ProfessionConfiguration.Instance.ToJson();
+                var profession = new ProfessionDefinition { Name = "Fishing", MaximumLevel = 12, BaseExperience = 100, ExperienceGrowth = 1 };
+                ProfessionConfigurationRuntime.Save(new ProfessionConfiguration { Professions = [profession] }.ToJson());
+                professionId = profession.Id;
+            }
             var configuration = new FishingConfiguration
             {
+                ProfessionId = professionId,
                 Tools = [new() { ItemId = Tool.Id, Type = FishingToolType.Net, BaitItemId = _bait.Id,
                     WorldProfile = worldProfile ? FishingWorldProfile.Net() : new() }],
                 Zones = [new() { Name = "Fishing Event fixture zone", Enabled = true, MapIds = [Map.Id], UseTileRadius = false,
@@ -167,8 +241,8 @@ internal static class ServerSessionChecks
             Player = new Player { Name = "Fishing Event fixture player", InGame = true, MapId = Map.Id, X = 2, Y = 3 };
             GC.SuppressFinalize(Player);
             Array.Fill(Player.Equipment, -1);
-            Player.Items[0].Set(new Item(Tool.Id, 1));
-            Player.Equipment[0] = 0;
+            Player.Items[customProfession ? 9 : 0].Set(new Item(Tool.Id, 1));
+            if (!customProfession) Player.Equipment[0] = 0;
             Client = (Client)RuntimeHelpers.GetUninitializedObject(typeof(Client));
             Client.LanguageCode = "fr";
             Client.Entity = Player;
@@ -177,6 +251,14 @@ internal static class ServerSessionChecks
             typeof(Client).GetProperty(nameof(Client.Connection))!.SetValue(Client, new TestConnection());
             Player.Client = Client;
             _handler = (PacketHandler)RuntimeHelpers.GetUninitializedObject(typeof(PacketHandler));
+            if (customProfession)
+            {
+                Player.Items[4].Set(new Item(_bait.Id, 17));
+                // Joining the game sends the complete inventory and initializes its legal slots.
+                PacketSender.SendInventory(Player);
+                Player.EquipItem(Tool, 9);
+                ClearPackets();
+            }
 
             var descriptor = new EventDescriptor(Guid.NewGuid(), Map.Id, 2, 4) { Name = "Fishing Event fixture spot" };
             var commands = descriptor.Pages[0].CommandLists.Values.First();
@@ -214,6 +296,13 @@ internal static class ServerSessionChecks
             foreach (var item in new[] { Tool, _bait, _fish }) ItemDescriptor.Lookup.DeleteAt(item.Id);
             lock (_grids) _grids.Remove(_grid);
             MapController.Lookup.DeleteAt(Map.Id);
+            if (_previousSharedProfessions != null)
+            {
+                var professionGate = typeof(ProfessionConfigurationRuntime).GetField("Gate", PrivateStatic)!.GetValue(null)!;
+                lock (professionGate)
+                    typeof(ProfessionConfigurationRuntime).GetField("_current", PrivateStatic)!.SetValue(null, _previousProfessions);
+                ProfessionConfiguration.Load(_previousSharedProfessions);
+            }
         }
     }
 

@@ -490,14 +490,17 @@ public partial class MonoContentManager : GameContentManager
         }
         else
         {
-            var items = Directory.GetFiles(dir, "*.wav");
+            var items = Directory.GetFiles(dir, "*.wav", SearchOption.AllDirectories);
             for (var i = 0; i < items.Length; i++)
             {
-                var filename = items[i].Replace(dir, "").TrimStart(Path.DirectorySeparatorChar).ToLower();
+                // Fishing cues include their folder ("fishing/fishing_ui_open").
+                // Keep that namespace so equal basenames in different folders
+                // cannot replace each other or existing top-level sounds.
+                var filename = Path.GetRelativePath(dir, items[i]).Replace('\\', '/').ToLowerInvariant();
                 mSoundDict.Add(
                     RemoveExtension(filename),
                     new MonoSoundSource(
-                        Path.Combine(dir, filename), Path.Combine(dir, items[i].Replace(dir, "").TrimStart(Path.DirectorySeparatorChar))
+                        Path.Combine(dir, filename.Replace('/', Path.DirectorySeparatorChar)), items[i]
                     )
                 );
             }
