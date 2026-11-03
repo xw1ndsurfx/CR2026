@@ -139,6 +139,61 @@
       "en": "Return to the original merchant",
       "fr": "Retournez voir le marchand de départ",
       "es": "Vuelve con el comerciante de origen"
+    },
+    "Cargo preparation": {
+      "en": "Cargo preparation",
+      "fr": "Préparation de la cargaison",
+      "es": "Preparación de la carga"
+    },
+    "Click goods to pack a matching crate": {
+      "en": "Click goods to pack a matching crate",
+      "fr": "Cliquez sur les marchandises pour remplir les caisses",
+      "es": "Haz clic en las mercancías para llenar las cajas"
+    },
+    "Exportation graphics and sounds": {
+      "en": "Exportation graphics and sounds",
+      "fr": "Exportation : graphismes et sons",
+      "es": "Exportación: gráficos y sonidos"
+    },
+    "Play sound": {
+      "en": "Play sound",
+      "fr": "Écouter le son",
+      "es": "Reproducir sonido"
+    },
+    "Refresh assets": {
+      "en": "Refresh assets",
+      "fr": "Actualiser les ressources",
+      "es": "Actualizar recursos"
+    },
+    "Preview only: route editing and live quest integration are not connected yet.": {
+      "en": "Preview only: route editing and live quest integration are not connected yet.",
+      "fr": "Aperçu seulement : l’édition des routes et les quêtes en jeu ne sont pas encore connectées.",
+      "es": "Solo vista previa: el editor de rutas y las misiones todavía no están conectados."
+    },
+    "Exportation assets are missing. Install the approved ZIP and rebuild the editor.": {
+      "en": "Exportation assets are missing. Install the approved ZIP and rebuild the editor.",
+      "fr": "Les ressources d’Exportation sont absentes. Installez le ZIP approuvé et recompilez l’éditeur.",
+      "es": "Faltan recursos de Exportación. Instala el ZIP aprobado y vuelve a compilar el editor."
+    },
+    "Missing asset: {0}": {
+      "en": "Missing asset: {0}",
+      "fr": "Ressource manquante : {0}",
+      "es": "Recurso faltante: {0}"
+    },
+    "Cannot preview: {0}": {
+      "en": "Cannot preview: {0}",
+      "fr": "Aperçu impossible : {0}",
+      "es": "No se puede previsualizar: {0}"
+    },
+    "{0:N0} Aureons": {
+      "en": "{0:N0} Aureons",
+      "fr": "{0:N0} Aureons",
+      "es": "{0:N0} Aureons"
+    },
+    "+{0:N0} Exportation XP": {
+      "en": "+{0:N0} Exportation XP",
+      "fr": "+{0:N0} XP Exportation",
+      "es": "+{0:N0} EXP Exportación"
     }
   }
 }
