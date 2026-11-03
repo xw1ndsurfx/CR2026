@@ -16,7 +16,18 @@ namespace Intersect.Server.Professions;
 
 internal static partial class ProfessionRuntime
 {
-    private static long Raw(Player player, Guid id) => Math.Max(0L, player.GetVariable(id)?.Value?.Integer ?? 0L);
+    private static long Raw(Player player, Guid id) => id == Intersect.Framework.Core.Housing.FarmingProfession.Id
+        ? (player.House.Farm.Learned ? player.House.Farm.Experience + 1 : 0)
+        : Math.Max(0L, player.GetVariable(id)?.Value?.Integer ?? 0L);
+    private static void WriteRaw(Player player, Guid id, long value)
+    {
+        if (id == Intersect.Framework.Core.Housing.FarmingProfession.Id)
+        {
+            player.House.Farm.Learned = value > 0;
+            player.House.Farm.Experience = Math.Max(0, value - 1);
+        }
+        else player.SetVariableValue(id, value);
+    }
     private static long Total(Player player, Guid id) => Math.Max(0L, Raw(player, id) - 1L);
 
     internal static bool IsLearned(Player player, Guid id) => NativeProfessions.IsNative(id) || Raw(player, id) > 0;
@@ -80,7 +91,7 @@ internal static partial class ProfessionRuntime
     {
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null || IsLearned(player, id)) return;
-        player.SetVariableValue(id, 1L);
+        WriteRaw(player, id, 1L);
         PacketSender.SendChatMsg(player, $"[{definition.Name}] Profession learned.", ChatMessageType.Notice);
     }
 
@@ -89,7 +100,7 @@ internal static partial class ProfessionRuntime
         if(NativeProfessions.IsNative(id))return;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null) return;
-        player.SetVariableValue(id, 0L);
+        WriteRaw(player, id, 0L);
         PacketSender.SendChatMsg(player, $"[{definition.Name}] Profession forgotten.", ChatMessageType.Notice);
     }
 
@@ -103,7 +114,7 @@ internal static partial class ProfessionRuntime
         var oldLevel = GetLevel(player, id);
         var target = Math.Clamp(level, 1, definition.MaximumLevel);
         var total = definition.ExperienceToReachLevel(target);
-        player.SetVariableValue(id, total == long.MaxValue ? long.MaxValue : total + 1L);
+        WriteRaw(player, id, total == long.MaxValue ? long.MaxValue : total + 1L);
         if (target > oldLevel) GrantLevelRewards(player, definition, oldLevel, target);
     }
 
@@ -117,7 +128,7 @@ internal static partial class ProfessionRuntime
 
         var oldLevel = GetLevel(player, id);
         var total = definition.ClampExperience(experience);
-        player.SetVariableValue(id, total + 1L);
+        WriteRaw(player, id, total + 1L);
         var newLevel = definition.LevelForExperience(total);
         AchievementRuntime.SetAbsoluteProgress(
             player,
@@ -156,7 +167,7 @@ internal static partial class ProfessionRuntime
             : Math.Max(0L, oldTotal + amount);
         var newTotal = definition.ClampExperience(proposedTotal);
         if (Raw(player, id) != newTotal + 1L)
-            player.SetVariableValue(id, newTotal + 1L);
+            WriteRaw(player, id, newTotal + 1L);
         var newLevel = definition.LevelForExperience(newTotal);
         AchievementRuntime.SetAbsoluteProgress(
             player,

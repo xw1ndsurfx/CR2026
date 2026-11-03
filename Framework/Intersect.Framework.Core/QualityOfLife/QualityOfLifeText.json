@@ -4646,7 +4646,33 @@
       "es": "No se pudo guardar. Inténtalo de nuevo."
     },
     "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"},
-    "{0}'s house": {"en": "{0}'s house", "fr": "Maison de {0}", "es": "Casa de {0}"}
-
+    "{0}'s house": {"en": "{0}'s house", "fr": "Maison de {0}", "es": "Casa de {0}"},
+    "Farm & hired workers...": {"en": "Farm & hired workers...", "fr": "Ferme et ouvriers...", "es": "Granja y trabajadores..."},
+    "Farm configuration": {"en": "Farm configuration", "fr": "Configuration de la ferme", "es": "Configuración de la granja"},
+    "Settings": {"en": "Settings", "fr": "Paramètres", "es": "Ajustes"},
+    "Crops": {"en": "Crops", "fr": "Cultures", "es": "Cultivos"},
+    "Exterior map": {"en": "Exterior map", "fr": "Carte extérieure", "es": "Mapa exterior"},
+    "Salary currency": {"en": "Salary currency", "fr": "Monnaie des salaires", "es": "Moneda de los salarios"},
+    "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.": {"en": "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.", "fr": "Choisissez une carte extérieure isolée et le fichier du sprite des ouvriers. Chaque ouvrier utilise deux cases praticables à (FieldX + index * 2, FieldY) et sur la case en dessous. Les cultures utilisent des objets existants et empilables pour les graines et les récoltes. Le tileset facultatif contient trois images de croissance adjacentes. Fermez cette fenêtre, puis enregistrez la configuration des maisons.", "es": "Selecciona un mapa exterior aislado y el archivo del sprite de los trabajadores. Cada trabajador usa dos casillas transitables en (FieldX + index * 2, FieldY) y la casilla inferior. Los cultivos requieren objetos existentes y apilables para semillas y cosechas. El tileset opcional contiene tres imágenes de crecimiento contiguas. Cierra esta ventana y guarda la configuración de las casas."},
+    "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)": {"en": "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)", "fr": "Ajouter blé, carottes et pommes de terre (choisir les objets avant activation)", "es": "Añadir trigo, zanahorias y patatas (asigna los objetos antes de activar)"},
+    "SeedItemId": {"en": "SeedItemId", "fr": "Objet graine", "es": "Objeto de semilla"},
+    "HarvestItemId": {"en": "HarvestItemId", "fr": "Objet récolté", "es": "Objeto cosechado"},
+    "Seconds": {"en": "Seconds", "fr": "Secondes", "es": "Segundos"},
+    "Yield": {"en": "Yield", "fr": "Rendement", "es": "Producción"},
+    "Experience": {"en": "Experience", "fr": "Expérience", "es": "Experiencia"},
+    "RequiredLevel": {"en": "RequiredLevel", "fr": "Niveau requis", "es": "Nivel requerido"},
+    "Tileset": {"en": "Tileset", "fr": "Tileset", "es": "Tileset"},
+    "SourceX": {"en": "SourceX", "fr": "Source X", "es": "Origen X"},
+    "SourceY": {"en": "SourceY", "fr": "Source Y", "es": "Origen Y"},
+    "Enable farming": {"en": "Enable farming", "fr": "Activer la ferme", "es": "Activar la granja"},
+    "Entry X": {"en": "Entry X", "fr": "Entrée X", "es": "Entrada X"},
+    "Entry Y": {"en": "Entry Y", "fr": "Entrée Y", "es": "Entrada Y"},
+    "Field X": {"en": "Field X", "fr": "Champ X", "es": "Campo X"},
+    "Field Y": {"en": "Field Y", "fr": "Champ Y", "es": "Campo Y"},
+    "Maximum workers": {"en": "Maximum workers", "fr": "Nombre maximal d’ouvriers", "es": "Máximo de trabajadores"},
+    "Granary capacity": {"en": "Granary capacity", "fr": "Capacité du grenier", "es": "Capacidad del granero"},
+    "Hiring price": {"en": "Hiring price", "fr": "Coût de recrutement", "es": "Coste de contratación"},
+    "Wage per cycle": {"en": "Wage per cycle", "fr": "Salaire par cycle", "es": "Salario por ciclo"},
+    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"}
   }
 }

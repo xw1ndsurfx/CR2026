@@ -8,7 +8,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Housing;
 using Intersect.Network.Packets.Housing;
 namespace Intersect.Client.Interface.Game;
-internal sealed class HousingWindow : Window
+internal sealed partial class HousingWindow : Window
 {
     private readonly ScrollControl _rows;
     private readonly Label _heading;
@@ -16,6 +16,7 @@ internal sealed class HousingWindow : Window
     private readonly Button _enter;
     private readonly Button _privacy;
     private readonly Button _layouts;
+    private readonly Button _farm;
     private readonly Button[] _tabs;
     private HouseView? _view;
     private int _tab;
@@ -33,6 +34,7 @@ internal sealed class HousingWindow : Window
         _enter = AddButton(this, "Go home", 20, 78, 150, () => { if (_view != null) PacketSender.SendHouseAction(_view.Inside ? HouseAction.Leave : HouseAction.Visit, _view.OwnerId); });
         _privacy = AddButton(this, "Open to public", 180, 78, 180, () => { if (_view != null) PacketSender.SendHouseAction(HouseAction.SetPublic, _view.OwnerId, open: !_view.House.Public); });
         _layouts=NavalManagementWindow.Button(this,"SavedHouseLayouts",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Saved layouts",ClientLanguages.Current),370,78,190,30,()=>{_tab=4;RefreshRows();});
+        _farm = AddButton(this, "Farm", 570, 78, 150, () => { _tab = 5; RefreshRows(); });
         _tabs = new[] { "Monthly catalog", "Furniture storage", "Placed furniture", "House pets" }.Select((text, index) =>
             AddButton(this, text, 20 + index * 202, 124, 194, () => { _tab = index; RefreshRows(); })).ToArray();
         _rows = new ScrollControl(this, "HouseRows") { OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true };
@@ -50,6 +52,7 @@ internal sealed class HousingWindow : Window
         _enter.Text = ClientLanguages.Text(view.Inside ? "Leave house" : "Go home"); _enter.IsDisabled = !view.Enabled;
         _privacy.IsHidden = !view.IsOwner; _privacy.Text = ClientLanguages.Text(view.House.Public ? "Make private" : "Open to public");
         _layouts.IsHidden=!view.IsOwner;
+        _farm.IsHidden = !view.IsOwner || _furnitureShop;
         _tabs[0].IsHidden = !_furnitureShop;
         _tabs[1].IsHidden = !view.IsOwner || _furnitureShop;
         _tabs[2].IsHidden = _tabs[3].IsHidden = _furnitureShop;
@@ -64,6 +67,7 @@ internal sealed class HousingWindow : Window
         _rows.DeleteAll();
         if (_view == null) return;
         var y = 4;
+        if (_tab == 5) { RefreshFarmRows(); return; }
         if(_tab==4 && _view.IsOwner)
         {
             var save=NavalManagementWindow.Button(_rows,"SaveLayout",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Save current layout",ClientLanguages.Current),8,y,300,32,()=>

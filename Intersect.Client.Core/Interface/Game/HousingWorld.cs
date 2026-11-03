@@ -10,7 +10,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 namespace Intersect.Client.Interface.Game;
-internal static class HousingWorld
+internal static partial class HousingWorld
 {
     internal static HouseView? View { get; set; }
     internal sealed record PlacementPreview(Guid OwnerId, Guid MapId, Guid FurnitureId, int Rotation, FurnitureDefinition Definition);
@@ -44,6 +44,7 @@ internal static class HousingWorld
         var view = View;
         if (view is not { Inside: true } || Globals.Me?.MapId != view.MapId || !MapInstance.TryGet(view.MapId, out var map)) return;
         if (row >= 0 && upper != (Globals.Me.Z != 0)) return;
+        if (view.Outside) { DrawFarm(row, map.X, map.Y, view); return; }
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         foreach (var place in view.House.Placements.OrderBy(p => p.Y))
         {
