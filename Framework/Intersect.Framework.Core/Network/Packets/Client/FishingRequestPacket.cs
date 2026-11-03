@@ -1,7 +1,7 @@
 using MessagePack;
 namespace Intersect.Network.Packets.Client;
 
-public enum FishingAction { GetConfiguration, SaveConfiguration, Cast, SetMode, SetReeling, AcceptLegendary, ChallengeInput, Leave, UseSkill }
+public enum FishingAction { GetConfiguration, SaveConfiguration, Cast, SetMode, SetReeling, AcceptLegendary, ChallengeInput, Leave, UseSkill, GetDraftConfiguration, SaveDraftConfiguration }
 
 [MessagePackObject]
 public sealed partial class FishingRequestPacket : IntersectPacket

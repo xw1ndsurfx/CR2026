@@ -27,7 +27,7 @@ internal sealed class EditorHubView : UserControl
     internal event Action? MapEventRequested;
     private static readonly string[] HomeIds = ["map", "mapEvents", "classEditorToolStripMenuItem", "itemEditorToolStripMenuItem",
         "npcEditorToolStripMenuItem", "uiDesigner", "questEditorToolStripMenuItem", "balanceLabEditorToolStripMenuItem"];
-    internal static readonly string[] LatestIds = ["SmartMapBuilderTool", "weaponMasteryEditor", "miniGame.Archery", "miniGame.Jousting",
+    internal static readonly string[] LatestIds = ["miniGame.Fishing", "SmartMapBuilderTool", "weaponMasteryEditor", "miniGame.Archery", "miniGame.Jousting",
         "professionEditorToolStripMenuItem", "craftingTableEditorToolStripMenuItem", "navalSystemEditor", "royalCinematicDirector"];
     internal static readonly DrawingColor Background = DrawingColor.FromArgb(13, 21, 31), Surface = DrawingColor.FromArgb(22, 33, 46), Border = DrawingColor.FromArgb(43, 62, 79),
         Muted = DrawingColor.FromArgb(169, 185, 203), Accent = DrawingColor.FromArgb(150, 217, 65), Foreground = DrawingColor.FromArgb(238, 243, 249);

@@ -15,6 +15,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Fishing domain and native reward checks failed.' }
     & dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --fishing-only
     if ($LASTEXITCODE -ne 0) { throw 'Fishing editor checks failed.' }
+    & dotnet run --no-build --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --hub-only
+    if ($LASTEXITCODE -ne 0) { throw 'Fishing Hub entry and editor navigation checks failed.' }
     & python scripts/fishing/verify_assets.py
     if ($LASTEXITCODE -ne 0) { throw 'Fishing asset integrity checks failed.' }
 }

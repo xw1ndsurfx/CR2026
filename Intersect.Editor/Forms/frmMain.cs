@@ -224,18 +224,30 @@ public partial class FrmMain : Form
 
     private void AddRewardConfigurationEditorMenu()
     {
-        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem")) return;
-        var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
-        daily.Click += (_, _) => RequestMiniGameEditor(null);
-        contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
-        var games = new ToolStripMenuItem("Mini-Game") { Name = "miniGameEditorsToolStripMenuItem" };
+        if (!contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        {
+            var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
+            daily.Click += (_, _) => RequestMiniGameEditor(null);
+            contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
+        }
+        var games = GetOrCreateMiniGameEditorsMenu();
         foreach (var game in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
         {
-            var entry = new ToolStripMenuItem(game.DisplayName) { Name = "miniGame." + game.Type };
+            var name = "miniGame." + game.Type;
+            if (games.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == name)) continue;
+            var entry = new ToolStripMenuItem(game.DisplayName) { Name = name };
             entry.Click += (_, _) => RequestMiniGameEditor(game.Type);
             games.DropDownItems.Add(entry);
         }
-        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, games);
+    }
+
+    private ToolStripMenuItem GetOrCreateMiniGameEditorsMenu()
+    {
+        if (menuStrip.Items.OfType<ToolStripMenuItem>().FirstOrDefault(item => item.Name == "miniGameEditorsToolStripMenuItem") is { } existing)
+            return existing;
+        var menu = new ToolStripMenuItem(EditorHub.HubText.T("MiniGames")) { Name = "miniGameEditorsToolStripMenuItem" };
+        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, menu);
+        return menu;
     }
 
     public void OpenRewardConfigurationEditor()

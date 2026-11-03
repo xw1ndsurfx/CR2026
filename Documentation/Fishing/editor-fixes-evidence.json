@@ -1,0 +1,220 @@
+{
+  "recorded_at_utc": "2026-11-03T05:31:50.649029+00:00",
+  "base_commit": "210114fd695fa937ea33b92037e38cb9daef272b",
+  "branch": "fix/fishing-editor-zones",
+  "shared_rules": {
+    "command": "python3 Utilities/FishingRulesTests/run-standalone.py --dotnet <dotnet8-host>",
+    "exit_code": 0,
+    "checks": 319
+  },
+  "native_server": {
+    "command": "python3 Utilities/FishingRulesTests/run-native.py --dotnet <dotnet8-host>",
+    "exit_code": 0,
+    "checks": 393,
+    "includes_shared_checks": true,
+    "matches_rebuilt_server_and_framework": true
+  },
+  "assets": {
+    "command": "python3 scripts/fishing/verify_assets.py",
+    "exit_code": 0,
+    "checks": 698,
+    "images": 20,
+    "audio_files": 32
+  },
+  "builds": {
+    "server": "PASS",
+    "client": "PASS",
+    "editor_windows_cross_compile": "PASS",
+    "editor_tests_windows_cross_compile": "PASS",
+    "sdk": "8.0.427",
+    "method": "Direct MSBuild host; existing key generation task executed in-process by a temporary external MSBuild override, no repository key-generation changes."
+  },
+  "localization": {
+    "editor_entries": 224,
+    "server_entries": 28,
+    "languages": [
+      "en",
+      "fr",
+      "es"
+    ],
+    "placeholder_parity": "PASS"
+  },
+  "windows_execution": {
+    "script": "scripts/Verify-Fishing.ps1",
+    "workflow": ".github/workflows/fishing.yml",
+    "ui_suites": [
+      "--fishing-only",
+      "--hub-only"
+    ],
+    "result_location": "GitHub Actions checks for the pull request revision. Cross-compilation above does not claim local WinForms execution."
+  },
+  "coverage": [
+    "Multi-map eligibility and migration retaining legacy radius",
+    "Independent map list copies and filtering without dropping hidden selections",
+    "Strict active validation versus bounded incomplete draft validation",
+    "Real server MapController persistence and unknown second map rejection",
+    "Draft write/reopen and active file/cache preservation",
+    "Invalid active configuration fallback with source bytes preserved",
+    "Corrupt draft detection without silent fallback or data replacement",
+    "UTF-8 file and payload bounds",
+    "Atomic write failures and recoverable draft when active apply fails",
+    "Actual packet-handler editor-only configuration authorization",
+    "MessagePack compatibility and unchanged existing enum values",
+    "Editor draft acknowledgements, active Event cache isolation and real Hub startup covered by Windows suites"
+  ],
+  "limits": [
+    "No live production server/database connection or deployment.",
+    "No visual multiplayer or audio listening validation.",
+    "Native server tests use real production classes and temporary files.",
+    "Existing dependency/compiler warnings remain."
+  ],
+  "sources": [
+    {
+      "path": ".github/workflows/fishing.yml",
+      "bytes": 1732,
+      "sha256": "302efc2d6a345222e72f05b31b94e855f5a14dfea2005c2cabfd65db83efbd98"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingConfiguration.cs",
+      "bytes": 8644,
+      "sha256": "96315f423485e3ed8284f8c7464072c7e7cfb37bd791989af228ed80c694b076"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingRules.cs",
+      "bytes": 9531,
+      "sha256": "363c0921886cdde79b2daa6d72852442b24a4f23f27eb2cb5dff247de13af229"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/Text.json",
+      "bytes": 7097,
+      "sha256": "f89bd9ac0ac41fc6dd5bd344a5c4b198f88f90bd2993917bae670b8a06ea9ed2"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Network/Packets/Client/FishingRequestPacket.cs",
+      "bytes": 703,
+      "sha256": "b20716fcbda8ceb7bb6535178ac3d3f30829d164a074ab4a445e0e32f9fba0ed"
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Network/Packets/Server/FishingStatePacket.cs",
+      "bytes": 573,
+      "sha256": "9e5efd1978bbb4692063f2e88b2be9002da8294bf30df9bf626c89db2536848f"
+    },
+    {
+      "path": "Intersect.Editor/Forms/EditorHub/EditorHubView.cs",
+      "bytes": 25702,
+      "sha256": "e4451012a50b045f789ca6847936db8f7b6da6de31cf29b189d57730ca9b34e4"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FishingEditorState.cs",
+      "bytes": 853,
+      "sha256": "ce40f0273c75c744a3938c3d528f5037d10e0980fb92c017567842834a4eda38"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FrmFishing.Maps.cs",
+      "bytes": 4289,
+      "sha256": "60a95ccde930f1c8fc255962a1f63d7e3aa402a342322157ba990e99b12b8d9f"
+    },
+    {
+      "path": "Intersect.Editor/Forms/Editors/FrmFishing.cs",
+      "bytes": 30089,
+      "sha256": "05b82dce6f59de0ea77f7388749614e7ef3768c1570f6ab190867161f73188b2"
+    },
+    {
+      "path": "Intersect.Editor/Forms/frmMain.EditorHub.cs",
+      "bytes": 8162,
+      "sha256": "85b620022dd4f222b9dc3b1f112241c15ab905a4e066e5a7c02fa75930b2d89b"
+    },
+    {
+      "path": "Intersect.Editor/Forms/frmMain.Fishing.cs",
+      "bytes": 2973,
+      "sha256": "702eeee1324044f32d6a9810eb7bc190ac74a698090f335d2773b10cb22adaae"
+    },
+    {
+      "path": "Intersect.Editor/Forms/frmMain.cs",
+      "bytes": 103036,
+      "sha256": "5b58cccb2441f5f224f235781d92e1877bea78da2ce827d5dee0077303d6e882"
+    },
+    {
+      "path": "Intersect.Editor/Localization/FishingEditorText.json",
+      "bytes": 39858,
+      "sha256": "d62c8b88e6d5d8638e249637fab1f0874479de0db2ca9e5200cacf6963693dd7"
+    },
+    {
+      "path": "Intersect.Server.Core/Entities/Player.Fishing.cs",
+      "bytes": 26662,
+      "sha256": "588d5021aaad724e0ea218ba48609cc6be903b07555fbf485098fbb8ff08e2aa"
+    },
+    {
+      "path": "Intersect.Server.Core/Fishing/FishingRuntime.cs",
+      "bytes": 7572,
+      "sha256": "7b1a1fa6c0a4b3145a621612f793213da9cea308e87da3d0c0a22721abf238a5"
+    },
+    {
+      "path": "Intersect.Server.Core/Networking/PacketHandler.Fishing.cs",
+      "bytes": 3076,
+      "sha256": "ced52b314c43fc53b9295ca775afa7084e385c9122f4eb2a05785a7805344388"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/Program.cs",
+      "bytes": 26805,
+      "sha256": "dc3da78b0e62a39bcd5856072dadfb26022032d395fd09e3b6ed505b963851cf"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/ServerDraftChecks.cs",
+      "bytes": 16105,
+      "sha256": "a0c036ce2d7b7a13a711c94f14cdb4093f0fe27c66ce3312e62bee113586005e"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/ServerRewardChecks.cs",
+      "bytes": 14219,
+      "sha256": "26958bf0c5ad193aaf7604f1f8716f425a642d7c08518ee56dfb2564c709d52a"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/run-native.py",
+      "bytes": 4140,
+      "sha256": "36cb5ecc763d31be95faf379b4495909a98428538d8127449b252edb52708eff"
+    },
+    {
+      "path": "Utilities/InterfaceEditorTests/EditorHubTests.cs",
+      "bytes": 20110,
+      "sha256": "030544921289e85c0307e9cb27bf3b05688b0a12848cc7db3959d4b25fe80000"
+    },
+    {
+      "path": "Utilities/InterfaceEditorTests/FishingEditorTests.cs",
+      "bytes": 24781,
+      "sha256": "d2e83e075f6edaeba4fd546284120e50f6c3e1fcc4fb10eedf6b3ba5d2b80374"
+    },
+    {
+      "path": "scripts/Verify-Fishing.ps1",
+      "bytes": 2149,
+      "sha256": "0858ec73d5482a88777fd98c3ed4b736e6719aa93aee5d911f667af32693af16"
+    }
+  ],
+  "assemblies": [
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
+      "bytes": 79872,
+      "sha256": "d5521d7d15b27d23d2cf5ede4c2bc62335319eafe6536f416aee364a8c650a9e"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Server.Core.dll",
+      "bytes": 13675520,
+      "sha256": "873963ca25c3267a6adfbebb2f33d4ccc1badbe618b8c132094cd997ef9d9b27"
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Framework.Core.dll",
+      "bytes": 2679296,
+      "sha256": "8bf7ffd1e6f7d12a8e720c58b8c578ac62bc0fd0c98f93db39e0451e82a08671"
+    },
+    {
+      "path": "Intersect.Editor/bin/Debug/net8.0-windows/win-x64/Logiklik 2D Engine.dll",
+      "bytes": 8174592,
+      "sha256": "b4593dfab993176cb1c78ba729f8ada9b9b79f4a771eeb58f77378a647f61cfa"
+    },
+    {
+      "path": "Utilities/InterfaceEditorTests/bin/Debug/net8.0-windows/win-x64/Intersect.Tests.Editor.dll",
+      "bytes": 837632,
+      "sha256": "38b1f5274af1d95e8859ca0eb5448ba445d6275c89c4bb795eb54936beca6498"
+    }
+  ]
+}

@@ -22,7 +22,7 @@ public partial class Player
         internal required FishingZoneDefinition Zone;
         internal required FishingToolDefinition Tool;
         internal required FishingState State;
-        internal Guid InstanceId, AttemptId;
+        internal Guid StartMapId, InstanceId, AttemptId;
         internal float StartX, StartY;
         internal long LastRequest, LastSent, PhaseStarted, Deadline, FightDeadline, NextAnimation;
         internal readonly long[] SkillReadyAt = new long[4];
@@ -61,7 +61,7 @@ public partial class Player
             var language = Client.LanguageCode ?? "en";
             _fishing = new FishingSession
             {
-                Configuration = config, Zone = zone, Tool = tool, InstanceId = MapInstanceId, StartX = X, StartY = Y,
+                Configuration = config, Zone = zone, Tool = tool, StartMapId = MapId, InstanceId = MapInstanceId, StartX = X, StartY = Y,
                 PhaseStarted = now,
                 State = new FishingState
                 {
@@ -86,7 +86,7 @@ public partial class Player
     }
 
     private bool ValidFishing() => _fishing is { } s && InGame && !IsDisposed && Client is { IsEditor: false } && Client.IsConnected() &&
-        Client.Entity == this && !IsDead && !HasPendingDeath && MapInstanceId == s.InstanceId && X == s.StartX && Y == s.StartY &&
+        Client.Entity == this && !IsDead && !HasPendingDeath && MapId == s.StartMapId && MapInstanceId == s.InstanceId && X == s.StartX && Y == s.StartY &&
         FishingRules.WithinZone(s.Zone, MapId, X, Y) && ReferenceEquals(s.Configuration, FishingRuntime.Current) &&
         EquippedFishingTool(s.Configuration)?.ItemId == s.Tool.ItemId && CombatTimer <= Timing.Global.Milliseconds && !IsCasting && !IsBusy();
 
@@ -386,7 +386,7 @@ public partial class Player
         }
         s.WorldRefreshAt = now + 3000;
         if (s.Tool.WorldProfile?.Enabled != true && action != FishingWorldAction.Stop) return;
-        PacketSender.SendDataToProximityOnMapInstance(s.Zone.MapId, s.InstanceId, new FishingWorldPacket
+        PacketSender.SendDataToProximityOnMapInstance(s.StartMapId, s.InstanceId, new FishingWorldPacket
         {
             EntityId = Id, ToolItemId = s.Tool.ItemId, Action = action, Sequence = ++_fishingWorldSequence,
             ProfileJson = action == FishingWorldAction.Stop ? "" : System.Text.Json.JsonSerializer.Serialize(s.Tool.WorldProfile, FishingConfiguration.JsonOptions),

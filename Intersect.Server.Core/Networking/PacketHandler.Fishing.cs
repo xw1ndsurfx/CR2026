@@ -11,27 +11,43 @@ internal sealed partial class PacketHandler
     {
         if (client.IsEditor)
         {
-            if (packet.Action is not (FishingAction.GetConfiguration or FishingAction.SaveConfiguration)) return;
+            if (packet.Action is not (FishingAction.GetConfiguration or FishingAction.SaveConfiguration or
+                FishingAction.GetDraftConfiguration or FishingAction.SaveDraftConfiguration)) return;
+            var draft = packet.Action is FishingAction.GetDraftConfiguration or FishingAction.SaveDraftConfiguration;
+            var save = packet.Action is FishingAction.SaveConfiguration or FishingAction.SaveDraftConfiguration;
             try
             {
-                if (packet.Action == FishingAction.SaveConfiguration) FishingRuntime.Save(packet.ConfigurationJson);
+                var json = packet.Action switch
+                {
+                    FishingAction.SaveConfiguration => FishingRuntime.Save(packet.ConfigurationJson),
+                    FishingAction.SaveDraftConfiguration => FishingRuntime.SaveDraft(packet.ConfigurationJson),
+                    FishingAction.GetDraftConfiguration => FishingRuntime.ReadDraft().ToJson(),
+                    _ => FishingRuntime.Current.ToJson(),
+                };
                 client.Send(new FishingStatePacket
                 {
-                    Editor = true, Open = true, Saved = packet.Action == FishingAction.SaveConfiguration,
-                    ConfigurationJson = FishingRuntime.Current.ToJson(),
-                    Message = packet.Action == FishingAction.SaveConfiguration ? FishingText.Get("Fishing configuration saved.", client.LanguageCode ?? "en") : "",
+                    Editor = true, Open = true, Draft = draft, Saved = save,
+                    ConfigurationJson = json,
+                    Message = save ? FishingText.Get(draft ? "Fishing draft saved." : "Fishing configuration saved.", client.LanguageCode ?? "en") : "",
                 });
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException)
+            catch (Exception exception) when (exception is InvalidDataException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException)
             {
-                client.Send(new FishingStatePacket { Editor = true,
-                    Message = FishingText.Get(exception.Message == "Fishing configuration references a missing item, map, profession or animation."
-                        ? exception.Message : "Invalid fishing configuration.", client.LanguageCode ?? "en") });
+                var message = exception.Message is FishingRuntime.InvalidDraftMessage or
+                    "Fishing configuration references a missing item, map, profession or animation."
+                    ? exception.Message
+                    : exception is InvalidDataException or System.Text.Json.JsonException or ArgumentException
+                        ? "Invalid fishing configuration."
+                        : save ? "Fishing configuration could not be saved. The active configuration was not changed."
+                            : "Fishing configuration could not be read. Existing files were preserved.";
+                client.Send(new FishingStatePacket { Editor = true, Draft = draft,
+                    Message = FishingText.Get(message, client.LanguageCode ?? "en") });
             }
             return;
         }
         // Configuration and Event authorization are never accepted from a game client.
-        if (packet.Action is FishingAction.GetConfiguration or FishingAction.SaveConfiguration) return;
+        if (packet.Action is FishingAction.GetConfiguration or FishingAction.SaveConfiguration or
+            FishingAction.GetDraftConfiguration or FishingAction.SaveDraftConfiguration) return;
         if (client.Entity is { InGame: true } player) player.HandleFishingRequest(packet);
     }
 }

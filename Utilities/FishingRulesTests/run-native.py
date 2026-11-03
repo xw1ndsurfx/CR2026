@@ -57,7 +57,8 @@ for name in list(references):
 usings = output / "GlobalUsings.cs"
 usings.write_text("\n".join("global using " + name + ";" for name in
     ["System", "System.Collections.Generic", "System.IO", "System.Linq", "System.Threading", "System.Threading.Tasks"]) + "\n")
-sources = [Path(__file__).with_name("Program.cs"), Path(__file__).with_name("ServerRewardChecks.cs"), usings]
+sources = [Path(__file__).with_name("Program.cs"), Path(__file__).with_name("ServerRewardChecks.cs"),
+           Path(__file__).with_name("ServerDraftChecks.cs"), usings]
 arguments = ["-nologo", "-target:exe", "-langversion:latest", "-nullable:enable", "-define:FISHING_SERVER_TESTS",
              f'-out:"{output / "Intersect.Tests.Server.dll"}"']
 arguments += [f'-reference:"{path}"' for path in references.values()]

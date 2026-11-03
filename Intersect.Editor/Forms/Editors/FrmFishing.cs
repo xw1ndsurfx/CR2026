@@ -4,7 +4,6 @@ using Intersect.Editor.Localization;
 using Intersect.Framework.Core.Fishing;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Items;
-using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Professions;
 using Intersect.Network.Packets.Client;
@@ -24,12 +23,15 @@ public sealed partial class FrmFishing : Form
     private readonly TabControl _tabs = new() { Dock = DockStyle.Fill };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 44, AutoEllipsis = true, Padding = new Padding(8) };
     private readonly Button _save = new() { AutoSize = true };
+    private readonly Button _apply = new() { AutoSize = true };
     private readonly System.Windows.Forms.Timer _saveTimeout = new() { Interval = 15000 };
     private readonly List<TabPage> _pages = [];
     private bool _loading, _dirty;
     private string? _pendingSaveJson;
+    private bool _pendingSaveIsDraft;
     private int _soundScope;
     private string _soundKey = "cast";
+    private string _mapFilter = "";
     private static string T(string value) => FishingEditorText.Get(value);
     private sealed record Choice(Guid Id, string Caption) { public override string ToString() => Caption; }
     private sealed record Named<TValue>(TValue Value, Func<TValue, string> Caption)
@@ -38,11 +40,12 @@ public sealed partial class FrmFishing : Form
     public FrmFishing(string json)
     {
         _config = FishingConfiguration.FromJson(json);
-        FishingRules.Validate(_config);
+        FishingRules.ValidateDraft(_config);
         Text = T("Fishing Editor"); Size = new(1180, 790); MinimumSize = new(940, 620);
         StartPosition = FormStartPosition.CenterParent;
         var toolbar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6) };
-        _save.Text = T("Save"); _save.Click += (_, _) => Save(); toolbar.Controls.Add(_save);
+        _save.Text = T("Save draft"); _save.Click += (_, _) => SaveDraft(); toolbar.Controls.Add(_save);
+        _apply.Text = T("Apply to game"); _apply.Click += (_, _) => Save(); toolbar.Controls.Add(_apply);
         AddButton(toolbar, "Validate", () => { if (ValidateDraft()) _status.Text = T("Configuration is valid."); });
         AddButton(toolbar, "Reload resources", RebuildPages);
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(1160, 660), SplitterDistance = 260 };
@@ -63,10 +66,11 @@ public sealed partial class FrmFishing : Form
         _zones.SelectedIndexChanged += (_, _) => {
             if (_loading) return;
             _zone = (_zones.SelectedItem as Named<FishingZoneDefinition>)?.Value;
+            _mapFilter = "";
             _catch = _zone?.Catches.FirstOrDefault(); RebuildPages();
         };
         _tabs.SelectedIndexChanged += (_, _) => { if (!_loading) BuildSelectedPage(); };
-        _saveTimeout.Tick += (_, _) => { _saveTimeout.Stop(); _save.Enabled = true; _pendingSaveJson = null; _status.Text = T("No server response. Your draft is still available."); };
+        _saveTimeout.Tick += (_, _) => { _saveTimeout.Stop(); _save.Enabled = _apply.Enabled = true; _pendingSaveJson = null; _status.Text = T("No server response. Your draft is still available."); };
         FormClosing += (_, e) => {
             if (_pendingSaveJson is not null)
             { e.Cancel = true; _status.Text = T("A save is pending. Wait for the server response before closing."); return; }
@@ -81,13 +85,14 @@ public sealed partial class FrmFishing : Form
         // Select it explicitly after the draft selection exists, before building its controls.
         _tabs.SelectedIndex = 0;
         RebuildPages();
+        _status.Text = T("Save draft preserves unfinished entries. Apply to game updates the active configuration.");
     }
 
     protected override bool ProcessCmdKey(ref Message message, Keys keys)
     {
         if (keys == (Keys.Control | Keys.S))
         {
-            if (_save.Enabled) { _save.Focus(); Save(); }
+            if (_save.Enabled) { _save.Focus(); SaveDraft(); }
             return true;
         }
         if (keys == Keys.Escape && !HasOpenChoice(this)) { Close(); return true; }
@@ -139,9 +144,10 @@ public sealed partial class FrmFishing : Form
     }
     private void NewZone()
     {
-        _zone = new() { Name = T("New fishing zone"), MapId = Globals.CurrentMap?.Id ?? Guid.Empty, Enabled = false };
+        _zone = new() { Name = T("New fishing zone"),
+            MapIds = Globals.CurrentMap is { } map ? [map.Id] : [], UseTileRadius = false, Enabled = false };
         _zone.LocalizedNames = new() { ["en"] = "New fishing zone", ["fr"] = "Nouvelle zone de pêche", ["es"] = "Nueva zona de pesca" };
-        _config.Zones.Add(_zone); _catch = null; _search.Text = ""; RefreshZoneList(); RebuildPages(); Changed();
+        _config.Zones.Add(_zone); _catch = null; _mapFilter = ""; _search.Text = ""; RefreshZoneList(); RebuildPages(); Changed();
     }
     private void DuplicateZone()
     {
@@ -149,7 +155,7 @@ public sealed partial class FrmFishing : Form
         _zone = JsonSerializer.Deserialize<FishingZoneDefinition>(JsonSerializer.Serialize(_zone))!;
         _zone.Id = Guid.NewGuid(); _zone.Name = string.Format(T("Copy of {0}"), _zone.Name); _zone.Enabled = false;
         foreach (var entry in _zone.Catches) entry.Id = Guid.NewGuid();
-        _config.Zones.Add(_zone); _catch = _zone.Catches.FirstOrDefault();
+        _config.Zones.Add(_zone); _catch = _zone.Catches.FirstOrDefault(); _mapFilter = "";
         RefreshZoneList(); RebuildPages(); Changed();
     }
     private void DeleteZone()
@@ -170,13 +176,17 @@ public sealed partial class FrmFishing : Form
             TextField(table, "Name (" + locale + ")", zone.LocalizedNames.GetValueOrDefault(locale, ""), s => zone.LocalizedNames[locale] = s);
         }
         Check(table, "Enabled", zone.Enabled, b => zone.Enabled = b);
-        GuidField(table, "Map", zone.MapId, MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)), id => zone.MapId = id);
-        Number(table, "X (tiles)", zone.X, 0, 10000, v => zone.X = (int)v);
-        Number(table, "Y (tiles)", zone.Y, 0, 10000, v => zone.Y = (int)v);
-        Number(table, "Zone radius (tiles)", zone.Radius, 0, 64, v => zone.Radius = (int)v);
-        var current = new FlowLayoutPanel { AutoSize = true };
-        AddButton(current, "Use current map", () => { if (Globals.CurrentMap is not null) { zone.MapId = Globals.CurrentMap.Id; Changed(); BuildSelectedPage(); } });
-        Row(table, "", current);
+        BuildZoneMaps(table, zone);
+        Check(table, "Limit each map to a tile radius", zone.UseTileRadius,
+            enabled => { zone.UseTileRadius = enabled; BuildSelectedPage(); });
+        if (zone.UseTileRadius)
+        {
+            Number(table, "X (tiles)", zone.X, 0, 10000, v => zone.X = (int)v);
+            Number(table, "Y (tiles)", zone.Y, 0, 10000, v => zone.Y = (int)v);
+            Number(table, "Zone radius (tiles)", zone.Radius, 0, 64, v => zone.Radius = (int)v);
+            Note(table, "The same tile area is used on every selected map. Existing zones keep their original radius until you change this option.");
+        }
+        else Note(table, "Fishing is available throughout the selected maps. Events still control where the fishing window opens.");
         FileField(table, "Background", zone.Assets.Background, "backgrounds", s => zone.Assets.Background = s);
         FileField(table, "Foreground", zone.Assets.Foreground, "backgrounds", s => zone.Assets.Foreground = s, true);
         FileField(table, "Decorations", zone.Assets.Decorations, "gui", s => zone.Assets.Decorations = s, true);
@@ -193,7 +203,7 @@ public sealed partial class FrmFishing : Form
     private void ToolSelector(TableLayoutPanel table)
     {
         var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
-        foreach (var tool in _config.Tools) box.Items.Add(new Named<FishingToolDefinition>(tool, t => ItemName(t.ItemId)));
+        foreach (var tool in _config.Tools) box.Items.Add(new Named<FishingToolDefinition>(tool, ToolCaption));
         box.SelectedItem = box.Items.OfType<Named<FishingToolDefinition>>().FirstOrDefault(n => n.Value == _tool);
         box.SelectedIndexChanged += (_, _) => { if (_loading) return; _tool = (box.SelectedItem as Named<FishingToolDefinition>)?.Value; BuildSelectedPage(); };
         Row(table, "Tool", box);
@@ -208,7 +218,7 @@ public sealed partial class FrmFishing : Form
             if (_tool.ItemId != Guid.Empty && _config.Zones.Any(z => z.Catches.Any(c => c.ToolItemIds.Contains(_tool.ItemId))))
             { _status.Text = T("This tool is used by catches. Remove those associations first."); return; }
             _config.Tools.Remove(_tool); _tool = _config.Tools.FirstOrDefault(); Changed(); BuildSelectedPage();
-            _status.Text = T("Tool deleted. Save to apply the change.");
+            _status.Text = T("Tool deleted from the draft.");
         }); Row(table, "", buttons);
         if (_tool is not { } tool) { Note(table, "Create or select an equipped fishing tool."); return; }
         GuidField(table, "Equipment item", tool.ItemId,
@@ -247,7 +257,7 @@ public sealed partial class FrmFishing : Form
         AddButton(buttons, "Delete catch", () => {
             if (_catch is null) return;
             zone.Catches.Remove(_catch); _catch = null; Changed(); BuildSelectedPage();
-            _status.Text = T("Catch deleted. Save to apply the change.");
+            _status.Text = T("Catch deleted from the draft.");
         });
         Row(table, "", buttons);
         if (_catch is not { } entry) { Note(table, "Add a catch and select its allowed equipment."); return; }
@@ -255,6 +265,8 @@ public sealed partial class FrmFishing : Form
         var allowed = new CheckedListBox { CheckOnClick = true, Height = 110, Dock = DockStyle.Fill };
         foreach (var tool in _config.Tools.Where(t => t.ItemId != Guid.Empty))
             allowed.Items.Add(new Choice(tool.ItemId, ItemName(tool.ItemId)), entry.ToolItemIds.Contains(tool.ItemId));
+        foreach (var itemId in entry.ToolItemIds.Where(id => _config.Tools.All(tool => tool.ItemId != id)))
+            allowed.Items.Add(new Choice(itemId, string.Format(T("No tool profile: {0}"), ItemName(itemId))), true);
         allowed.ItemCheck += (_, e) => {
             if (_loading || allowed.Items[e.Index] is not Choice choice) return;
             if (e.NewValue == CheckState.Checked) { if (!entry.ToolItemIds.Contains(choice.Id)) entry.ToolItemIds.Add(choice.Id); }
@@ -331,18 +343,34 @@ public sealed partial class FrmFishing : Form
     {
         try
         {
-            if (_config.Tools.Any(t => t.ItemId == Guid.Empty)) throw new InvalidDataException(T("Select an equipment item for every tool."));
-            if (_config.Tools.Select(t => t.ItemId).Distinct().Count() != _config.Tools.Count) throw new InvalidDataException(T("Each equipment item can have only one fishing tool profile."));
+            var emptyTool = _config.Tools.FirstOrDefault(tool => tool.ItemId == Guid.Empty);
+            if (emptyTool is not null)
+                return ShowValidationIssue(string.Format(T("Tool #{0}: choose an equipment item before applying to the game."), _config.Tools.IndexOf(emptyTool) + 1),
+                    1, tool: emptyTool, field: "Equipment item");
+            var duplicateTool = _config.Tools.GroupBy(tool => tool.ItemId).FirstOrDefault(group => group.Count() > 1)?.Last();
+            if (duplicateTool is not null)
+                return ShowValidationIssue(T("Each equipment item can have only one fishing tool profile."), 1, tool: duplicateTool, field: "Equipment item");
+            var invalidTool = _config.Tools.FirstOrDefault(tool => ItemDescriptor.Get(tool.ItemId) is not { ItemType: ItemType.Equipment });
+            if (invalidTool is not null)
+                return ShowValidationIssue(string.Format(T("Tool #{0}: the selected item is missing or is not equipment. Choose an equipment item."), _config.Tools.IndexOf(invalidTool) + 1),
+                    1, tool: invalidTool, field: "Equipment item");
             foreach (var zone in _config.Zones)
             {
-                if (zone.Enabled && (zone.MapId == Guid.Empty || zone.Catches.Count == 0))
-                    throw new InvalidDataException(string.Format(T("Enabled zone {0} needs a map and at least one catch."), zone.Name));
+                if (zone.Enabled && zone.MapIds.Count == 0)
+                    return ShowValidationIssue(string.Format(T("Enabled zone {0} needs at least one fishing map."), zone.Name), 0, zone: zone, field: "Fishing maps");
+                if (zone.Enabled && zone.Catches.Count == 0)
+                    return ShowValidationIssue(string.Format(T("Enabled zone {0} needs at least one catch."), zone.Name), 2, zone: zone);
                 foreach (var entry in zone.Catches)
                 {
                     if (entry.ItemId == Guid.Empty || entry.ToolItemIds.Count == 0)
-                        throw new InvalidDataException(string.Format(T("A catch in {0} needs a reward item and allowed equipment."), zone.Name));
+                        return ShowValidationIssue(string.Format(T("Catch #{0} in {1}: choose a reward item and allowed equipment before applying to the game."), zone.Catches.IndexOf(entry) + 1, zone.Name),
+                            2, zone: zone, catchDefinition: entry, field: entry.ItemId == Guid.Empty ? "Reward item" : "Allowed equipment");
                     if (ItemDescriptor.Get(entry.ItemId) is not { IsStackable: true, MaxInventoryStack: > 0 })
-                        throw new InvalidDataException(string.Format(T("Reward item {0} must allow inventory stacks."), ItemName(entry.ItemId)));
+                        return ShowValidationIssue(string.Format(T("Reward item {0} must allow inventory stacks."), ItemName(entry.ItemId)),
+                            2, zone: zone, catchDefinition: entry, field: "Reward item");
+                    if (entry.ToolItemIds.Any(id => _config.Tools.All(tool => tool.ItemId != id)))
+                        return ShowValidationIssue(string.Format(T("Catch #{0} in {1}: an allowed item has no fishing tool profile. Create its profile or remove that association."), zone.Catches.IndexOf(entry) + 1, zone.Name),
+                            2, zone: zone, catchDefinition: entry, field: "Allowed equipment");
                 }
             }
             FishingRules.Validate(_config); return true;
@@ -350,12 +378,43 @@ public sealed partial class FrmFishing : Form
         catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
         { _status.Text = ex.Message == "Invalid fishing configuration." ? T("Invalid fishing configuration. Check references, time ranges, quantities and sound settings.") : ex.Message; return false; }
     }
+    private string ToolCaption(FishingToolDefinition tool) => string.Format(T("Tool #{0} — {1}"), _config.Tools.IndexOf(tool) + 1, ItemName(tool.ItemId));
+    private bool ShowValidationIssue(string message, int pageIndex, FishingZoneDefinition? zone = null,
+        FishingToolDefinition? tool = null, FishingCatchDefinition? catchDefinition = null, string? field = null)
+    {
+        if (zone is not null) { _zone = zone; _search.Text = ""; _mapFilter = ""; RefreshZoneList(); }
+        if (tool is not null) _tool = tool;
+        if (catchDefinition is not null) _catch = catchDefinition;
+        _tabs.SelectedIndex = pageIndex; RebuildPages();
+        if (field is not null && _pages[pageIndex].Controls.OfType<TableLayoutPanel>().SingleOrDefault() is { } table)
+        {
+            var label = table.Controls.OfType<Label>().FirstOrDefault(control => control.Text == T(field));
+            if (label is not null && table.GetControlFromPosition(1, table.GetPositionFromControl(label).Row) is { } control)
+            { _pages[pageIndex].ScrollControlIntoView(control); control.Select(); }
+        }
+        _status.Text = message;
+        return false;
+    }
     private void Save()
     {
         if (!ValidateDraft()) return;
+        SendConfiguration(isDraft: false);
+    }
+    private void SaveDraft()
+    {
+        try { FishingRules.ValidateDraft(_config); }
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
+        { _status.Text = T("The draft cannot be saved. Check collection limits, numeric ranges and resource paths. Your changes are preserved."); return; }
+        SendConfiguration(isDraft: true);
+    }
+    private void SendConfiguration(bool isDraft)
+    {
+        if (_pendingSaveJson is not null) return;
         _pendingSaveJson = _config.ToJson();
-        _save.Enabled = false; _saveTimeout.Start(); _status.Text = T("Saving...");
-        Networking.Network.SendPacket(new FishingRequestPacket { Action = FishingAction.SaveConfiguration, ConfigurationJson = _pendingSaveJson });
+        _pendingSaveIsDraft = isDraft;
+        _save.Enabled = _apply.Enabled = false; _saveTimeout.Start();
+        _status.Text = T(isDraft ? "Saving draft..." : "Applying to game...");
+        Networking.Network.SendPacket(new FishingRequestPacket { Action = isDraft ? FishingAction.SaveDraftConfiguration : FishingAction.SaveConfiguration, ConfigurationJson = _pendingSaveJson });
     }
     internal void Response(FishingStatePacket packet)
     {
@@ -363,12 +422,17 @@ public sealed partial class FrmFishing : Form
         if (!packet.Saved && string.IsNullOrEmpty(packet.Message)) return;
         if (packet.Saved)
         {
-            if (_pendingSaveJson is null || packet.ConfigurationJson != _pendingSaveJson) return;
+            if (_pendingSaveJson is null || packet.Draft != _pendingSaveIsDraft || packet.ConfigurationJson != _pendingSaveJson) return;
             _dirty = _config.ToJson() != _pendingSaveJson;
-            _status.Text = T(_dirty ? "Saved. Newer changes are still unsaved." : "Saved");
+            _status.Text = T(packet.Draft
+                ? _dirty ? "Draft saved. Newer changes are still unsaved." : "Draft saved. Apply to the game when ready."
+                : _dirty ? "Applied to game. Newer changes are still unsaved." : "Applied to game.");
         }
-        else _status.Text = FishingUiText.Get(packet.Message,
-            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-        _saveTimeout.Stop(); _save.Enabled = true; _pendingSaveJson = null;
+        else
+        {
+            if (_pendingSaveJson is not null && packet.Draft != _pendingSaveIsDraft) return;
+            _status.Text = FishingUiText.Get(packet.Message, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        }
+        _saveTimeout.Stop(); _save.Enabled = _apply.Enabled = true; _pendingSaveJson = null;
     }
 }

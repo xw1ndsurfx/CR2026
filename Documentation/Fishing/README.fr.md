@@ -40,7 +40,7 @@ Pour l’XP, deux possibilités : créer ou sélectionner une profession de pêc
 
 ## 3. Ouvrir Fishing Editor et définir les outils
 
-Ouvrir **Mini-Game → Éditeur de pêche**. Le hub propose également la carte **Éditeur de pêche**, accessible par la recherche « pêche », « fishing » ou « pesca ». L’ouverture demande la configuration au serveur.
+Ouvrir **Mini-Game → Éditeur de pêche**, ou la carte **Éditeur de pêche** affichée dans les nouveautés de l’accueil du hub. La recherche accepte « pêche », « peche », « fishing » et « pesca ». L’ouverture récupère le brouillon enregistré sur le serveur ; en l’absence de brouillon, elle reprend la configuration active.
 
 Dans **Équipements**, cliquer sur **Nouvel équipement**, sélectionner **Objet à équiper**, puis choisir le **Type d’équipement**. Selon la langue, les valeurs correspondent à `Rod`, `Cage` et `Net` :
 
@@ -60,7 +60,9 @@ Les planches fournies sont des couches de filet devant/derrière l’avatar. Ne 
 
 ## 4. Créer une zone et choisir ses décors
 
-Dans **Zones**, cliquer sur **Nouvelle zone**. Elle commence désactivée. Saisir son nom et ses variantes anglaise, française et espagnole. Choisir une carte existante, ou utiliser **Utiliser la carte actuelle**, puis régler X, Y et le rayon en tuiles. Ces coordonnées définissent l’accès à la pêche ; l’Event devra être utilisable depuis ce périmètre.
+Dans **Zones**, cliquer sur **Nouvelle zone**. Elle commence désactivée. Saisir son nom et ses variantes anglaise, française et espagnole. Cocher les cartes qui appartiennent à cette zone, comme dans Dungeon Editor : par exemple le port, la côte et les autres cartes de Polonya. Le filtre aide à retrouver une carte et conserve les cartes déjà cochées même lorsqu’elles sont masquées. Le bouton d’ajout de la carte actuelle conserve aussi la sélection existante.
+
+Les nouvelles zones couvrent les **cartes entières sélectionnées**. La restriction à une position X/Y et à un rayon est une option explicite. Une ancienne configuration à carte unique est convertie en conservant son ancienne restriction ; l’ouverture ne transforme donc pas sa petite zone en carte entière. La liste est limitée à 256 cartes et n’accepte ni doublons ni identifiants vides. Un changement de carte pendant une partie interrompt la pêche, même si la nouvelle carte appartient à la même zone.
 
 Choisir séparément **Arrière-plan**, **Premier plan** et **Décorations**. Voici comment employer les cinq images reçues :
 
@@ -89,7 +91,7 @@ L’onglet **Créatures légendaires** filtre les prises marquées légendaires.
 
 En automatique, une rencontre légendaire suspend la pêche et affiche une invitation. Si le joueur ne répond pas avant le délai, la créature fuit sans poisson ni XP légendaire, puis la pêche automatique reprend après 1 500 ms. Le joueur peut annuler cette reprise avec STOP pendant l’invitation ; celle-ci reste alors disponible en mode manuel. Une invitation acceptée engage une lutte et un défi manuels : leur réussite ou leur échec ne réactive jamais l’automatique. Une invitation déclenchée en mode manuel reste également manuelle après expiration. Tester ces cas séparément ; une créature légendaire ne doit jamais être créditée simplement parce que le joueur est absent.
 
-Activer la zone lorsqu’elle possède une carte et au moins une prise correctement liée. Une nouvelle zone vide peut rester désactivée ; une prise partiellement remplie doit être complétée ou supprimée avant la sauvegarde.
+Activer la zone lorsqu’elle possède au moins une carte et une prise correctement liée. Les profils d’équipement ou prises incomplets peuvent être conservés dans le brouillon. Ils doivent être complétés avant l’application au jeu ; la validation indique l’élément à corriger et sélectionne son onglet.
 
 ## 6. Régler les sons et enregistrer
 
@@ -103,13 +105,17 @@ La priorité est **prise → outil → zone → global → défaut**. Préférer
 
 Le pack contient 32 WAV et 58 bindings ; le catalogue runtime expose 68 clés, dont alias et signaux d’arrêt. Les deux clés de défis réservés restent prévisualisables mais leurs overrides sont désactivés. Le détail des paramètres et limites figure dans le [contrat audio](Audio.fr.md) et la [matrice des hooks](Audio-hooks.md).
 
-Cliquer sur **Valider**, puis **Enregistrer**, ou utiliser `Ctrl+S`. Attendre **Enregistré**. Le serveur conserve la configuration dans son propre `resources/fishing.json`. Une erreur conserve le brouillon ; une absence de réponse ne prouve pas que le serveur n’a rien écrit. Après un doute réseau, vérifier la configuration enregistrée avant de continuer.
+**Enregistrer le brouillon**, ou `Ctrl+S`, conserve le travail dans le fichier serveur `resources/fishing.draft.json`, y compris les équipements et prises encore incomplets. Attendre l’accusé de sauvegarde. Fermer puis rouvrir l’éditeur permet de reprendre ce travail. Ce bouton ne remplace pas la configuration utilisée par les joueurs et ne publie pas les zones dans le sélecteur Event.
+
+Quand la configuration est prête, utiliser **Valider**, puis **Appliquer au jeu**. Cette seconde action vérifie les objets équipables, les récompenses empilables, toutes les cartes et les autres références avant de modifier la configuration active `resources/fishing.json`. Une application réussie synchronise aussi le brouillon. Un échec conserve les données éditées ; aucune configuration invalide n’est activée.
+
+Une absence de réponse ne prouve pas que le serveur n’a rien écrit. Après un doute réseau, vérifier séparément le brouillon et la configuration active avant de continuer. Le client, le serveur et l’éditeur doivent tous être mis à jour pour utiliser ces actions.
 
 Les changements effectués après l’envoi restent signalés comme non enregistrés. Une sauvegarde en cours bloque la fermeture jusqu’à sa réponse ou son délai d’attente. `Échap` ferme une liste déroulante ouverte, puis demande la fermeture de l’éditeur ; un brouillon modifié demande confirmation. Dans le sélecteur Event, `Échap` annule le choix en cours.
 
 ## 7. Relier l’Event et essayer dans le client
 
-Créer ou modifier l’Event habituel du point de pêche. Ajouter **Ouvrir la pêche**, sélectionner une zone **déjà enregistrée**, puis enregistrer la commande et l’Event. **Actualiser les zones** demande la dernière configuration au serveur. L’enregistrement de cette commande ne sauvegarde pas les modifications encore ouvertes dans Fishing Editor.
+Créer ou modifier l’Event habituel du point de pêche. Ajouter **Ouvrir la pêche**, sélectionner une zone **déjà appliquée au jeu**, puis enregistrer la commande et l’Event. **Actualiser les zones** demande la configuration active au serveur ; les brouillons restent exclus de cette liste. L’enregistrement de cette commande ne sauvegarde pas les modifications encore ouvertes dans Fishing Editor.
 
 Dans le client compatible, placer le personnage dans la zone, équiper l’outil choisi et déclencher l’Event. Vérifier d’abord un lancer manuel et une récompense ordinaire. Les piles affichées doivent correspondre aux objets de l’inventaire. Maintenir puis relâcher la remontée, utiliser les compétences disponibles et fermer par la croix ou `Échap`.
 

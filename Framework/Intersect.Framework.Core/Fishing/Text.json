@@ -60,6 +60,26 @@
       "fr": "Configuration de la pêche enregistrée.",
       "es": "Configuración de pesca guardada."
     },
+    "Fishing draft saved.": {
+      "en": "Fishing draft saved.",
+      "fr": "Brouillon de la pêche enregistré.",
+      "es": "Borrador de pesca guardado."
+    },
+    "The saved fishing draft is invalid. It was preserved and was not applied.": {
+      "en": "The saved fishing draft is invalid. It was preserved and was not applied.",
+      "fr": "Le brouillon de pêche enregistré n’est pas valide. Il a été conservé et n’a pas été appliqué.",
+      "es": "El borrador de pesca guardado no es válido. Se ha conservado y no se ha aplicado."
+    },
+    "Fishing configuration could not be saved. The active configuration was not changed.": {
+      "en": "Fishing configuration could not be saved. The active configuration was not changed.",
+      "fr": "La configuration de pêche n’a pas pu être enregistrée. La configuration active n’a pas été modifiée.",
+      "es": "No se pudo guardar la configuración de pesca. La configuración activa no se ha modificado."
+    },
+    "Fishing configuration could not be read. Existing files were preserved.": {
+      "en": "Fishing configuration could not be read. Existing files were preserved.",
+      "fr": "La configuration de pêche n’a pas pu être lue. Les fichiers existants ont été conservés.",
+      "es": "No se pudo leer la configuración de pesca. Se han conservado los archivos existentes."
+    },
     "Invalid fishing configuration.": {
       "en": "Invalid fishing configuration.",
       "fr": "La configuration de la pêche n’est pas valide.",

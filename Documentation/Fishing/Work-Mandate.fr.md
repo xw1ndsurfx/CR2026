@@ -26,7 +26,9 @@ L’éditeur doit permettre de créer, rechercher, dupliquer, désactiver et mod
 
 ### Zones
 
-Chaque zone porte un identifiant stable, un nom traduit, une carte, un emplacement et un périmètre d’accès. Elle choisit son arrière-plan, son éventuel premier plan, ses délais d’attente et ses autorisations de pêche automatique. Elle contient une liste explicite des prises possibles.
+Chaque zone porte un identifiant stable, un nom traduit et une sélection de cartes, sur le modèle de Dungeon Editor. Elle couvre par défaut les cartes entières ; une restriction commune à X/Y et à un rayon reste disponible en option. Les anciennes zones à carte unique conservent leur périmètre lors de leur migration. Elle choisit son arrière-plan, son éventuel premier plan, ses délais d’attente et ses autorisations de pêche automatique. Elle contient une liste explicite des prises possibles.
+
+L’éditeur doit figurer dans l’accueil du hub et dans les résultats de recherche. **Enregistrer le brouillon** conserve la saisie même si les équipements ou prises ne sont pas encore liés. **Appliquer au jeu** valide les références et active la configuration pour les événements et les joueurs. Le fichier de brouillon est séparé de la configuration active ; une saisie incomplète ne doit pas modifier les zones déjà utilisables.
 
 Une zone peut avoir son propre décor et sa propre population. Une eau côtière peut contenir plusieurs petits poissons ; une zone marine peut réserver certaines créatures à un outil supérieur. Les exemples n’imposent aucune distribution sur les cartes existantes : les cartes et les identifiants doivent être liés dans l’éditeur.
 
