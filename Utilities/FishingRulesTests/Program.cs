@@ -17,6 +17,36 @@ var rare = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [
 var zone = new FishingZoneDefinition { Name = "Test", MapIds = [map], UseTileRadius = true, X = 10, Y = 20, Radius = 2, Catches = [fish, lobster, rare] };
 var config = new FishingConfiguration { Tools = [new() { ItemId = rod }, new() { ItemId = cage, Type = FishingToolType.Cage }], Zones = [zone] };
 FishingRules.Validate(config); checks++;
+Check(zone.AutomaticFailureChance == .50 && zone.AutomaticExperienceMultiplier == .20,
+    "New zones default to 50% idle failures and 20% of normal XP");
+Check(!FishingRules.AutomaticCatchSucceeds(zone, 0) && !FishingRules.AutomaticCatchSucceeds(zone, .499999) &&
+    FishingRules.AutomaticCatchSucceeds(zone, .5) && FishingRules.AutomaticCatchSucceeds(zone, .999999),
+    "Automatic catch probability respects the exact configured threshold");
+Check(!FishingRules.AutomaticCatchSucceeds(zone, double.NaN) && !FishingRules.AutomaticCatchSucceeds(zone, 1),
+    "Invalid and out-of-range random rolls cannot grant an automatic catch");
+Check(FishingRules.AutomaticExperience(zone, 25) == 5 && FishingRules.AutomaticExperience(zone, 1) == 0 &&
+    FishingRules.AutomaticExperience(zone, 0) == 0,
+    "A 25 XP catch grants only 5 XP in auto; tiny values round down");
+zone.AutomaticFailureChance = 1;
+Check(!FishingRules.AutomaticCatchSucceeds(zone, .999999), "100% automatic failure never rewards fish");
+zone.AutomaticFailureChance = 0;
+Check(FishingRules.AutomaticCatchSucceeds(zone, 0), "0% automatic failure always succeeds");
+zone.AutomaticFailureChance = .5;
+zone.AutomaticExperienceMultiplier = 0;
+Check(FishingRules.AutomaticExperience(zone, 25) == 0, "Zero idle XP factor grants no XP");
+zone.AutomaticExperienceMultiplier = 1;
+Check(FishingRules.AutomaticExperience(zone, 25) == 25, "Full idle XP factor is configurable");
+zone.AutomaticExperienceMultiplier = .20;
+zone.AutomaticFailureChance = -.1; Invalid(() => FishingRules.Validate(config), "Negative idle failure probability rejected");
+zone.AutomaticFailureChance = 1.01; Invalid(() => FishingRules.Validate(config), "Idle failure probability above 100% rejected");
+zone.AutomaticFailureChance = double.NaN; Invalid(() => FishingRules.ValidateDraft(config), "Nonfinite idle failure rejected in drafts");
+zone.AutomaticFailureChance = .50;
+zone.AutomaticExperienceMultiplier = double.PositiveInfinity; Invalid(() => FishingRules.Validate(config), "Nonfinite idle XP multiplier rejected");
+zone.AutomaticExperienceMultiplier = -0.01; Invalid(() => FishingRules.ValidateDraft(config), "Negative idle XP rejected in drafts");
+zone.AutomaticExperienceMultiplier = .20;
+var legacyAutomaticZone = JsonSerializer.Deserialize<FishingZoneDefinition>("{\"Name\":\"Legacy idle\",\"MapIds\":[]}")!;
+Check(legacyAutomaticZone.AutomaticFailureChance == .5 && legacyAutomaticZone.AutomaticExperienceMultiplier == .2,
+    "Old saved fishing zone JSON receives safe idle balancing defaults");
 Check(FishingRules.WithinZone(zone, map, 12, 22), "Zone includes its boundary");
 Check(!FishingRules.WithinZone(zone, map, 13, 20), "Zone rejects outside position");
 Check(!FishingRules.WithinZone(zone, Guid.NewGuid(), 10, 20), "Zone rejects another map");
