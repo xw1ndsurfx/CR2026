@@ -2,20 +2,50 @@
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Network.Packets.Server;
+using Intersect.Enums;
 namespace Intersect.Client.Interface.Game;
 internal static class IntoxicationVisuals
 {
     internal static long GreenUntil;
     internal static long DrunkUntil;
-    internal static float BlurStrength => Math.Clamp((DrunkUntil-Environment.TickCount64)/1000f,0f,1f);
+    internal static int DrunkIntensity;
+    internal static float BlurStrength => DrunkUntil > Environment.TickCount64 ? DrunkIntensity / 4f : 0f;
     private static readonly Dictionary<Guid,long> VomitAt = [];
     internal static void Apply(IntoxicationPacket packet)
     {
         var now = Environment.TickCount64;
         if (packet.GreenMilliseconds > 0) GreenUntil = Math.Max(GreenUntil,now+Math.Clamp(packet.GreenMilliseconds,0,120000));
-        if (!packet.Vomit && packet.GreenMilliseconds>0) DrunkUntil=now+Math.Clamp(packet.GreenMilliseconds,0,120000);
+        if (!packet.Vomit)
+        {
+            DrunkUntil = now + Math.Clamp(packet.GreenMilliseconds, 0, 120000);
+            DrunkIntensity = Math.Clamp(packet.Intensity, 0, 4);
+        }
         if (packet.Vomit) VomitAt[packet.PlayerId] = now;
     }
+    private static readonly Direction[] Compass =
+    [
+        Direction.Up, Direction.UpRight, Direction.Right, Direction.DownRight,
+        Direction.Down, Direction.DownLeft, Direction.Left, Direction.UpLeft,
+    ];
+
+    internal static Direction DistortMove(Direction intended)
+    {
+        if (DrunkUntil <= Environment.TickCount64 || DrunkIntensity <= 0)
+        {
+            return intended;
+        }
+
+        var index = Array.IndexOf(Compass, intended);
+        var chancePercent = Math.Clamp(DrunkIntensity * 12, 0, 48);
+        if (index < 0 || Random.Shared.Next(100) >= chancePercent)
+        {
+            return intended;
+        }
+
+        var offset = Random.Shared.Next(2) == 0 ? -1 : 1;
+        return Compass[(index + offset + Compass.Length) % Compass.Length];
+    }
+
     internal static void DrawVomit(Guid id, System.Numerics.Vector2 origin)
     {
         if (!VomitAt.TryGetValue(id,out var at)) return;

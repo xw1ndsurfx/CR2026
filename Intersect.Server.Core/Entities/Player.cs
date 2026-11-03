@@ -788,6 +788,7 @@ public partial class Player : Entity
                 UpdateTutorial();
                 UpdateMount();
                 UpdateIntoxication();
+                UpdateConsumableStatEffects();
                 UpdateJoust();
                 UpdateArchery();
                 UpdateFishing();
@@ -2301,6 +2302,10 @@ public partial class Player : Entity
                 percentageStats += descriptor.PercentageStatsGiven[(int)statType];
             }
         }
+
+        var timedConsumableStats = GetActiveConsumableStatBuffs(statType);
+        flatStats += timedConsumableStats.Item1;
+        percentageStats += timedConsumableStats.Item2;
 
         return new Tuple<int, int>(flatStats, percentageStats);
     }
@@ -3816,14 +3821,23 @@ public partial class Player : Entity
                 case ItemType.Consumable:
                     if (itemBase.Consumable.Type == ConsumableType.Grog)
                     {
-                        if (TryTakeItem(Items[slot], 1)) { DrinkGrog(itemBase); if(useEvent != default) EnqueueStartCommonEvent(useEvent); }
+                        if (TryTakeItem(Items[slot], 1))
+                        {
+                            DrinkGrog(itemBase);
+                            ActivateConsumableStatEffects(itemBase);
+                            if (useEvent != default) EnqueueStartCommonEvent(useEvent);
+                        }
                         break;
                     }
                     if(itemBase.Consumable.Type==ConsumableType.ExperienceBoost)
                     {
                         if(!ActivateExperienceBoost(slot,itemBase.Consumable.Percentage,itemBase.Consumable.Value))
                             PacketSender.SendChatMsg(this,"This EXP potion cannot replace a stronger or fully extended boost.",ChatMessageType.Error);
-                        else if(useEvent!=default)EnqueueStartCommonEvent(useEvent);
+                        else
+                        {
+                            ActivateConsumableStatEffects(itemBase);
+                            if (useEvent != default) EnqueueStartCommonEvent(useEvent);
+                        }
                         break;
                     }
                     var color = CustomColors.Items.ConsumeHp;
@@ -3885,9 +3899,10 @@ public partial class Player : Entity
                         }
                     }
 
-                    if (TryTakeItem(Items[slot], 1) && useEvent != default)
+                    if (TryTakeItem(Items[slot], 1))
                     {
-                        EnqueueStartCommonEvent(useEvent);
+                        ActivateConsumableStatEffects(itemBase);
+                        if (useEvent != default) EnqueueStartCommonEvent(useEvent);
                     }
 
                     break;
