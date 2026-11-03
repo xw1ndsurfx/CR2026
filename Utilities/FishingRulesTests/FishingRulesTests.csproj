@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><RollForward>Major</RollForward>
+    <AssemblyName Condition="'$(TestServer)' == 'true'">Intersect.Tests.Server</AssemblyName>
+    <DefineConstants Condition="'$(TestServer)' == 'true'">$(DefineConstants);FISHING_SERVER_TESTS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Condition="'$(TestServer)' != 'true'" Include="../../Framework/Intersect.Framework.Core/Fishing/*.cs" Exclude="../../Framework/Intersect.Framework.Core/Fishing/*Text.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Condition="'$(TestServer)' != 'true'" Include="../../Framework/Intersect.Framework.Core/MiniGames/MiniGameProgression.cs" Link="Core/MiniGameProgression.cs" />
+    <ProjectReference Condition="'$(TestServer)' == 'true'" Include="../../Intersect.Server.Core/Intersect.Server.Core.csproj" />
+    <None Include="../../Framework/Intersect.Framework.Core/Fishing/Text.json" Link="Text.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

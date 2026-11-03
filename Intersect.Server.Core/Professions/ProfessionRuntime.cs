@@ -14,7 +14,7 @@ using Intersect.Server.Networking;
 
 namespace Intersect.Server.Professions;
 
-internal static class ProfessionRuntime
+internal static partial class ProfessionRuntime
 {
     private static long Raw(Player player, Guid id) => Math.Max(0L, player.GetVariable(id)?.Value?.Integer ?? 0L);
     private static long Total(Player player, Guid id) => Math.Max(0L, Raw(player, id) - 1L);

@@ -1,5 +1,27 @@
 [
   {
+    "id": "miniGame.Fishing",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "art": "miniGame.Cooking.png",
+    "keywords": "fishing peche pêche pesca fish poisson net filet cage legendary legendaire légendaire",
+    "title": {
+      "en": "Fishing Editor",
+      "fr": "Éditeur de pêche",
+      "es": "Editor de pesca"
+    },
+    "description": {
+      "en": "Configure fishing zones, equipment, catches, legendary challenges, animations and sounds.",
+      "fr": "Configurer les zones, les équipements, les prises, les défis légendaires, les animations et les sons.",
+      "es": "Configura zonas, equipos, capturas, desafíos legendarios, animaciones y sonidos."
+    }
+  },
+  {
     "id": "lobbyEditor",
     "oldMenu": "contentEditorsToolStripMenuItem",
     "category": "Game",
@@ -1110,6 +1132,29 @@
     "art": "miniGame.Blackjack.png",
     "keywords": "Blackjack Blackjack Blackjack Blackjack",
     "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.RollTheDice",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Roll the Dice",
+      "fr": "Jeu de dés",
+      "es": "Juego de dados"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Dice",
+    "art": "miniGame.Poker.png",
+    "keywords": "RollTheDice roll the dice dice game jeu de dés des lancer dados juego lanzar"
   },
   {
     "id": "miniGame.Potions",

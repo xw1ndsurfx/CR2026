@@ -835,6 +835,9 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenRoyalContracts:
                 tmpCommand = new OpenRoyalContractsCommand();
                 break;
+            case EventCommandType.OpenFishing:
+                tmpCommand = new OpenFishingCommand();
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -877,6 +880,10 @@ public partial class FrmEvent : Form
         AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
+        var fishingNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "interface")
+            ?? lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        fishingNode?.Nodes.Add(new TreeNode(Intersect.Editor.Localization.FishingEditorText.Get("Open Fishing"))
+            { Name = "openfishing", Tag = (int)EventCommandType.OpenFishing });
         var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         contractsNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
             System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
@@ -1775,6 +1782,9 @@ public partial class FrmEvent : Form
                 cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
                 break;
             case EventCommandType.OpenRoyalContracts:
+                break;
+            case EventCommandType.OpenFishing:
+                cmdWindow = new EventCommandFishing((OpenFishingCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

@@ -22,6 +22,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (player.IsFishingActive) return;
         if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id) && command.Game != MiniGameType.RollTheDice) return;
         if (command.Game == MiniGameType.Archery) { player.OpenArcheryFromEvent(); return; }
         if (player.IsArcheryActive) return;
@@ -169,6 +170,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (player.IsFishingActive) { player.LeaveFishingFromEvent(); return; }
         if (player.IsArcheryActive) { player.LeaveArcheryFromEvent(); return; }
         if(Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Leave(player))return;
         if (LockpickingRuntime.Leave(player)) return;
