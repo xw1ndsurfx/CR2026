@@ -319,5 +319,6 @@ foreach (var entry in document.RootElement.GetProperty("Entries").EnumerateObjec
 #if FISHING_SERVER_TESTS
 ServerRewardChecks.Run(Check);
 ServerDraftChecks.Run(Check);
+ServerSessionChecks.Run(Check);
 #endif
 Console.WriteLine($"Fishing rules: {checks} checks passed.");

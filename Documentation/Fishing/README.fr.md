@@ -131,6 +131,14 @@ Créer ou modifier l’Event habituel du point de pêche. Ajouter **Ouvrir la p�
 
 Dans le client compatible, placer le personnage dans la zone, équiper l’outil choisi et déclencher l’Event. Vérifier d’abord un lancer manuel et une récompense ordinaire. Les piles affichées doivent correspondre aux objets de l’inventaire. Maintenir puis relâcher la remontée, utiliser les compétences disponibles et fermer par la croix ou `Échap`.
 
+### Si l’interaction n’ouvre pas la fenêtre
+
+Un événement **Action Button** sur la case visée est prioritaire sur une ressource récoltable placée sur cette même case. Les PNJ et joueurs attaquables conservent la priorité du combat. Une ressource seule, un événement sur une autre case ou un déclencheur autre qu’**Action Button** conservent le comportement habituel de récolte. Cette correction est côté **client** : mettre à jour seulement le serveur ou l’éditeur ne modifie pas l’interaction dans un ancien client.
+
+Un événement sans image et avec **Disable Inspector** reste utilisable par la commande d’interaction face à sa case. L’objet de pêche doit être équipé ; la présence d’un filet dans l’inventaire ne suffit pas. L’absence d’appâts ne bloque pas l’ouverture de la fenêtre : elle est signalée au lancer.
+
+Pour distinguer une interaction qui n’atteint pas l’événement d’un refus de pêche, placer temporairement **Afficher un texte** avant **Ouvrir la pêche**. Enregistrer chaque commande, puis **Sauvegarder l’événement et la carte**. Le texte doit apparaître dans le client, puis être fermé pour laisser continuer la commande suivante. Le déclenchement doit être vérifié dans le client. Un refus de zone ou d’équipement s’affiche dans le chat ; vérifier également les conditions de la page si le texte ne paraît pas.
+
 Poursuivre la recette avec les trois familles d’outils : chaque prise exclusive doit rester inaccessible aux deux autres. Tester ensuite l’automatique connecté, le manque d’appâts, l’inventaire plein et les légendaires. Déconnecter puis reconnecter pour vérifier la persistance de l’XP et l’absence de récompenses hors ligne.
 
 Avec un second client, contrôler les couches du filet, les directions, les tenues et la fin des animations. Écouter les boucles, leur arrêt à la fermeture et les volumes réellement appliqués. La spatialisation sonore est locale au mixeur du joueur ; elle ne constitue pas une diffusion automatique des effets de pêche à tous les observateurs.

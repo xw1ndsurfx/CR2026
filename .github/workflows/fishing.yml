@@ -10,6 +10,8 @@ on:
       - 'Intersect.Server.Core/**/PacketHandler.Fishing.cs'
       - 'Intersect.Server.Core/**/CommandProcessing.Fishing.cs'
       - 'Intersect.Client.Core/**/*Fishing*.cs'
+      - 'Intersect.Client.Core/Entities/Player.cs'
+      - 'Intersect.Tests.Client/Fishing*Tests.cs'
       - 'Intersect.Editor/**/*Fishing*'
       - 'Intersect.Editor/Forms/EditorHub/**'
       - 'Intersect.Editor/Forms/frmMain.EditorHub.cs'
