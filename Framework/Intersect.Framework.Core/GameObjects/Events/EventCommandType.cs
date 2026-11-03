@@ -178,4 +178,5 @@ public enum EventCommandType
     OpenStable = 1091,
     OpenFurnitureShop = 1092,
     OpenHouseDirectory = 1093,
+    OpenFishing = 1100,
 }

@@ -1,5 +1,27 @@
 [
   {
+    "id": "miniGame.Fishing",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "art": "miniGame.Cooking.png",
+    "keywords": "fishing peche pêche pesca fish poisson net filet cage legendary legendaire légendaire",
+    "title": {
+      "en": "Fishing Editor",
+      "fr": "Éditeur de pêche",
+      "es": "Editor de pesca"
+    },
+    "description": {
+      "en": "Configure fishing zones, equipment, catches, legendary challenges, animations and sounds.",
+      "fr": "Configurer les zones, les équipements, les prises, les défis légendaires, les animations et les sons.",
+      "es": "Configura zonas, equipos, capturas, desafíos legendarios, animaciones y sonidos."
+    }
+  },
+  {
     "id": "lobbyEditor",
     "oldMenu": "contentEditorsToolStripMenuItem",
     "category": "Game",

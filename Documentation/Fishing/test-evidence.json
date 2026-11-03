@@ -1,0 +1,136 @@
+{
+  "recorded_at_utc": "2026-11-03T03:34:33.316794+00:00",
+  "shared_rules": {
+    "command": "python3 Utilities/FishingRulesTests/run-standalone.py --dotnet /workspace/scratch/8ec90a3cad52/tooling/dotnet/dotnet",
+    "result": "Fishing rules: 236 checks passed.",
+    "exit_code": 0,
+    "assembly": "Utilities/FishingRulesTests/bin/standalone/FishingRulesTests.dll"
+  },
+  "native_server_rules_and_rewards": {
+    "command": "python3 Utilities/FishingRulesTests/run-native.py --dotnet /workspace/scratch/8ec90a3cad52/tooling/dotnet/dotnet",
+    "result": "Fishing rules: 269 checks passed.",
+    "exit_code": 0,
+    "assembly": "Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
+    "run_existing_command": "/workspace/scratch/8ec90a3cad52/tooling/dotnet/dotnet Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
+    "compiler_response": "Utilities/FishingRulesTests/bin/native/compile.rsp",
+    "compiler_notes": [
+      "CS1701 compatibility assumptions for the existing System.Linq.Async and System.Interactive.Async dependencies referencing System.Runtime 6 while targeting .NET 8. No errors."
+    ]
+  },
+  "coverage": [
+    "Zone, equipped-tool, level, UTC-hour, depth and player-variable intersection",
+    "Independent legendary encounter chance and weighted eligible pools",
+    "Pressure/release, difficulty limits and four server-controlled skills",
+    "Legendary invitation origin tracking, exact expiry, automatic resumption after 1500 ms, pending-resumption cancellation, manual-only accepted challenge, input pacing and manual-origin expiry",
+    "Sound override precedence, aliases, explicit silence and reserved challenge hooks",
+    "Net world-profile validation and JSON preservation of nine source asset paths",
+    "English/French/Spanish catalog coverage, placeholders and English fallback",
+    "Native inventory bounded stacks and all-or-nothing capacity checks",
+    "Native reward checkpoint success and rollback for failure results and thrown exceptions",
+    "XP, profession level rewards and receipt staged in the same inventory checkpoint",
+    "Receipt replay before save, including a restored receipt",
+    "Equipped bait protection and exact bait rollback/debit",
+    "Forged cast without a server Event session rejected",
+    "MessagePack request round-trip and stable OpenFishing Event ID"
+  ],
+  "scope_notes": [
+    "The native run uses the real built Player, Item, InventorySlot and FishingRewards.Commit types, with an injected save callback. It does not connect to a live game database.",
+    "The standalone run compiles current shared production source. The native run reuses the built server and framework assembly snapshots listed below; it does not rebuild those projects.",
+    "Client/editor rendering, live network play, map content bindings and deployment are separate checks. This evidence does not claim those checks."
+  ],
+  "sources": [
+    {
+      "path": "Utilities/FishingRulesTests/Program.cs",
+      "sha256": "ec5eda143045bc53b79f2125876d610ec4b9eb222d645cbf9b17afe3bf7983a9",
+      "bytes": 15202
+    },
+    {
+      "path": "Utilities/FishingRulesTests/ServerRewardChecks.cs",
+      "sha256": "405ea424e1d84e7d9cf332f1aedfa0eabced8edf7c40d73622d252f04d0f9a2a",
+      "bytes": 8888
+    },
+    {
+      "path": "Utilities/FishingRulesTests/run-standalone.py",
+      "sha256": "78dccd0a8ce0d18c63927afe52dd4971dfa102155024f7c016442bebec0844e1",
+      "bytes": 2315
+    },
+    {
+      "path": "Utilities/FishingRulesTests/run-native.py",
+      "sha256": "5a29a9efc4d4afd99b97ae9a17f08c7b751edc92b821869ec7cd22988088313f",
+      "bytes": 4079
+    }
+  ],
+  "native_tested_assemblies": [
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Tests.Server.dll",
+      "sha256": "82e3649eeedbf7e807d62f805b3c36d65ea1f3104f7be8b4b64973e81063d36f",
+      "bytes": 40960
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Server.Core.dll",
+      "sha256": "85ea3a6b7e02750c06f6a0fd9f3cf3a22c1b4543068936bf6a76668638c853d0",
+      "bytes": 13672448
+    },
+    {
+      "path": "Utilities/FishingRulesTests/bin/native/Intersect.Framework.Core.dll",
+      "sha256": "07375ff8545f6c32c5d8227b278da284a1c7a33116a1729ad47e262fa9032ed3",
+      "bytes": 2675712
+    }
+  ],
+  "current_native_revision_verified": true,
+  "current_shared_sources": [
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingConfiguration.cs",
+      "sha256": "3223a27b02455e1f29a465b8ae7180325895bcad7559f7705332c968d4f9f13e",
+      "bytes": 7714
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingRules.cs",
+      "sha256": "30bed9e1ca7b3e6eaebbe6a874039bbf2a3bbc4da4f00bf1447217b664f4f63a",
+      "bytes": 8566
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingFight.cs",
+      "sha256": "e091421722b288b704c60e3d77a07d1454df136a3f3b67a6ca387fff45e0fb5b",
+      "bytes": 3170
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingLegendaryEncounter.cs",
+      "sha256": "0d328ce45aad3d74e3d8610753ee02c8e6b5a261a8b5122efa626800eb69592a",
+      "bytes": 4251
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingSoundCatalog.cs",
+      "sha256": "5726ffcd741abbe0257bab53427ebb627b3b06cc0abee44fa9799e98fb38989d",
+      "bytes": 5872
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/FishingWorldProfile.cs",
+      "sha256": "0c2167c410ae231287789406598ad441ef74ff3f52d8cfb065dcbde14b504db4",
+      "bytes": 2977
+    },
+    {
+      "path": "Framework/Intersect.Framework.Core/Fishing/Text.json",
+      "sha256": "710f9e581d8f8978458f56a29c196200cb3b0e7c9f5edbc6ac939e1584bc0585",
+      "bytes": 5715
+    }
+  ],
+  "server_source_snapshot": [
+    {
+      "path": "Intersect.Server.Core/Entities/Player.Fishing.cs",
+      "sha256": "5ce38e6416509174f3d54b7c0ca2a0cf14fc6fa392f3ed671bf49d842759387c",
+      "bytes": 26163
+    },
+    {
+      "path": "Intersect.Server.Core/Fishing/FishingRewards.cs",
+      "sha256": "97a2e17918a101713493dc65f8c742dd893a4fb720b7f769d855274ab1f23063",
+      "bytes": 7599
+    },
+    {
+      "path": "Intersect.Server.Core/Fishing/FishingRuntime.cs",
+      "sha256": "08b9e555d8222ab3ff062566aacbdcdee018b4d68550299745fcda76cd60897e",
+      "bytes": 3999
+    }
+  ],
+  "native_server_matches_latest_build": true
+}

@@ -1,0 +1,59 @@
+{
+  "sdk": "8.0.427",
+  "configuration": "Debug",
+  "host": "Linux",
+  "editor_target": "net8.0-windows/win-x64",
+  "verification_adaptations": [
+    "Existing key generation task invoked in-process using a temporary MSBuild import outside the repository.",
+    "Explicit LogiklikBuildNumber=1 and standard SDK Roslyn compiler; RunAnalyzers=false, matching repository verification scripts."
+  ],
+  "builds": [
+    {
+      "project": "server",
+      "output": "Intersect.Server/bin/Debug/net8.0/Intersect Server.dll",
+      "sha256": "482a76d17f9c2d45bfe775c6c8aa21cb159c52579050af62113037425e54e179",
+      "bytes": 10510336,
+      "exit_code": 0,
+      "build_log": "server-final.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "client",
+      "output": "Intersect.Client/bin/Debug/net8.0/Corps Royaux.dll",
+      "sha256": "beaed0a62a5eb43b4932e5181bd467d6957b9c0d6f8988d01b3d5489a7b554e9",
+      "bytes": 616960,
+      "exit_code": 0,
+      "build_log": "client-app-final.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "client_core",
+      "output": "Intersect.Client.Core/bin/Debug/net8.0/Intersect Client Core.dll",
+      "sha256": "5b9673e6871c6c1c641bafe563aa40fbd146e6479e9c77a1f5f76adce561c9c4",
+      "bytes": 16674816,
+      "exit_code": 0,
+      "build_log": "client-core-final.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "editor",
+      "output": "Intersect.Editor/bin/Debug/net8.0-windows/win-x64/Logiklik 2D Engine.dll",
+      "sha256": "80a264210d97fa56ce7938156ee7bfbb82fbd4e36c430ce5dfa47b1dc700efe0",
+      "bytes": 8155136,
+      "exit_code": 0,
+      "build_log": "editor-tests-build.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "editor_tests",
+      "output": "Utilities/InterfaceEditorTests/bin/Debug/net8.0-windows/win-x64/Intersect.Tests.Editor.dll",
+      "sha256": "dad9c30253cc822429122b44e86a2d27199221be9c227980d3c425186edf995b",
+      "bytes": 821248,
+      "exit_code": 0,
+      "build_log": "editor-tests-build.log",
+      "runtime_executed": false
+    }
+  ],
+  "note": "Build evidence only. Native reward test execution is recorded separately. GUI, audio listening and live multiplayer not executed.",
+  "recorded_at_utc": "2026-11-03T03:38:30.480327+00:00"
+}

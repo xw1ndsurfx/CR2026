@@ -23,6 +23,7 @@ public partial class FrmMain
         AddMountEditorMenu();
         AddJoustEditorMenu();
         AddRoyalCombatEditorMenus();
+        AddFishingEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestDungeonConfiguration(openEditor: false);

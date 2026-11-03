@@ -494,6 +494,7 @@ public partial class GameInterface : MutableInterface
         UpdatePoker();
         UpdateRoulette();
         UpdateDice();
+        UpdateFishing();
         UpdateLockpicking();
         UpdateQuestGuidance();
 
@@ -735,6 +736,7 @@ public partial class GameInterface : MutableInterface
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = CloseDiceWindow() || closedWindows;
+        closedWindows = CloseFishingWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -796,6 +798,7 @@ public partial class GameInterface : MutableInterface
         DisposePoker();
         DisposeRoulette();
         DisposeDice();
+        DisposeFishing();
         DisposeLockpicking();
         DisposeQuestGuidance();
         DisposeSoundSequence();

@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "source_policy": "User inputs preserved byte-for-byte; generated UI uses real alpha; live labels and values render in code.",
+  "assets": [
+    {
+      "source_name": "Item_Sheet_Fishing.png",
+      "repository_path": "resources/fishing/items/Item_Sheet_Fishing.png",
+      "runtime_path": "resources/gui/fishing/items/Item_Sheet_Fishing.png",
+      "sha256": "72ede9b3cfac4f45f82ddb7ed040f6385408ce8d9cbf88f6cd0f276744617482",
+      "width": 640,
+      "height": 192,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Item_Sheet_Flora&Fauna_1.png",
+      "repository_path": "resources/fishing/items/Item_Sheet_Flora&Fauna_1.png",
+      "runtime_path": "resources/gui/fishing/items/Item_Sheet_Flora&Fauna_1.png",
+      "sha256": "94e2ead9fce2208f53f430916f375472c7aaa10156efa320db234a361e1d572b",
+      "width": 160,
+      "height": 128,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Water_Background1.png",
+      "repository_path": "resources/fishing/backgrounds/Water_Background1.png",
+      "runtime_path": "resources/gui/fishing/backgrounds/Water_Background1.png",
+      "sha256": "5ceaa0ced0e2817b5288d78d4c6aa2d3cd614d04be6435feeb9d122463563895",
+      "width": 1920,
+      "height": 1360,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Water_Background2.png",
+      "repository_path": "resources/fishing/backgrounds/Water_Background2.png",
+      "runtime_path": "resources/gui/fishing/backgrounds/Water_Background2.png",
+      "sha256": "5d3639c799893d21633d887b7a88c59691b3dbe966f811636d2493e3e2ec2c3c",
+      "width": 907,
+      "height": 2048,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Water_Background3.png",
+      "repository_path": "resources/fishing/backgrounds/Water_Background3.png",
+      "runtime_path": "resources/gui/fishing/backgrounds/Water_Background3.png",
+      "sha256": "c437d33844677a53a13da55f1ef3985aa28c2a3cb809b155c97fa8ea4d1e2aae",
+      "width": 1920,
+      "height": 1080,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Water_Background4.png",
+      "repository_path": "resources/fishing/backgrounds/Water_Background4.png",
+      "runtime_path": "resources/gui/fishing/backgrounds/Water_Background4.png",
+      "sha256": "275349d2d69e1cdf618fcc48e0c1b9b6f90f15e1f9d15f060ef19724d0b58931",
+      "width": 1920,
+      "height": 1080,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_name": "Water_Background5.png",
+      "repository_path": "resources/fishing/backgrounds/Water_Background5.png",
+      "runtime_path": "resources/gui/fishing/backgrounds/Water_Background5.png",
+      "sha256": "13b35aa37dbfcc76de620db6663473b88285281634d226334e671fa93dd7a0d1",
+      "width": 1920,
+      "height": 1080,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "B_Move_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/B_Move_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/B_Move_1H_Tools_Fishing_Net.png",
+      "sha256": "80aea50c79fe1a37a6e21a39ca843456b8db5a138f2fe806f5706b27d1a375ba",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "B_Catch_1H_Tools_Fishing_Net-sheet.png",
+      "repository_path": "resources/fishing/paperdolls/B_Catch_1H_Tools_Fishing_Net-sheet.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/B_Catch_1H_Tools_Fishing_Net-sheet.png",
+      "sha256": "04e61424a71e97c35bd8a7e77b3d1a7f953d6e6f61789f831735e94c50129c83",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "F_Catch_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/F_Catch_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/F_Catch_1H_Tools_Fishing_Net.png",
+      "sha256": "d2ed0a4fe31e08e8013463b1b7c256e1d1297594fa41bdde7138be41b3908608",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "B_Fishing_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/B_Fishing_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/B_Fishing_1H_Tools_Fishing_Net.png",
+      "sha256": "817969b0625be29390467f44d799796f4965ca09ce14c9afc9ad1bcffec0c7cf",
+      "width": 512,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "F_Idle_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/F_Idle_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/F_Idle_1H_Tools_Fishing_Net.png",
+      "sha256": "9883e8993c6e13b281127ae08dd942fdd10127c679895bcf68246e973f2abf08",
+      "width": 512,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "B_Throw_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/B_Throw_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/B_Throw_1H_Tools_Fishing_Net.png",
+      "sha256": "2216fec959878360877dffeaf640a656c6780715648eb061cfdd7ed093f2c67b",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "F_Fishing_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/F_Fishing_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/F_Fishing_1H_Tools_Fishing_Net.png",
+      "sha256": "51564f089f153824e668bb6d6d4ea8080417ae34b9fd0debca9ed75c10d92112",
+      "width": 512,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "F_Move_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/F_Move_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/F_Move_1H_Tools_Fishing_Net.png",
+      "sha256": "3c4ae014e4cbbee4467d08c1e80973254ef0c40b61fecde36fc012b831bdf0f4",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source_archive": "Fishing_Net.zip",
+      "source_name": "F_Throw_1H_Tools_Fishing_Net.png",
+      "repository_path": "resources/fishing/paperdolls/F_Throw_1H_Tools_Fishing_Net.png",
+      "runtime_path": "resources/gui/fishing/paperdolls/F_Throw_1H_Tools_Fishing_Net.png",
+      "sha256": "bd4397b31bb04ff9c730f34c6714c9b73c22107e453109789bc6498d6bfe2f5f",
+      "width": 768,
+      "height": 512,
+      "preserved_original_bytes": true
+    },
+    {
+      "source": "imagegen",
+      "repository_path": "resources/fishing/gui/fishing_shell.png",
+      "runtime_path": "resources/gui/fishing/gui/fishing_shell.png",
+      "sha256": "f4af58aef65bac90c3f0c597acc43c3f793403533d7ff0d1062cd3650739b47b",
+      "width": 1670,
+      "height": 941
+    },
+    {
+      "source": "imagegen",
+      "repository_path": "resources/fishing/gui/fishing_components.png",
+      "runtime_path": "resources/gui/fishing/gui/fishing_components.png",
+      "sha256": "d2d0e8feff65c3c4f21d5165c0e016590e00b66c7336f751a765cbb537c3d433",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "source": "imagegen",
+      "repository_path": "resources/fishing/fx/fishing_effects.png",
+      "runtime_path": "resources/gui/fishing/fx/fishing_effects.png",
+      "sha256": "d57cb9282b1d4aa606da123d2b4fa7b7a0fb552ca0c6395cce29501535b6de1b",
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "source": "imagegen",
+      "repository_path": "resources/fishing/gui/coral_foreground.png",
+      "runtime_path": "resources/gui/fishing/gui/coral_foreground.png",
+      "sha256": "8ae07043bde35c64f8a458aba54a6efbe1d12647f0732a25b3c635efe8f71a25",
+      "width": 1672,
+      "height": 941
+    }
+  ]
+}
