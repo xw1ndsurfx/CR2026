@@ -23,6 +23,6 @@ internal sealed class DayPhaseHud : Label
     public void UpdatePhase(DayPhase phase, bool available)
     {
         IsHidden = !available;
-        if (available) { Text = ClientLanguages.Text(phase.ToString()); SetBounds(8, 4, 180, 20); BringToFront(); }
+        if (available) { Text = ClientLanguages.Text(phase.ToString()); HudPlacement.FitTextHud(this, 8, 4); BringToFront(); }
     }
 }

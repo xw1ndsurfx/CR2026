@@ -1,6 +1,7 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using DarkUI.Forms;
 using Intersect.Framework.Core.QualityOfLife;
@@ -11,6 +12,15 @@ namespace Intersect.Editor.Forms;
 
 public sealed class FrmAnimationImport : DarkForm
 {
+    private const int ListViewGetOrigin = 0x1029;
+    private const int ListViewScroll = 0x1014;
+
+    [DllImport("user32.dll", EntryPoint = "SendMessageW")]
+    private static extern nint SendListViewMessage(nint handle, int message, nint wParam, ref Point point);
+
+    [DllImport("user32.dll", EntryPoint = "SendMessageW")]
+    private static extern nint SendListViewMessage(nint handle, int message, nint wParam, nint lParam);
+
     private enum ZipImportMode
     {
         AutoDetect,
@@ -2217,11 +2227,22 @@ public sealed class FrmAnimationImport : DarkForm
 
     private void PopulateAssetList() => PopulateAssetListAt(0);
 
-    private void PopulateAssetListAt(int selectedIndex)
+    private void PopulateAssetListAt(int selectedIndex, bool preservePosition = false)
     {
         if (IsDisposed || Disposing)
         {
             return;
+        }
+
+        var selectedAsset = preservePosition ? _selectedAsset : null;
+        var previousIndex = preservePosition && _assetList.SelectedIndices.Count > 0
+            ? _assetList.SelectedIndices[0]
+            : 0;
+        // LargeIcon lists do not support TopItem; retain their pixel scroll origin.
+        var scrollOrigin = new Point();
+        if (preservePosition)
+        {
+            SendListViewMessage(_assetList.Handle, ListViewGetOrigin, 0, ref scrollOrigin);
         }
 
         _thumbnailCancellation?.Cancel();
@@ -2407,7 +2428,28 @@ public sealed class FrmAnimationImport : DarkForm
 
         if (_assetList.Items.Count > 0)
         {
-            SelectVisibleAnimation(Math.Clamp(selectedIndex, 0, _assetList.Items.Count - 1));
+            var index = preservePosition
+                ? _visibleAssets.FindIndex(asset => ReferenceEquals(asset, selectedAsset))
+                : selectedIndex;
+            if (index < 0)
+            {
+                index = previousIndex;
+            }
+
+            index = Math.Clamp(index, 0, _assetList.Items.Count - 1);
+            SelectVisibleAnimation(index);
+
+            if (preservePosition)
+            {
+                var currentOrigin = new Point();
+                SendListViewMessage(_assetList.Handle, ListViewGetOrigin, 0, ref currentOrigin);
+                SendListViewMessage(
+                    _assetList.Handle,
+                    ListViewScroll,
+                    scrollOrigin.X - currentOrigin.X,
+                    scrollOrigin.Y - currentOrigin.Y
+                );
+            }
         }
         else
         {
@@ -2882,8 +2924,7 @@ public sealed class FrmAnimationImport : DarkForm
         SaveFavorites();
         UpdateFavoriteButton();
 
-        _assetPage = 0;
-        PopulateAssetList();
+        PopulateAssetListAt(0, preservePosition: true);
     }
 
     private void UpdateFavoriteButton()

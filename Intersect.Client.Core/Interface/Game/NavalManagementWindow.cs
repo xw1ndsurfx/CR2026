@@ -14,8 +14,8 @@ internal class NavalManagementWindow:Window
     private CannonAmmoKind? _browsedAmmo;
     private NavalManagementState _state=new();private long _received;private bool _expiredRefresh;private bool _repairRotated;
     internal static string T(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
-    internal static void Request(NavalManageAction action,CannonAmmoKind ammo=default,int quantity=1,NavalSkillKind skill=default,NavalRepairKind repair=default,Guid target=default,Guid token=default,int value=0)=>
-        Networking.Network.SendPacket(new NavalManagePacket {Action=action,Ammo=ammo,Quantity=quantity,Skill=skill,Repair=repair,TargetId=target,Token=token,Value=value});
+    internal static void Request(NavalManageAction action,CannonAmmoKind ammo=default,int quantity=1,NavalSkillKind skill=default,NavalRepairKind repair=default,Guid target=default,Guid token=default,int value=0,int? expectedUnitPrice=null)=>
+        Networking.Network.SendPacket(new NavalManagePacket {Action=action,Ammo=ammo,Quantity=quantity,Skill=skill,Repair=repair,TargetId=target,Token=token,Value=value,ExpectedUnitPrice=expectedUnitPrice});
     internal NavalManagementWindow(Canvas parent,NavalManageAction panel=NavalManageAction.Ammo):base(parent,T(panel==NavalManageAction.Repair?"Ship repairs":panel==NavalManageAction.OfferHelm?"Helm control":panel==NavalManageAction.Skills?"Sailing skills":"Ammunition inventory"),false,"Naval"+panel+"Window")
     {
         SetSize(Math.Min(panel==NavalManageAction.Ammo?460:720,Math.Max(300,parent.Width-24)),Math.Min(panel==NavalManageAction.Ammo?560:590,Math.Max(360,parent.Height-32)));
@@ -106,7 +106,7 @@ internal class NavalManagementWindow:Window
                 var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(16,18,36,34);
                 var item=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(a.ItemId);
                 icon.Texture=!string.IsNullOrEmpty(a.Icon)?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon):
-                    item==null?null:GameContentManager.Current.GetTexture(item.UsesSpellIcon?Intersect.Client.Framework.Content.TextureType.Spell:Intersect.Client.Framework.Content.TextureType.Item,item.DisplayIcon);
+                    item==null?null:Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
                 if(a.Kind==state.SelectedAmmo)
                 {
                     var active=Text(slot,"AmmoInUse",T("Active"),0,0,70,18,10);

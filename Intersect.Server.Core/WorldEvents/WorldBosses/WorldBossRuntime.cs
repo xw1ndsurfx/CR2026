@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Network.Packets.WorldEvents;
 using Intersect.Enums;
@@ -37,6 +37,7 @@ internal static class WorldBossRuntime
         public ConcurrentDictionary<Guid, string> Names { get; } = [];
         public long LastBroadcastAtMs { get; set; }
         public long LastHealth { get; set; } = -1;
+        public int Defeated;
     }
 
     private static readonly object Gate = new();
@@ -52,7 +53,7 @@ internal static class WorldBossRuntime
         {
             foreach (var (id, session) in Active.ToArray())
             {
-                if (session.Npc.IsDead || session.Npc.IsDisposed)
+                if (Volatile.Read(ref session.Defeated) != 0 || session.Npc.IsDead || session.Npc.IsDisposed)
                 {
                     Active.Remove(id);
                     ActiveByNpcId.TryRemove(session.Npc.Id, out _);
@@ -209,6 +210,18 @@ internal static class WorldBossRuntime
             (_, total) => total > long.MaxValue - damage ? long.MaxValue : total + damage);
     }
 
+    // Called under the NPC lock. Never take Gate here: scheduler expiry takes
+    // Gate before the NPC lock. Persist the terminal event and close the HUD now.
+    internal static void OnNpcDied(Npc npc)
+    {
+        if (!ActiveByNpcId.TryGetValue(npc.Id, out var session) ||
+            Interlocked.Exchange(ref session.Defeated, 1) != 0)
+            return;
+        foreach (var player in Player.OnlinePlayersSnapshot())
+            if (player != null && !player.IsDisposed)
+                player.SendPacket(new WorldBossStatusPacket { Active = false, BossId = session.Definition.Id, NpcId = npc.Id });
+    }
+
     internal static void SendStatus(Player player)
     {
         foreach (var session in ActiveByNpcId.Values.DistinctBy(s => s.Npc.Id))
@@ -225,7 +238,7 @@ internal static class WorldBossRuntime
         lock (Gate)
         {
             return Active.Values
-                .Where(session => !session.Npc.IsDead && !session.Npc.IsDisposed)
+                .Where(session => Volatile.Read(ref session.Defeated) == 0 && !session.Npc.IsDead && !session.Npc.IsDisposed)
                 .Select(session => new WorldBossPublicStatus(
                     session.Definition.Id,
                     Math.Max(0L, session.Npc.GetVital(Vital.Health)),
@@ -256,7 +269,8 @@ internal static class WorldBossRuntime
         session.Damage.TryGetValue(player.Id, out var ownDamage);
         return new WorldBossStatusPacket
         {
-            Active = true, BossId = session.Definition.Id, Name = session.Definition.Name,
+            Active = Volatile.Read(ref session.Defeated) == 0 && !session.Npc.IsDead && !session.Npc.IsDisposed,
+            BossId = session.Definition.Id, NpcId = session.Npc.Id, Name = session.Definition.Name,
             MapName = MapController.Get(session.Definition.MapId)?.Name ?? "Unknown map",
             SpawnX = session.Definition.SpawnX, SpawnY = session.Definition.SpawnY,
             Health = Math.Max(0, session.Npc.GetVital(Vital.Health)),
@@ -287,13 +301,15 @@ internal static class WorldBossRuntime
         {
             if (player == null || player.IsDisposed)
                 continue;
-            player.SendPacket(new WorldBossStatusPacket { Active = false, BossId = session.Definition.Id });
+            player.SendPacket(new WorldBossStatusPacket { Active = false, BossId = session.Definition.Id, NpcId = session.Npc.Id });
             var index = Array.FindIndex(ranking, entry => entry.PlayerId == player.Id);
             if (index < 0)
                 continue;
             var damage = ranking[index].Damage;
             var qualified = victory && average > 0 &&
                 eligible.Any(entry => entry.PlayerId == player.Id);
+            if (qualified) Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(player,
+                Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.WorldBossesDefeated, session.Definition.Id);
             var rewardPercent = qualified ? (int)Math.Clamp(
                 Math.Round(damage * 100m / average),
                 session.Definition.MinimumRewardPercent,

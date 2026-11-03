@@ -13,6 +13,7 @@ internal static class ServerCrashLog
     private static readonly string FileName =
         $"crash-Intersect Server-{DateTime.UtcNow:yyyy_MM_dd-HH_mm_ss_fff}-{Environment.ProcessId}.log";
     private static string? _path;
+    internal static string JournalFileName => FileName;
 
     internal static void SetDirectory(string directory)
     {

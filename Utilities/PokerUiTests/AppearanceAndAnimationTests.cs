@@ -159,17 +159,53 @@ internal static class AppearanceAndAnimationTests
         }
         var descriptor = new AnimationDescriptor(Guid.NewGuid());
         AnimationDescriptor.Lookup[descriptor.Id] = descriptor;
+        var ordinary = new Animation(descriptor, true, parent: npc,
+            source: new AnimationSource(AnimationSourceType.Any, Guid.NewGuid()));
+        var overheadEffect = new Animation(descriptor, true, parent: npc,
+            source: new AnimationSource(AnimationSourceType.Any, Guid.NewGuid())) { AboveParent = true };
+        npc.TryAddAnimation(ordinary, ordinary.Source); npc.TryAddAnimation(overheadEffect, overheadEffect.Source);
+        ordinary.SetPosition(100, 200, 0, 0, Guid.Empty, 0);
+        overheadEffect.SetPosition(100, 200, 0, 0, Guid.Empty, 0);
+        var ordinaryBefore = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(ordinary, [layer, 64f, 96f])!;
+        var overheadBefore = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(overheadEffect, [layer, 64f, 96f])!;
         try
         {
             var desired = new Dictionary<Guid, (Guid TaskId, Guid AnimationId, Entity Entity)>
                 { [Guid.NewGuid()] = (Guid.NewGuid(), descriptor.Id, npc) };
             guidanceType.GetMethod("SynchronizeMarkers", flags)!.Invoke(guidance, [desired]);
             var attached = (List<Animation>)typeof(Entity).GetField("_animations", flags)!.GetValue(npc)!;
-            Check(attached.Count == 1 && attached[0].AboveParent, "Real quest guidance registration uses the overhead anchor");
+            var marker = attached.Last();
+            Check(attached.Count == 3 && !marker.AboveParent,
+                "Only the quest objective marker uses the body anchor instead of being forced above the NPC.");
+            var anchorMethod = typeof(Entity).GetMethod("AnimationAnchor", flags)!;
+            var map = DispatchProxy.Create<Intersect.Client.Framework.Maps.IMapInstance, EventInteractionMapFixture>();
+            npc.LatestMap = map; npc.Texture = DispatchProxy.Create<Intersect.Client.Framework.Graphics.IGameTexture, DirectionalBodyFixture>();
+            foreach (var origin in new[] { new System.Numerics.Vector2(116, 232), new System.Numerics.Vector2(183, 195) })
+            {
+                typeof(Entity).GetField("mOrigin", flags)!.SetValue(npc, origin);
+                var anchor = (System.Numerics.Vector2)anchorMethod.Invoke(npc, [marker.AboveParent])!;
+                marker.SetPosition(anchor.X, anchor.Y, 0, 0, Guid.Empty, 0);
+                foreach (var markerLayer in new[] { descriptor.Lower, descriptor.Upper })
+                foreach (var size in new[] { new System.Numerics.Vector2(32, 48), new System.Numerics.Vector2(192, 256) })
+                {
+                    var frame = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(marker, [markerLayer, size.X, size.Y])!;
+                    Check(frame.X + frame.Width / 2 == npc.Center.X && frame.Y + frame.Height / 2 == npc.Center.Y,
+                        "Both quest marker layers stay centered on the moving padded NPC at different animation scales.");
+                }
+            }
+            var ordinaryAfter = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(ordinary, [layer, 64f, 96f])!;
+            var overheadAfter = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(overheadEffect, [layer, 64f, 96f])!;
+            Check(ordinaryBefore.X == ordinaryAfter.X && ordinaryBefore.Y == ordinaryAfter.Y &&
+                overheadBefore.X == overheadAfter.X && overheadBefore.Y == overheadAfter.Y,
+                "Registering a quest marker does not move body-centered or overhead animations.");
+            guidanceType.GetMethod("Clear")!.Invoke(guidance, null);
+            Check(attached.Count == 2 && !ordinary.IsDisposed && !overheadEffect.IsDisposed,
+                "Removing quest guidance preserves the NPC's unrelated animations.");
         }
         finally
         {
             guidanceType.GetMethod("Clear")!.Invoke(guidance, null);
+            ordinary.Dispose(); overheadEffect.Dispose();
             AnimationDescriptor.Lookup.DeleteAt(descriptor.Id);
         }
         System.Console.WriteLine("PASS animation visual geometry/transparency and actual Character Creation/Royal Stylist layout");

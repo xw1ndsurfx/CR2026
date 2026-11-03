@@ -8,14 +8,32 @@ internal static class RoyalCombatEditorTests
 {
     internal static void Run()
     {
+        var generated = FrmItem.CreateAutoRequirements(25, new MasteryCategory { Key = "whips", Name = "Whips", Cap = 30 }, 12);
+        if (generated.Conditions.Count != 2 ||
+            generated.Conditions[0] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.LevelOrStatCondition { Value: 25 } ||
+            generated.Conditions[1] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { MasteryKey: "whips", Value: 12 })
+            throw new Exception("Character and mastery levels must be required together in the same AND branch.");
+        var masteryOnly = FrmItem.CreateAutoRequirements(null, new MasteryCategory { Key = "daggers", Cap = 30 }, 100);
+        if (masteryOnly.Conditions.Count != 1 ||
+            masteryOnly.Conditions[0] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { Value: 30 })
+            throw new Exception("Mastery-only requirements must respect the configured cap.");
         using var editor = new FrmRoyalCombatConfiguration(new RoyalCombatConfiguration().ToJson(), true);
         var show = typeof(FrmRoyalCombatConfiguration).GetMethod("ShowMode", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var grid = Descendants(editor).OfType<PropertyGrid>().Single();
         var mastery = (MasteryCategory)grid.SelectedObject!;
+        var animation = Descendants(editor).OfType<ComboBox>().Single(c => c.Name == "MasteryLevelUpAnimation");
+        if (mastery.LevelUpAnimationId != Guid.Empty || animation.SelectedIndex != 0)
+            throw new Exception("Existing masteries must default to no level-up animation.");
+        mastery.LevelUpAnimationId = Guid.NewGuid(); // Deleted assets must survive opening/switching editor views.
         mastery.BaseExperience = 150;
         show.Invoke(editor, [false]); show.Invoke(editor, [true]);
         if (!ReferenceEquals(grid.SelectedObject, mastery) || mastery.BaseExperience != 150)
             throw new Exception("Switching royal editor menus discarded unsaved mastery changes.");
+        var restoredMastery = System.Text.Json.JsonSerializer.Deserialize<MasteryCategory>(System.Text.Json.JsonSerializer.Serialize(mastery))!;
+        if (mastery.LevelUpAnimationId == Guid.Empty || restoredMastery.LevelUpAnimationId != mastery.LevelUpAnimationId || animation.SelectedIndex < 1)
+            throw new Exception("The mastery animation picker lost an unavailable saved animation.");
+        animation.SelectedIndex = 0;
+        if (mastery.LevelUpAnimationId != Guid.Empty) throw new Exception("Choosing no animation did not clear the mastery animation.");
         var dialog = typeof(FrmRoyalCombatConfiguration).Assembly.GetType("Intersect.Editor.Forms.Editors.Events.MiniGameCommandDialog", true)!;
         var command = new StartMiniGameCommand { Game = MiniGameType.Archery };
         using var form = (Form)Activator.CreateInstance(dialog, [command, (MiniGameType?)MiniGameType.Archery])!;
@@ -32,12 +50,37 @@ internal static class RoyalCombatEditorTests
                 throw new Exception("Talent editing changed the source before Save or lost native rank-spell pickers.");
         }
         using var ammunition = new FrmWeaponAmmunition([]);
+        var swordCategory=new RoyalCombatConfiguration().Masteries.Single(c=>c.Key=="swords");
+        using(var nativeTalents=new FrmMasteryTalents(swordCategory))
+        {
+            var list=Descendants(nativeTalents).OfType<ListBox>().Single();
+            list.SelectedIndex=Array.FindIndex(nativeTalents.Result.Talents,t=>t.Skill.Enabled);
+            if(Descendants(nativeTalents).OfType<ComboBox>().Count(c=>c.Name is "WeaponSkillAnimation" or "WeaponSkillImpactAnimation")!=2)
+                throw new Exception("Separate active weapon techniques need skill/impact animation selectors");
+            var native=nativeTalents.Result.Talents[list.SelectedIndex];
+            native.Skill.AnimationId=Guid.NewGuid();
+            if(swordCategory.Talents[list.SelectedIndex].Skill.AnimationId!=Guid.Empty || native.RankSpellIds.Length!=0)
+                throw new Exception("Native skills must remain separate from spells and edits must stay in the detached draft");
+        }
         var resetConfig = new RoyalCombatConfiguration { RespecCost = 2500 };
         using (var reset = new FrmMasteryRespec(resetConfig))
             if (reset.RespecEnabled || reset.Cost != 2500 || reset.CurrencyId != Guid.Empty || resetConfig.RespecEnabled)
                 throw new Exception("Reset settings invented a currency, enabled payments or changed the source without Save.");
         if (ammunition.Result.Length != 0) throw new Exception("Opening ammunition compatibility invented a weapon mapping.");
         CheckRangeEditor();
+        RoyalCombatEditorState.Apply(new RoyalCombatConfiguration { Masteries = [new MasteryCategory { Key = "blades", Name = "Swordsmanship" }] }.ToJson());
+        using (var requirement = new Intersect.Editor.Forms.Editors.Events.Event_Commands.Conditions.ConditionControl_WeaponMastery())
+        {
+            var source = new Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { MasteryKey = "blades", Value = 7 };
+            requirement.SetupFormValues(source);
+            var saved = new Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition();
+            requirement.SaveFormValues(saved);
+            if (saved.MasteryKey != "blades" || saved.Value != 7) throw new Exception("Mastery requirement picker lost its selected category or level.");
+            RoyalCombatEditorState.Apply(new RoyalCombatConfiguration().ToJson());
+            requirement.SaveFormValues(saved);
+            if (saved.MasteryKey != "blades") throw new Exception("A deleted mastery requirement was silently changed to a different category.");
+        }
+        System.Console.WriteLine("PASS mastery requirement category/level editing and preservation of missing category keys");
         System.Console.WriteLine("PASS: royal editor draft preservation, dedicated NPC command dialog and stable mini-game IDs.");
     }
     private static void CheckRangeEditor()

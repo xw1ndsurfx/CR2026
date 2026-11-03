@@ -1,210 +1,20 @@
 {
   "Entries": {
-  "Farm": {
-    "en": "Farm",
-    "fr": "Ferme",
-    "es": "Granja"
-  },
-  "Farmer": {
-    "en": "Farmer",
-    "fr": "Agriculteur",
-    "es": "Agricultor"
-  },
-  "Manage crops and hired farm workers.": {
-    "en": "Manage crops and hired farm workers.",
-    "fr": "Gérer les cultures et les ouvriers agricoles embauchés.",
-    "es": "Gestionar cultivos y trabajadores agrícolas contratados."
-  },
-  "Wheat": {
-    "en": "Wheat",
-    "fr": "Blé",
-    "es": "Trigo"
-  },
-  "Carrots": {
-    "en": "Carrots",
-    "fr": "Carottes",
-    "es": "Zanahorias"
-  },
-  "Potatoes": {
-    "en": "Potatoes",
-    "fr": "Pommes de terre",
-    "es": "Patatas"
-  },
-  "Visit farm": {
-    "en": "Visit farm",
-    "fr": "Visiter la ferme",
-    "es": "Visitar la granja"
-  },
-  "Deposit 100 for salaries": {
-    "en": "Deposit 100 for salaries",
-    "fr": "Déposer 100 pour les salaires",
-    "es": "Depositar 100 para salarios"
-  },
-  "Withdraw salary fund": {
-    "en": "Withdraw salary fund",
-    "fr": "Retirer la caisse de salaires",
-    "es": "Retirar el fondo de salarios"
-  },
-  "Hire novice ({0})": {
-    "en": "Hire novice ({0})",
-    "fr": "Embaucher un novice ({0})",
-    "es": "Contratar novato ({0})"
-  },
-  "Hire expert ({0})": {
-    "en": "Hire expert ({0})",
-    "fr": "Embaucher un expert ({0})",
-    "es": "Contratar experto ({0})"
-  },
-  "Deposit 10 seeds": {
-    "en": "Deposit 10 seeds",
-    "fr": "Déposer 10 graines",
-    "es": "Depositar 10 semillas"
-  },
-  "Pause after harvest": {
-    "en": "Pause after harvest",
-    "fr": "Pause après la récolte",
-    "es": "Pausar tras la cosecha"
-  },
-  "Dismiss worker": {
-    "en": "Dismiss worker",
-    "fr": "Congédier l’ouvrier",
-    "es": "Despedir trabajador"
-  },
-  "Collect harvest": {
-    "en": "Collect harvest",
-    "fr": "Récupérer la récolte",
-    "es": "Recoger cosecha"
-  },
-  "Expert": {
-    "en": "Expert",
-    "fr": "Expert",
-    "es": "Experto"
-  },
-  "Novice": {
-    "en": "Novice",
-    "fr": "Novice",
-    "es": "Novato"
-  },
-  "Working": {
-    "en": "Working",
-    "fr": "Au travail",
-    "es": "Trabajando"
-  },
-  "Paused": {
-    "en": "Paused",
-    "fr": "En pause",
-    "es": "En pausa"
-  },
-  "Choose a crop": {
-    "en": "Choose a crop",
-    "fr": "Choisir une culture",
-    "es": "Elegir un cultivo"
-  },
-  "Farming level too low": {
-    "en": "Farming level too low",
-    "fr": "Niveau agricole insuffisant",
-    "es": "Nivel agrícola insuficiente"
-  },
-  "Salary fund empty": {
-    "en": "Salary fund empty",
-    "fr": "Caisse de salaires insuffisante",
-    "es": "Fondo de salarios insuficiente"
-  },
-  "No seeds": {
-    "en": "No seeds",
-    "fr": "Graines épuisées",
-    "es": "Sin semillas"
-  },
-  "Granary full": {
-    "en": "Granary full",
-    "fr": "Grenier plein",
-    "es": "Granero lleno"
-  },
-  "Farmer level {0} - EXP {1}": {
-    "en": "Farmer level {0} - EXP {1}",
-    "fr": "Agriculteur niveau {0} - EXP {1}",
-    "es": "Agricultor nivel {0} - EXP {1}"
-  },
-  "Salary fund: {0} {1} - granary: {2}/{3}": {
-    "en": "Salary fund: {0} {1} - granary: {2}/{3}",
-    "fr": "Salaires : {0} {1} - grenier : {2}/{3}",
-    "es": "Salarios: {0} {1} - granero: {2}/{3}"
-  },
-  "Harvested: {0} - wages paid: {1}": {
-    "en": "Harvested: {0} - wages paid: {1}",
-    "fr": "Récolté : {0} - salaires versés : {1}",
-    "es": "Cosechado: {0} - salarios pagados: {1}"
-  },
-  "{0}: {1} seeds": {
-    "en": "{0}: {1} seeds",
-    "fr": "{0} : {1} graines",
-    "es": "{0}: {1} semillas"
-  },
-  "Worker {0} ({1}) - {2}": {
-    "en": "Worker {0} ({1}) - {2}",
-    "fr": "Ouvrier {0} ({1}) - {2}",
-    "es": "Trabajador {0} ({1}) - {2}"
-  },
-  "Crop: {0} - wage per cycle: {1}": {
-    "en": "Crop: {0} - wage per cycle: {1}",
-    "fr": "Culture : {0} - salaire par cycle : {1}",
-    "es": "Cultivo: {0} - salario por ciclo: {1}"
-  },
-  "Grow {0} (level {1}, {2} min)": {
-    "en": "Grow {0} (level {1}, {2} min)",
-    "fr": "Cultiver {0} (niveau {1}, {2} min)",
-    "es": "Cultivar {0} (nivel {1}, {2} min)"
-  },
-  "Farm saved.": {
-    "en": "Farm saved.",
-    "fr": "Ferme enregistrée.",
-    "es": "Granja guardada."
-  },
-  "Farming is not available yet.": {
-    "en": "Farming is not available yet.",
-    "fr": "L’agriculture n’est pas encore disponible.",
-    "es": "La agricultura aún no está disponible."
-  },
-  "Only the owner can manage this farm.": {
-    "en": "Only the owner can manage this farm.",
-    "fr": "Seul le propriétaire peut gérer cette ferme.",
-    "es": "Solo el propietario puede gestionar esta granja."
-  },
-  "Farm worker not found.": {
-    "en": "Farm worker not found.",
-    "fr": "Ouvrier agricole introuvable.",
-    "es": "Trabajador agrícola no encontrado."
-  },
-  "Not enough supplies.": {
-    "en": "Not enough supplies.",
-    "fr": "Réserves insuffisantes.",
-    "es": "Suministros insuficientes."
-  },
-  "Farm worker limit reached.": {
-    "en": "Farm worker limit reached.",
-    "fr": "Limite d’ouvriers agricoles atteinte.",
-    "es": "Límite de trabajadores agrícolas alcanzado."
-  },
-  "Pause the worker and wait for the current harvest.": {
-    "en": "Pause the worker and wait for the current harvest.",
-    "fr": "Mets l’ouvrier en pause et attends la récolte en cours.",
-    "es": "Pausa al trabajador y espera la cosecha actual."
-  },
-  "Invalid farm quantity.": {
-    "en": "Invalid farm quantity.",
-    "fr": "Quantité agricole invalide.",
-    "es": "Cantidad agrícola no válida."
-  },
-  "Wait for the current harvest before changing crops.": {
-    "en": "Wait for the current harvest before changing crops.",
-    "fr": "Attends la récolte en cours avant de changer de culture.",
-    "es": "Espera la cosecha actual antes de cambiar de cultivo."
-  },
-  "Withdraw the previous salary currency first.": {
-    "en": "Withdraw the previous salary currency first.",
-    "fr": "Retire d’abord l’ancienne monnaie de la caisse de salaires.",
-    "es": "Retira primero la moneda anterior del fondo de salarios."
-  },
+    "Explore to reveal new regions. Discoveries are saved for this character.": {
+      "en": "Explore to reveal new regions. Discoveries are saved for this character.",
+      "fr": "Explorez pour dévoiler de nouvelles régions. Les découvertes sont sauvegardées pour ce personnage.",
+      "es": "Explora para revelar nuevas regiones. Los descubrimientos se guardan para este personaje."
+    },
+    "Unexplored region": {
+      "en": "Unexplored region",
+      "fr": "Région inexplorée",
+      "es": "Región inexplorada"
+    },
+    "Docking could not be saved. Stay aboard and try again.": {
+      "en": "Docking could not be saved. Stay aboard and try again.",
+      "fr": "L’accostage n’a pas pu être sauvegardé. Restez à bord et réessayez.",
+      "es": "No se pudo guardar el atraque. Permanece a bordo e inténtalo de nuevo."
+    },
     "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
         "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
         "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
@@ -4995,6 +4805,11 @@
       "fr": "Afficher le suivi du boss mondial",
       "es": "Mostrar panel del jefe mundial"
     },
+    "Show dungeon HUD": {
+      "en": "Show dungeon HUD",
+      "fr": "Afficher le suivi du donjon",
+      "es": "Mostrar panel de mazmorra"
+    },
     "Show invasion HUD": {
       "en": "Show invasion HUD",
       "fr": "Afficher le suivi d'invasion",
@@ -7119,6 +6934,146 @@
       "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
       "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
       "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
-    }
+    },
+    "Character": {"en": "Character", "fr": "Personnage", "es": "Personaje"},
+    "News": {"en": "News", "fr": "Actualités", "es": "Noticias"},
+    "Show menu": {"en": "Show menu", "fr": "Afficher le menu", "es": "Mostrar menú"},
+    "Hide menu": {"en": "Hide menu", "fr": "Masquer le menu", "es": "Ocultar menú"},
+    "Whips": {
+        "en": "Whips",
+        "fr": "Fouets",
+        "es": "Látigos"
+    },
+    "Weapon mastery requirement": {
+        "en": "Weapon mastery requirement",
+        "fr": "Prérequis de maîtrise d’arme",
+        "es": "Requisito de maestría de arma"
+    },
+    "Required mastery level": {
+        "en": "Required mastery level",
+        "fr": "Niveau de maîtrise requis",
+        "es": "Nivel de maestría requerido"
+    },
+    "No mastery requirement": {
+        "en": "No mastery requirement",
+        "fr": "Aucun prérequis de maîtrise",
+        "es": "Sin requisito de maestría"
+    },
+    "Mastery configuration is loading. Reopen the creator if no categories appear.": {
+        "en": "Mastery configuration is loading. Reopen the creator if no categories appear.",
+        "fr": "Chargement des maîtrises. Rouvrez le créateur si aucune catégorie ne s’affiche.",
+        "es": "Cargando maestrías. Vuelve a abrir el creador si no aparecen categorías."
+    },
+    "Requires {0} level {1}.": {
+        "en": "Requires {0} level {1}.",
+        "fr": "Maîtrise {0} de niveau {1} requise.",
+        "es": "Requiere {0} de nivel {1}."
+    },
+    "Character level": {
+        "en": "Character level",
+        "fr": "Niveau du personnage",
+        "es": "Nivel del personaje"
+    },
+    "Weapon mastery": {
+        "en": "Weapon mastery",
+        "fr": "Maîtrise d’arme",
+        "es": "Maestría de arma"
+    },
+    "Requirements (all)": {
+        "en": "Requirements (all)",
+        "fr": "Prérequis (tous)",
+        "es": "Requisitos (todos)"
+    },
+    "Requirements (alternative {0})": {
+        "en": "Requirements (alternative {0})",
+        "fr": "Prérequis (possibilité {0})",
+        "es": "Requisitos (alternativa {0})"
+    },
+    "Other conditions apply": {
+        "en": "Other conditions apply",
+        "fr": "D’autres conditions s’appliquent",
+        "es": "Se aplican otras condiciones"
+    },
+    "NOT {0}": {
+        "en": "NOT {0}",
+        "fr": "NON {0}",
+        "es": "NO {0}"
+    },
+    "Level {0}/{1}": {
+        "en": "Level {0}/{1}",
+        "fr": "Niveau {0}/{1}",
+        "es": "Nivel {0}/{1}"
+    },
+    "Mastery damage bonus": {
+        "en": "Mastery damage bonus",
+        "fr": "Bonus de dégâts de maîtrise",
+        "es": "Bonificación de daño de maestría"
+    },
+    "Mastery attack speed bonus": {
+        "en": "Mastery attack speed bonus",
+        "fr": "Bonus de vitesse de maîtrise",
+        "es": "Bonificación de velocidad de maestría"
+    },
+    "Mastery critical chance bonus": {
+        "en": "Mastery critical chance bonus",
+        "fr": "Bonus de critique de maîtrise",
+        "es": "Bonificación crítica de maestría"
+    },
+    "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%": {
+        "en": "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
+        "fr": "Dégâts +{0:0.##}% | Vitesse +{1:0.##}% | Critique +{2}%",
+        "es": "Daño +{0:0.##}% | Velocidad +{1:0.##}% | Crítico +{2}%"
+    },
+    "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.": {
+        "en": "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.",
+        "fr": "Associez cette arme à sa catégorie dans Weapon Mastery Editor pour gagner de l’XP de maîtrise.",
+        "es": "Asigna esta arma a su categoría en Weapon Mastery Editor para ganar XP de maestría."
+    },
+    "Mastery requirements will be installed together with the character level.": {
+        "en": "Mastery requirements will be installed together with the character level.",
+        "fr": "Les prérequis de maîtrise seront installés avec le niveau du personnage.",
+        "es": "Los requisitos de maestría se instalarán con el nivel del personaje."
+    },
+    "Farm": {"en": "Farm", "fr": "Ferme", "es": "Granja"},
+    "Farmer": {"en": "Farmer", "fr": "Agriculteur", "es": "Agricultor"},
+    "Manage crops and hired farm workers.": {"en": "Manage crops and hired farm workers.", "fr": "Gérer les cultures et les ouvriers agricoles embauchés.", "es": "Gestionar cultivos y trabajadores agrícolas contratados."},
+    "Wheat": {"en": "Wheat", "fr": "Blé", "es": "Trigo"},
+    "Carrots": {"en": "Carrots", "fr": "Carottes", "es": "Zanahorias"},
+    "Potatoes": {"en": "Potatoes", "fr": "Pommes de terre", "es": "Patatas"},
+    "Visit farm": {"en": "Visit farm", "fr": "Visiter la ferme", "es": "Visitar la granja"},
+    "Deposit 100 for salaries": {"en": "Deposit 100 for salaries", "fr": "Déposer 100 pour les salaires", "es": "Depositar 100 para salarios"},
+    "Withdraw salary fund": {"en": "Withdraw salary fund", "fr": "Retirer la caisse de salaires", "es": "Retirar el fondo de salarios"},
+    "Hire novice ({0})": {"en": "Hire novice ({0})", "fr": "Embaucher un novice ({0})", "es": "Contratar novato ({0})"},
+    "Hire expert ({0})": {"en": "Hire expert ({0})", "fr": "Embaucher un expert ({0})", "es": "Contratar experto ({0})"},
+    "Deposit 10 seeds": {"en": "Deposit 10 seeds", "fr": "Déposer 10 graines", "es": "Depositar 10 semillas"},
+    "Pause after harvest": {"en": "Pause after harvest", "fr": "Pause après la récolte", "es": "Pausar tras la cosecha"},
+    "Dismiss worker": {"en": "Dismiss worker", "fr": "Congédier l’ouvrier", "es": "Despedir trabajador"},
+    "Collect harvest": {"en": "Collect harvest", "fr": "Récupérer la récolte", "es": "Recoger cosecha"},
+    "Expert": {"en": "Expert", "fr": "Expert", "es": "Experto"},
+    "Novice": {"en": "Novice", "fr": "Novice", "es": "Novato"},
+    "Working": {"en": "Working", "fr": "Au travail", "es": "Trabajando"},
+    "Paused": {"en": "Paused", "fr": "En pause", "es": "En pausa"},
+    "Choose a crop": {"en": "Choose a crop", "fr": "Choisir une culture", "es": "Elegir un cultivo"},
+    "Farming level too low": {"en": "Farming level too low", "fr": "Niveau agricole insuffisant", "es": "Nivel agrícola insuficiente"},
+    "Salary fund empty": {"en": "Salary fund empty", "fr": "Caisse de salaires insuffisante", "es": "Fondo de salarios insuficiente"},
+    "No seeds": {"en": "No seeds", "fr": "Graines épuisées", "es": "Sin semillas"},
+    "Granary full": {"en": "Granary full", "fr": "Grenier plein", "es": "Granero lleno"},
+    "Farmer level {0} - EXP {1}": {"en": "Farmer level {0} - EXP {1}", "fr": "Agriculteur niveau {0} - EXP {1}", "es": "Agricultor nivel {0} - EXP {1}"},
+    "Salary fund: {0} {1} - granary: {2}/{3}": {"en": "Salary fund: {0} {1} - granary: {2}/{3}", "fr": "Salaires : {0} {1} - grenier : {2}/{3}", "es": "Salarios: {0} {1} - granero: {2}/{3}"},
+    "Harvested: {0} - wages paid: {1}": {"en": "Harvested: {0} - wages paid: {1}", "fr": "Récolté : {0} - salaires versés : {1}", "es": "Cosechado: {0} - salarios pagados: {1}"},
+    "{0}: {1} seeds": {"en": "{0}: {1} seeds", "fr": "{0} : {1} graines", "es": "{0}: {1} semillas"},
+    "Worker {0} ({1}) - {2}": {"en": "Worker {0} ({1}) - {2}", "fr": "Ouvrier {0} ({1}) - {2}", "es": "Trabajador {0} ({1}) - {2}"},
+    "Crop: {0} - wage per cycle: {1}": {"en": "Crop: {0} - wage per cycle: {1}", "fr": "Culture : {0} - salaire par cycle : {1}", "es": "Cultivo: {0} - salario por ciclo: {1}"},
+    "Grow {0} (level {1}, {2} min)": {"en": "Grow {0} (level {1}, {2} min)", "fr": "Cultiver {0} (niveau {1}, {2} min)", "es": "Cultivar {0} (nivel {1}, {2} min)"},
+    "Farm saved.": {"en": "Farm saved.", "fr": "Ferme enregistrée.", "es": "Granja guardada."},
+    "Farming is not available yet.": {"en": "Farming is not available yet.", "fr": "L’agriculture n’est pas encore disponible.", "es": "La agricultura aún no está disponible."},
+    "Only the owner can manage this farm.": {"en": "Only the owner can manage this farm.", "fr": "Seul le propriétaire peut gérer cette ferme.", "es": "Solo el propietario puede gestionar esta granja."},
+    "Farm worker not found.": {"en": "Farm worker not found.", "fr": "Ouvrier agricole introuvable.", "es": "Trabajador agrícola no encontrado."},
+    "Not enough supplies.": {"en": "Not enough supplies.", "fr": "Réserves insuffisantes.", "es": "Suministros insuficientes."},
+    "Farm worker limit reached.": {"en": "Farm worker limit reached.", "fr": "Limite d’ouvriers agricoles atteinte.", "es": "Límite de trabajadores agrícolas alcanzado."},
+    "Pause the worker and wait for the current harvest.": {"en": "Pause the worker and wait for the current harvest.", "fr": "Mets l’ouvrier en pause et attends la récolte en cours.", "es": "Pausa al trabajador y espera la cosecha actual."},
+    "Invalid farm quantity.": {"en": "Invalid farm quantity.", "fr": "Quantité agricole invalide.", "es": "Cantidad agrícola no válida."},
+    "Wait for the current harvest before changing crops.": {"en": "Wait for the current harvest before changing crops.", "fr": "Attends la récolte en cours avant de changer de culture.", "es": "Espera la cosecha actual antes de cambiar de cultivo."},
+    "Withdraw the previous salary currency first.": {"en": "Withdraw the previous salary currency first.", "fr": "Retire d’abord l’ancienne monnaie de la caisse de salaires.", "es": "Retira primero la moneda anterior del fondo de salarios."}
   }
 }

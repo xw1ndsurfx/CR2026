@@ -52,6 +52,10 @@ internal static class FarmingUiTests
                 rows.UpdateScrollBars();
                 typeof(ScrollControl).GetMethod("OnMouseWheeled", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(rows, [-120]);
                 Check(rows.VerticalScrollBar.ScrollAmount > 0, "Long farm management content is scrollable");
+                var shop = (ControlBase)Activator.CreateInstance(type, [canvas, true])!;
+                type.GetMethod("Apply")!.Invoke(shop, [view, ""]);
+                Check(((Button)type.GetField("_farm", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(shop)!).IsHidden,
+                    "The dedicated NPC furniture shop does not expose farm management.");
                 view.IsOwner = false;
                 type.GetMethod("Apply")!.Invoke(window, [view, ""]);
                 Check(!Desc(rows).OfType<Button>().Any(), "Visitors have no farm management controls");

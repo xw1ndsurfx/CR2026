@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Intersect;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.Forms.DockingElements;
@@ -40,8 +40,16 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--promotions-only")) { ShopPromotionTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--invasion-only")) { InvasionEditorTests.Run(); InvasionConditionEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--fishing-only")) { FishingEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--consumables-only")) { BoosterEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--services-qol-only")) { ServicesQolEditorTests.Run(); HousingPickerTests.Run(); NavalShopEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-zoom-only")) { CharacterPreviewZoomTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--auto-creators-only")) { AutoCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--smart-map-only")) { SmartMapBuilderTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--royal-combat-only")) { RoyalCombatEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--item-usability-only")) { ItemEditorUsabilityTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-creators-only")) { CinematicCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-usability-only")) { CinematicUsabilityTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-chapters-only")) { CinematicChapterEditorTests.Run(); return; }
@@ -55,6 +63,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--weather-only")) { WeatherEnvironmentEditorTests.Run();QualityOfLifeEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--qol-only")) { WeatherEnvironmentEditorTests.Run(); BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();AnimationImportNavigationTests.Run();AchievementRewardEditorTests.Run();NavalSystemEditorTests.Run();NavalPatrolCreatorEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--harbour-only")) { HarbourDockEditorTests.Run(); NavalShopEditorTests.Run(); NavalSystemEditorTests.Run(); NavalPatrolCreatorEditorTests.Run(); NavalCombatMusicEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--dock-landing-only")) { HarbourDockEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--achievement-icons-only")) { AchievementIconEditorTests.Run(); MonthlyNpcMissionEditorTests.Run(); return; }
@@ -65,6 +74,7 @@ internal static class Program
         SaveProtectionTests.Run();
         SearchableChoiceTests.Run();
         EditorWindowTests.Run();
+        ShopPromotionTests.Run();
         SoundImportTests.Run();
         NavalMapListTests.Run();
         HarbourDockEditorTests.Run();
@@ -84,6 +94,7 @@ internal static class Program
         InvasionConditionEditorTests.Run();
         MiniGameEditorTests.Run();
         RoyalCombatEditorTests.Run();
+        AutoCreatorsTests.Run();
         HousingPickerTests.Run();
         using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))
         {
@@ -184,7 +195,11 @@ internal static class Program
         Check(editor.CurrentPage.WorldMapOffsetX == -64 && editor.CurrentPage.WorldMapOffsetY == 32, "Page offsets must save");
         editor.Size = new Size(1500, 950); editor.PerformLayout();
         var split = editor.Controls.OfType<SplitContainer>().Single();
-        Check(split.Width > 1400 && split.Height > 700 && split.Panel2.Width > 800, "Event command area must grow with the window");
+        // Windows caps oversized requests to the monitor's tracking size on laptops.
+        var chromeHeight = editor.Controls.Cast<Control>()
+            .Where(control => control.Dock is DockStyle.Top or DockStyle.Bottom).Sum(control => control.Height);
+        Check(split.Width == editor.ClientSize.Width && split.Height == editor.ClientSize.Height - chromeHeight &&
+            split.Panel2.Width >= split.Panel2MinSize, "Event command area must fill the available window on every monitor");
         var save = (Control)typeof(FrmEvent).GetField("btnSave", flags)!.GetValue(editor)!;
         Check(save.Parent!.Bottom <= editor.ClientSize.Height && save.Parent.Height >= save.Bottom, "Save controls remain accessible");
         editor.ShowInTaskbar = false; editor.Opacity = 0; editor.StartPosition = FormStartPosition.Manual;

@@ -635,6 +635,7 @@ public partial class Entity : IEntity
 
     public virtual void Dispose()
     {
+        Intersect.Client.Interface.Game.FishingWorldPresentation.Remove(Id);
         if (RenderList != null)
         {
             _ = RenderList.Remove(this);
@@ -1374,6 +1375,7 @@ public partial class Entity : IEntity
 
         //Order the layers of paperdolls and sprites
         var cinematicDirection = Graphics.CinematicDrawDirection(_lastDirection);
+        DrawFishingEquipment(false, renderColor);
         for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection].Count; z++)
         {
             var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection][z];
@@ -1409,7 +1411,7 @@ public partial class Entity : IEntity
                         var itemPaperdoll = Gender == 0
                             ? itemDescriptor.MalePaperdoll
                             : itemDescriptor.FemalePaperdoll;
-                        DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
+                        if (!IsFishingEquipment(itemId)) DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
                         drewEquipment = true;
                     }
 
@@ -1424,6 +1426,7 @@ public partial class Entity : IEntity
                 }
             }
         }
+        DrawFishingEquipment(true, renderColor);
         EndMountDraw(renderColor);
         if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
             Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
@@ -1737,7 +1740,7 @@ public partial class Entity : IEntity
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = position == 2
-            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2 * NameplateScale
+            ? GetLabelLocation(LabelType.Afk)
             : position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
 
         if (backgroundColor != Color.Transparent)
@@ -1872,6 +1875,7 @@ public partial class Entity : IEntity
             LabelType.Name => layout.Name,
             LabelType.Header => layout.Header,
             LabelType.Guild => layout.Guild,
+            LabelType.Afk => layout.Afk,
             LabelType.ChatBubble => layout.ChatBubble,
             _ => layout.Name,
         };
@@ -2276,6 +2280,7 @@ public partial class Entity : IEntity
                 SpriteFrameTimer = timingMilliseconds;
             }
         }
+        ApplyFishingBodyAnimation();
     }
 
     public void ResetSpriteFrame()
@@ -2516,6 +2521,8 @@ public partial class Entity : IEntity
             }
 
             tmpMapId = Globals.MapGrid[gridX, gridY];
+            if ((this is Player || GetType() == typeof(Entity)) &&
+                Intersect.Client.Interface.Interface.InGameUiOrNull?.CampfireBlocks(tmpMapId, tmpX, tmpY, z) == true) return -2;
 
             foreach (var en in Globals.Entities)
             {

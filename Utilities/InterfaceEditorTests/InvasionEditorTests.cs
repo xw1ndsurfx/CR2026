@@ -33,8 +33,8 @@ internal static class InvasionEditorTests
             var message = (TextBox)Field("_reminder60Message");
             Check(message.Multiline && message.ScrollBars == ScrollBars.Vertical && message.Text == invasion.Reminder60Message && message.MaxLength == 16384,
                 "Editor retains long multiline speeches and exposes scrolling");
-            Check(((ListBox)Field("_additionalTargets")).Items.Count == 1 && ((NumericUpDown)Field("_environmentLead")).Value == 0,
-                "Editor loads additional targets and first-warning ambience default");
+            Check(((ListBox)Field("_additionalTargets")).Items.Count == 1,
+                "Editor loads additional targets without the obsolete first-warning ambience offset");
             for (var i = 0; i < reminders.Length; i++)
             {
                 var picker = (ComboBox)Field($"_reminder{reminders[i]}CommonEvent");

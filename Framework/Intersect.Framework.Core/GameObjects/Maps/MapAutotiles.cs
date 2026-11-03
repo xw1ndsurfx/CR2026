@@ -2143,7 +2143,7 @@ public partial class MapAutotiles
 
     public bool CheckTileMatch(string layerName, int x1, int y1, int x2, int y2, MapDescriptor[,] surroundingMaps)
     {
-        Tile targetTile;
+        Tile targetTile = default;
         targetTile.TilesetId = Guid.Empty;
         targetTile.X = -1;
         targetTile.Y = -1;
@@ -2210,6 +2210,11 @@ public partial class MapAutotiles
         }
 
         // check we//re a matching
+        // Ground-only shore variants retain their original water connections,
+        // including across map boundaries. Ordinary atlas rows stay distinct.
+        if ((sourceTile.TilesetId != targetTile.TilesetId || sourceTile.X != targetTile.X || sourceTile.Y != targetTile.Y)
+            && GroundShoreVariant.Connects(sourceTile, targetTile)) return true;
+
         if (sourceTile.TilesetId != targetTile.TilesetId)
         {
             return false;

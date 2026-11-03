@@ -380,6 +380,8 @@ public static partial class Graphics
                     EntitiesDrawn++;
                 }
 
+                if (x == 1) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y);
+
                 if (x == 0 && y > 0 && y % mapHeight == 0)
                 {
                     for (var x1 = gridX - 1; x1 <= gridX + 1; x1++)
@@ -424,6 +426,7 @@ public static partial class Graphics
             for (var x = 3; x < 6; x++)
             {
                 if (x == 4) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y, true);
+                if (x == 4) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y, true);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.
@@ -617,6 +620,7 @@ public static partial class Graphics
 
         UpdateView();
 
+        renderer.BeginWorldBlur(gameState==GameStates.InGame ? Intersect.Client.Interface.Game.IntoxicationVisuals.BlurStrength : 0);
         switch (gameState)
         {
             case GameStates.Intro:
@@ -646,6 +650,7 @@ public static partial class Graphics
         if (gameState == GameStates.InGame && Cinematics.CinematicCamera.PerspectiveRequested && Globals.Me?.MapInstance is MapInstance weatherMap)
         { weatherMap.DrawWeather(); weatherMap.DrawStormFlash(); }
         if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
+        renderer.EndWorldBlur();
         renderer.Scale = Globals.Database.UIScale;
 
         Interface.Interface.DrawGui(deltaTime, totalTime);

@@ -437,6 +437,18 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
+        try { return ProcessPacketCore(packet, client); }
+        catch (Exception exception)
+        {
+            // Record identifiers and the operation only, never authentication/chat packet contents.
+            ServerCrashLog.Record($"Packet processing failed; packet={packet?.GetType().Name}; " +
+                $"clientId={client?.Id}; mapId={client?.Entity?.MapId}", exception);
+            throw;
+        }
+    }
+
+    private bool ProcessPacketCore(IPacket packet, Client client)
+    {
         if (client.Entity is { NavalShipId: var shipId } navalPlayer && shipId != Guid.Empty &&
             !(navalPlayer.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld && Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(navalPlayer)) &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
@@ -760,23 +772,10 @@ internal sealed partial class PacketHandler
         PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
 
         // Send dedicated World Map data instead of normal gameplay MapPackets.
-        // This keeps the complete grid independent from the normal 3x3 gameplay map lifecycle.
+        // Discovered maps stay independent from the normal 3x3 gameplay map lifecycle.
         foreach (var mapId in grid.MapIds)
         {
-            if (!MapController.TryGet(mapId, out var map))
-            {
-                continue;
-            }
-
-            client.Send(
-                new WorldMapMapDataPacket(
-                    map.Id,
-                    map.JsonData,
-                    map.TileData,
-                    map.GetAttributeData(),
-                    map.Revision
-                )
-            );
+            PacketSender.SendDiscoveredWorldMapData(client, mapId);
         }
     }
 
@@ -2044,7 +2043,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.BuyItem(packet.Slot, packet.Quantity);
+        player.BuyItem(packet.Slot, packet.Quantity, packet.ExpectedUnitPrice);
     }
 
     //SellItemPacket
@@ -2056,7 +2055,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.SellItem(packet.Slot, packet.Quantity);
+        player.SellItem(packet.Slot, packet.Quantity, packet.AllCopies);
     }
 
     //CloseShopPacket

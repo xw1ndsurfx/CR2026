@@ -13,8 +13,24 @@ public partial class GameInterface
     private ArcheryWindow? _archeryWindow;
     private WeaponMasteriesWindow? _masteriesWindow;
     private UniversalAmmunitionWindow? _ammunitionWindow;
+    private WeaponSkillBar? _weaponSkills;
+    private long _weaponSkillsRequestAt;
+    private void UpdateWeaponSkills()
+    {
+        if(General.Globals.Me==null) return;
+        if(_weaponSkills?.HasMasteryState!=true && Environment.TickCount64>=_weaponSkillsRequestAt)
+        {
+            _weaponSkillsRequestAt=Environment.TickCount64+3000;
+            Networking.Network.SendPacket(new ArcheryRequestPacket { Action=ArcheryAction.SyncMasteries });
+        }
+        _weaponSkills?.Update();
+    }
     internal void ApplyArcheryState(ArcheryStatePacket packet)
     {
+        if(packet.WeaponSkillCooldownsJson.Length>0)
+        {
+            _weaponSkills??=new WeaponSkillBar(GameCanvas);_weaponSkills.Apply(packet);return;
+        }
         if (packet.AmmunitionJson.Length > 0)
         {
             if (_ammunitionWindow == null && !packet.Open) return;
@@ -22,6 +38,10 @@ public partial class GameInterface
         }
         if (packet.MasteriesJson.Length > 0 || packet.MasteriesReadOnly)
         {
+            if(!packet.MasteriesReadOnly)
+            {
+                _weaponSkills??=new WeaponSkillBar(GameCanvas);_weaponSkills.Apply(packet);
+            }
             if (_masteriesWindow == null && !packet.Open) return;
             _masteriesWindow ??= new WeaponMasteriesWindow(GameCanvas); _masteriesWindow.Apply(packet); return;
         }

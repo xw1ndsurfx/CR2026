@@ -1,0 +1,304 @@
+{
+  "Entries": {
+    "CORPS ROYAUX": {
+      "en": "CORPS ROYAUX",
+      "fr": "CORPS ROYAUX",
+      "es": "CORPS ROYAUX"
+    },
+    "PROFESSION · FISHING": {
+      "en": "PROFESSION · FISHING",
+      "fr": "MÉTIER · PÊCHE",
+      "es": "OFICIO · PESCA"
+    },
+    "ACTIVE FISHING": {
+      "en": "ACTIVE FISHING",
+      "fr": "PÊCHE ACTIVE",
+      "es": "PESCA ACTIVA"
+    },
+    "AUTO": {
+      "en": "AUTO",
+      "fr": "AUTO",
+      "es": "AUTO"
+    },
+    "EQUIPMENT": {
+      "en": "EQUIPMENT",
+      "fr": "ÉQUIPEMENT",
+      "es": "EQUIPO"
+    },
+    "INVENTORY": {
+      "en": "INVENTORY",
+      "fr": "INVENTAIRE",
+      "es": "INVENTARIO"
+    },
+    "Stackable catches": {
+      "en": "Stackable catches",
+      "fr": "Prises empilables",
+      "es": "Capturas apilables"
+    },
+    "AUTOMATIC FISHING": {
+      "en": "AUTOMATIC FISHING",
+      "fr": "PÊCHE AUTOMATIQUE",
+      "es": "PESCA AUTOMÁTICA"
+    },
+    "ACTIVATE": {
+      "en": "ACTIVATE",
+      "fr": "ACTIVER",
+      "es": "ACTIVAR"
+    },
+    "Stops without bait or inventory space": {
+      "en": "Stops without bait or inventory space",
+      "fr": "Arrêt sans appâts ou si inventaire plein",
+      "es": "Se detiene sin cebo o con el inventario lleno"
+    },
+    "CAST THE LINE": {
+      "en": "CAST THE LINE",
+      "fr": "LANCER LA LIGNE",
+      "es": "LANZAR EL SEDAL"
+    },
+    "ACCEPT THE CHALLENGE": {
+      "en": "ACCEPT THE CHALLENGE",
+      "fr": "RELEVER LE DÉFI",
+      "es": "ACEPTAR EL DESAFÍO"
+    },
+    "Left": {
+      "en": "Left",
+      "fr": "Gauche",
+      "es": "Izquierda"
+    },
+    "Up": {
+      "en": "Up",
+      "fr": "Haut",
+      "es": "Arriba"
+    },
+    "Right": {
+      "en": "Right",
+      "fr": "Droite",
+      "es": "Derecha"
+    },
+    "Down": {
+      "en": "Down",
+      "fr": "Bas",
+      "es": "Abajo"
+    },
+    "Stabilize": {
+      "en": "Stabilize",
+      "fr": "Stabiliser",
+      "es": "Estabilizar"
+    },
+    "Pull": {
+      "en": "Pull",
+      "fr": "Traction",
+      "es": "Tirar"
+    },
+    "Repair": {
+      "en": "Repair",
+      "fr": "Réparer",
+      "es": "Reparar"
+    },
+    "Dive": {
+      "en": "Dive",
+      "fr": "Plonger",
+      "es": "Sumergir"
+    },
+    "Fishing data could not be read. Reopen the activity.": {
+      "en": "Fishing data could not be read. Reopen the activity.",
+      "fr": "Les données de pêche sont illisibles. Rouvre cette activité.",
+      "es": "No se pudieron leer los datos de pesca. Vuelve a abrir la actividad."
+    },
+    "Level {0}": {
+      "en": "Level {0}",
+      "fr": "Niveau {0}",
+      "es": "Nivel {0}"
+    },
+    "MAX": {
+      "en": "MAX",
+      "fr": "MAX",
+      "es": "MÁX"
+    },
+    "{0:N0} / {1:N0} XP": {
+      "en": "{0:N0} / {1:N0} XP",
+      "fr": "{0:N0} / {1:N0} XP",
+      "es": "{0:N0} / {1:N0} XP"
+    },
+    "Rod": {
+      "en": "Rod",
+      "fr": "Canne",
+      "es": "Caña"
+    },
+    "Net": {
+      "en": "Net",
+      "fr": "Filet",
+      "es": "Red"
+    },
+    "Cage": {
+      "en": "Cage",
+      "fr": "Cage",
+      "es": "Nasa"
+    },
+    "Line": {
+      "en": "Line",
+      "fr": "Ligne",
+      "es": "Sedal"
+    },
+    "No bait": {
+      "en": "No bait",
+      "fr": "Sans appât",
+      "es": "Sin cebo"
+    },
+    "Bait ×{0}": {
+      "en": "Bait ×{0}",
+      "fr": "Appâts ×{0}",
+      "es": "Cebo ×{0}"
+    },
+    "Line condition · {0:0}%": {
+      "en": "Line condition · {0:0}%",
+      "fr": "État de la ligne · {0:0}%",
+      "es": "Estado del sedal · {0:0}%"
+    },
+    "Tension {0:0}% · Depth {1:0}%": {
+      "en": "Tension {0:0}% · Depth {1:0}%",
+      "fr": "Tension {0:0}% · Profondeur {1:0}%",
+      "es": "Tensión {0:0}% · Profundidad {1:0}%"
+    },
+    "STOP AUTOMATIC FISHING": {
+      "en": "STOP AUTOMATIC FISHING",
+      "fr": "ARRÊTER LA PÊCHE AUTO",
+      "es": "DETENER PESCA AUTOMÁTICA"
+    },
+    "ACTIVATE AFTER THIS CATCH": {
+      "en": "ACTIVATE AFTER THIS CATCH",
+      "fr": "ACTIVER APRÈS LA PRISE",
+      "es": "ACTIVAR TRAS ESTA CAPTURA"
+    },
+    "Automatic fishing is disabled in this zone.": {
+      "en": "Automatic fishing is disabled in this zone.",
+      "fr": "La pêche automatique est désactivée ici.",
+      "es": "La pesca automática está desactivada aquí."
+    },
+    "Legendary catch: waiting for you": {
+      "en": "Legendary catch: waiting for you",
+      "fr": "Prise légendaire : en attente de toi",
+      "es": "Captura legendaria: esperando tu acción"
+    },
+    "Fishing continues while connected": {
+      "en": "Fishing continues while connected",
+      "fr": "Les prises s’enchaînent tant que tu restes connecté",
+      "es": "Las capturas continúan mientras sigues conectado"
+    },
+    "Chain catches while connected": {
+      "en": "Chain catches while connected",
+      "fr": "Enchaîne les prises en restant connecté",
+      "es": "Encadena capturas mientras sigues conectado"
+    },
+    "Follow the highlighted direction before time runs out": {
+      "en": "Follow the highlighted direction before time runs out",
+      "fr": "Suis la direction indiquée avant la fin du temps",
+      "es": "Sigue la dirección indicada antes de que se acabe el tiempo"
+    },
+    "Hold: reel in  ·  Release: let the line run": {
+      "en": "Hold: reel in  ·  Release: let the line run",
+      "fr": "Maintenir : mouliner  ·  Relâcher : laisser filer",
+      "es": "Mantener: recoger  ·  Soltar: dar sedal"
+    },
+    "Choose active fishing or automatic fishing": {
+      "en": "Choose active fishing or automatic fishing",
+      "fr": "Choisis la pêche active ou automatique",
+      "es": "Elige la pesca activa o automática"
+    },
+    "CAST AGAIN": {
+      "en": "CAST AGAIN",
+      "fr": "RELANCER",
+      "es": "LANZAR DE NUEVO"
+    },
+    "Ready to fish": {
+      "en": "Ready to fish",
+      "fr": "Prêt à pêcher",
+      "es": "Listo para pescar"
+    },
+    "Waiting for a bite…": {
+      "en": "Waiting for a bite…",
+      "fr": "En attente d’une touche…",
+      "es": "Esperando una picada…"
+    },
+    "The fish resists!\nRelease the reel": {
+      "en": "The fish resists!\nRelease the reel",
+      "fr": "Le poisson résiste !\nRelâche le moulinet",
+      "es": "¡El pez se resiste!\nSuelta el carrete"
+    },
+    "Reel in!\nHold to bring the catch closer": {
+      "en": "Reel in!\nHold to bring the catch closer",
+      "fr": "Mouline !\nMaintiens pour rapprocher la prise",
+      "es": "¡Recoge!\nMantén pulsado para acercar la captura"
+    },
+    "A legendary creature!\nAccept within {0}s": {
+      "en": "A legendary creature!\nAccept within {0}s",
+      "fr": "Une créature légendaire !\nAccepte avant {0}s",
+      "es": "¡Una criatura legendaria!\nAcepta en {0}s"
+    },
+    "Legendary challenge · {0}/{1}\n{2} · {3:0.0}s": {
+      "en": "Legendary challenge · {0}/{1}\n{2} · {3:0.0}s",
+      "fr": "Défi légendaire · {0}/{1}\n{2} · {3:0.0}s",
+      "es": "Desafío legendario · {0}/{1}\n{2} · {3:0.0}s"
+    },
+    "{0} ×{1}\n+{2} XP": {
+      "en": "{0} ×{1}\n+{2} XP",
+      "fr": "{0} ×{1}\n+{2} XP",
+      "es": "{0} ×{1}\n+{2} XP"
+    },
+    "The catch escaped": {
+      "en": "The catch escaped",
+      "fr": "La prise s’est échappée",
+      "es": "La captura se ha escapado"
+    },
+    " ({0}s)": {
+      "en": " ({0}s)",
+      "fr": " ({0}s)",
+      "es": " ({0}s)"
+    },
+    "×{0:N0}": {
+      "en": "×{0:N0}",
+      "fr": "×{0:N0}",
+      "es": "×{0:N0}"
+    },
+    "This session: {0} catches": {
+      "en": "This session: {0} catches",
+      "fr": "Cette session : {0} prises",
+      "es": "Esta sesión: {0} capturas"
+    },
+    "Fishing zone": {
+      "en": "Fishing zone",
+      "fr": "Zone de pêche",
+      "es": "Zona de pesca"
+    },
+    "CANCEL AUTOMATIC FISHING": {
+      "en": "CANCEL AUTOMATIC FISHING",
+      "fr": "ANNULER LA PÊCHE AUTO",
+      "es": "CANCELAR PESCA AUTOMÁTICA"
+    },
+    "KEEP AUTOMATIC FISHING": {
+      "en": "KEEP AUTOMATIC FISHING",
+      "fr": "GARDER LA PÊCHE AUTO",
+      "es": "MANTENER PESCA AUTOMÁTICA"
+    },
+    "Automatic starts after this catch": {
+      "en": "Automatic starts after this catch",
+      "fr": "La pêche auto commencera après cette prise",
+      "es": "La pesca automática empezará tras esta captura"
+    },
+    "Automatic stops after this catch": {
+      "en": "Automatic stops after this catch",
+      "fr": "La pêche auto s’arrêtera après cette prise",
+      "es": "La pesca automática se detendrá tras esta captura"
+    },
+    "AUTO will resume when this invitation expires": {
+      "en": "AUTO will resume when this invitation expires",
+      "fr": "AUTO reprendra à la fin de cette invitation",
+      "es": "AUTO se reanudará cuando termine esta invitación"
+    },
+    "Legendary catches require manual fishing": {
+      "en": "Legendary catches require manual fishing",
+      "fr": "Les prises légendaires se pêchent manuellement",
+      "es": "Las capturas legendarias se pescan manualmente"
+    }
+  }
+}

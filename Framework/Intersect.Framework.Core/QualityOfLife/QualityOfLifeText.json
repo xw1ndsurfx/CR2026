@@ -1,5 +1,565 @@
 {
   "Entries": {
+    "Roll the Dice": {
+      "en": "Roll the Dice",
+      "fr": "Roll the Dice",
+      "es": "Roll the Dice"
+    },
+    "Less than 7": {
+      "en": "Less than 7",
+      "fr": "Moins de 7",
+      "es": "Menos de 7"
+    },
+    "Exactly 7": {
+      "en": "Exactly 7",
+      "fr": "Exactement 7",
+      "es": "Exactamente 7"
+    },
+    "More than 7": {
+      "en": "More than 7",
+      "fr": "Plus de 7",
+      "es": "Más de 7"
+    },
+    "Roll the dice": {
+      "en": "Roll the dice",
+      "fr": "Lancer les dés",
+      "es": "Lanzar los dados"
+    },
+    "Play again": {
+      "en": "Play again",
+      "fr": "Rejouer",
+      "es": "Volver a jugar"
+    },
+    "Rules": {
+      "en": "Rules",
+      "fr": "Règles",
+      "es": "Reglas"
+    },
+    "Your purse": {
+      "en": "Your purse",
+      "fr": "Votre bourse",
+      "es": "Tu bolsa"
+    },
+    "Last round": {
+      "en": "Last round",
+      "fr": "Dernière manche",
+      "es": "Última ronda"
+    },
+    "Next wager": {
+      "en": "Next wager",
+      "fr": "Prochaine mise",
+      "es": "Próxima apuesta"
+    },
+    "Level {0}": {
+      "en": "Level {0}",
+      "fr": "Niveau {0}",
+      "es": "Nivel {0}"
+    },
+    "MAX": {
+      "en": "MAX",
+      "fr": "MAX",
+      "es": "MÁX"
+    },
+    "{0:N0} / {1:N0} XP": {
+      "en": "{0:N0} / {1:N0} XP",
+      "fr": "{0:N0} / {1:N0} XP",
+      "es": "{0:N0} / {1:N0} XP"
+    },
+    "{0:N0} {1}": {
+      "en": "{0:N0} {1}",
+      "fr": "{0:N0} {1}",
+      "es": "{0:N0} {1}"
+    },
+    "{0} + {1} = {2}": {
+      "en": "{0} + {1} = {2}",
+      "fr": "{0} + {1} = {2}",
+      "es": "{0} + {1} = {2}"
+    },
+    "+{0:N0} XP": {
+      "en": "+{0:N0} XP",
+      "fr": "+{0:N0} XP",
+      "es": "+{0:N0} XP"
+    },
+    "Choose your bet and roll the two dice.": {
+      "en": "Choose your bet and roll the two dice.",
+      "fr": "Choisissez votre pari puis lancez les deux dés.",
+      "es": "Elige tu apuesta y lanza los dos dados."
+    },
+    "No completed round yet.": {
+      "en": "No completed round yet.",
+      "fr": "Aucune manche terminée.",
+      "es": "Aún no hay rondas terminadas."
+    },
+    "Wager: {0:N0}\nReturn: {1:N0}\nStake included\nNet gain: {2:+#,0;-#,0;0}": {
+      "en": "Wager: {0:N0}\nReturn: {1:N0}\nStake included\nNet gain: {2:+#,0;-#,0;0}",
+      "fr": "Mise : {0:N0}\nRetour : {1:N0}\nMise incluse\nGain net : {2:+#,0;-#,0;0}",
+      "es": "Apuesta: {0:N0}\nRetorno: {1:N0}\nApuesta incluida\nGanancia neta: {2:+#,0;-#,0;0}"
+    },
+    "Request pending…": {
+      "en": "Request pending…",
+      "fr": "Demande en cours…",
+      "es": "Solicitud en curso…"
+    },
+    "Rolling…": {
+      "en": "Rolling…",
+      "fr": "Lancer en cours…",
+      "es": "Lanzando…"
+    },
+    "You won!": {
+      "en": "You won!",
+      "fr": "Gagné !",
+      "es": "¡Has ganado!"
+    },
+    "You lost.": {
+      "en": "You lost.",
+      "fr": "Perdu.",
+      "es": "Has perdido."
+    },
+    "Invalid wager. Check the limits and step in Rules.": {
+      "en": "Invalid wager. Check the limits and step in Rules.",
+      "fr": "Mise invalide. Vérifiez les limites et le pas dans les règles.",
+      "es": "Apuesta no válida. Revisa los límites y el incremento en las reglas."
+    },
+    "Your purse cannot cover this wager.": {
+      "en": "Your purse cannot cover this wager.",
+      "fr": "Votre bourse ne permet pas cette mise.",
+      "es": "Tu bolsa no cubre esta apuesta."
+    },
+    "The house cannot cover this return.": {
+      "en": "The house cannot cover this return.",
+      "fr": "La banque ne peut pas couvrir ce retour.",
+      "es": "La banca no puede cubrir este retorno."
+    },
+    "The table changed. Please try again.": {
+      "en": "The table changed. Please try again.",
+      "fr": "La table a changé. Réessayez.",
+      "es": "La mesa ha cambiado. Inténtalo de nuevo."
+    },
+    "Settlement is being recovered. Reopen the table before playing again.": {
+      "en": "Settlement is being recovered. Reopen the table before playing again.",
+      "fr": "Le règlement est en cours de récupération. Rouvrez la table avant de rejouer.",
+      "es": "Se está recuperando la liquidación. Vuelve a abrir la mesa antes de jugar."
+    },
+    "Players at this table": {
+      "en": "Players at this table",
+      "fr": "Joueurs à cette table",
+      "es": "Jugadores en esta mesa"
+    },
+    "{0} — ready": {
+      "en": "{0} — ready",
+      "fr": "{0} — prêt",
+      "es": "{0} — listo"
+    },
+    "{0}: {1} + {2} = {3} · net {4:+#,0;-#,0;0}": {
+      "en": "{0}: {1} + {2} = {3} · net {4:+#,0;-#,0;0}",
+      "fr": "{0} : {1} + {2} = {3} · net {4:+#,0;-#,0;0}",
+      "es": "{0}: {1} + {2} = {3} · neto {4:+#,0;-#,0;0}"
+    },
+    "Unable to open Roll the Dice. Check the currency, buy-in and house reserve.": {
+      "en": "Unable to open Roll the Dice. Check the currency, buy-in and house reserve.",
+      "fr": "Impossible d’ouvrir Roll the Dice. Vérifiez la monnaie, le droit d’entrée et la réserve de la banque.",
+      "es": "No se puede abrir Roll the Dice. Revisa la moneda, la entrada y la reserva de la banca."
+    },
+    "Table ID": {
+      "en": "Table ID",
+      "fr": "Identifiant de table",
+      "es": "Identificador de mesa"
+    },
+    "Maximum players": {
+      "en": "Maximum players",
+      "fr": "Nombre maximal de joueurs",
+      "es": "Máximo de jugadores"
+    },
+    "Currency item (Aureons)": {
+      "en": "Currency item (Aureons)",
+      "fr": "Objet monnaie (Aureons)",
+      "es": "Objeto moneda (Aureons)"
+    },
+    "Buy-in reserved from inventory": {
+      "en": "Buy-in reserved from inventory",
+      "fr": "Droit d’entrée réservé depuis l’inventaire",
+      "es": "Entrada reservada del inventario"
+    },
+    "House reserve per player": {
+      "en": "House reserve per player",
+      "fr": "Réserve de la banque par joueur",
+      "es": "Reserva de la banca por jugador"
+    },
+    "Minimum wager": {
+      "en": "Minimum wager",
+      "fr": "Mise minimale",
+      "es": "Apuesta mínima"
+    },
+    "Maximum wager": {
+      "en": "Maximum wager",
+      "fr": "Mise maximale",
+      "es": "Apuesta máxima"
+    },
+    "Wager step": {
+      "en": "Wager step",
+      "fr": "Pas de mise",
+      "es": "Incremento de apuesta"
+    },
+    "Total return for less/more than 7": {
+      "en": "Total return for less/more than 7",
+      "fr": "Retour total pour moins/plus de 7",
+      "es": "Retorno total para menos/más de 7"
+    },
+    "Total return for exactly 7": {
+      "en": "Total return for exactly 7",
+      "fr": "Retour total pour exactement 7",
+      "es": "Retorno total para exactamente 7"
+    },
+    "Use the same table ID and settings on the same map instance. Each player rolls independently. The lobby recruits players; Meet host does not buy in automatically.": {
+      "en": "Use the same table ID and settings on the same map instance. Each player rolls independently. The lobby recruits players; Meet host does not buy in automatically.",
+      "fr": "Utilisez le même identifiant et les mêmes réglages dans la même instance de carte. Chacun lance ses dés. Le lobby recrute les joueurs ; rejoindre l’hôte ne prélève aucun droit d’entrée.",
+      "es": "Usa el mismo identificador y ajustes en la misma instancia del mapa. Cada jugador lanza sus dados. El lobby reúne jugadores; reunirse con el anfitrión no cobra la entrada."
+    },
+    "Choose a currency, valid wager limits divisible by the step, and a reserve covering the largest possible net win.": {
+      "en": "Choose a currency, valid wager limits divisible by the step, and a reserve covering the largest possible net win.",
+      "fr": "Choisissez une monnaie, des limites divisibles par le pas et une réserve couvrant le gain net maximal.",
+      "es": "Elige una moneda, límites divisibles por el incremento y una reserva que cubra la mayor ganancia neta posible."
+    },
+    "Two independent dice. Less than 7: totals 2–6. Exactly 7: total 7. More than 7: totals 8–12.\nTotal returns: {0}× for less/more, {1}× for seven, stake included.\nWagers: {2:N0}–{3:N0}, in steps of {4:N0}.\n25 XP per win before event bonuses. Levels do not change the odds.\nEveryone rolls independently; results are shared at this table.": {
+      "en": "Two independent dice. Less than 7: totals 2–6. Exactly 7: total 7. More than 7: totals 8–12.\nTotal returns: {0}× for less/more, {1}× for seven, stake included.\nWagers: {2:N0}–{3:N0}, in steps of {4:N0}.\n25 XP per win before event bonuses. Levels do not change the odds.\nEveryone rolls independently; results are shared at this table.",
+      "fr": "Deux dés indépendants. Moins de 7 : totaux 2–6. Exactement 7 : total 7. Plus de 7 : totaux 8–12.\nRetours : {0}× pour moins/plus, {1}× pour sept, mise incluse.\nMises : {2:N0}–{3:N0}, par pas de {4:N0}.\n25 XP par victoire avant bonus d’événement. Le niveau ne change pas les probabilités.\nChacun lance ses dés ; les résultats sont partagés à cette table.",
+      "es": "Dos dados independientes. Menos de 7: totales 2–6. Exactamente 7: total 7. Más de 7: totales 8–12.\nRetornos: {0}× para menos/más, {1}× para siete, apuesta incluida.\nApuestas: {2:N0}–{3:N0}, en incrementos de {4:N0}.\n25 XP por victoria antes de bonos de evento. El nivel no cambia las probabilidades.\nCada jugador lanza sus dados; los resultados se comparten en esta mesa."
+    },
+    "Weapon skills": {
+      "en": "Weapon skills",
+      "fr": "Compétences d’armes",
+      "es": "Habilidades de armas"
+    },
+    "Skill animation": {
+      "en": "Skill animation",
+      "fr": "Animation de compétence",
+      "es": "Animación de habilidad"
+    },
+    "Impact animation": {
+      "en": "Impact animation",
+      "fr": "Animation d’impact",
+      "es": "Animación de impacto"
+    },
+    "Weapon skills use animations and their own cooldowns, without learning a spell.": {
+      "en": "Weapon skills use animations and their own cooldowns, without learning a spell.",
+      "fr": "Les compétences d’armes utilisent des animations et leurs propres délais de recharge, sans apprendre de spell.",
+      "es": "Las habilidades de armas utilizan animaciones y sus propios tiempos de recarga, sin aprender hechizos."
+    },
+    "Passive talent bonuses apply while its weapon is equipped.": {
+      "en": "Passive talent bonuses apply while its weapon is equipped.",
+      "fr": "Les bonus du talent passif s’appliquent lorsque son arme est équipée.",
+      "es": "Las bonificaciones del talento pasivo se aplican al equipar su arma."
+    },
+    "Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s": {
+      "en": "Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+      "fr": "Compétence d’arme · Dégâts {0}% · Portée {1} · Recharge {2}s",
+      "es": "Habilidad de arma · Daño {0}% · Alcance {1} · Recarga {2}s"
+    },
+    "{0} ({1}s)": {
+      "en": "{0} ({1}s)",
+      "fr": "{0} ({1}s)",
+      "es": "{0} ({1}s)"
+    },
+    "Select a hostile target first.": {
+      "en": "Select a hostile target first.",
+      "fr": "Sélectionnez d’abord une cible ennemie.",
+      "es": "Selecciona primero un objetivo enemigo."
+    },
+    "Skill unavailable: check your weapon, target and cooldown.": {
+      "en": "Skill unavailable: check your weapon, target and cooldown.",
+      "fr": "Compétence indisponible : vérifiez l’arme, la cible et la recharge.",
+      "es": "Habilidad no disponible: comprueba el arma, el objetivo y la recarga."
+    },
+    "Active": {
+      "en": "Active",
+      "fr": "Active",
+      "es": "Activa"
+    },
+    "Passive": {
+      "en": "Passive",
+      "fr": "Passive",
+      "es": "Pasiva"
+    },
+    "Weapon talent templates": {
+      "en": "Weapon talent templates",
+      "fr": "Modèles de talents d’arme",
+      "es": "Plantillas de talentos de armas"
+    },
+    "The mastery requirement applies to every usage requirement alternative.": {
+      "en": "The mastery requirement applies to every usage requirement alternative.",
+      "fr": "Le prérequis de maîtrise s’applique à chaque alternative des conditions d’utilisation.",
+      "es": "El requisito de maestría se aplica a cada alternativa de las condiciones de uso."
+    },
+    "Sword Training": {
+      "en": "Sword Training",
+      "fr": "Entraînement à l’épée",
+      "es": "Entrenamiento con espada"
+    },
+    "Quick Slashes": {
+      "en": "Quick Slashes",
+      "fr": "Taillades rapides",
+      "es": "Tajos rápidos"
+    },
+    "Blade Precision": {
+      "en": "Blade Precision",
+      "fr": "Précision de la lame",
+      "es": "Precisión de la hoja"
+    },
+    "Heavy Slashes": {
+      "en": "Heavy Slashes",
+      "fr": "Taillades puissantes",
+      "es": "Tajos potentes"
+    },
+    "Relentless Blade": {
+      "en": "Relentless Blade",
+      "fr": "Lame implacable",
+      "es": "Hoja implacable"
+    },
+    "Sword Expertise": {
+      "en": "Sword Expertise",
+      "fr": "Expertise à l’épée",
+      "es": "Pericia con espada"
+    },
+    "Dagger Training": {
+      "en": "Dagger Training",
+      "fr": "Entraînement à la dague",
+      "es": "Entrenamiento con daga"
+    },
+    "Quick Stabs": {
+      "en": "Quick Stabs",
+      "fr": "Estocades rapides",
+      "es": "Estocadas rápidas"
+    },
+    "Vital Strikes": {
+      "en": "Vital Strikes",
+      "fr": "Frappes vitales",
+      "es": "Golpes vitales"
+    },
+    "Deep Cuts": {
+      "en": "Deep Cuts",
+      "fr": "Entailles profondes",
+      "es": "Cortes profundos"
+    },
+    "Relentless Daggers": {
+      "en": "Relentless Daggers",
+      "fr": "Dagues implacables",
+      "es": "Dagas implacables"
+    },
+    "Dagger Expertise": {
+      "en": "Dagger Expertise",
+      "fr": "Expertise à la dague",
+      "es": "Pericia con daga"
+    },
+    "Heavy Weapon Training": {
+      "en": "Heavy Weapon Training",
+      "fr": "Entraînement aux armes lourdes",
+      "es": "Entrenamiento con armas pesadas"
+    },
+    "Swift Swings": {
+      "en": "Swift Swings",
+      "fr": "Balancements rapides",
+      "es": "Golpes rápidos"
+    },
+    "Crushing Precision": {
+      "en": "Crushing Precision",
+      "fr": "Précision écrasante",
+      "es": "Precisión aplastante"
+    },
+    "Heavy Blows": {
+      "en": "Heavy Blows",
+      "fr": "Coups puissants",
+      "es": "Golpes potentes"
+    },
+    "Relentless Swings": {
+      "en": "Relentless Swings",
+      "fr": "Balancements implacables",
+      "es": "Golpes implacables"
+    },
+    "Heavy Weapon Expertise": {
+      "en": "Heavy Weapon Expertise",
+      "fr": "Expertise aux armes lourdes",
+      "es": "Pericia con armas pesadas"
+    },
+    "Staff Training": {
+      "en": "Staff Training",
+      "fr": "Entraînement au bâton",
+      "es": "Entrenamiento con bastón"
+    },
+    "Quick Casting": {
+      "en": "Quick Casting",
+      "fr": "Incantations rapides",
+      "es": "Lanzamiento rápido"
+    },
+    "Arcane Precision": {
+      "en": "Arcane Precision",
+      "fr": "Précision arcanique",
+      "es": "Precisión arcana"
+    },
+    "Arcane Power": {
+      "en": "Arcane Power",
+      "fr": "Puissance arcanique",
+      "es": "Poder arcano"
+    },
+    "Arcane Rhythm": {
+      "en": "Arcane Rhythm",
+      "fr": "Rythme arcanique",
+      "es": "Ritmo arcano"
+    },
+    "Staff Expertise": {
+      "en": "Staff Expertise",
+      "fr": "Expertise au bâton",
+      "es": "Pericia con bastón"
+    },
+    "Whip Training": {
+      "en": "Whip Training",
+      "fr": "Entraînement au fouet",
+      "es": "Entrenamiento con látigo"
+    },
+    "Quick Lashes": {
+      "en": "Quick Lashes",
+      "fr": "Coups de fouet rapides",
+      "es": "Latigazos rápidos"
+    },
+    "Lash Precision": {
+      "en": "Lash Precision",
+      "fr": "Précision du fouet",
+      "es": "Precisión del látigo"
+    },
+    "Heavy Lashes": {
+      "en": "Heavy Lashes",
+      "fr": "Coups de fouet puissants",
+      "es": "Latigazos potentes"
+    },
+    "Relentless Lashes": {
+      "en": "Relentless Lashes",
+      "fr": "Coups de fouet implacables",
+      "es": "Latigazos implacables"
+    },
+    "Whip Expertise": {
+      "en": "Whip Expertise",
+      "fr": "Expertise au fouet",
+      "es": "Pericia con látigo"
+    },
+    "Owned": {
+      "en": "Owned",
+      "fr": "Possédés",
+      "es": "Adquiridos"
+    },
+    "Lobby": {
+      "en": "Lobby",
+      "fr": "Lobby",
+      "es": "Salón"
+    },
+    "Search products...": {
+      "en": "Search products...",
+      "fr": "Rechercher des produits...",
+      "es": "Buscar productos..."
+    },
+    "Old": {
+      "en": "Old",
+      "fr": "Anciens",
+      "es": "Antiguos"
+    },
+    "Price: high to low": {
+      "en": "Price: high to low",
+      "fr": "Prix décroissant",
+      "es": "Precio descendente"
+    },
+    "All products": {
+      "en": "All products",
+      "fr": "Tous les produits",
+      "es": "Todos los productos"
+    },
+    "Not owned": {
+      "en": "Not owned",
+      "fr": "Non possédés",
+      "es": "No adquiridos"
+    },
+    "No products match your filters.": {
+      "en": "No products match your filters.",
+      "fr": "Aucun produit ne correspond aux filtres.",
+      "es": "Ningún producto coincide con los filtros."
+    },
+    "Products: {0} / {1}": {
+      "en": "Products: {0} / {1}",
+      "fr": "Produits : {0} / {1}",
+      "es": "Productos: {0} / {1}"
+    },
+    "Open Stable": {
+      "en": "Open Stable",
+      "fr": "Ouvrir l’écurie",
+      "es": "Abrir el establo"
+    },
+    "Complete the selected quest": {
+      "en": "Complete the selected quest",
+      "fr": "Terminer la quête sélectionnée",
+      "es": "Completar la misión seleccionada"
+    },
+    "Quest objective": {
+      "en": "Quest objective",
+      "fr": "Objectif de quête",
+      "es": "Objetivo de misión"
+    },
+    "Quest to complete": {
+      "en": "Quest to complete",
+      "fr": "Quête à terminer",
+      "es": "Misión por completar"
+    },
+    "A participant must complete this quest during the run. All selected objectives are required.": {
+      "en": "A participant must complete this quest during the run. All selected objectives are required.",
+      "fr": "Un participant doit terminer cette quête pendant le donjon. Tous les objectifs sélectionnés sont requis.",
+      "es": "Un participante debe completar esta misión durante la incursión. Se requieren todos los objetivos seleccionados."
+    },
+    "Quest completed: {0}": {
+      "en": "Quest completed: {0}",
+      "fr": "Quête terminée : {0}",
+      "es": "Misión completada: {0}"
+    },
+    "Complete quest: {0}": {
+      "en": "Complete quest: {0}",
+      "fr": "Terminer la quête : {0}",
+      "es": "Completar misión: {0}"
+    },
+    "Boss defeated": {
+      "en": "Boss defeated",
+      "fr": "Boss vaincu",
+      "es": "Jefe derrotado"
+    },
+    "Defeat final boss": {
+      "en": "Defeat final boss",
+      "fr": "Vaincre le boss final",
+      "es": "Derrotar al jefe final"
+    },
+    "{0} monsters remaining": {
+      "en": "{0} monsters remaining",
+      "fr": "{0} monstres restants",
+      "es": "{0} monstruos restantes"
+    },
+    "Complete the dungeon.": {
+      "en": "Complete the dungeon.",
+      "fr": "Terminer le donjon.",
+      "es": "Completar la mazmorra."
+    },
+    "Quest": {
+      "en": "Quest",
+      "fr": "Quête",
+      "es": "Misión"
+    },
+    "Mastery level-up animation": {
+      "en": "Mastery level-up animation",
+      "fr": "Animation de montée de maîtrise",
+      "es": "Animación al subir de dominio"
+    },
+    "No animation": {
+      "en": "No animation",
+      "fr": "Aucune animation",
+      "es": "Sin animación"
+    },
+    "Missing animation": {
+      "en": "Missing animation",
+      "fr": "Animation introuvable",
+      "es": "Animación no encontrada"
+    },
     "7. Sounds": {
       "en": "7. Sounds",
       "fr": "7. Sons",
@@ -1059,6 +1619,24 @@
         "en": "Jousting",
         "fr": "Joutes royales",
         "es": "Justas reales"
+    },
+    "Jousting progression": {
+        "en": "Progression earned in jousting matches.",
+        "fr": "Progression gagnée pendant les matchs de joute.",
+        "es": "Progreso obtenido en los encuentros de justas."
+    },
+    "Weapon mastery level": { "en": "Weapon mastery level", "fr": "Niveau de maîtrise d’arme", "es": "Nivel de dominio de arma" },
+    "Missing mastery: {0}": { "en": "Missing mastery: {0}", "fr": "Maîtrise introuvable : {0}", "es": "Dominio no encontrado: {0}" },
+    "Weapon mastery {0} level {1} {2}": { "en": "Weapon mastery {0} level {1} {2}", "fr": "Maîtrise {0} de niveau {1} {2}", "es": "Dominio {0} de nivel {1} {2}" },
+    "{0}  •  Level {1}/{2}{3}": { "en": "{0}  •  Level {1}/{2}{3}", "fr": "{0}  •  Niveau {1}/{2}{3}", "es": "{0}  •  Nivel {1}/{2}{3}" },
+    "LEVEL UP!": { "en": "LEVEL UP!", "fr": "NIVEAU SUPÉRIEUR !", "es": "¡SUBIDA DE NIVEL!" },
+    "+{0:N0} XP  •  Maximum level reached": { "en": "+{0:N0} XP  •  Maximum level reached", "fr": "+{0:N0} XP  •  Niveau maximal atteint", "es": "+{0:N0} XP  •  Nivel máximo alcanzado" },
+    "Maximum level reached": { "en": "Maximum level reached", "fr": "Niveau maximal atteint", "es": "Nivel máximo alcanzado" },
+    "+{0:N0} XP  •  {1:N0} XP remaining": { "en": "+{0:N0} XP  •  {1:N0} XP remaining", "fr": "+{0:N0} XP  •  {1:N0} XP restants", "es": "+{0:N0} XP  •  {1:N0} XP restantes" },
+    "No valid campfire recipes exist yet. Configure one in the recipe editor.": {
+        "en": "No valid campfire recipes exist yet. Configure one in the recipe editor.",
+        "fr": "Aucune recette de feu de camp valide n’existe encore. Configurez-en une dans l’éditeur de recettes.",
+        "es": "Aún no hay recetas válidas de fogatas. Configure una en el editor de recetas."
     },
     "Left click: start. Right click: end. Shift-click: opponent lane.": {
         "en": "Left click: start. Right click: end. Shift-click: opponent lane.",
@@ -2847,6 +3425,23 @@
     "Full screen (F11)": { "en": "Full screen (F11)", "fr": "Plein écran (F11)", "es": "Pantalla completa (F11)" },
     "Progression": { "en": "Progression", "fr": "Progression", "es": "Progresión" },
     "Starting items and spells": { "en": "Starting items and spells", "fr": "Objets et sorts de départ", "es": "Objetos y hechizos iniciales" },
+    "Special offer": { "en": "Special offer", "fr": "Offre spéciale", "es": "Oferta especial" },
+    "Special offer...": { "en": "Special offer...", "fr": "Offre spéciale...", "es": "Oferta especial..." },
+    "Enable promotion": { "en": "Enable promotion", "fr": "Activer la promotion", "es": "Activar la promoción" },
+    "Reduction (%)": { "en": "Reduction (%)", "fr": "Réduction (%)", "es": "Descuento (%)" },
+    "Starts at": { "en": "Starts at", "fr": "Date de début", "es": "Fecha de inicio" },
+    "Ends at": { "en": "Ends at", "fr": "Date de fin", "es": "Fecha de fin" },
+    "Dates use your computer's local time ({0}).": { "en": "Dates use your computer's local time ({0}).", "fr": "Les dates utilisent l’heure locale de votre ordinateur ({0}).", "es": "Las fechas usan la hora local de tu equipo ({0})." },
+    "Remove promotion": { "en": "Remove promotion", "fr": "Retirer la promotion", "es": "Quitar la promoción" },
+    "The end date must be after the start date. Check daylight-saving time too.": { "en": "The end date must be after the start date. Check daylight-saving time too.", "fr": "La fin doit être après le début. Vérifiez également le changement d’heure.", "es": "El fin debe ser posterior al inicio. Comprueba también el cambio de hora." },
+    "Promotion price: {0} → {1}": { "en": "Promotion price: {0} → {1}", "fr": "Prix promotionnel : {0} → {1}", "es": "Precio promocional: {0} → {1}" },
+    "Disabled": { "en": "Disabled", "fr": "Désactivée", "es": "Desactivada" },
+    "Active": { "en": "Active", "fr": "Active", "es": "Activa" },
+    "Scheduled": { "en": "Scheduled", "fr": "Programmée", "es": "Programada" },
+    "Expired": { "en": "Expired", "fr": "Expirée", "es": "Caducada" },
+    "Invalid dates": { "en": "Invalid dates", "fr": "Dates invalides", "es": "Fechas no válidas" },
+    "Original price: {0}": { "en": "Original price: {0}", "fr": "Prix d’origine : {0}", "es": "Precio original: {0}" },
+    "Shop prices changed. Please check the updated price and try again.": { "en": "Shop prices changed. Please check the updated price and try again.", "fr": "Les prix ont changé. Vérifiez le nouveau prix puis réessayez.", "es": "Los precios han cambiado. Comprueba el nuevo precio e inténtalo de nuevo." },
     "GNU General Public License v3": {
       "en": "GNU General Public License v3",
       "fr": "Licence publique générale GNU v3",
@@ -3471,6 +4066,613 @@
       "en": "Choose a currency to enable resets.",
       "fr": "Choisissez une monnaie pour activer les réinitialisations.",
       "es": "Elige una moneda para activar los restablecimientos."
-    }
+    },
+    "Whips": {
+        "en": "Whips",
+        "fr": "Fouets",
+        "es": "Látigos"
+    },
+    "Weapon mastery requirement": {
+        "en": "Weapon mastery requirement",
+        "fr": "Prérequis de maîtrise d’arme",
+        "es": "Requisito de maestría de arma"
+    },
+    "Required mastery level": {
+        "en": "Required mastery level",
+        "fr": "Niveau de maîtrise requis",
+        "es": "Nivel de maestría requerido"
+    },
+    "No mastery requirement": {
+        "en": "No mastery requirement",
+        "fr": "Aucun prérequis de maîtrise",
+        "es": "Sin requisito de maestría"
+    },
+    "Mastery configuration is loading. Reopen the creator if no categories appear.": {
+        "en": "Mastery configuration is loading. Reopen the creator if no categories appear.",
+        "fr": "Chargement des maîtrises. Rouvrez le créateur si aucune catégorie ne s’affiche.",
+        "es": "Cargando maestrías. Vuelve a abrir el creador si no aparecen categorías."
+    },
+    "Requires {0} level {1}.": {
+        "en": "Requires {0} level {1}.",
+        "fr": "Maîtrise {0} de niveau {1} requise.",
+        "es": "Requiere {0} de nivel {1}."
+    },
+    "Character level": {
+        "en": "Character level",
+        "fr": "Niveau du personnage",
+        "es": "Nivel del personaje"
+    },
+    "Weapon mastery": {
+        "en": "Weapon mastery",
+        "fr": "Maîtrise d’arme",
+        "es": "Maestría de arma"
+    },
+    "Requirements (all)": {
+        "en": "Requirements (all)",
+        "fr": "Prérequis (tous)",
+        "es": "Requisitos (todos)"
+    },
+    "Requirements (alternative {0})": {
+        "en": "Requirements (alternative {0})",
+        "fr": "Prérequis (possibilité {0})",
+        "es": "Requisitos (alternativa {0})"
+    },
+    "Other conditions apply": {
+        "en": "Other conditions apply",
+        "fr": "D’autres conditions s’appliquent",
+        "es": "Se aplican otras condiciones"
+    },
+    "NOT {0}": {
+        "en": "NOT {0}",
+        "fr": "NON {0}",
+        "es": "NO {0}"
+    },
+    "Level {0}/{1}": {
+        "en": "Level {0}/{1}",
+        "fr": "Niveau {0}/{1}",
+        "es": "Nivel {0}/{1}"
+    },
+    "Mastery damage bonus": {
+        "en": "Mastery damage bonus",
+        "fr": "Bonus de dégâts de maîtrise",
+        "es": "Bonificación de daño de maestría"
+    },
+    "Mastery attack speed bonus": {
+        "en": "Mastery attack speed bonus",
+        "fr": "Bonus de vitesse de maîtrise",
+        "es": "Bonificación de velocidad de maestría"
+    },
+    "Mastery critical chance bonus": {
+        "en": "Mastery critical chance bonus",
+        "fr": "Bonus de critique de maîtrise",
+        "es": "Bonificación crítica de maestría"
+    },
+    "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%": {
+        "en": "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
+        "fr": "Dégâts +{0:0.##}% | Vitesse +{1:0.##}% | Critique +{2}%",
+        "es": "Daño +{0:0.##}% | Velocidad +{1:0.##}% | Crítico +{2}%"
+    },
+    "Unavailable": {
+        "en": "Unavailable",
+        "fr": "Indisponible",
+        "es": "No disponible"
+    },
+    "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.": {
+        "en": "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.",
+        "fr": "Associez cette arme à sa catégorie dans Weapon Mastery Editor pour gagner de l’XP de maîtrise.",
+        "es": "Asigna esta arma a su categoría en Weapon Mastery Editor para ganar XP de maestría."
+    },
+    "Mastery requirements will be installed together with the character level.": {
+        "en": "Mastery requirements will be installed together with the character level.",
+        "fr": "Les prérequis de maîtrise seront installés avec le niveau du personnage.",
+        "es": "Los requisitos de maestría se instalarán con el nivel del personaje."
+    },
+    "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?": {
+        "en": "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?",
+        "fr": "Les conditions existantes seront conservées ; les nouveaux prérequis de niveau et de maîtrise ne seront pas installés. Continuer ?",
+        "es": "Se conservarán las condiciones existentes; no se instalarán los nuevos requisitos de nivel y maestría. ¿Continuar?"
+    },
+    "Requirements unchanged (existing custom conditions).": {
+        "en": "Requirements unchanged (existing custom conditions).",
+        "fr": "Prérequis inchangés (conditions personnalisées existantes).",
+        "es": "Requisitos sin cambios (condiciones personalizadas existentes)."
+    },
+    "NPC sprite": {
+        "en": "NPC sprite",
+        "fr": "Sprite du PNJ",
+        "es": "Sprite del PNJ"
+    },
+    "Item icon": {
+        "en": "Item icon",
+        "fr": "Icône de l’objet",
+        "es": "Icono del objeto"
+    },
+    "Spell icon": {
+        "en": "Spell icon",
+        "fr": "Icône du sort",
+        "es": "Icono del hechizo"
+    },
+    "Preview unavailable": {
+        "en": "Preview unavailable",
+        "fr": "Aperçu indisponible",
+        "es": "Vista previa no disponible"
+    },
+    "Animations, paperdolls and event links are preserved.": {
+        "en": "Animations, paperdolls and event links are preserved.",
+        "fr": "Les animations, les apparences équipées et les liens d’événements sont conservés.",
+        "es": "Se conservan las animaciones, las apariencias equipadas y los enlaces de eventos."
+    },
+    "Keep existing cast and hit animations": {
+        "en": "Keep existing cast and hit animations",
+        "fr": "Conserver les animations de lancement et d’impact",
+        "es": "Conservar las animaciones de lanzamiento e impacto"
+    },
+    "Auto Projectile Creator": {
+        "en": "Auto Projectile Creator",
+        "fr": "Créateur automatique de projectiles",
+        "es": "Creador automático de proyectiles"
+    },
+    "Straight shot": {
+        "en": "Straight shot",
+        "fr": "Tir droit",
+        "es": "Disparo recto"
+    },
+    "Three-way shot": {
+        "en": "Three-way shot",
+        "fr": "Tir à trois directions",
+        "es": "Disparo en tres direcciones"
+    },
+    "Five-way shot": {
+        "en": "Five-way shot",
+        "fr": "Tir à cinq directions",
+        "es": "Disparo en cinco direcciones"
+    },
+    "Radial burst": {
+        "en": "Radial burst",
+        "fr": "Salve circulaire",
+        "es": "Ráfaga radial"
+    },
+    "Directional": {
+        "en": "Directional",
+        "fr": "Direction du lanceur",
+        "es": "Dirección del lanzador"
+    },
+    "Direct shot": {
+        "en": "Direct shot",
+        "fr": "Tir direct",
+        "es": "Disparo directo"
+    },
+    "Homing": {
+        "en": "Homing",
+        "fr": "Tête chercheuse",
+        "es": "Teledirigido"
+    },
+    "Projectile name": {
+        "en": "Projectile name",
+        "fr": "Nom du projectile",
+        "es": "Nombre del proyectil"
+    },
+    "Shot pattern": {
+        "en": "Shot pattern",
+        "fr": "Forme du tir",
+        "es": "Patrón de disparo"
+    },
+    "Targeting behavior": {
+        "en": "Targeting behavior",
+        "fr": "Mode de ciblage",
+        "es": "Modo de apuntado"
+    },
+    "Projectile animation": {
+        "en": "Projectile animation",
+        "fr": "Animation du projectile",
+        "es": "Animación del proyectil"
+    },
+    "Range (tiles)": {
+        "en": "Range (tiles)",
+        "fr": "Portée (cases)",
+        "es": "Alcance (casillas)"
+    },
+    "Travel time (ms)": {
+        "en": "Travel time (ms)",
+        "fr": "Durée du trajet (ms)",
+        "es": "Duración del trayecto (ms)"
+    },
+    "Burst count": {
+        "en": "Burst count",
+        "fr": "Nombre de salves",
+        "es": "Número de ráfagas"
+    },
+    "Time between bursts (ms)": {
+        "en": "Time between bursts (ms)",
+        "fr": "Délai entre les salves (ms)",
+        "es": "Intervalo entre ráfagas (ms)"
+    },
+    "Knockback (tiles)": {
+        "en": "Knockback (tiles)",
+        "fr": "Recul (cases)",
+        "es": "Empuje (casillas)"
+    },
+    "Rotate animation with direction": {
+        "en": "Rotate animation with direction",
+        "fr": "Orienter l’animation selon la direction",
+        "es": "Orientar la animación según la dirección"
+    },
+    "Pierce targets": {
+        "en": "Pierce targets",
+        "fr": "Traverser les cibles",
+        "es": "Atravesar objetivos"
+    },
+    "Pass through map blocks": {
+        "en": "Pass through map blocks",
+        "fr": "Traverser les obstacles de la carte",
+        "es": "Atravesar los obstáculos del mapa"
+    },
+    "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.": {
+        "en": "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.",
+        "fr": "Les dégâts viennent de l’arme ou du sort qui utilise ce projectile. Les munitions, sorts de collision et réglages de grappin sont conservés.",
+        "es": "El daño proviene del arma o hechizo que utiliza este proyectil. Se conservan la munición, los hechizos de colisión y los ajustes de gancho."
+    },
+    "Apply to projectile": {
+        "en": "Apply to projectile",
+        "fr": "Appliquer au projectile",
+        "es": "Aplicar al proyectil"
+    },
+    "Enter a projectile name.": {
+        "en": "Enter a projectile name.",
+        "fr": "Saisissez un nom de projectile.",
+        "es": "Introduce un nombre de proyectil."
+    },
+    "Select or create a projectile first.": {
+        "en": "Select or create a projectile first.",
+        "fr": "Sélectionnez ou créez d’abord un projectile.",
+        "es": "Selecciona o crea un proyectil primero."
+    },
+    "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.": {
+        "en": "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.",
+        "fr": "{0} projectile(s) par salve × {1} salve(s) = {2} au total\nPortée : {3} cases | Trajet : {4} ms\nDélai : {5} ms | Séquence totale : {6} ms\nVérifiez l’aperçu, puis appliquez et sauvegardez dans l’éditeur.",
+        "es": "{0} proyectil(es) por ráfaga × {1} ráfaga(s) = {2} en total\nAlcance: {3} casillas | Trayecto: {4} ms\nIntervalo: {5} ms | Secuencia total: {6} ms\nRevisa la vista previa, aplica y guarda en el editor."
+    },
+    "Sell all copies": {
+        "en": "Sell all copies",
+        "fr": "Vendre tous les exemplaires",
+        "es": "Vender todos los ejemplares"
+    },
+    "Sell all copies ({0})": {
+        "en": "Sell all copies ({0})",
+        "fr": "Vendre tous les exemplaires ({0})",
+        "es": "Vender todos los ejemplares ({0})"
+    },
+    "Sell all {0} copies of {1} from your inventory?": {
+        "en": "Sell all {0} copies of {1} from your inventory?",
+        "fr": "Vendre les {0} exemplaires de {1} de votre inventaire ?",
+        "es": "¿Vender los {0} ejemplares de {1} de tu inventario?"
+    },
+    "Non-empty bags are kept.": {
+        "en": "Non-empty bags are kept.",
+        "fr": "Les sacs non vides sont conservés.",
+        "es": "Se conservan las bolsas que no están vacías."
+    },
+    "Boss and death effects": {
+        "en": "Boss and death effects",
+        "fr": "Boss et effets de mort",
+        "es": "Jefes y efectos de muerte"
+    },
+    "NPC death animation": {
+        "en": "NPC death animation",
+        "fr": "Animation de mort du PNJ",
+        "es": "Animación de muerte del PNJ"
+    },
+    "Duration in seconds (0 = natural)": {
+        "en": "Duration in seconds (0 = natural)",
+        "fr": "Durée en secondes (0 = naturelle)",
+        "es": "Duración en segundos (0 = natural)"
+    },
+    "Ground animation": {
+        "en": "Ground animation",
+        "fr": "Animation au sol",
+        "es": "Animación en el suelo"
+    },
+    "Ground duration (s)": {
+        "en": "Ground duration (s)",
+        "fr": "Durée au sol (s)",
+        "es": "Duración en el suelo (s)"
+    },
+    "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.": {
+        "en": "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.",
+        "fr": "Événement commun → masquer le joueur → animation de mort → réapparition. L’animation au sol reste à l’endroit de la mort pendant la durée configurée.",
+        "es": "Evento común → ocultar al jugador → animación de muerte → reaparición. La animación en el suelo permanece en el lugar de la muerte durante el tiempo configurado."
+    },
+    "Zoom in": {
+        "en": "Zoom in",
+        "fr": "Zoom avant",
+        "es": "Acercar"
+    },
+    "Zoom out": {
+        "en": "Zoom out",
+        "fr": "Zoom arrière",
+        "es": "Alejar"
+    },
+    "Fit preview": {
+        "en": "Fit preview",
+        "fr": "Ajuster l’aperçu",
+        "es": "Ajustar vista previa"
+    },
+    "Mouse wheel: zoom. Drag: move the preview.": {
+        "en": "Mouse wheel: zoom. Drag: move the preview.",
+        "fr": "Molette : zoom. Glisser : déplacer l’aperçu.",
+        "es": "Rueda: zoom. Arrastrar: mover la vista previa."
+    },
+    "Guild emblem": {
+      "en": "Guild emblem",
+      "fr": "Logo de guilde",
+      "es": "Emblema de hermandad"
+    },
+    "Browse PNG": {
+      "en": "Browse PNG",
+      "fr": "Choisir un PNG",
+      "es": "Elegir un PNG"
+    },
+    "Submit for approval": {
+      "en": "Submit for approval",
+      "fr": "Soumettre pour approbation",
+      "es": "Enviar para aprobación"
+    },
+    "Approve": {
+      "en": "Approve",
+      "fr": "Approuver",
+      "es": "Aprobar"
+    },
+    "Reject": {
+      "en": "Reject",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Remove emblem": {
+      "en": "Remove emblem",
+      "fr": "Retirer le logo",
+      "es": "Eliminar emblema"
+    },
+    "Awaiting approval": {
+      "en": "Awaiting approval",
+      "fr": "En attente d’approbation",
+      "es": "Pendiente de aprobación"
+    },
+    "Approved": {
+      "en": "Approved",
+      "fr": "Approuvé",
+      "es": "Aprobado"
+    },
+    "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.": {
+      "en": "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.",
+      "fr": "Seul le staff Game Master Premium peut proposer un logo. Un administrateur doit l’approuver avant sa publication.",
+      "es": "Solo el personal Game Master Premium puede enviar un emblema. Un administrador debe aprobarlo antes de publicarlo."
+    },
+    "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.": {
+      "en": "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.",
+      "fr": "Choisis un PNG RGB ou RGBA valide, de 128 x 128 pixels et 64 Ko maximum.",
+      "es": "Elige un PNG RGB o RGBA válido, de 128 x 128 píxeles y 64 KB como máximo."
+    },
+    "Premium Game Master staff access is required.": {
+      "en": "Premium Game Master staff access is required.",
+      "fr": "Un accès staff Game Master Premium est requis.",
+      "es": "Se requiere acceso de personal Game Master Premium."
+    },
+    "Guild emblem submitted for administrator approval.": {
+      "en": "Guild emblem submitted for administrator approval.",
+      "fr": "Logo envoyé pour approbation par un administrateur.",
+      "es": "Emblema enviado para aprobación de un administrador."
+    },
+    "This submission has changed. Refresh the list.": {
+      "en": "This submission has changed. Refresh the list.",
+      "fr": "Cette proposition a changé. Actualise la liste.",
+      "es": "Este envío ha cambiado. Actualiza la lista."
+    },
+    "This folder cannot be opened.": {
+      "en": "This folder cannot be opened.",
+      "fr": "Impossible d’ouvrir ce dossier.",
+      "es": "No se puede abrir esta carpeta."
+    },
+    "Open furniture shop": {
+      "en": "Open furniture shop",
+      "fr": "Ouvrir le magasin de meubles",
+      "es": "Abrir tienda de muebles"
+    },
+    "Open house directory": {
+      "en": "Open house directory",
+      "fr": "Ouvrir le répertoire des maisons",
+      "es": "Abrir directorio de casas"
+    },
+    "Furniture shop": {
+      "en": "Furniture shop",
+      "fr": "Magasin de meubles",
+      "es": "Tienda de muebles"
+    },
+    "Accessible houses": {
+      "en": "Accessible houses",
+      "fr": "Maisons accessibles",
+      "es": "Casas accesibles"
+    },
+    "Visit house": {
+      "en": "Visit house",
+      "fr": "Visiter la maison",
+      "es": "Visitar casa"
+    },
+    "Return to the furniture merchant.": {
+      "en": "Return to the furniture merchant.",
+      "fr": "Retourne auprès du marchand de meubles.",
+      "es": "Vuelve al comerciante de muebles."
+    },
+    "Grog (green screen and vomiting)": {
+      "en": "Grog (green screen and vomiting)",
+      "fr": "Grog (écran vert et vomissement)",
+      "es": "Grog (pantalla verde y vómitos)"
+    },
+    "Duration in seconds (5-120)": {
+      "en": "Duration in seconds (5-120)",
+      "fr": "Durée en secondes (5-120)",
+      "es": "Duración en segundos (5-120)"
+    },
+    "Lobby Editor": {
+      "en": "Lobby Editor",
+      "fr": "Éditeur de lobbys",
+      "es": "Editor de salas"
+    },
+    "Image filename (GUI)": {
+      "en": "Image filename (GUI)",
+      "fr": "Nom du fichier image (GUI)",
+      "es": "Nombre del archivo de imagen (GUI)"
+    },
+    "Maximum party size": {
+      "en": "Maximum party size",
+      "fr": "Taille maximale du groupe",
+      "es": "Tamaño máximo del grupo"
+    },
+    "Invalid lobby settings.": {
+      "en": "Invalid lobby settings.",
+      "fr": "Paramètres de lobby invalides.",
+      "es": "Configuración de sala no válida."
+    },
+    "Place lobby images in the client GUI folder. The party limit also respects dungeon, ship and server limits.": {
+      "en": "Place lobby images in the client GUI folder. The party limit also respects dungeon, ship and server limits.",
+      "fr": "Place les images de lobby dans le dossier GUI du client. La limite du groupe respecte aussi les limites du donjon, du navire et du serveur.",
+      "es": "Coloca las imágenes de sala en la carpeta GUI del cliente. El límite del grupo también respeta los límites de mazmorra, barco y servidor."
+    },
+    "Grog": {
+      "en": "Grog",
+      "fr": "Grog",
+      "es": "Grog"
+    },
+    "Green screen and vomiting; splashes nearby players.": {
+      "en": "Green screen and vomiting; splashes nearby players.",
+      "fr": "Écran vert et vomissements ; éclabousse les joueurs proches.",
+      "es": "Pantalla verde y vómitos; salpica a los jugadores cercanos."
+    },
+    "Find an offer": {
+      "en": "Find an offer",
+      "fr": "Rechercher une offre",
+      "es": "Buscar una oferta"
+    },
+    "Activity": {
+      "en": "Activity",
+      "fr": "Activité",
+      "es": "Actividad"
+    },
+    "World Boss": {
+      "en": "World Boss",
+      "fr": "Boss mondial",
+      "es": "Jefe mundial"
+    },
+    "House Party": {
+      "en": "House Party",
+      "fr": "Fête à la maison",
+      "es": "Fiesta en casa"
+    },
+    "Naval crew": {
+      "en": "Naval crew",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "Open": { "en": "Open", "fr": "Ouvrir", "es": "Abrir" },
+    "Close": { "en": "Close", "fr": "Fermer", "es": "Cerrar" },
+    "Guild emblem could not be saved. Try again.": { "en": "Guild emblem could not be saved. Try again.", "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.", "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo." },
+    "Image": {
+      "en": "Image",
+      "fr": "Image",
+      "es": "Imagen"
+    },
+    "Choose lobby images using the image selector and preview. Party size also respects dungeon, ship and server limits.": {
+      "en": "Choose lobby images using the image selector and preview. Party size also respects dungeon, ship and server limits.",
+      "fr": "Choisis les images de lobby avec le sélecteur et son aperçu. La taille du groupe respecte aussi les limites du donjon, du navire et du serveur.",
+      "es": "Elige las imágenes de sala con el selector y su vista previa. El tamaño del grupo también respeta los límites de mazmorra, barco y servidor."
+    },
+    "Royal Seals shop": {
+      "en": "Royal Seals shop",
+      "fr": "Boutique de sceaux royaux",
+      "es": "Tienda de sellos reales"
+    },
+    "Royal Seals": {
+      "en": "Royal Seals",
+      "fr": "Sceaux royaux",
+      "es": "Sellos reales"
+    },
+    "Royal Seals: {0}": {
+      "en": "Royal Seals: {0}",
+      "fr": "Sceaux royaux : {0}",
+      "es": "Sellos reales: {0}"
+    },
+    "Total: {0} Royal Seals": {
+      "en": "Total: {0} Royal Seals",
+      "fr": "Total : {0} sceaux royaux",
+      "es": "Total: {0} sellos reales"
+    },
+    "No seal exchange is available.": {
+      "en": "No seal exchange is available.",
+      "fr": "Aucun échange de sceaux n’est disponible.",
+      "es": "No hay ningún intercambio de sellos disponible."
+    },
+    "Not enough Royal Seals.": {
+      "en": "Not enough Royal Seals.",
+      "fr": "Pas assez de sceaux royaux.",
+      "es": "No tienes suficientes sellos reales."
+    },
+    "This offer has changed. Refresh the shop.": {
+      "en": "This offer has changed. Refresh the shop.",
+      "fr": "Cette offre a changé. Actualise la boutique.",
+      "es": "Esta oferta ha cambiado. Actualiza la tienda."
+    },
+    "This offer is unavailable.": {
+      "en": "This offer is unavailable.",
+      "fr": "Cette offre n’est pas disponible.",
+      "es": "Esta oferta no está disponible."
+    },
+    "Exchange Royal Seals": {
+      "en": "Exchange Royal Seals",
+      "fr": "Échanger des sceaux royaux",
+      "es": "Canjear sellos reales"
+    },
+    "Quantity: {0}": {
+      "en": "Quantity: {0}",
+      "fr": "Quantité : {0}",
+      "es": "Cantidad: {0}"
+    },
+    "Make room in your inventory.": {
+      "en": "Make room in your inventory.",
+      "fr": "Libère de la place dans ton inventaire.",
+      "es": "Haz espacio en tu inventario."
+    },
+    "Unable to save. Please try again.": {
+      "en": "Unable to save. Please try again.",
+      "fr": "Impossible d’enregistrer. Réessaie.",
+      "es": "No se pudo guardar. Inténtalo de nuevo."
+    },
+    "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"},
+    "{0}'s house": {"en": "{0}'s house", "fr": "Maison de {0}", "es": "Casa de {0}"},
+    "Farm & hired workers...": {"en": "Farm & hired workers...", "fr": "Ferme et ouvriers...", "es": "Granja y trabajadores..."},
+    "Farm configuration": {"en": "Farm configuration", "fr": "Configuration de la ferme", "es": "Configuración de la granja"},
+    "Settings": {"en": "Settings", "fr": "Paramètres", "es": "Ajustes"},
+    "Crops": {"en": "Crops", "fr": "Cultures", "es": "Cultivos"},
+    "Exterior map": {"en": "Exterior map", "fr": "Carte extérieure", "es": "Mapa exterior"},
+    "Salary currency": {"en": "Salary currency", "fr": "Monnaie des salaires", "es": "Moneda de los salarios"},
+    "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.": {"en": "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.", "fr": "Choisissez une carte extérieure isolée et le fichier du sprite des ouvriers. Chaque ouvrier utilise deux cases praticables à (FieldX + index * 2, FieldY) et sur la case en dessous. Les cultures utilisent des objets existants et empilables pour les graines et les récoltes. Le tileset facultatif contient trois images de croissance adjacentes. Fermez cette fenêtre, puis enregistrez la configuration des maisons.", "es": "Selecciona un mapa exterior aislado y el archivo del sprite de los trabajadores. Cada trabajador usa dos casillas transitables en (FieldX + index * 2, FieldY) y la casilla inferior. Los cultivos requieren objetos existentes y apilables para semillas y cosechas. El tileset opcional contiene tres imágenes de crecimiento contiguas. Cierra esta ventana y guarda la configuración de las casas."},
+    "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)": {"en": "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)", "fr": "Ajouter blé, carottes et pommes de terre (choisir les objets avant activation)", "es": "Añadir trigo, zanahorias y patatas (asigna los objetos antes de activar)"},
+    "SeedItemId": {"en": "SeedItemId", "fr": "Objet graine", "es": "Objeto de semilla"},
+    "HarvestItemId": {"en": "HarvestItemId", "fr": "Objet récolté", "es": "Objeto cosechado"},
+    "Seconds": {"en": "Seconds", "fr": "Secondes", "es": "Segundos"},
+    "Yield": {"en": "Yield", "fr": "Rendement", "es": "Producción"},
+    "Experience": {"en": "Experience", "fr": "Expérience", "es": "Experiencia"},
+    "RequiredLevel": {"en": "RequiredLevel", "fr": "Niveau requis", "es": "Nivel requerido"},
+    "Tileset": {"en": "Tileset", "fr": "Tileset", "es": "Tileset"},
+    "SourceX": {"en": "SourceX", "fr": "Source X", "es": "Origen X"},
+    "SourceY": {"en": "SourceY", "fr": "Source Y", "es": "Origen Y"},
+    "Enable farming": {"en": "Enable farming", "fr": "Activer la ferme", "es": "Activar la granja"},
+    "Entry X": {"en": "Entry X", "fr": "Entrée X", "es": "Entrada X"},
+    "Entry Y": {"en": "Entry Y", "fr": "Entrée Y", "es": "Entrada Y"},
+    "Field X": {"en": "Field X", "fr": "Champ X", "es": "Campo X"},
+    "Field Y": {"en": "Field Y", "fr": "Champ Y", "es": "Campo Y"},
+    "Maximum workers": {"en": "Maximum workers", "fr": "Nombre maximal d’ouvriers", "es": "Máximo de trabajadores"},
+    "Granary capacity": {"en": "Granary capacity", "fr": "Capacité du grenier", "es": "Capacidad del granero"},
+    "Hiring price": {"en": "Hiring price", "fr": "Coût de recrutement", "es": "Coste de contratación"},
+    "Wage per cycle": {"en": "Wage per cycle", "fr": "Salaire par cycle", "es": "Salario por ciclo"},
+    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"}
   }
 }

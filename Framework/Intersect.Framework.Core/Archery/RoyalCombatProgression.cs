@@ -12,7 +12,8 @@ public sealed class MasteryTalent
     public double AttackSpeedPercentPerRank { get; set; }
     public int CritChancePerRank { get; set; }
     [System.ComponentModel.Browsable(false)] public Guid[] RankSpellIds { get; set; } = [];
-    public bool Configured => DamagePercentPerRank > 0 || AttackSpeedPercentPerRank > 0 || CritChancePerRank > 0 || RankSpellIds.Length > 0;
+    public WeaponSkillDefinition Skill { get; set; } = new();
+    public bool Configured => Skill.Enabled || DamagePercentPerRank > 0 || AttackSpeedPercentPerRank > 0 || CritChancePerRank > 0 || RankSpellIds.Length > 0;
     public static MasteryTalent[] ArcheryDefaults() => [
         new() { DamagePercentPerRank = .5 },
         new() { Key = "quick-shot", Name = "Quick Shot", RequiredLevel = 3, AttackSpeedPercentPerRank = .5 },
@@ -21,6 +22,40 @@ public sealed class MasteryTalent
         new() { Key = "rain-of-arrows", Name = "Rain of Arrows", RequiredLevel = 20, Prerequisite = "multi-shot" },
         new() { Key = "eagle-eye", Name = "Eagle Eye", RequiredLevel = 25, CritChancePerRank = 1, Prerequisite = "steady-aim", PrerequisiteRank = 3 }
     ];
+
+    public static MasteryTalent[] WeaponDefaults(string category, int cap = 30)
+    {
+        if (category == "archery") return ArcheryDefaults();
+        var names = category switch
+        {
+            "swords" => new[] { "Sword Training", "Quick Slashes", "Blade Precision", "Heavy Slashes", "Relentless Blade", "Sword Expertise" },
+            "daggers" => new[] { "Dagger Training", "Quick Stabs", "Vital Strikes", "Deep Cuts", "Relentless Daggers", "Dagger Expertise" },
+            "axes" => new[] { "Heavy Weapon Training", "Swift Swings", "Crushing Precision", "Heavy Blows", "Relentless Swings", "Heavy Weapon Expertise" },
+            "magic" => new[] { "Staff Training", "Quick Casting", "Arcane Precision", "Arcane Power", "Arcane Rhythm", "Staff Expertise" },
+            "whips" => new[] { "Whip Training", "Quick Lashes", "Lash Precision", "Heavy Lashes", "Relentless Lashes", "Whip Expertise" },
+            _ => [],
+        };
+        if (names.Length == 0) return [];
+        // Every node has a real effect. Native active techniques use animations
+        // and their own cooldowns, independently of learned spells.
+        var levels = new[] { 1, 3, 5, 10, 20, 25 };
+        var keys = new[] { "training", "swiftness", "precision", "power", "rhythm", "expertise" };
+        return names.Select((name, i) => new MasteryTalent
+        {
+            Key = keys[i], Name = name, RequiredLevel = Math.Min(levels[i], cap),
+            DamagePercentPerRank = i == 0 ? .5 : 0,
+            AttackSpeedPercentPerRank = 0,
+            CritChancePerRank = i is 2 or 5 ? 1 : 0,
+            Skill = new WeaponSkillDefinition
+            {
+                Enabled=i is 1 or 3 or 4, Range=category=="magic"?6:category=="whips"?3:1,
+                CooldownMilliseconds=i==1?1500:i==3?4000:8000,
+                DamagePercent=i==1?110:i==3?160:220,
+            },
+            Prerequisite = i switch { 2 => keys[0], 3 => keys[0], 4 => keys[1], 5 => keys[2], _ => "" },
+            PrerequisiteRank = i == 5 ? 3 : 1,
+        }).ToArray();
+    }
 }
 
 public sealed class WeaponAmmunitionRule
@@ -51,6 +86,7 @@ public static class MasteryRules
             !double.IsFinite(t.DamagePercentPerRank) || t.DamagePercentPerRank is < 0 or > 2 ||
             !double.IsFinite(t.AttackSpeedPercentPerRank) || t.AttackSpeedPercentPerRank is < 0 or > 2 ||
             t.CritChancePerRank is < 0 or > 2 || t.RankSpellIds == null ||
+            t.Skill is not { IsValid:true } || t.Skill.Enabled && t.RankSpellIds.Length>0 ||
             t.RankSpellIds.Length != 0 && (t.RankSpellIds.Length != t.MaxRank || t.RankSpellIds.Any(id => id == Guid.Empty)) ||
             t.Prerequisite == null || t.PrerequisiteRank is < 1 or > 5) ||
             talents.Select(t => t.Key).Distinct().Count() != talents.Length) return false;

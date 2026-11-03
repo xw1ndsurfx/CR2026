@@ -371,8 +371,7 @@ public partial class EventGraphicSelector : UserControl
     private void btnOk_Click(object sender, EventArgs e)
     {
         mEditingGraphic.CopyFrom(mTmpGraphic);
-        if (mEventEditor != null) mEventEditor.CloseGraphicSelector(this);
-        else SelectionClosed?.Invoke(true);
+        CloseSelection(true);
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
@@ -382,8 +381,15 @@ public partial class EventGraphicSelector : UserControl
             mRouteDesigner.RemoveLastAction();
         }
 
-        if (mEventEditor != null) mEventEditor.CloseGraphicSelector(this);
-        else SelectionClosed?.Invoke(false);
+        CloseSelection(false);
+    }
+
+    private void CloseSelection(bool accepted)
+    {
+        SelectionClosed?.Invoke(accepted);
+        if(IsDisposed)return;
+        if(mEventEditor!=null)mEventEditor.CloseGraphicSelector(this);
+        else { Parent?.Controls.Remove(this);Hide();Dispose(); }
     }
 
 }

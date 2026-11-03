@@ -9,6 +9,8 @@ namespace Intersect.Client.Core.Sounds;
 
 public partial class MapSound : Sound, IMapSound
 {
+    // Per-source gain composes with distance attenuation; existing map sounds retain gain 1.
+    internal float SourceGain { get; set; } = 1f;
     private readonly int mDistance;
 
     private readonly IEntity? mEntity;
@@ -94,7 +96,7 @@ public partial class MapSound : Sound, IMapSound
         {
             if (mSound is { } sound)
             {
-                sound.Volume = 100;
+                sound.Volume = (int)(100 * Math.Clamp(SourceGain, 0, 1));
             }
         }
         else
@@ -111,7 +113,7 @@ public partial class MapSound : Sound, IMapSound
 
             if (mSound is { } sound)
             {
-                sound.Volume = (int)volume;
+                sound.Volume = (int)(volume * Math.Clamp(SourceGain, 0, 1));
             }
         }
     }

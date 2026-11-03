@@ -7,6 +7,7 @@ public sealed class MasteryCategory
     public string Key { get; set; } = "archery";
     public string Name { get; set; } = "Archery";
     public Guid[] WeaponIds { get; set; } = [];
+    [System.ComponentModel.Browsable(false)] public Guid LevelUpAnimationId { get; set; }
     public int Cap { get; set; } = 30;
     public int BaseExperience { get; set; } = 100;
     public double DamagePercentPerLevel { get; set; } = .5;
@@ -48,9 +49,14 @@ public sealed class ArcheryRange
 
 public sealed class RoyalCombatConfiguration
 {
+    // Missing in older saved configurations: add the new category once, preserving mappings.
+    public int BuiltInMasteriesVersion { get; set; }
     public MasteryCategory[] Masteries { get; set; } = [new() { Talents = MasteryTalent.ArcheryDefaults() },
-        new() { Key = "swords", Name = "Swordsmanship" }, new() { Key = "daggers", Name = "Daggers" },
-        new() { Key = "axes", Name = "Axes & Hammers" }, new() { Key = "magic", Name = "Staves & Magic" }];
+        new() { Key = "swords", Name = "Swordsmanship", Talents = MasteryTalent.WeaponDefaults("swords") },
+        new() { Key = "daggers", Name = "Daggers", Talents = MasteryTalent.WeaponDefaults("daggers") },
+        new() { Key = "axes", Name = "Axes & Hammers", Talents = MasteryTalent.WeaponDefaults("axes") },
+        new() { Key = "magic", Name = "Staves & Magic", Talents = MasteryTalent.WeaponDefaults("magic") },
+        new() { Key = "whips", Name = "Whips", Talents = MasteryTalent.WeaponDefaults("whips") }];
     public ArcheryRange[] Ranges { get; set; } = [];
     public WeaponAmmunitionRule[] Ammunition { get; set; } = [];
     public bool RespecEnabled { get; set; }
@@ -77,6 +83,19 @@ public sealed class RoyalCombatConfiguration
     {
         if (json.Length > 262144) throw new InvalidDataException("royal-config-size");
         var result = JsonSerializer.Deserialize<RoyalCombatConfiguration>(json, new JsonSerializerOptions { MaxDepth = 12 });
-        return result?.IsValid == true ? result : throw new InvalidDataException("royal-config-invalid");
+        if (result?.IsValid != true) throw new InvalidDataException("royal-config-invalid");
+        if (result.BuiltInMasteriesVersion < 1)
+        {
+            if (!result.Masteries.Any(m => m.Key == "whips") && result.Masteries.Length < 32)
+                result.Masteries = [..result.Masteries, new() { Key = "whips", Name = "Whips" }];
+            result.BuiltInMasteriesVersion = 1;
+        }
+        if (result.BuiltInMasteriesVersion < 2)
+        {
+            foreach (var category in result.Masteries.Where(m => m.Key != "archery" && m.Talents.Length == 0))
+                category.Talents = MasteryTalent.WeaponDefaults(category.Key, category.Cap);
+            result.BuiltInMasteriesVersion = 2;
+        }
+        return result;
     }
 }

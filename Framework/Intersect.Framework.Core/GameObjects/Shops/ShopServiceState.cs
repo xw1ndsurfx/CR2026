@@ -1,6 +1,7 @@
 namespace Intersect.GameObjects;
 public sealed class ShopServiceState
 {
+    public long ServerTimeUnixMilliseconds {get;set;}
     public string Name {get;set;}="";
     public bool Music {get;set;}
     public bool Premium {get;set;}

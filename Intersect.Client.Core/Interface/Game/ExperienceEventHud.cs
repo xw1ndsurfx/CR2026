@@ -38,15 +38,15 @@ internal sealed class ExperienceEventHud : Label
     internal void ShowPremiumLine(string text, int x, int y, int height)
     {
         Text=text;
-        var measured=Skin.Renderer.MeasureText(Font,FontSize,text).X+12;
-        SetBounds(x,y,Math.Max(0,Math.Min(measured,Parent.Width-x-8)),height);
+        HudPlacement.FitTextHud(this, x, y);
+        Height = Math.Max(Height, height);
         IsHidden=Width<80;
         BringToFront();
     }
     internal void ShowLine(string text, int y)
     {
         Text = text;
-        SetBounds(8, y, Math.Max(120, Math.Min(620, Parent.Width - 16)), 26);
+        HudPlacement.FitTextHud(this, 8, y);
         IsHidden = false;
         BringToFront();
     }

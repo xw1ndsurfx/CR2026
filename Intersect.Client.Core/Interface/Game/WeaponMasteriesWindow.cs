@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
@@ -14,6 +14,7 @@ internal sealed class WeaponMasteriesWindow : Window
     private readonly ScrollControl _talents;
     private readonly Label _header;
     private readonly Label _experienceHeader;
+    private readonly MasteryExperienceBar _experienceBar;
     private readonly Label _status;
     private readonly Label _detail;
     private readonly Button _confirm;
@@ -35,7 +36,8 @@ internal sealed class WeaponMasteriesWindow : Window
         SetSize(760, 590); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
         _header = NavalManagementWindow.Text(this, "MasteryHeader", "", 16, 38, 720, 26, 11);
         _experienceHeader = NavalManagementWindow.Text(this, "MasteryExperienceHeader", "", 16, 68, 720, 26, 11);
-        _categories = Scroll(16, 104, 180, 340); _talents = Scroll(208, 104, 528, 340);
+        _experienceBar = new MasteryExperienceBar(this); _experienceBar.SetBounds(16,98,720,12);
+        _categories = Scroll(16, 120, 180, 324); _talents = Scroll(208, 120, 528, 324);
         _status = NavalManagementWindow.Text(this, "MasteryStatus", "", 16, 454, 720, 24, 10);
         _detail = NavalManagementWindow.Text(this, "MasteryConfirmationDetail", "", 16, 480, 720, 22, 10);
         _confirm = NavalManagementWindow.Button(this, "ConfirmTalent", T("Confirm"), 208, 510, 252, 30, Confirm);
@@ -63,7 +65,7 @@ internal sealed class WeaponMasteriesWindow : Window
         if (packet.MasteriesJson.Length == 0)
         {
             foreach (var row in _categoryRows.Concat(_talentRows)) { row.Parent = null; row.Dispose(); }
-            _categoryRows.Clear(); _talentRows.Clear(); _respec.Hide(); _header.Text = _experienceHeader.Text = ""; _status.Text = T(packet.Message);
+            _categoryRows.Clear(); _talentRows.Clear(); _respec.Hide(); _header.Text = _experienceHeader.Text = ""; _experienceBar.IsHidden=true; _status.Text = T(packet.Message);
             if (packet.Open) { Show(); BringToFront(); } return;
         }
         _config = RoyalCombatConfiguration.FromJson(packet.ConfigurationJson);
@@ -93,6 +95,7 @@ internal sealed class WeaponMasteriesWindow : Window
         var xp = category.WithinLevel(total); var required = level == category.Cap ? 0 : category.Required(level);
         _header.Text = ClientLanguages.Format("{0} · Level {1}/{2} · Points {3}", Name(category.Name), level, category.Cap, points);
         _experienceHeader.Text = ClientLanguages.Format("XP {0}/{1} · {2}% · Remaining {3}", xp, required, required == 0 ? 100 : (int)(xp * 100 / required), Math.Max(0, required - xp));
+        _experienceBar.IsHidden=false; _experienceBar.Ratio = required==0?1f:Math.Clamp(xp/(float)required,0,1);
         foreach (var row in _talentRows) { row.Parent = null; row.Dispose(); } _talentRows.Clear();
         foreach (var talent in category.Talents)
         {
@@ -100,6 +103,8 @@ internal sealed class WeaponMasteriesWindow : Window
             var row = new Base(_talents, "Talent" + talent.Key); row.SetBounds(0, _talentRows.Count * 114, 502, 108); _talentRows.Add(row);
             NavalManagementWindow.Text(row, "TalentName", ClientLanguages.Format("{0} · Rank {1}/{2} · Level {3}", Name(talent.Name), rank, talent.MaxRank, talent.RequiredLevel), 0, 0, 500, 26, 11);
             var effect = ClientLanguages.Format("Damage +{0}% · Speed +{1}% · Critical +{2}", talent.DamagePercentPerRank, talent.AttackSpeedPercentPerRank, talent.CritChancePerRank);
+            if(talent.Skill.Enabled)effect=ClientLanguages.Format("Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+                talent.Skill.Power(Math.Max(1,rank)),talent.Skill.Range,talent.Skill.CooldownMilliseconds/1000f);
             if (talent.RankSpellIds.Length > 0) effect = Name(SpellDescriptor.GetName(talent.RankSpellIds[Math.Min(rank, talent.RankSpellIds.Length - 1)]));
             if (!talent.Configured) effect = T("Talent unavailable.");
             if (talent.Prerequisite.Length > 0) effect += " · " + ClientLanguages.Format("Requires {0} rank {1}",
@@ -127,4 +132,16 @@ internal sealed class WeaponMasteriesWindow : Window
         Cancel();
     }
     private void Cancel() { _pendingRespec = false; _pendingTalent = _pendingCategory = ""; _confirm.Hide(); _cancel.Hide(); _status.Text = _detail.Text = ""; }
+}
+
+internal sealed class MasteryExperienceBar(Base parent) : Base(parent,"MasteryExperienceBar")
+{
+    internal float Ratio { get; set; }
+    protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {
+        skin.Renderer.DrawColor=new Color(255,35,29,24);skin.Renderer.DrawFilledRect(RenderBounds);
+        skin.Renderer.DrawColor=new Color(255,200,159,70);
+        skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(2,2,(int)((Width-4)*Math.Clamp(Ratio,0,1)),Height-4));
+        skin.Renderer.DrawColor=new Color(255,234,204,135);skin.Renderer.DrawLinedRect(RenderBounds);
+    }
 }

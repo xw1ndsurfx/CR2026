@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Core;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Dungeons;
@@ -122,6 +122,10 @@ internal static partial class NavalSystem
             if(Ships.TryGetValue(run.Ship,out var source))
                 foreach(var id in source.Crew.Keys.ToArray())if(Player.FindOnline(id) is {} member && !CanReceiveBoardingReward(member,encounter))source.Crew.Remove(id);
             run.Finished=true;run.Won=won;
+            if (won)
+                foreach (var id in run.Members)
+                    if (Player.FindOnline(id) is {} participant && CanReceiveBoardingReward(participant, encounter))
+                        BoardingContractUpdates[id] = BoardingContractUpdates.GetValueOrDefault(id) + 1;
             if(Ships.TryGetValue(run.Enemy,out var enemy))
             {
                 enemy.EnemyBoardingEncounter=Guid.Empty;

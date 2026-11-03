@@ -38,7 +38,13 @@ internal static partial class RoyalCombatRuntime
             var snapshot = MasterySnapshot(character);
             return Current.Masteries.Select(c => {
                 var total = snapshot.Experience.GetValueOrDefault(c.Key); var level = c.Level(total);
+                var ranks = snapshot.Ranks.GetValueOrDefault(c.Key) ?? new();
+                var talents = c.Talents.Where(t => ranks.GetValueOrDefault(t.Key) > 0 && MasteryRules.Eligible(c, t, total, ranks))
+                    .Select(t => (Talent: t, Rank: Math.Clamp(ranks.GetValueOrDefault(t.Key), 0, t.MaxRank))).ToArray();
                 return new PlayerMasteryProfilePacket { Key = c.Key, Name = c.Name, Level = level, MaximumLevel = c.Cap,
+                    DamageBonusPercent = (level - 1) * c.DamagePercentPerLevel + talents.Sum(t => t.Talent.DamagePercentPerRank * t.Rank),
+                    AttackSpeedBonusPercent = Math.Min(50, talents.Sum(t => t.Talent.AttackSpeedPercentPerRank * t.Rank)),
+                    CritChanceBonus = Math.Min(50, talents.Sum(t => t.Talent.CritChancePerRank * t.Rank)),
                     LevelExperience = c.WithinLevel(total), RequiredExperience = level == c.Cap ? 0 : c.Required(level),
                     AvailablePoints = Math.Max(0, MasteryRules.Points(c, total) - MasteryRules.Spent(c, snapshot.Ranks.GetValueOrDefault(c.Key) ?? new())) };
             }).ToArray();

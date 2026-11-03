@@ -34,6 +34,7 @@ public partial class InventoryItem : SlotItem
     private readonly MenuItem _useItemMenuItem;
     private readonly MenuItem _actionItemMenuItem;
     private readonly MenuItem _dropItemMenuItem;
+    private readonly MenuItem _sellAllMenuItem;
 
     public InventoryItem(InventoryWindow inventoryWindow, Base parent, int index, ContextMenu contextMenu)
         : base(parent, nameof(InventoryItem), index, contextMenu)
@@ -92,6 +93,8 @@ public partial class InventoryItem : SlotItem
         _dropItemMenuItem.Clicked += _dropItemContextItem_Clicked;
         _actionItemMenuItem = contextMenu.AddItem(Strings.ItemContextMenu.Bank);
         _actionItemMenuItem.Clicked += _actionItemContextItem_Clicked;
+        _sellAllMenuItem = contextMenu.AddItem(ClientLanguages.Text("Sell all copies"));
+        _sellAllMenuItem.Clicked += (_, _) => Globals.Me?.TrySellItem(SlotIndex, allCopies: true);
         contextMenu.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
         if (Globals.Me is { } player)
@@ -165,6 +168,12 @@ public partial class InventoryItem : SlotItem
         {
             contextMenu.AddChild(_actionItemMenuItem);
             _actionItemMenuItem.SetText(Strings.ItemContextMenu.Sell.ToString(descriptor.Name));
+            var copies = Globals.Me.ShopItemCount(descriptor);
+            if (copies > 1)
+            {
+                contextMenu.AddChild(_sellAllMenuItem);
+                _sellAllMenuItem.SetText(ClientLanguages.Format("Sell all copies ({0})", copies));
+            }
         }
 
         // Can we drop this item? if so show the user!
@@ -520,12 +529,12 @@ public partial class InventoryItem : SlotItem
             Icon.RenderColor.A = descriptor.Color.A;
         }
 
-        if (Icon.TextureFilename == descriptor.Icon)
+        if (Icon.Texture == Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor))
         {
             return;
         }
 
-        var itemTexture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, descriptor.DisplayIcon);
+        var itemTexture = Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor);
         if (itemTexture != null)
         {
             Icon.Texture = itemTexture;

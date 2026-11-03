@@ -80,9 +80,15 @@ public sealed partial class CinematicAtmosphereGpuTests
             map.FogTransparency = 128;
             // Start at a settled visual state: this test checks GPU composition,
             // independently of the wall-clock duration of the fog fade-in.
-            Field(typeof(MapInstance), "mRenderedFogName").SetValue(map, FogName);
-            Field(typeof(MapInstance), "mCurFogIntensity").SetValue(map, 1f);
-            Field(typeof(MapInstance), "mFogUpdateTime").SetValue(map, Timing.Global.MillisecondsUtc);
+            void SettleFog(int alpha)
+            {
+                map.FogTransparency = alpha;
+                Field(typeof(MapInstance), "mRenderedFogName").SetValue(map, FogName);
+                Field(typeof(MapInstance), "mRenderedFogAlpha").SetValue(map, (float)alpha);
+                Field(typeof(MapInstance), "mCurFogIntensity").SetValue(map, 1f);
+                Field(typeof(MapInstance), "mFogUpdateTime").SetValue(map, Environment.TickCount64);
+            }
+            SettleFog(128);
 
             void DrawScene(bool includeCoveredWorldFog = false)
             {
@@ -127,7 +133,7 @@ public sealed partial class CinematicAtmosphereGpuTests
             XnaColor[]? singleFog = null;
             foreach (var alpha in new[] { 0, 128, 255 })
             {
-                map.FogTransparency = alpha;
+                SettleFog(alpha);
                 DrawScene();
                 DrawReferenceFog(alpha);
                 var expected = Capture($"reference-fog-{alpha}");
@@ -139,7 +145,17 @@ public sealed partial class CinematicAtmosphereGpuTests
                 if (alpha == 128) singleFog = actual;
             }
 
-            map.FogTransparency = 128;
+            SettleFog(128);
+            map.FogTransparency = 0;
+            Field(typeof(MapInstance), "mFogUpdateTime").SetValue(map, Environment.TickCount64 - 1000);
+            DrawScene(includeCoveredWorldFog: true);
+            CinematicEnvironment.DrawPerspectiveAtmosphere();
+            var fadingFog = Capture("03a-fog-fading-out");
+            Assert.That((float)Field(typeof(MapInstance), "mRenderedFogAlpha").GetValue(map)!, Is.InRange(74f, 78f),
+                "Changing opacity to zero must retain partially visible fog after one second.");
+            Assert.That(MaxRgbError(singleFog!, fadingFog), Is.GreaterThan(3));
+            Assert.That(MaxRgbError(baseline, fadingFog), Is.GreaterThan(3));
+            SettleFog(128);
             DrawScene();
             DrawReferenceFog(128);
             DrawReferenceFog(128);

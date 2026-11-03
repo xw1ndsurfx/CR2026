@@ -41,7 +41,7 @@ internal static class ProfessionConfigurationRuntime
     internal static void Save(string json)
     {
         var configuration = ProfessionConfiguration.FromJson(json);
-        Intersect.Framework.Core.Naval.NavalProfessions.Include(configuration);
+        NativeProfessions.Include(configuration);
         Intersect.Framework.Core.Housing.FarmingProfession.Include(configuration);
         if (!IsValid(configuration))
             throw new InvalidDataException("Profession configuration references missing resources, items, or common events.");
@@ -63,7 +63,7 @@ internal static class ProfessionConfigurationRuntime
             File.WriteAllText(temp, configuration.ToJson());
             File.Move(temp, PathName, overwrite: true);
             _current = configuration;
-            Intersect.Framework.Core.Naval.NavalProfessions.Include(configuration);
+            NativeProfessions.Include(configuration);
             Intersect.Framework.Core.Housing.FarmingProfession.Include(configuration);
             ProfessionConfiguration.Load(configuration.ToJson());
         }
@@ -77,7 +77,7 @@ internal static class ProfessionConfigurationRuntime
                 ? ProfessionConfiguration.FromJson(File.ReadAllText(PathName))
                 : new ProfessionConfiguration();
             if (!IsValid(configuration)) configuration = new ProfessionConfiguration();
-            Intersect.Framework.Core.Naval.NavalProfessions.Include(configuration);
+            NativeProfessions.Include(configuration);
             Intersect.Framework.Core.Housing.FarmingProfession.Include(configuration);
             ProfessionConfiguration.Load(configuration.ToJson());
             return configuration;
@@ -85,7 +85,7 @@ internal static class ProfessionConfigurationRuntime
         catch
         {
             var empty = new ProfessionConfiguration();
-            Intersect.Framework.Core.Naval.NavalProfessions.Include(empty);
+            NativeProfessions.Include(empty);
             Intersect.Framework.Core.Housing.FarmingProfession.Include(empty);
             ProfessionConfiguration.Load(empty.ToJson());
             return empty;

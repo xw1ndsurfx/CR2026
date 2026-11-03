@@ -20,18 +20,19 @@ public partial class MapInstance
 
     private void UpdateRainSound()
     {
-        var filename = RainIsConfigured ? WeatherEffects.RainSound?.Trim() ?? "" : "";
+        var strength = WeatherStrength;
+        var filename = strength > 0 ? RenderedWeather.Sound : "";
         if (filename != _rainFilename)
         {
             _rainLoop?.Stop(); _rainLoop = null;
             _rainFilename = filename; _rainRetryAt = 0;
         }
         var now = Environment.TickCount64;
-        if (_rainLoop is { Loaded: true }) _rainLoop.Volume = 100 * WeatherStrength;
+        if (_rainLoop is { Loaded: true }) _rainLoop.Volume = 100 * strength;
         if (filename.Length == 0 || _rainLoop is { Loaded: true } || now < _rainRetryAt) return;
         _rainRetryAt = now + 5000;
         _rainLoop = Audio.AddGameSound(filename, true);
-        if (_rainLoop != null) _rainLoop.Volume = 100 * WeatherStrength;
+        if (_rainLoop != null) _rainLoop.Volume = 100 * strength;
     }
 
     private void StopWeatherSounds()

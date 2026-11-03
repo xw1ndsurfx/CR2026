@@ -1,5 +1,54 @@
 [
   {
+    "id": "miniGame.Fishing",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "art": "miniGame.Cooking.png",
+    "keywords": "fishing peche pêche pesca fish poisson net filet cage legendary legendaire légendaire",
+    "title": {
+      "en": "Fishing Editor",
+      "fr": "Éditeur de pêche",
+      "es": "Editor de pesca"
+    },
+    "description": {
+      "en": "Configure fishing zones, equipment, catches, legendary challenges, animations and sounds.",
+      "fr": "Configurer les zones, les équipements, les prises, les défis légendaires, les animations et les sons.",
+      "es": "Configura zonas, equipos, capturas, desafíos legendarios, animaciones y sonidos."
+    }
+  },
+  {
+    "id": "lobbyEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "Gameplay"
+    ],
+    "art": "housingEditor.png",
+    "keywords": "lobby party group image capacity maximum lobby groupe image limite sala grupo",
+    "title": {
+      "en": "Lobby Editor",
+      "fr": "Éditeur de lobbys",
+      "es": "Editor de salas"
+    },
+    "description": {
+      "en": "Choose activity images and maximum party sizes.",
+      "fr": "Choisir les images des activités et la taille maximale des groupes.",
+      "es": "Elige imágenes de actividades y tamaños máximos de grupo."
+    }
+  },
+  {
+    "id": "royalContractsEditorToolStripMenuItem", "oldMenu": "Game Editors", "category": "Game", "subcategory": "WorldAndProgression",
+    "tags": ["Gameplay", "Economy"], "art": "questEditorToolStripMenuItem.png", "keywords": "royal contracts daily weekly mission contract contrat quotidien hebdomadaire collectif intendant",
+    "title": {"en":"Royal Contracts", "fr":"Contrats royaux", "es":"Contratos reales"},
+    "description": {"en":"Manage automatic daily and weekly commissions, deliveries and collective goals.", "fr":"Gérer les missions quotidiennes et hebdomadaires, les livraisons et les objectifs collectifs.", "es":"Gestiona misiones diarias y semanales, entregas y objetivos colectivos."}
+  },
+  {
     "id": "royalCinematicDirector", "oldMenu": "contentEditorsToolStripMenuItem", "category": "Game", "subcategory": "WorldAndProgression",
     "tags": ["World"], "art": "commonEventEditorToolStripMenuItem.png", "keywords": "cinematic camera timeline actor story dialogue movement saga chapitre",
     "title": {"en":"Royal Cinematic Director", "fr":"Royal Cinematic Director", "es":"Royal Cinematic Director"},
@@ -156,13 +205,13 @@
       "es": "Mesas de fabricación"
     },
     "description": {
-      "en": "Organize the recipes available at each table.",
-      "fr": "Organisez les recettes proposées par chaque table.",
-      "es": "Organiza las recetas disponibles en cada mesa."
+      "en": "Crafting tables, recipe lists and persistent campfire creators.",
+      "fr": "Tables de fabrication, recettes et créateurs de feux de camp.",
+      "es": "Mesas de fabricación, recetas y creadores de fogatas."
     },
     "sign": "Blacksmith",
     "art": "craftingTableEditorToolStripMenuItem.png",
-    "keywords": "craftingTableEditorToolStripMenuItem Crafting Tables Tables de fabrication Mesas de fabricación",
+    "keywords": "craftingTableEditorToolStripMenuItem Crafting Tables Tables de fabrication Mesas de fabricación craft table campfire feu camp recettes fabrication",
     "subcategory": "EconomyAndCommerce"
   },
   {
@@ -432,13 +481,13 @@
       "es": "Profesiones"
     },
     "description": {
-      "en": "Configure professions and progression rewards.",
-      "fr": "Configurez les métiers et leurs récompenses.",
-      "es": "Configura profesiones y sus recompensas."
+      "en": "Professions, resources, levels and native jousting progress.",
+      "fr": "Métiers, ressources, niveaux et progression de joute.",
+      "es": "Profesiones, recursos, niveles y progreso de justas."
     },
     "sign": "Blacksmith",
     "art": "professionEditorToolStripMenuItem.png",
-    "keywords": "professionEditorToolStripMenuItem Professions Professions Profesiones",
+    "keywords": "professionEditorToolStripMenuItem Professions Professions Profesiones profession joust joute justas xp level niveau",
     "subcategory": "EconomyAndCommerce"
   },
   {
@@ -1085,6 +1134,29 @@
     "subcategory": "MiniGameSettings"
   },
   {
+    "id": "miniGame.RollTheDice",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Roll the Dice",
+      "fr": "Jeu de dés",
+      "es": "Juego de dados"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Dice",
+    "art": "miniGame.Poker.png",
+    "keywords": "RollTheDice roll the dice dice game jeu de dés des lancer dados juego lanzar"
+  },
+  {
     "id": "miniGame.Potions",
     "oldMenu": "Mini-Game",
     "category": "MiniGames",
@@ -1244,26 +1316,26 @@
   "keywords": "jousting joutes justas Herbonia William"
 },
 {
-  "id": "SmartMapBuilderTool",
-  "oldMenu": "toolsToolStripMenuItem",
-  "category": "Tools",
-  "subcategory": "WorldAndProgression",
-  "tags": [
-    "World"
-  ],
-  "art": "map.png",
-  "keywords": "smart map builder terrain road river cliff animated autotile VX XP pinceau rivière falaise",
-  "title": {
-    "en": "Smart Map Builder",
-    "fr": "Smart Map Builder",
-    "es": "Smart Map Builder"
+    "id": "SmartMapBuilderTool",
+    "oldMenu": "toolsToolStripMenuItem",
+    "category": "Tools",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "World"
+    ],
+    "art": "map.png",
+    "keywords": "smart map builder terrain road river cliff animated autotile VX XP pinceau rivière falaise ground island shore water color pixels terrain ile rive couleur sable gazon",
+    "title": {
+      "en": "Smart Map Builder",
+      "fr": "Smart Map Builder",
+      "es": "Smart Map Builder"
+    },
+    "description": {
+      "en": "Ground islands, connected shores and built-in ground painting.",
+      "fr": "Îles sur Ground, rives raccordées et retouches du sol.",
+      "es": "Islas en Ground, orillas conectadas y edición del suelo."
+    }
   },
-  "description": {
-    "en": "Paint terrain, animated rivers and reusable buildings with native VX/XP autotiles.",
-    "fr": "Peignez terrains, rivières animées et bâtiments réutilisables avec les autotiles natifs VX/XP.",
-    "es": "Pinte terrenos, ríos animados y edificios reutilizables con autotiles nativos VX/XP."
-  }
-},
 {
   "id": "miniGame.Archery",
   "oldMenu": "miniGameEditorsToolStripMenuItem",
@@ -1286,24 +1358,45 @@
   "keywords": "archery tir arc weapon mastery armes munition"
 },
 {
-  "id": "weaponMasteryEditor",
-  "oldMenu": "contentEditorsToolStripMenuItem",
-  "category": "Game",
-  "subcategory": "WorldAndProgression",
-  "tags": [
-    "Gameplay"
-  ],
-  "art": "itemEditorToolStripMenuItem.png",
-  "title": {
-    "en": "Weapon Mastery Editor",
-    "fr": "Éditeur de maîtrise des armes",
-    "es": "Editor de dominio de armas"
+    "id": "weaponMasteryEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "Gameplay"
+    ],
+    "art": "itemEditorToolStripMenuItem.png",
+    "title": {
+      "en": "Weapon Mastery Editor",
+      "fr": "Éditeur de maîtrise des armes",
+      "es": "Editor de dominio de armas"
+    },
+    "description": {
+      "en": "Weapon XP, talents, reset settings and mastery requirements.",
+      "fr": "XP des armes, talents, réinitialisation et prérequis.",
+      "es": "XP de armas, talentos, reinicios y requisitos de dominio."
+    },
+    "keywords": "archery tir arc weapon mastery armes munition weapon sword epee maitrise mastery requirements prerequis niveau equiper event talents reset"
   },
-  "description": {
-    "en": "Configure weapon mastery progression and ammunition rules.",
-    "fr": "Configurez la progression de maîtrise des armes et les règles de munitions.",
-    "es": "Configure la progresión de dominio de armas y las reglas de munición."
-  },
-  "keywords": "archery tir arc weapon mastery armes munition"
-}
+  {
+    "id": "royalTutorialEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Systems",
+    "subcategory": "Configuration",
+    "tags": [
+      "World"
+    ],
+    "title": {
+      "en": "Tutorial editor",
+      "fr": "Éditeur de tutoriel",
+      "es": "Editor de tutorial"
+    },
+    "description": {
+      "en": "Configure first-login guidance, objectives and cinematics.",
+      "fr": "Configurer le guide de première connexion, les objectifs et les cinématiques.",
+      "es": "Configurar la guía inicial, los objetivos y las cinemáticas."
+    },
+    "art": "commonEventEditorToolStripMenuItem.png",
+    "keywords": "tutorial onboarding guide introduction cinematic"
+  }
 ]

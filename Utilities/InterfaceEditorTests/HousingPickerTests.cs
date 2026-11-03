@@ -9,6 +9,29 @@ using Newtonsoft.Json;
 internal static class HousingPickerTests
 {
     private static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
+    private static void VerifyFarmProperties()
+    {
+        var previous = System.Globalization.CultureInfo.CurrentUICulture;
+        var type = typeof(FrmHousingConfiguration).Assembly.GetType("Intersect.Editor.Forms.Editors.FarmEditorProperties", true)!;
+        var farm = new FarmConfiguration();
+        var wrapper = (ICustomTypeDescriptor)Activator.CreateInstance(type, [farm])!;
+        try
+        {
+            foreach (var language in new[] { "en", "fr", "es" })
+            {
+                System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+                var properties = wrapper.GetProperties();
+                Check(properties["ProductionEpochUtc"] == null && properties["Crops"] == null, "Internal farm epoch and separate crop editor stay out of settings.");
+                Check(properties["MaximumWorkers"]!.DisplayName == Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Maximum workers", language), "Farm property captions follow the editor locale.");
+                properties["MaximumWorkers"]!.SetValue(wrapper, 4);
+                Check(farm.MaximumWorkers == 4, "Localized farm settings edit the underlying draft.");
+                foreach (var caption in new[] { "Farm & hired workers...", "Farm configuration", "Exterior map", "Salary currency", "SeedItemId", "HarvestItemId" })
+                    Check(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Catalog.Entries[caption].ContainsKey(language), "Farm editor caption has locale coverage: " + caption);
+            }
+        }
+        finally { System.Globalization.CultureInfo.CurrentUICulture = previous; }
+    }
+
     private static void VerifyUnloadedMaps()
     {
         var previous = MapList.OrderedMaps.ToArray();
@@ -34,6 +57,7 @@ internal static class HousingPickerTests
     }
     internal static void Run()
     {
+        VerifyFarmProperties();
         VerifyUnloadedMaps();
         foreach (var existing in new[] { false, true })
         foreach (var columnName in new[] { "ChooseGraphic", "ChooseTileset" })

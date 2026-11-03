@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -735,158 +735,6 @@ public partial class Player : Entity, IPlayer
         }
 
         return 0;
-    }
-
-    public void TrySellItem(int inventorySlotIndex)
-    {
-        var inventorySlot = Inventory[inventorySlotIndex];
-        if (!ItemDescriptor.TryGet(inventorySlot.ItemId, out var itemDescriptor))
-        {
-            return;
-        }
-
-        var shop = Globals.GameShop;
-        var shopCanBuyItem =
-            shop?.BuyingWhitelist == true && shop.BuyingItems.Any(buyingItem => buyingItem.ItemId == itemDescriptor.Id)
-            || shop?.BuyingWhitelist == false && !shop.BuyingItems.Any(buyingItem => buyingItem.ItemId == itemDescriptor.Id);
-
-        var prompt = Strings.Shop.SellPrompt;
-        var inputType = InputType.YesNo;
-        Base.GwenEventHandler<InputSubmissionEventArgs>? onSuccess = (sender, args) =>
-        {
-            if (sender is not InputBox { UserData: int slotIndex })
-            {
-                return;
-            }
-
-            PacketSender.SendSellItem(slotIndex, 1);
-        };
-        var userData = inventorySlotIndex;
-        var slotQuantity = inventorySlot.Quantity;
-        var maxQuantity = slotQuantity;
-
-        if (!shopCanBuyItem)
-        {
-            prompt = Strings.Shop.CannotSell;
-            inputType = InputType.Okay;
-            onSuccess = null;
-            userData = -1;
-        }
-        else if (itemDescriptor.IsStackable || slotQuantity > 1)
-        {
-            var inventoryQuantity = GetQuantityOfItemInInventory(itemDescriptor.Id);
-            if (inventoryQuantity > 1)
-            {
-                maxQuantity = inventoryQuantity;
-                prompt = Strings.Shop.SellItemPrompt;
-                inputType = InputType.NumericSliderInput;
-                onSuccess = TrySellItemOnSubmit;
-                userData = inventorySlotIndex;
-            }
-        }
-
-        _ = new InputBox(
-            title: Strings.Shop.SellItem,
-            prompt: prompt.ToString(itemDescriptor.Name),
-            inputType: inputType,
-            quantity: slotQuantity,
-            maximumQuantity: maxQuantity,
-            userData: userData,
-            onSubmit: onSuccess
-        );
-    }
-
-    private static void TrySellItemOnSubmit(Base sender, InputSubmissionEventArgs args)
-    {
-        if (sender is not InputBox { UserData: int slotIndex })
-        {
-            return;
-        }
-
-        if (args.Value is not NumericalSubmissionValue submissionValue)
-        {
-            return;
-        }
-
-        var value = (int)Math.Round(submissionValue.Value);
-        if (value > 0)
-        {
-            PacketSender.SendSellItem(slotIndex, value);
-        }
-    }
-
-    public void TryBuyItem(int shopSlotIndex)
-    {
-        // Confirm the purchase. Never trust a UI callback index blindly.
-        var shop = Globals.GameShop;
-        if (shop == null || shopSlotIndex < 0 || shopSlotIndex >= shop.SellingItems.Count)
-        {
-            ApplicationContext.Context.Value?.Logger.LogWarning(
-                "Ignored invalid shop buy index {ShopSlotIndex} for shop {ShopName}.",
-                shopSlotIndex,
-                shop?.Name ?? "(none)"
-            );
-            return;
-        }
-
-        var shopSlot = shop.SellingItems[shopSlotIndex];
-        if (shopSlot == default || !ItemDescriptor.TryGet(shopSlot.ItemId, out var itemDescriptor))
-        {
-            return;
-        }
-
-        var maxBuyAmount = 0;
-        if (shopSlot.CostItemQuantity < 1)
-        {
-            var emptySlots = Inventory.Count(inventorySlot => inventorySlot.ItemId == default);
-            var slotsWithItem = Inventory.Count(inventorySlot => inventorySlot.ItemId == itemDescriptor.Id);
-            var currentItemQuantity = GetQuantityOfItemInInventory(shopSlot.ItemId);
-            var stackSize = itemDescriptor.IsStackable ? itemDescriptor.MaxInventoryStack : 1;
-            var itemQuantityLimitInCurrentStacks = slotsWithItem * stackSize;
-            var partialStackEmptyQuantity = itemQuantityLimitInCurrentStacks - currentItemQuantity;
-            maxBuyAmount = emptySlots * stackSize + partialStackEmptyQuantity;
-        }
-        else
-        {
-            var currencyCount = GetQuantityOfItemInInventory(shopSlot.CostItemId);
-            maxBuyAmount = (int)Math.Floor(currencyCount / (float)shopSlot.CostItemQuantity);
-        }
-
-        // If our max buy amount is 0 or the item isn't stackable, let the server handle it
-        if (!itemDescriptor.IsStackable || maxBuyAmount == 0)
-        {
-            PacketSender.SendBuyItem(shopSlotIndex, 1);
-            return;
-        }
-
-        _ = new InputBox(
-            title: Strings.Shop.BuyItem,
-            prompt: Strings.Shop.BuyItemPrompt.ToString(itemDescriptor.Name),
-            inputType: InputType.NumericSliderInput,
-            quantity: maxBuyAmount,
-            maximumQuantity: maxBuyAmount,
-            userData: shopSlotIndex,
-            onSubmit: TryBuyItemOnSubmit
-        );
-    }
-
-    private static void TryBuyItemOnSubmit(Base sender, InputSubmissionEventArgs args)
-    {
-        if (sender is not InputBox { UserData: int slotIndex })
-        {
-            return;
-        }
-
-        if (args.Value is not NumericalSubmissionValue submissionValue)
-        {
-            return;
-        }
-
-        var value = (int)Math.Round(submissionValue.Value);
-        if (value > 0)
-        {
-            PacketSender.SendBuyItem(slotIndex, value);
-        }
     }
 
     /// <summary>
@@ -2770,15 +2618,13 @@ public partial class Player : Entity, IPlayer
 
     private void DrawNameAndLabels(Color textColor, Color? borderColor, Color? backgroundColor)
     {
+        Intersect.Client.Interface.Game.IntoxicationVisuals.DrawVomit(Id, Origin);
         base.DrawName(textColor, borderColor, backgroundColor);
-        if (IsAfk)
-        {
-            DrawLabels("AFK", 2, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
-        }
         DrawBadge();
         DrawLabels(HeaderLabel.Text, 0, HeaderLabel.Color, textColor, borderColor, backgroundColor);
         DrawLabels(FooterLabel.Text, 1, FooterLabel.Color, textColor, borderColor, backgroundColor);
-        DrawGuildName(textColor, borderColor, backgroundColor);
+        DrawGuildName(new Color(255, 220, 202, 160), borderColor, backgroundColor);
+        if (IsAfk) DrawLabels("AFK", 2, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
     }
 
     private void DrawBadge()
@@ -2858,12 +2704,18 @@ public partial class Player : Entity, IPlayer
         var textSize = Graphics.Renderer.MeasureText(
             guildLabel,
             Graphics.EntityNameFont,
-            Graphics.EntityNameFontSize,
+            Math.Max(8, Graphics.EntityNameFontSize - 2),
             NameplateScale
         );
 
-        var x = (int)Math.Ceiling(Origin.X);
+        var emblem = Intersect.Client.Interface.Game.GuildEmblems.Get(guildLabel);
+        var emblemSize = textSize.Y;
+        var emblemWidth = emblem == null ? 0 : emblemSize + 4 * NameplateScale;
+        var x = (int)Math.Ceiling(Origin.X + emblemWidth / 2f);
         var y = GetLabelLocation(LabelType.Guild);
+        if (emblem != null)
+            Graphics.DrawGameTexture(emblem, new FloatRect(0, 0, emblem.Width, emblem.Height),
+                new FloatRect(x - textSize.X / 2f - emblemWidth, y, emblemSize, emblemSize), Color.White);
 
         backgroundColor ??= Color.Transparent;
         if (backgroundColor != Color.Transparent)
@@ -2880,7 +2732,7 @@ public partial class Player : Entity, IPlayer
         Graphics.Renderer.DrawString(
             guildLabel,
             Graphics.EntityNameFont,
-            Graphics.EntityNameFontSize,
+            Math.Max(8, Graphics.EntityNameFontSize - 2),
             x - (int)Math.Ceiling(textSize.X / 2f),
             (int)y,
             NameplateScale,

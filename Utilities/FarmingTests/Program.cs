@@ -74,5 +74,8 @@ foreach (var caption in captions)
     Check(catalog.Entries.TryGetValue(caption, out var versions) && GameTextCatalog.Languages.All(lang => versions.ContainsKey(lang) && GameTextTokens.Compatible(caption, versions[lang])), "Locale coverage and placeholders: " + caption);
     Check(catalog.Get(caption, "unknown") == caption, "Unknown locale falls back to English");
 }
+Check((int)Intersect.Network.Packets.Housing.HouseAction.Directory == 16 &&
+    (int)Intersect.Network.Packets.Housing.HouseAction.VisitFarm == 17,
+    "Farm actions append after the existing house-directory protocol identifier");
 FarmingServerChecks.Run(Check, config);
 Console.WriteLine($"PASS: {assertions} farming checks (offline persistence, conservation, storage, pauses, currencies, progression, server authorization/rollback and en/fr/es).");

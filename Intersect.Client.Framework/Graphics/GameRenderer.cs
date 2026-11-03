@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using Intersect.Client.Framework.Content;
@@ -690,6 +690,9 @@ public abstract partial class GameRenderer : IGameRenderer, ITextHelper
 
     /// <summary>Optional offscreen perspective pass; unsupported renderers leave the ordinary view intact.</summary>
     public virtual bool RenderMapPerspective(IGameRenderTexture target, MapPerspectiveScene scene) => false;
+
+    public virtual void BeginWorldBlur(float strength) { }
+    public virtual void EndWorldBlur() { }
 
     public abstract void Close();
 

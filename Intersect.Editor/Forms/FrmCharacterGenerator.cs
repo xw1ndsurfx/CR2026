@@ -175,10 +175,39 @@ public sealed partial class FrmCharacterGenerator : DarkForm
     private sealed class PixelPreview : Control
     {
         private Bitmap? _image;
+        private double _zoom = 1;
+        private PointF _pan;
+        private System.Drawing.Point _dragStart;
+        private PointF _dragPan;
+        internal double Zoom => _zoom;
+        internal event Action? ZoomChanged;
+        internal void ZoomBy(double factor, System.Drawing.Point? point = null)
+        {
+            var next = Math.Clamp(_zoom * factor, .25, 8);
+            var cursor = point ?? new System.Drawing.Point(Width / 2, Height / 2);
+            var x = cursor.X - Width / 2f; var y = cursor.Y - Height / 2f;
+            _pan = new PointF((float)(x - (x - _pan.X) * next / _zoom), (float)(y - (y - _pan.Y) * next / _zoom));
+            _zoom = next; Invalidate(); ZoomChanged?.Invoke();
+        }
+        internal void FitPreview() { _zoom = 1; _pan = PointF.Empty; Invalidate(); ZoomChanged?.Invoke(); }
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); Focus(); }
+        protected override void OnMouseWheel(MouseEventArgs e) { base.OnMouseWheel(e); ZoomBy(Math.Pow(1.25, e.Delta / 120d), e.Location); }
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left) return;
+            Capture = true; _dragStart = e.Location; _dragPan = _pan;
+        }
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (Capture) { _pan = new PointF(_dragPan.X + e.X - _dragStart.X, _dragPan.Y + e.Y - _dragStart.Y); Invalidate(); }
+        }
+        protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); if (e.Button == MouseButtons.Left) Capture = false; }
 
         public PixelPreview()
         {
-            DoubleBuffered = true;
+            DoubleBuffered = true; TabStop = true; SetStyle(ControlStyles.Selectable, true);
             BackColor = System.Drawing.Color.FromArgb(17, 17, 17);
         }
 
@@ -228,10 +257,11 @@ public sealed partial class FrmCharacterGenerator : DarkForm
                 scale = Math.Min((double)Width / source.Width, (double)Height / source.Height);
             }
 
+            scale *= _zoom;
             var width = Math.Max(1, (int)Math.Round(source.Width * scale));
             var height = Math.Max(1, (int)Math.Round(source.Height * scale));
-            var xPos = (Width - width) / 2;
-            var yPos = (Height - height) / 2;
+            var xPos = (Width - width) / 2 + (int)_pan.X;
+            var yPos = (Height - height) / 2 + (int)_pan.Y;
 
             e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
             e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
@@ -1093,6 +1123,17 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         _preview.Dock = DockStyle.Fill;
         previewHost.Controls.Add(_preview);
         previewPanel.Controls.Add(previewHost);
+        string ZoomText(string text) => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(text, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        var zoomBar = new FlowLayoutPanel { Name = "CharacterPreviewZoom", Dock = DockStyle.Bottom, Height = 34, WrapContents = false };
+        var zoomOut = new Button { Name = "CharacterPreviewZoomOut", Text = "−", Width = 38, Height = 28, AccessibleName = ZoomText("Zoom out") };
+        var zoomIn = new Button { Name = "CharacterPreviewZoomIn", Text = "+", Width = 38, Height = 28, AccessibleName = ZoomText("Zoom in") };
+        var fitPreview = new Button { Name = "CharacterPreviewFit", Text = ZoomText("Fit preview"), AutoSize = true, Height = 28 };
+        var zoomLabel = new Label { AutoSize = true, Text = "100%", Padding = new Padding(2, 6, 0, 0) };
+        zoomOut.Click += (_, _) => _preview.ZoomBy(.8); zoomIn.Click += (_, _) => _preview.ZoomBy(1.25);
+        fitPreview.Click += (_, _) => _preview.FitPreview(); _preview.ZoomChanged += () => zoomLabel.Text = $"{_preview.Zoom * 100:0}%";
+        zoomBar.Controls.AddRange([zoomOut, zoomIn, fitPreview, zoomLabel]); previewPanel.Controls.Add(zoomBar); zoomBar.BringToFront();
+        var zoomTip = new ToolTip(); zoomTip.SetToolTip(_preview, ZoomText("Mouse wheel: zoom. Drag: move the preview."));
+        Disposed += (_, _) => zoomTip.Dispose();
 
         var resetButton = CreateAccentButton("RESET CHARACTER");
         resetButton.Dock = DockStyle.Bottom;

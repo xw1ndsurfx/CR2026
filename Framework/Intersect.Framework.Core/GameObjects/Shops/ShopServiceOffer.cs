@@ -1,6 +1,7 @@
 ﻿namespace Intersect.GameObjects;
 public sealed class ShopServiceOffer
 {
+    public ShopPromotion? Promotion { get; set; }
     public Guid Id {get;set;}=Guid.NewGuid();
     public string Name {get;set;}="";
     public Guid SpellId {get;set;}

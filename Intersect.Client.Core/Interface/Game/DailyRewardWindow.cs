@@ -115,7 +115,7 @@ internal sealed class DailyRewardWindow : Window
             var item = first == null ? null : ItemDescriptor.Get(first.ItemId);_hoverItem=item;
             _icon.Texture = item == null || string.IsNullOrWhiteSpace(item.Icon)
                 ? null
-                : Globals.ContentManager.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
+                : Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
             _icon.RenderColor = item?.Color ?? Color.White;
 
             // The preview displays the quantity rather than a long item name.

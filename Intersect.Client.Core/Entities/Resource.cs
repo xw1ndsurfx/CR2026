@@ -165,12 +165,8 @@ public partial class Resource : Entity, IResource
 
     public override void Load(EntityPacket? packet)
     {
-        if(packet is ResourceEntityPacket {IsDead:true} && !IsDead && Descriptor?.FallingTree==true && Texture!=null && _renderBoundsDest.Height>0)
-        {
-            _fallTexture=Texture;_fallSource=_renderBoundsSrc;_fallDestination=_renderBoundsDest;
-            _fallStarted=Environment.TickCount64;
-        }
-        else if(packet is ResourceEntityPacket {IsDead:false})_fallTexture=null;
+        if(packet is ResourceEntityPacket {IsDead:true} && !IsDead) CaptureFallingTree();
+        else if(packet is ResourceEntityPacket {IsDead:false}) { _fallTexture=null; ClearFallingSprite(); }
         base.Load(packet);
         _recalculateRenderBounds = true;
 
@@ -266,6 +262,10 @@ public partial class Resource : Entity, IResource
             s => currentHealthPercentage >= s.MinimumHealth && currentHealthPercentage <= s.MaximumHealth
         );
 
+        // The health packet can select the empty exhausted graphic before the
+        // death packet arrives. Preserve the standing sprite at that transition.
+        if (currentHealthPercentage <= 0 && _currentState is { MinimumHealth: > 0 }) CaptureFallingTree();
+
         // dispose animation if animation is not used in this current state,
         // but the previous state was an animation
         if (
@@ -289,6 +289,7 @@ public partial class Resource : Entity, IResource
 
     public override void Dispose()
     {
+        ClearFallingSprite();
         if (RenderList != null)
         {
             _ = RenderList.Remove(this);
@@ -326,7 +327,7 @@ public partial class Resource : Entity, IResource
             CalculateRenderBounds();
         }
 
-        if (!Graphics.WorldViewport.IntersectsWith(_renderBoundsDest))
+        if (!Graphics.WorldViewport.IntersectsWith(ResourceVisibilityBounds))
         {
             if (RenderList != null)
             {
@@ -350,7 +351,7 @@ public partial class Resource : Entity, IResource
 
     public override HashSet<Entity>? DetermineRenderOrder(HashSet<Entity>? renderList, IMapInstance? map)
     {
-        if (CurrentState is not { } graphicState || !graphicState.RenderBelowEntities)
+        if (_fallTexture != null || CurrentState is not { } graphicState || !graphicState.RenderBelowEntities)
         {
             return base.DetermineRenderOrder(renderList, map);
         }
@@ -541,7 +542,6 @@ public partial class Resource : Entity, IResource
 
     public override void DrawHpBar()
     {
-        base.DrawHpBar();
         DrawTreeHarvestProgress();
     }
 
@@ -550,7 +550,6 @@ public partial class Resource : Entity, IResource
         if (!ShouldDrawHpBar ||
             IsDead ||
             Descriptor == null ||
-            !IsTreeResource(Descriptor) ||
             Graphics.Renderer == null)
         {
             return;
@@ -581,7 +580,7 @@ public partial class Resource : Entity, IResource
         );
 
         var textX = x - (int)Math.Ceiling(textSize.X / 2f);
-        var textY = barY - barTexture.Height / 2 - (int)Math.Ceiling(textSize.Y) - 4;
+        var textY = barY - (int)Math.Ceiling(textSize.Y / 2f);
 
         Graphics.Renderer.DrawString(
             text,
@@ -642,27 +641,27 @@ public partial class Resource : Entity, IResource
             return;
         }
 
-        if (Texture == null)
-        {
-            return;
-        }
-
         if(_fallTexture is {} falling)
         {
             var elapsed=Environment.TickCount64-_fallStarted;
             if(elapsed<1100)
             {
+                if (!_preparedFall) { _preparedFall = true; _shadowlessFall = PrepareFallingSprite(falling, _fallSource); }
                 var progress=Math.Clamp(elapsed/800f,0,1);
                 var angle=progress*progress*MathF.PI/2;
                 var dest=_fallDestination;
                 dest.X+=MathF.Sin(angle)*dest.Height/2;
                 dest.Y+=(1-MathF.Cos(angle))*dest.Height/2;
                 var alpha=(byte)(255*(1-Math.Clamp((elapsed-800)/300f,0,1)));
-                Graphics.DrawGameTexture(falling,_fallSource,dest,new Color(alpha,255,255,255),rotationDegrees:angle*180/MathF.PI);
+                Graphics.DrawGameTexture(_shadowlessFall ?? falling,
+                    _shadowlessFall != null ? new FloatRect(0, 0, _fallSource.Width, _fallSource.Height) : _fallSource,
+                    dest,new Color(alpha,255,255,255),rotationDegrees:angle*180/MathF.PI);
                 return;
             }
             _fallTexture=null;
+            ClearFallingSprite();
         }
+        if (Texture == null) return;
         // TODO: Add an option to show the exhausted sprite until the exhaustion animation is finished, but this is not necessary if the graphics line up like Blinkuz' sample provided to fix #2572
         if (_activeAnimation != null)
         {

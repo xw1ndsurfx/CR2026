@@ -27,6 +27,8 @@ internal static partial class RoyalCombatRuntime
     }
     private static void ValidateProgressionMappings(RoyalCombatConfiguration config)
     {
+        foreach(var id in config.Masteries.SelectMany(c=>c.Talents).SelectMany(t=>new[]{t.Skill.AnimationId,t.Skill.HitAnimationId}).Where(id=>id!=Guid.Empty))
+            if(Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(id)==null)throw new InvalidDataException("mastery-animation");
         foreach (var id in config.Masteries.SelectMany(c => c.Talents).SelectMany(t => t.RankSpellIds))
             if (SpellDescriptor.Get(id) == null) throw new InvalidDataException("mastery-spell");
         foreach (var rule in config.Ammunition)

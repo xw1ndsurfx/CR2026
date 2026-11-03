@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Intersect.Client.Classes.MonoGame.Graphics;
@@ -448,6 +448,7 @@ internal partial class MonoRenderer : GameRenderer
 
     public override void Close()
     {
+        DisposeWorldBlur();
     }
 
     protected override IGameTexture CreateWhitePixel()

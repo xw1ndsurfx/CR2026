@@ -79,6 +79,8 @@ internal static class QuestShopRequirementFormatter
             CombatCondition => "Be in combat",
             ProfessionLevelCondition value =>
                 $"Profession {ProfessionConfiguration.Instance.Find(value.ProfessionId)?.Name ?? "Unknown"} level {Comparator(value.Comparator)} {value.Value:N0}",
+            WeaponMasteryLevelCondition value =>
+                $"Weapon mastery {Intersect.Server.Archery.RoyalCombatRuntime.Current.Masteries.FirstOrDefault(m => m.Key == value.MasteryKey)?.Name ?? value.MasteryKey} level {Comparator(value.Comparator)} {value.Value}",
             PremiumStatusCondition value => value.Mode switch
             {
                 PremiumConditionMode.Active => "Premium active",

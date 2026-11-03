@@ -1,4 +1,4 @@
-using Intersect.Editor.Forms.EditorHub;
+﻿using Intersect.Editor.Forms.EditorHub;
 using Intersect.Editor.Networking;
 using Intersect.Editor.General;
 using Intersect.Editor.Forms.Styling;
@@ -23,6 +23,7 @@ public partial class FrmMain
         AddMountEditorMenu();
         AddJoustEditorMenu();
         AddRoyalCombatEditorMenus();
+        AddFishingEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestDungeonConfiguration(openEditor: false);
@@ -32,11 +33,16 @@ public partial class FrmMain
         housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
         contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
         AddRoyalStylistEditorMenu();
+        AddRoyalContractsEditorMenu();
+        var lobbyEditor = new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Lobby Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)) { Name = "lobbyEditor" };
+        lobbyEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.PartyLobbies.LobbyConfigurationRequestPacket());
+        contentEditorsToolStripMenuItem.DropDownItems.Add(lobbyEditor);
         if (requestConfigurations) PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
         AddSoundImportEditorMenu();
         AddCinematicDirectorMenu();
+        AddTutorialMenu();
         AddBalanceLabEditorMenu();
         AddWorldEventsEditorMenu();
         AddSystemEditorMenu();
@@ -56,6 +62,8 @@ public partial class FrmMain
     private void InitializeEditorHub(HubPreferences? preferences = null)
     {
         if (_editorHub != null) return;
+        // Register the native command before the hub captures its menu roots.
+        AddFishingEditorMenu();
         _hubPreferences = preferences ?? new HubPreferences();
         var rootNames = new[] { "contentEditorsToolStripMenuItem", "miniGameEditorsToolStripMenuItem", "worldEventsToolStripMenuItem", "systemEditorToolStripMenuItem", "toolsToolStripMenuItem" };
         var roots = menuStrip.Items.OfType<ToolStripMenuItem>().Where(item => rootNames.Contains(item.Name)).ToArray();

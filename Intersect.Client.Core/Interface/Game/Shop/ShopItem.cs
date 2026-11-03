@@ -74,7 +74,7 @@ public partial class ShopItem : SlotItem
                 gameShop.SellingItems[_mySlot].Item,
                 amount: 1,
                 itemProperties: itemProperty,
-                Strings.Shop.Costs.ToString(gameShop.SellingItems[_mySlot].CostItemQuantity, item.Name)
+                Strings.Shop.Costs.ToString(gameShop.SellingPrice(gameShop.SellingItems[_mySlot], gameShop.PricingTime), item.Name)
             );
         }
     }
@@ -141,7 +141,7 @@ public partial class ShopItem : SlotItem
             return;
         }
 
-        var itemTex = Globals.ContentManager?.GetTexture(itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon);
+        var itemTex = Intersect.Client.Interface.Game.ItemIconTexture.Get(itemDescriptor);
         if (itemTex != null)
         {
             Icon.Texture = itemTex;

@@ -12,6 +12,9 @@ internal sealed class NavalAmmoShopWindow:Window
     private readonly ScrollControl _buy,_sell;
     private readonly Label _message;
     private readonly Button _upgrade;
+    private readonly ShopCatalogControls _catalog;
+    private readonly Label _buyEmpty, _sellEmpty;
+    private NavalManagementState? _state;
     internal NavalAmmoShopWindow(Canvas parent):base(parent,NavalManagementWindow.T("Naval ammunition shop"),false,nameof(NavalAmmoShopWindow))
     {
         SetSize(780,620);Alignment=[Alignments.Center];DeleteOnClose=false;DisableResizing();
@@ -19,6 +22,9 @@ internal sealed class NavalAmmoShopWindow:Window
         NavalManagementWindow.Text(this,"BuyHeader",Strings.Shop.BuyItem,24,52,340,28,14);
         NavalManagementWindow.Text(this,"SellHeader",Strings.Shop.SellItem,406,52,340,28,14);
         _buy=List("BuyList",24);_sell=List("SellList",406);
+        _buyEmpty=NavalManagementWindow.Text(this,"BuyEmpty",ClientLanguages.Text("No products match your filters."),32,104,325,50);
+        _sellEmpty=NavalManagementWindow.Text(this,"SellEmpty",ClientLanguages.Text("No products match your filters."),414,104,325,50);
+        _catalog=new ShopCatalogControls(this,()=>{Rebuild();_buy.ScrollToTop();_sell.ScrollToTop();});
         _message=NavalManagementWindow.Text(this,"Status","",24,570,590,26);
         _upgrade=NavalManagementWindow.Button(this,"ExpandAmmo","Expand ammunition inventory",24,601,590,32,()=>NavalManagementWindow.Request(NavalManageAction.UpgradeAmmoInventory));
         SetSize(780,675);
@@ -29,6 +35,7 @@ internal sealed class NavalAmmoShopWindow:Window
     {var list=new ScrollControl(this,name) {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=false};list.SetBounds(x,90,350,468);ShopWindow.ConfigureNativeScrollbar(list);return list;}
     internal void Apply(NavalManagementState state)
     {
+        _state=state;
         _message.Text=string.Format(NavalManagementWindow.T("Ammunition: {0}/{1}"),state.AmmoUsed,state.AmmoCapacity)+"  "+NavalManagementWindow.T(state.Message);
         _upgrade.IsHidden=state.AmmoUpgrade==null;
         if(state.AmmoUpgrade is {} upgrade)
@@ -44,14 +51,25 @@ internal sealed class NavalAmmoShopWindow:Window
             }
             _upgrade.TooltipText=requirement;
         }
-        _buy.DeleteAllChildren();_sell.DeleteAllChildren();var by=0;var sy=0;
-        foreach(var ammo in state.Ammo)
+        Rebuild();Show();BringToFront();
+    }
+    private void Rebuild()
+    {
+        if (_state is not {} state) return;
+        // Rebuild product rows and explicitly size their scrollable content.
+        _buy.DeleteAll();_sell.DeleteAll();var by=0;var sy=0;
+        var entries=_catalog.Browse(state.Ammo,a=>ItemDescriptor.Get(a.ItemId)?.Name??"",
+            a=>Math.Max(a.SailingLevel,a.GunneryLevel),a=>a.Price,a=>a.CanBuy && a.MaximumPurchase>0,
+            a=>a.Quantity+(long)a.MainQuantity>0);
+        foreach(var ammo in entries)
         {
             if(ammo.Quantity<0 || ItemDescriptor.Get(ammo.ItemId) is not {} item)continue;
             if(ammo.ForSale) {var row=ShopProductRow.Buy(_buy,by,item,ammo.Price,ammo.Currency,ammo.CanBuy && ammo.MaximumPurchase>0,()=>Quantity(ammo, false),nativeButton:true);row.SetBounds(0,by,332,75);by+=76;}
             if(ammo.SellPrice>0 && ammo.Quantity+ (long)ammo.MainQuantity>0) {var row=ShopProductRow.Sell(_sell,sy,item,(int)Math.Min(int.MaxValue,ammo.Quantity+(long)ammo.MainQuantity),ammo.SellPrice,ammo.SellCurrency,()=>Quantity(ammo, true),nativeButton:true);row.SetBounds(0,sy,332,75);sy+=76;}
         }
-        _buy.UpdateScrollBars();_sell.UpdateScrollBars();Show();BringToFront();
+        _buyEmpty.IsHidden=by>0;_sellEmpty.IsHidden=sy>0;
+        _buy.SetInnerSize(332,by);_sell.SetInnerSize(332,sy);
+        _buy.UpdateScrollBars();_sell.UpdateScrollBars();
     }
     private static void Quantity(NavalAmmoOffer ammo, bool sell)
     {
@@ -67,7 +85,8 @@ internal sealed class NavalAmmoShopWindow:Window
             onSubmit: (_, args) =>
             {
                 if (args.Value is NumericalSubmissionValue value && value.Value > 0 && value.Value <= maximum)
-                    NavalManagementWindow.Request(sell ? NavalManageAction.SellAmmo : NavalManageAction.BuyAmmo, ammo.Kind, (int)value.Value);
+                    NavalManagementWindow.Request(sell ? NavalManageAction.SellAmmo : NavalManageAction.BuyAmmo, ammo.Kind, (int)value.Value,
+                        expectedUnitPrice: sell ? ammo.SellPrice : ammo.Price);
             });
     }
 

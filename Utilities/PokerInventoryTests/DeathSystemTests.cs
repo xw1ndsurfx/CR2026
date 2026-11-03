@@ -52,6 +52,7 @@ internal static class DeathSystemTests
             pendingPlayer.GetType().GetMethod("AdvanceConfiguredDeath", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(pendingPlayer, null);
             Check(pendingPlayer.HasPendingDeath && !pendingPlayer.CanMoveInDirection(Direction.Up, out _, out _), "A running death animation blocks authoritative movement until its deadline");
             pendingPlayer.Die(); Check(pendingPlayer.HasPendingDeath, "Repeated death calls cannot restart a pending sequence or drop items twice");
+            CheckFishingCleanupLifecycle(pendingPlayer);
             var eventPacket = new EventEntityPacket { AnimationOffsetX = -128, AnimationOffsetY = 64, RenderLayer = 0 };
             var eventCopy = MessagePackSerializer.Deserialize<EventEntityPacket>(MessagePackSerializer.Serialize(eventPacket));
             Check(eventCopy.AnimationOffsetX == -128 && eventCopy.AnimationOffsetY == 64 && eventCopy.RenderLayer == 0, "Offsets and layer travel together in event data");
@@ -79,6 +80,41 @@ internal static class DeathSystemTests
         }
         finally { typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, before); }
     }
+
+    private static void CheckFishingCleanupLifecycle(Intersect.Server.Entities.Player player)
+    {
+        var leave = player.GetType().GetMethod("LeaveFishingFromEvent", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var sessionField = player.GetType().GetField("_fishing", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        Check(player.EntityLock is null && sessionField.GetValue(player) is null, "Death fixture omits both the entity lock and fishing session");
+        leave.Invoke(player, null);
+        leave.Invoke(player, null);
+        Check(player.EntityLock is null && sessionField.GetValue(player) is null && player.HasPendingDeath,
+            "Repeated fishing cleanup is a no-op for an uninitialized idle player without inventing a lock or changing death state");
+
+        var invalidSession = RuntimeHelpers.GetUninitializedObject(sessionField.FieldType);
+        sessionField.SetValue(player, invalidSession);
+        try
+        {
+            var rejected = false;
+            try { leave.Invoke(player, null); }
+            catch (TargetInvocationException exception) when (exception.InnerException is ArgumentNullException { ParamName: "EntityLock" })
+            { rejected = true; }
+            Check(rejected && ReferenceEquals(sessionField.GetValue(player), invalidSession),
+                "An active fishing session without its lock is rejected rather than silently skipped or mutated");
+        }
+        finally { sessionField.SetValue(player, null); }
+
+        // Keep the initialized path covered without waiting on another thread in a module initializer.
+        var gate = player.EntityLock = new object();
+        lock (gate)
+        {
+            leave.Invoke(player, null);
+            player.Die();
+        }
+        Check(ReferenceEquals(player.EntityLock, gate) && player.HasPendingDeath,
+            "Fishing cleanup and repeated death preserve the initialized entity lock and pending death state");
+    }
+
     private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     private static void Reject(Action action) { try { action(); } catch (InvalidDataException) { return; } throw new Exception("Invalid death configuration accepted"); }
 }

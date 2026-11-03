@@ -167,7 +167,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _icon.Hide();
         if (descriptor != null && !string.IsNullOrWhiteSpace(descriptor.Icon))
         {
-            var texture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
+            var texture = Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor);
             if (texture != null)
             {
                 _icon.Texture = texture;

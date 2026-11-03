@@ -868,12 +868,18 @@ public sealed partial class FrmSoundImport : DarkForm
         );
     }
 
-    private void PopulateSoundList()
+    private void PopulateSoundList(bool preservePosition = false)
     {
         if (IsDisposed || Disposing)
         {
             return;
         }
+
+        var selectedAsset = preservePosition ? _selectedAsset : null;
+        var previousIndex = preservePosition && _soundList.SelectedIndices.Count > 0
+            ? _soundList.SelectedIndices[0]
+            : 0;
+        var topIndex = preservePosition ? _soundList.TopItem?.Index ?? 0 : 0;
 
         var filtered = GetFilteredAssets().ToArray();
         var pageCount = Math.Max(
@@ -928,7 +934,23 @@ public sealed partial class FrmSoundImport : DarkForm
 
         if (_soundList.Items.Count > 0)
         {
-            _soundList.Items[0].Selected = true;
+            var index = preservePosition
+                ? _visibleAssets.FindIndex(asset => ReferenceEquals(asset, selectedAsset))
+                : 0;
+            if (index < 0)
+            {
+                index = previousIndex;
+            }
+
+            index = Math.Clamp(index, 0, _soundList.Items.Count - 1);
+            _soundList.Items[index].Selected = true;
+
+            if (preservePosition)
+            {
+                _soundList.TopItem = _soundList.Items[
+                    Math.Clamp(topIndex, 0, _soundList.Items.Count - 1)
+                ];
+            }
         }
         else
         {
@@ -1103,8 +1125,7 @@ public sealed partial class FrmSoundImport : DarkForm
         SaveFavorites();
         UpdateFavoriteButton();
 
-        _page = 0;
-        PopulateSoundList();
+        PopulateSoundList(preservePosition: true);
     }
 
     private void UpdateFavoriteButton()

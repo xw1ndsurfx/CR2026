@@ -26,7 +26,7 @@ internal sealed class PartyLobbyWindow : Window
     internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.PvP?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("PvP",ClientLanguages.Current):activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
-        LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
+        LobbyActivity.RollTheDice => "Roll the Dice", LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
         LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", LobbyActivity.Jousting => "Royal Jousting", _ => "All activities" });
     internal PartyLobbyWindow(Canvas canvas) : base(canvas,ClientLanguages.Text("Adventure lobbies"),false,nameof(PartyLobbyWindow))
     {
@@ -132,10 +132,13 @@ internal sealed class PartyLobbyWindow : Window
         foreach(var lobby in entries)
         {
             var card=new LobbyCard(_rows,"Lobby"+lobby.Id,lobby.Id==_state.CurrentLobbyId); card.SetBounds(0,y,width,94);
-            var textWidth=actionX-20;
-            Label(card,"Host",10,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
-            var title=Label(card,"Title",10,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
-            var activity=Label(card,"Activity",10,54,textWidth,30,Cream);
+            var image = string.IsNullOrWhiteSpace(lobby.Image) ? null : GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Gui,lobby.Image);
+            var imageOffset = image == null ? 0 : 92;
+            if (image != null) { var portrait = new ImagePanel(card) { Texture=image, MaintainAspectRatio=true, MouseInputEnabled=false }; portrait.SetBounds(6,6,82,82); }
+            var textWidth=actionX-20-imageOffset;
+            Label(card,"Host",10+imageOffset,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
+            var title=Label(card,"Title",10+imageOffset,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
+            var activity=Label(card,"Activity",10+imageOffset,54,textWidth,30,Cream);
             activity.Text=ActivityName(lobby.Activity)+(string.IsNullOrEmpty(lobby.DungeonName)?"":" - "+ClientLanguages.ContentText(lobby.DungeonName));
             card.SetToolTipText(string.Join(", ",lobby.Members)+"\n"+lobby.Title+"\n"+activity.Text);
             var mine=lobby.Id==_state.CurrentLobbyId;

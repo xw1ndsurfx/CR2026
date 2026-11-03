@@ -341,7 +341,8 @@ public partial class GameInterface : MutableInterface
 
     public void OpenShop()
     {
-        _shopWindow = new ShopWindow(GameCanvas) { DeleteOnClose = true };
+        if (_shopWindow is { IsVisibleInTree: true }) _shopWindow.ReloadPrices();
+        else _shopWindow = new ShopWindow(GameCanvas) { DeleteOnClose = true };
         mShouldOpenShop = false;
     }
 
@@ -456,7 +457,13 @@ public partial class GameInterface : MutableInterface
 
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        UpdateTutorialGuide();
+        _royalContractsWindow?.Update();
+        UpdateContractJournal();
+        GuildEmblems.Update();
+        UpdateIntoxicationOverlay();
         _archeryWindow?.CheckClosed();
+        UpdateWeaponSkills();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {
             PlayerBox?.SetEntity(Globals.Me);
@@ -472,6 +479,7 @@ public partial class GameInterface : MutableInterface
         _minimapHud?.Update();
         UpdateProfessionProgress();
         _shopWindow?.Update();
+        _serviceShop?.Update();
         UpdateInvasionUi();
         UpdateSoundSequence();
         UpdateHousing();
@@ -487,6 +495,8 @@ public partial class GameInterface : MutableInterface
         UpdateCooking();
         UpdatePoker();
         UpdateRoulette();
+        UpdateDice();
+        UpdateFishing();
         UpdateLockpicking();
         UpdateQuestGuidance();
 
@@ -727,6 +737,8 @@ public partial class GameInterface : MutableInterface
         var closedWindows = ClosePotionWindow() || cannonWasOpen || royalWasOpen;
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
+        closedWindows = CloseDiceWindow() || closedWindows;
+        closedWindows = CloseFishingWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -787,6 +799,8 @@ public partial class GameInterface : MutableInterface
         DisposeCooking();
         DisposePoker();
         DisposeRoulette();
+        DisposeDice();
+        DisposeFishing();
         DisposeLockpicking();
         DisposeQuestGuidance();
         DisposeSoundSequence();

@@ -1,0 +1,31 @@
+name: Tutorial integration
+on:
+  pull_request:
+    paths:
+      - '**/*Tutorial*'
+      - '**/Tutorials/**'
+      - 'Intersect.Editor/Resources/EditorHub/Catalog.json'
+      - '.github/workflows/tutorial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Tutorial configuration, localization, progress and protocol tests
+        run: dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter FullyQualifiedName~TutorialTests
+      - name: Compile server integration
+        run: dotnet build Intersect.Server.Core/Intersect.Server.Core.csproj -c Debug
+      - name: Compile client integration
+        run: dotnet build Intersect.Client.Core/Intersect.Client.Core.csproj -c Debug
+      - name: Compile editor integration
+        run: dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug

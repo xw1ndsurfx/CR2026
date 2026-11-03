@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Shared/FishingAssets.props" />
   <Import Project="../Shared/JoustingAssets.props" />
   <ItemGroup>
     <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs" Link="Rendering/MapPerspectiveGeometry.cs" />
@@ -32,6 +33,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources/Cinematics/Texts.json" LogicalName="Cinematics.Texts.json" />
+    <EmbeddedResource Include="Localization/FishingEditorText.json" LogicalName="Intersect.Editor.Fishing.Text" />
     <EmbeddedResource Include="Resources/EditorHub/Catalog.json" LogicalName="EditorHub.Catalog.json" />
     <EmbeddedResource Include="Resources/EditorHub/Texts.json" LogicalName="EditorHub.Texts.json" />
     <EmbeddedResource Include="Resources/EditorHub/Art/*.png" LogicalName="EditorHub.Art.%(Filename)%(Extension)" />

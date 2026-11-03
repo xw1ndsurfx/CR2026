@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Intersect;
@@ -99,6 +99,10 @@ internal static class RoyalArcheryUiTests
         var window = (WindowControl)Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance, null, [canvas], null)!;
         type.GetMethod("Apply", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, [new ArcheryStatePacket { Open = true,
             ConfigurationJson = new RoyalCombatConfiguration().ToJson(), MasteriesJson = "{\"archery\":100}", MasteryRanksJson = "{}" }]);
+        var xpBar=All(window).Single(c=>c.Name=="MasteryExperienceBar");
+        var ratio=(float)xpBar.GetType().GetProperty("Ratio",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(xpBar)!;
+        if(xpBar.IsHidden || xpBar.Height<8 || ratio is <0 or >1)throw new Exception("Masteries display a bounded visible EXP bar");
+        if(!All(window).OfType<Label>().Any(l=>l.Name=="MasteryExperienceHeader" && l.Text.Contains('/')))throw new Exception("Mastery EXP retains current/required values alongside the level");
         var learn = All(window).OfType<Button>().Where(b => b.Name == "LearnTalent").ToArray();
         if (learn.Length != 6 || learn.Count(b => !b.IsDisabled) != 1) throw new Exception("Mastery point/level/unconfigured talent gates are not reflected in the UI.");
         typeof(Button).GetMethod("OnKeyReturn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(learn.Single(b => !b.IsDisabled), [false]);

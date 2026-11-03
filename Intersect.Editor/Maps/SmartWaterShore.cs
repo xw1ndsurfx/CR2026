@@ -3,9 +3,64 @@ using Intersect.Framework.Core.GameObjects.Maps;
 
 namespace Intersect.Editor.Maps;
 
-// Authoring operation only: creates a conventional PNG, rendered by the unchanged client.
+// Creates conventional PNGs. Transparent overlays use the existing renderer;
+// opaque Ground variants also need the shared source-water connection resolver.
 internal static class SmartWaterShore
 {
+    internal static Bitmap CreateGround(Bitmap source, SmartTile water, Bitmap landSheet, SmartTile land, int feather)
+    {
+        int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
+        if (land.Autotile is not (0 or 1 or 6) || !land.Fits(landSheet.Width, landSheet.Height, tw, th))
+            throw new InvalidDataException("Smart.GroundShoreRequired");
+        using var mask = Create(source, water, feather);
+        using var fill = LandFill(landSheet, land);
+        var result = source.Clone(new Rectangle(0, 0, source.Width, source.Height), PixelFormat.Format32bppArgb);
+        try
+        {
+            var size = water.Footprint;
+            for (var y = 0; y < size.Height * th; y++) for (var x = 0; x < size.Width * tw; x++)
+            {
+                int px = water.X * tw + x, py = water.Y * th + y;
+                var top = mask.GetPixel(px, py); var bottom = fill.GetPixel(x % tw, y % th);
+                int Blend(int a, int b) => (a * top.A + b * (255 - top.A) + 127) / 255;
+                result.SetPixel(px, py, System.Drawing.Color.FromArgb(255, Blend(top.R, bottom.R), Blend(top.G, bottom.G), Blend(top.B, bottom.B)));
+            }
+            return result;
+        }
+        catch { result.Dispose(); throw; }
+    }
+
+    internal static Bitmap LandFill(Bitmap landSheet, SmartTile land)
+    {
+        int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
+        if (land.Autotile is not (0 or 1 or 6) || !land.Fits(landSheet.Width, landSheet.Height, tw, th)
+            || Options.Instance.Map.MapWidth < 3 || Options.Instance.Map.MapHeight < 3) throw new InvalidDataException("Smart.GroundShoreRequired");
+        var fill = new Bitmap(tw, th);
+        try
+        {
+            var sample = new MapInstance(Guid.NewGuid());
+            var layer = Options.Instance.Map.Layers.All[0];
+            foreach (var name in Options.Instance.Map.Layers.All) sample.Layers[name] = new Tile[Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight];
+            for (var y = 0; y < 3; y++) for (var x = 0; x < 3; x++) sample.Layers[layer][x, y] = land.Native;
+            sample.InitAutotiles();
+            using (var graphics = Graphics.FromImage(fill))
+            {
+                if (land.Autotile == 0)
+                    graphics.DrawImage(landSheet, new Rectangle(0, 0, tw, th), new Rectangle(land.X * tw, land.Y * th, tw, th), GraphicsUnit.Pixel);
+                else for (var q = 1; q <= 4; q++)
+                {
+                    var point = sample.Autotiles.Layers[layer][1, 1].QuarterTile[q];
+                    graphics.DrawImage(landSheet, new Rectangle((q - 1) % 2 * (tw / 2), (q - 1) / 2 * (th / 2), tw / 2, th / 2), new Rectangle(point.X, point.Y, tw / 2, th / 2), GraphicsUnit.Pixel);
+                }
+            }
+            // Ground has no lower layer to show through: reject transparent fills.
+            for (var y = 0; y < th; y++) for (var x = 0; x < tw; x++)
+                if (fill.GetPixel(x, y).A != 255) throw new InvalidDataException("Smart.GroundShoreRequired");
+            return fill;
+        }
+        catch { fill.Dispose(); throw; }
+    }
+
     internal static Bitmap Create(Bitmap source, SmartTile tile, int feather)
     {
         int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;

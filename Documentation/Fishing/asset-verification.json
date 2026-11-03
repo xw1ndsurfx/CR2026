@@ -1,0 +1,10 @@
+{
+  "checks": 698,
+  "passed": true,
+  "errors": [],
+  "images": 20,
+  "audio_files": 32,
+  "audio_event_bindings": 58,
+  "max_pcm_peak": 16422,
+  "scope": "File integrity, atlas bounds, source coverage and numerical audio checks. Not a listening or game-render test."
+}

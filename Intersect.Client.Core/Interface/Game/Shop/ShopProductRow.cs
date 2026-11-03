@@ -30,7 +30,7 @@ internal sealed class ShopProductRow : Base
         string action,
         bool enabled,
         Action onAction,
-        string? serviceName=null,string? serviceIcon=null,bool nativeButton=false
+        string? serviceName=null,string? serviceIcon=null,bool nativeButton=false,string? promotionNote=null
     ) : base(parent, name)
     {
         _item = item;
@@ -53,8 +53,9 @@ internal sealed class ShopProductRow : Base
             ShouldDrawBackground = false,
             MouseInputEnabled = true,
         };
-        _icon.SetBounds(15, 12, 52, 52);
-        _icon.Texture = Globals.ContentManager?.GetTexture(item==null || item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item?.DisplayIcon??serviceIcon??"");
+        _icon.MaintainAspectRatio = false;
+        _icon.SetBounds(13, 11, 40, 40);
+        _icon.Texture = item==null ? Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Spell,serviceIcon??"") : Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
         _icon.RenderColor = item?.Color??Color.White;
         if(item!=null)_icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
@@ -69,7 +70,8 @@ internal sealed class ShopProductRow : Base
 
         _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
         _price.Text = Shorten(price, 21);
-        SetToolTipText((serviceName??item?.Name) + "\n" + detail + "\n" + price);
+        SetToolTipText((serviceName??item?.Name) + "\n" + detail + "\n" + price +
+            (promotionNote == null ? "" : "\n" + promotionNote));
 
         _action = new Button(this, "Action")
         {
@@ -118,8 +120,20 @@ internal sealed class ShopProductRow : Base
         var frame=atlas.Frame(180,0,180);_icon.Texture=texture;_icon.MaintainAspectRatio=true;
         _icon.SetTextureRect(frame.X,frame.Y,frame.Width,frame.Height);
     }
-    internal static ShopProductRow Service(Base parent,string id,string name,string detail,string price,string caption,bool enabled,Action action,string icon="")=>
-        new(parent,id,null,detail,price,caption,enabled,action,name,icon,true);
+    internal static ShopProductRow Service(Base parent,string id,string name,string detail,string price,string caption,bool enabled,Action action,string icon="",Guid spellId=default)
+    {
+        var row = new ShopProductRow(parent,id,null,detail,price,caption,enabled,action,name,icon,true);
+        if (spellId!=Guid.Empty)
+        {
+            row._icon.HoverEnter += (_, _) => {
+                if (!Interface.HasInGameUI) return;
+                Interface.GameUi.SpellDescriptionWindow ??= new Intersect.Client.Interface.Game.DescriptionWindows.SpellDescriptionWindow();
+                Interface.GameUi.SpellDescriptionWindow.Show(spellId);
+            };
+            row._icon.HoverLeave += (_, _) => { if(Interface.HasInGameUI)Interface.GameUi.SpellDescriptionWindow?.Hide(); };
+        }
+        return row;
+    }
 
     public static ShopProductRow Buy(
         Base parent,
@@ -128,16 +142,17 @@ internal sealed class ShopProductRow : Base
         int price,
         string currency,
         bool canAfford,
-        Action action,bool nativeButton=false
+        Action action,bool nativeButton=false, int discountPercent=0, int originalPrice=0
     ) => new(
         parent,
         "ShopBuy" + shopSlot,
         item,
         canAfford ? Strings.Shop.Available.ToString() : Strings.Shop.NotEnoughCurrency.ToString(),
-        Price(price, currency),
+        discountPercent > 0 ? $"{Price(price, currency)} (-{discountPercent}%)" : Price(price, currency),
         Strings.Shop.BuyItem.ToString(),
         canAfford,
-        action,nativeButton:nativeButton
+        action,nativeButton:nativeButton, promotionNote:discountPercent > 0 ?
+            string.Format(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Original price: {0}", ClientLanguages.Current), Price(originalPrice, currency)) : null
     );
 
     public static ShopProductRow Sell(
@@ -165,6 +180,8 @@ internal sealed class ShopProductRow : Base
         return text.Length <= maximum ? text : text[..Math.Max(0, maximum - 3)] + "...";
     }
 
+    internal void SetActionCaption(string caption) => _action.Text=caption;
+    internal void SetTotalPrice(long total,string currency) => _price.Text=total<=0?Strings.Shop.Free.ToString():$"{total} {currency}";
     private static string Price(int amount, string currency) => amount <= 0 ? Strings.Shop.Free.ToString() : $"{amount} {currency}";
 
     private Label Label(string name, int x, int y, int width, int height, int size, Color color)

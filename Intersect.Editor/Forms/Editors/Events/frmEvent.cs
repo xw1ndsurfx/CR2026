@@ -1,4 +1,4 @@
-using DarkUI.Controls;
+﻿using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -269,7 +269,9 @@ public partial class FrmEvent : Form
 
     public void CloseGraphicSelector(EventGraphicSelector graphicSelector)
     {
-        Controls.Remove(graphicSelector);
+        graphicSelector.Parent?.Controls.Remove(graphicSelector);
+        graphicSelector.Hide();
+        graphicSelector.Dispose();
         UpdateEventPreview();
     }
 
@@ -798,6 +800,12 @@ public partial class FrmEvent : Form
                 tmpCommand=new GrantLootBonusCommand();break;
             case EventCommandType.OpenAdventureLobby:
                 tmpCommand=new OpenAdventureLobbyCommand();break;
+            case EventCommandType.OpenStable:
+                tmpCommand=new OpenStableCommand();break;
+            case EventCommandType.OpenFurnitureShop:
+                tmpCommand=new OpenFurnitureShopCommand();break;
+            case EventCommandType.OpenHouseDirectory:
+                tmpCommand=new OpenHouseDirectoryCommand();break;
             case EventCommandType.OpenNavalAmmoShop:
                 tmpCommand=new OpenNavalAmmoShopCommand();
                 break;
@@ -823,6 +831,12 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenRoyalStylist:
                 tmpCommand = new OpenRoyalStylistCommand();
 
+                break;
+            case EventCommandType.OpenRoyalContracts:
+                tmpCommand = new OpenRoyalContractsCommand();
+                break;
+            case EventCommandType.OpenFishing:
+                tmpCommand = new OpenFishingCommand();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -866,6 +880,14 @@ public partial class FrmEvent : Form
         AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
+        var fishingNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "interface")
+            ?? lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        fishingNode?.Nodes.Add(new TreeNode(Intersect.Editor.Localization.FishingEditorText.Get("Open Fishing"))
+            { Name = "openfishing", Tag = (int)EventCommandType.OpenFishing });
+        var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        contractsNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+            { Name = "openroyalcontracts", Tag = (int)EventCommandType.OpenRoyalContracts });
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
@@ -906,7 +928,7 @@ public partial class FrmEvent : Form
         var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         if(shops!=null)
         {
-            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby")})
+            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby"),(EventCommandType.OpenStable,"Open Stable"),(EventCommandType.OpenFurnitureShop,"Open furniture shop"),(EventCommandType.OpenHouseDirectory,"Open house directory")})
                 if(!shops.Nodes.Cast<TreeNode>().Any(n=>n.Tag is int value && value==(int)id))
                     shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(caption,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name=id.ToString(),Tag=(int)id});
         }
@@ -1737,6 +1759,10 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenMarketplace:
                 break;
+            case EventCommandType.OpenStable:
+            case EventCommandType.OpenFurnitureShop:
+            case EventCommandType.OpenHouseDirectory:
+                break;
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
@@ -1754,6 +1780,11 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenRoyalStylist:
                 cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
+                break;
+            case EventCommandType.OpenRoyalContracts:
+                break;
+            case EventCommandType.OpenFishing:
+                cmdWindow = new EventCommandFishing((OpenFishingCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

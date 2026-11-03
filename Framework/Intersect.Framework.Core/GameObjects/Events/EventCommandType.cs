@@ -174,4 +174,9 @@ public enum EventCommandType
     CinematicVesselMove = 1080,
     CinematicVesselAction = 1081,
     CinematicEffectPath = 1082,
+    OpenRoyalContracts = 1090,
+    OpenStable = 1091,
+    OpenFurnitureShop = 1092,
+    OpenHouseDirectory = 1093,
+    OpenFishing = 1100,
 }

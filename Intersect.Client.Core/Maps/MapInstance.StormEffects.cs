@@ -15,10 +15,17 @@ public partial class MapInstance
     private float _strikeX,_strikeY;
     internal bool WeatherIsActive=>Intersect.Client.Cinematics.CinematicEnvironment.WeatherActive(this) ?? WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
     internal bool IsRaining=>RainIsConfigured && WeatherIsActive;
-    private readonly WeatherTransition _weatherTransition = new();
-    internal float WeatherStrength => _weatherTransition.Update(WeatherIsActive, Environment.TickCount64);
-    internal int TransitionBrightness(int normal) => RainIsConfigured && WeatherEffects.OverrideRainBrightness
-        ? (int)Math.Round(normal + (Math.Clamp(WeatherEffects.RainBrightness, 0, 100) - normal) * WeatherStrength) : normal;
+    private readonly WeatherVisualTransition _weatherTransition = new();
+    internal float WeatherStrength => _weatherTransition.Update(
+        RainIsConfigured && WeatherIsActive ? WeatherAppearance.From(this) : null, Environment.TickCount64);
+    private WeatherAppearance RenderedWeather => _weatherTransition.Appearance ?? WeatherAppearance.From(this);
+    internal int TransitionBrightness(int normal)
+    {
+        var strength = WeatherStrength;
+        var weather = RenderedWeather;
+        return weather.OverrideBrightness
+            ? (int)Math.Round(normal + (Math.Clamp(weather.Brightness, 0, 100) - normal) * strength) : normal;
+    }
     internal int EffectiveBrightness => IsIndoors && Intersect.Client.Cinematics.CinematicEnvironment.TryGetEnvironment(this,out var cinematic)
         ? cinematic.NightBrightness : TransitionBrightness(Brightness);
     private void SpawnRainSplash(float x,float y)

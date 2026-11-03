@@ -22,6 +22,7 @@ namespace Intersect.Network.Packets;
 [Union(13, typeof(UnlinkMapPacket))]
 [Union(14, typeof(PrepareNavalMapPacket))]
 [Union(15, typeof(NavalConfigurationRequestPacket))]
+[Union(16, typeof(Intersect.Network.Packets.Tutorials.TutorialEditorPacket))]
 
 public abstract partial class EditorPacket : IntersectPacket
 {

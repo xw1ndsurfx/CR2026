@@ -1,0 +1,500 @@
+{
+  "version": 1,
+  "runtime_fields": [
+    "File",
+    "Volume",
+    "Loop",
+    "CooldownMs",
+    "MaximumInstances",
+    "Spatial",
+    "Range"
+  ],
+  "metadata_only": [
+    "bus",
+    "pitch",
+    "fade_duration",
+    "manifest_gain_override"
+  ],
+  "reserved": [
+    "challenge_timing_prompt",
+    "challenge_reel_prompt"
+  ],
+  "events": [
+    {
+      "key": "ui_open",
+      "status": "alias",
+      "hook": "session_start",
+      "default_file": "fishing/fishing_ui_open.wav",
+      "detail_fr": "Ouverture validée par le serveur ; secours client si aucun cue serveur."
+    },
+    {
+      "key": "ui_close",
+      "status": "alias",
+      "hook": "session_end",
+      "default_file": "fishing/fishing_ui_close.wav",
+      "detail_fr": "Fermeture normale : une lecture non bouclée après nettoyage."
+    },
+    {
+      "key": "ui_select",
+      "status": "direct",
+      "hook": "FishingWindow.AddButton / ChangePage",
+      "default_file": "fishing/fishing_ui_select.wav",
+      "detail_fr": "Survol des boutons et pagination des piles."
+    },
+    {
+      "key": "ui_confirm",
+      "status": "direct",
+      "hook": "FishingWindow.Send / SetAutomatic",
+      "default_file": "fishing/fishing_ui_confirm.wav",
+      "detail_fr": "Lancer, accepter le défi, programmer le mode automatique."
+    },
+    {
+      "key": "ui_error",
+      "status": "direct",
+      "hook": "Player.FishingError / FishingWindow.Apply",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Refus initial, erreur de lecture ou retour utilisateur sans cue précis."
+    },
+    {
+      "key": "cast_rod",
+      "status": "alias",
+      "hook": "cast (Rod)",
+      "default_file": "fishing/fishing_cast_rod.wav",
+      "detail_fr": "Famille choisie selon l’outil équipé."
+    },
+    {
+      "key": "cast_net",
+      "status": "alias",
+      "hook": "cast (Net)",
+      "default_file": "fishing/fishing_cast_net.wav",
+      "detail_fr": "Famille choisie selon l’outil équipé."
+    },
+    {
+      "key": "cast_cage",
+      "status": "alias",
+      "hook": "cast (Cage)",
+      "default_file": "fishing/fishing_cast_cage.wav",
+      "detail_fr": "Famille choisie selon l’outil équipé."
+    },
+    {
+      "key": "splash",
+      "status": "optional",
+      "hook": "FishingAudio.Apply → Waiting +220 ms",
+      "default_file": "",
+      "detail_fr": "Silencieux par défaut : les fichiers de lancer incluent déjà le contact avec l’eau. Un override le déclenche."
+    },
+    {
+      "key": "bite",
+      "status": "direct",
+      "hook": "Player.StartFishingFight",
+      "default_file": "fishing/fishing_bite.wav",
+      "detail_fr": "Une prise a mordu ; début du combat."
+    },
+    {
+      "key": "reel_loop",
+      "status": "alias",
+      "hook": "reel",
+      "default_file": "fishing/fishing_reel_loop.wav",
+      "detail_fr": "Combat + moulinet maintenu, ou résolution automatique."
+    },
+    {
+      "key": "tension_loop",
+      "status": "alias",
+      "hook": "tension",
+      "default_file": "fishing/fishing_tension_loop.wav",
+      "detail_fr": "Combat et tension au moins 75 %."
+    },
+    {
+      "key": "line_break",
+      "status": "direct",
+      "hook": "Player.UpdateFishing",
+      "default_file": "fishing/fishing_line_break.wav",
+      "detail_fr": "État de ligne épuisé / rupture validée par le serveur."
+    },
+    {
+      "key": "escape",
+      "status": "direct",
+      "hook": "Player.FailFishing",
+      "default_file": "fishing/fishing_escape.wav",
+      "detail_fr": "Fuite ordinaire ou délai de combat écoulé."
+    },
+    {
+      "key": "catch",
+      "status": "alias",
+      "hook": "reward_item",
+      "default_file": "fishing/fishing_catch.wav",
+      "detail_fr": "Prise ordinaire ajoutée à l’inventaire."
+    },
+    {
+      "key": "crate_raise",
+      "status": "alias",
+      "hook": "cage_retrieve",
+      "default_file": "fishing/fishing_crate_raise.wav",
+      "detail_fr": "Remontée visuelle d’une prise obtenue à la cage."
+    },
+    {
+      "key": "net_retrieve",
+      "status": "direct",
+      "hook": "FishingAudio.Apply → Caught",
+      "default_file": "fishing/fishing_net_retrieve.wav",
+      "detail_fr": "Prise obtenue avec le filet."
+    },
+    {
+      "key": "skill_stabilize",
+      "status": "direct",
+      "hook": "Player.UseFishingSkill(0)",
+      "default_file": "fishing/fishing_skill_stabilize.wav",
+      "detail_fr": "Compétence acceptée par le serveur."
+    },
+    {
+      "key": "skill_pull",
+      "status": "direct",
+      "hook": "Player.UseFishingSkill(1)",
+      "default_file": "fishing/fishing_skill_pull.wav",
+      "detail_fr": "Compétence acceptée par le serveur."
+    },
+    {
+      "key": "skill_repair",
+      "status": "direct",
+      "hook": "Player.UseFishingSkill(2)",
+      "default_file": "fishing/fishing_skill_repair.wav",
+      "detail_fr": "Compétence acceptée par le serveur."
+    },
+    {
+      "key": "skill_sink",
+      "status": "direct",
+      "hook": "Player.UseFishingSkill(3)",
+      "default_file": "fishing/fishing_skill_sink.wav",
+      "detail_fr": "Compétence acceptée par le serveur."
+    },
+    {
+      "key": "auto_start",
+      "status": "direct",
+      "hook": "Player.SetMode / FishingAudio.Apply",
+      "default_file": "fishing/fishing_auto_start.wav",
+      "detail_fr": "Passage effectif au mode automatique ; transition client conserve le cue si Cast a suivi dans le même tick."
+    },
+    {
+      "key": "auto_stop",
+      "status": "direct",
+      "hook": "Player.SetMode / FishingAudio.Apply",
+      "default_file": "fishing/fishing_auto_stop.wav",
+      "detail_fr": "Retour effectif au mode manuel entre les prises."
+    },
+    {
+      "key": "auto_pause",
+      "status": "fallback",
+      "hook": "auto_bait_empty / auto_inventory_full / auto_legendary_wait",
+      "default_file": "fishing/fishing_auto_pause.wav",
+      "detail_fr": "Valeur commune héritée par les trois pauses ; les cues précis ont priorité."
+    },
+    {
+      "key": "legendary_appear",
+      "status": "alias",
+      "hook": "legendary_hooked",
+      "default_file": "fishing/fishing_legendary_appear.wav",
+      "detail_fr": "Une rencontre légendaire vient d’être tirée."
+    },
+    {
+      "key": "legendary_challenge_cue",
+      "status": "alias",
+      "hook": "challenge",
+      "default_file": "fishing/fishing_legendary_challenge_cue.wav",
+      "detail_fr": "Nouvelle direction à suivre dans le défi."
+    },
+    {
+      "key": "legendary_challenge_success",
+      "status": "alias",
+      "hook": "challenge_success",
+      "default_file": "fishing/fishing_legendary_challenge_success.wav",
+      "detail_fr": "Dernière étape réussie ; reprise du combat."
+    },
+    {
+      "key": "legendary_challenge_fail",
+      "status": "alias",
+      "hook": "legendary_timeout",
+      "default_file": "fishing/fishing_legendary_challenge_fail.wav",
+      "detail_fr": "Défi expiré. Une mauvaise direction utilise legendary_escape."
+    },
+    {
+      "key": "legendary_catch",
+      "status": "direct",
+      "hook": "Player.CompleteFishing",
+      "default_file": "fishing/fishing_legendary_catch.wav",
+      "detail_fr": "Créature légendaire effectivement récompensée."
+    },
+    {
+      "key": "xp_gain",
+      "status": "alias",
+      "hook": "reward_xp",
+      "default_file": "fishing/fishing_xp_gain.wav",
+      "detail_fr": "Gain de progression confirmé, différé de 650 ms après réception."
+    },
+    {
+      "key": "level_up",
+      "status": "direct",
+      "hook": "FishingAudio.Apply",
+      "default_file": "fishing/fishing_level_up.wav",
+      "detail_fr": "Niveau augmenté ; remplace le cue XP simple pour ce gain."
+    },
+    {
+      "key": "ambience_sea_loop",
+      "status": "alias",
+      "hook": "ambience",
+      "default_file": "fishing/fishing_ambience_sea_loop.wav",
+      "detail_fr": "Ambiance de la scène pendant une activité, sauf Ready / prompt légendaire / fermeture."
+    },
+    {
+      "key": "session_start",
+      "status": "direct",
+      "hook": "Player.OpenFishingFromEvent",
+      "default_file": "fishing/fishing_ui_open.wav",
+      "detail_fr": "Événement valide, zone et outil acceptés."
+    },
+    {
+      "key": "session_end",
+      "status": "direct",
+      "hook": "FishingWindow.Destroy / Player.EndFishing",
+      "default_file": "fishing/fishing_ui_close.wav",
+      "detail_fr": "Fermeture normale. Toutes les boucles sont arrêtées avant le cue final."
+    },
+    {
+      "key": "session_interrupted",
+      "status": "direct",
+      "hook": "Player.EndFishing",
+      "default_file": "fishing/fishing_auto_stop.wav",
+      "detail_fr": "Interruption de session. Lecture finale forcée sans boucle."
+    },
+    {
+      "key": "tool_changed",
+      "status": "direct",
+      "hook": "Player.ValidateFishingEquipment",
+      "default_file": "fishing/fishing_ui_select.wav",
+      "detail_fr": "Changement d’outil équipé entraînant la fermeture."
+    },
+    {
+      "key": "tool_missing",
+      "status": "direct",
+      "hook": "Player.FishingError / NoticeSoundJson",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Aucun outil de pêche compatible équipé avant l’ouverture."
+    },
+    {
+      "key": "tool_incompatible",
+      "status": "direct",
+      "hook": "Player.CastFishing / CompleteFishing",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Aucune prise éligible avec cet outil et les conditions actuelles."
+    },
+    {
+      "key": "bait_missing",
+      "status": "direct",
+      "hook": "Player.CastFishing",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Appâts manquants en mode manuel."
+    },
+    {
+      "key": "inventory_full",
+      "status": "direct",
+      "hook": "Player.CastFishing / CompleteFishing",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Récompense impossible faute de place en mode manuel."
+    },
+    {
+      "key": "zone_unavailable",
+      "status": "direct",
+      "hook": "Player.FishingError / NoticeSoundJson",
+      "default_file": "fishing/fishing_ui_error.wav",
+      "detail_fr": "Zone absente, désactivée ou inaccessible depuis la position du joueur."
+    },
+    {
+      "key": "legendary_hooked",
+      "status": "direct",
+      "hook": "Player.FishingBite",
+      "default_file": "fishing/fishing_legendary_appear.wav",
+      "detail_fr": "Ouverture de l’invitation légendaire."
+    },
+    {
+      "key": "challenge_timing_prompt",
+      "status": "reserved",
+      "hook": "—",
+      "default_file": "fishing/fishing_legendary_challenge_cue.wav",
+      "detail_fr": "Réservé : aucun défi de timing autonome dans cette version. Prévisualisation seulement, override désactivé dans l’éditeur."
+    },
+    {
+      "key": "challenge_direction_prompt",
+      "status": "alias",
+      "hook": "challenge",
+      "default_file": "fishing/fishing_legendary_challenge_cue.wav",
+      "detail_fr": "Le défi implémenté est une suite de directions avec une fenêtre de réponse."
+    },
+    {
+      "key": "challenge_reel_prompt",
+      "status": "reserved",
+      "hook": "—",
+      "default_file": "fishing/fishing_legendary_challenge_cue.wav",
+      "detail_fr": "Réservé : aucun défi autonome de moulinet dans cette version. Prévisualisation seulement, override désactivé dans l’éditeur."
+    },
+    {
+      "key": "legendary_timeout",
+      "status": "direct",
+      "hook": "Player.UpdateFishing",
+      "default_file": "fishing/fishing_legendary_challenge_fail.wav",
+      "detail_fr": "Invitation ou fenêtre de défi expirée. Une invitation ignorée provenant du mode AUTO reprend AUTO après 1 500 ms ; une prise acceptée reste manuelle."
+    },
+    {
+      "key": "legendary_escape",
+      "status": "direct",
+      "hook": "Player.ChallengeInput / UpdateFishing",
+      "default_file": "fishing/fishing_escape.wav",
+      "detail_fr": "Mauvaise direction ou temps de combat légendaire écoulé."
+    },
+    {
+      "key": "auto_bait_empty",
+      "status": "direct",
+      "hook": "Player.CastFishing",
+      "default_file": "fishing/fishing_auto_pause.wav",
+      "detail_fr": "Manque d’appâts pendant la pêche automatique ; arrêt effectif."
+    },
+    {
+      "key": "auto_inventory_full",
+      "status": "direct",
+      "hook": "Player.CastFishing / CompleteFishing",
+      "default_file": "fishing/fishing_auto_pause.wav",
+      "detail_fr": "Manque de place pendant la pêche automatique ; arrêt effectif."
+    },
+    {
+      "key": "auto_legendary_wait",
+      "status": "direct",
+      "hook": "FishingAudio.Apply",
+      "default_file": "fishing/fishing_auto_pause.wav",
+      "detail_fr": "Transition automatique vers l’invitation légendaire ; le cue complète la rencontre sans remplacer son cue principal."
+    },
+    {
+      "key": "reward_item",
+      "status": "direct",
+      "hook": "Player.CompleteFishing",
+      "default_file": "fishing/fishing_catch.wav",
+      "detail_fr": "Récompense ordinaire finalisée, une seule fois par séquence."
+    },
+    {
+      "key": "reward_xp",
+      "status": "direct",
+      "hook": "FishingAudio.Apply",
+      "default_file": "fishing/fishing_xp_gain.wav",
+      "detail_fr": "Progression accrue sans passage de niveau ; cue retardé de 650 ms."
+    },
+    {
+      "key": "rod_cast",
+      "status": "alias",
+      "hook": "cast (Rod)",
+      "default_file": "fishing/fishing_cast_rod.wav",
+      "detail_fr": "Alias du lancer à la canne."
+    },
+    {
+      "key": "net_cast",
+      "status": "alias",
+      "hook": "cast (Net)",
+      "default_file": "fishing/fishing_cast_net.wav",
+      "detail_fr": "Alias du lancer au filet."
+    },
+    {
+      "key": "cage_cast",
+      "status": "alias",
+      "hook": "cast (Cage)",
+      "default_file": "fishing/fishing_cast_cage.wav",
+      "detail_fr": "Alias de la mise à l’eau de la cage."
+    },
+    {
+      "key": "cage_retrieve",
+      "status": "direct",
+      "hook": "FishingAudio.Apply → Caught",
+      "default_file": "fishing/fishing_crate_raise.wav",
+      "detail_fr": "Prise obtenue avec une cage."
+    },
+    {
+      "key": "line_tension_enter",
+      "status": "alias",
+      "hook": "tension",
+      "default_file": "fishing/fishing_tension_loop.wav",
+      "detail_fr": "Entrée dans la zone de tension élevée (75 %)."
+    },
+    {
+      "key": "reeling_start",
+      "status": "alias",
+      "hook": "reel",
+      "default_file": "fishing/fishing_reel_loop.wav",
+      "detail_fr": "Entrée dans l’état de moulinet actif."
+    },
+    {
+      "key": "reeling_stop",
+      "status": "optional",
+      "hook": "FishingAudio.Apply",
+      "default_file": "",
+      "detail_fr": "Sortie de l’état moulinet : coupe toujours la boucle, cue additionnel silencieux par défaut."
+    },
+    {
+      "key": "line_tension_exit",
+      "status": "optional",
+      "hook": "FishingAudio.Apply",
+      "default_file": "",
+      "detail_fr": "Sortie de la zone de tension : coupe toujours la boucle, cue additionnel silencieux par défaut."
+    },
+    {
+      "key": "cast",
+      "status": "family",
+      "hook": "Player.CastFishing",
+      "default_file": "fishing/fishing_cast_rod.wav",
+      "detail_fr": "Résout Rod / Cage / Net selon le type équipé."
+    },
+    {
+      "key": "reel",
+      "status": "family",
+      "hook": "FishingAudio.Apply / Player.SetReeling",
+      "default_file": "fishing/fishing_reel_loop.wav",
+      "detail_fr": "Famille de moulinet ; propriétaire d’une boucle au maximum."
+    },
+    {
+      "key": "tension",
+      "status": "family",
+      "hook": "FishingAudio.Apply",
+      "default_file": "fishing/fishing_tension_loop.wav",
+      "detail_fr": "Famille de tension ; seuil 75 %."
+    },
+    {
+      "key": "ambience",
+      "status": "family",
+      "hook": "FishingAudio.Apply",
+      "default_file": "fishing/fishing_ambience_sea_loop.wav",
+      "detail_fr": "Ambiance de scène, remise à zéro à la fermeture / déconnexion."
+    },
+    {
+      "key": "legendary",
+      "status": "family",
+      "hook": "legendary_hooked",
+      "default_file": "fishing/fishing_legendary_appear.wav",
+      "detail_fr": "Famille de compatibilité pour l’apparition légendaire."
+    },
+    {
+      "key": "challenge",
+      "status": "family",
+      "hook": "Player.BeginFishingChallenge / ChallengeInput",
+      "default_file": "fishing/fishing_legendary_challenge_cue.wav",
+      "detail_fr": "Étape du défi de directions."
+    },
+    {
+      "key": "challenge_success",
+      "status": "family",
+      "hook": "Player.ChallengeInput",
+      "default_file": "fishing/fishing_legendary_challenge_success.wav",
+      "detail_fr": "Étapes requises validées."
+    },
+    {
+      "key": "challenge_fail",
+      "status": "family",
+      "hook": "legendary_timeout",
+      "default_file": "fishing/fishing_legendary_challenge_fail.wav",
+      "detail_fr": "Famille de compatibilité pour la réponse expirée."
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "sdk": "8.0.427",
+  "configuration": "Debug",
+  "host": "Linux",
+  "editor_target": "net8.0-windows/win-x64",
+  "verification_adaptations": [
+    "Existing key generation task invoked in-process using a temporary MSBuild import outside the repository.",
+    "Explicit LogiklikBuildNumber=1 and standard SDK Roslyn compiler; RunAnalyzers=false, matching repository verification scripts."
+  ],
+  "builds": [
+    {
+      "project": "server",
+      "output": "Intersect.Server/bin/Debug/net8.0/Intersect Server.dll",
+      "sha256": "562739f02cbe25bec60d7881551ec4e314d8dfa7e27280ac802de83bf480f493",
+      "bytes": 10507725,
+      "exit_code": 0,
+      "build_log": "server-lifecycle-fix.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "client",
+      "output": "Intersect.Client/bin/Debug/net8.0/Corps Royaux.dll",
+      "sha256": "beaed0a62a5eb43b4932e5181bd467d6957b9c0d6f8988d01b3d5489a7b554e9",
+      "bytes": 616960,
+      "exit_code": 0,
+      "build_log": "client-app-final.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "client_core",
+      "output": "Intersect.Client.Core/bin/Debug/net8.0/Intersect Client Core.dll",
+      "sha256": "5b9673e6871c6c1c641bafe563aa40fbd146e6479e9c77a1f5f76adce561c9c4",
+      "bytes": 16674816,
+      "exit_code": 0,
+      "build_log": "client-core-final.log",
+      "runtime_executed": false
+    },
+    {
+      "project": "editor",
+      "output": "Intersect.Editor/bin/Debug/net8.0-windows/win-x64/Logiklik 2D Engine.dll",
+      "sha256": "80a264210d97fa56ce7938156ee7bfbb82fbd4e36c430ce5dfa47b1dc700efe0",
+      "bytes": 8155136,
+      "exit_code": 0,
+      "build_log": "editor-tests-build.log",
+      "runtime_executed": false,
+      "snapshot_note": "This local cross-build precedes the explicit initial-tab production fix; the Windows workflow verifies subsequent revisions."
+    },
+    {
+      "project": "editor_tests",
+      "output": "Utilities/InterfaceEditorTests/bin/Debug/net8.0-windows/win-x64/Intersect.Tests.Editor.dll",
+      "sha256": "4dc16c47afb29e245f0e2da1b7e7639b646878e41028252fb4522077e83e7871",
+      "bytes": 821760,
+      "exit_code": 0,
+      "build_log": "editor-fixture-restored.log",
+      "runtime_executed": false,
+      "snapshot_note": "This local cross-build precedes the explicit initial-tab production fix; the Windows workflow verifies subsequent revisions."
+    }
+  ],
+  "note": "Build evidence only. Native reward test execution is recorded separately. GUI, audio listening and live multiplayer not executed.",
+  "recorded_at_utc": "2026-11-03T03:59:34.886384+00:00"
+}

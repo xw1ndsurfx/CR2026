@@ -3,9 +3,13 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.EditorHub;
+using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.Forms.Styling;
 using Intersect.Editor.General;
+using Intersect.Editor.Localization;
+using Intersect.Framework.Core.Fishing;
 using Intersect.Localization;
+using Intersect.Network.Packets.Server;
 
 internal static class EditorHubTests
 {
@@ -13,8 +17,8 @@ internal static class EditorHubTests
     private static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
     internal static void Run()
     {
-        TestPreferences(); TestRegistry(); TestLocalizationAndArt(); TestIntegratedWorkspace();
-        Console.WriteLine("PASS Editor Hub: exhaustive live-menu coverage, original command dispatch, live additions, bilingual/accent search, filters, preferences, real recents, disposal, embedded artwork, keyboard and four responsive sizes");
+        TestPreferences(); TestRegistry(); TestLocalizationAndArt(); TestFishingMenuRegistration(); TestIntegratedWorkspace();
+        Console.WriteLine("PASS Editor Hub: exhaustive live-menu coverage, original command dispatch, live additions, trilingual/accent search, fishing startup and opening, filters, preferences, real recents, disposal, embedded artwork, keyboard and four responsive sizes");
     }
     private static void TestPreferences()
     {
@@ -92,6 +96,75 @@ internal static class EditorHubTests
                 Check(!string.IsNullOrWhiteSpace(pair.Value[language]) && GameTextTokens.Compatible(pair.Value["en"], pair.Value[language]), "Hub labels have compatible translations: " + pair.Key);
         Check(art.Get("banner.png") is { Width: 720 }, "The banner is packaged with the application.");
     }
+    private static void TestFishingMenuRegistration()
+    {
+        using var main = new FrmMain();
+        var addFishing = typeof(FrmMain).GetMethod("AddFishingEditorMenu", Hidden)!;
+        var addRewards = typeof(FrmMain).GetMethod("AddRewardConfigurationEditorMenu", Hidden)!;
+        // Fishing must also work before the unrelated reward menu is registered.
+        addFishing.Invoke(main, null); addFishing.Invoke(main, null);
+        addRewards.Invoke(main, null); addRewards.Invoke(main, null);
+        var menubar = (MenuStrip)typeof(FrmMain).GetField("menuStrip", Hidden)!.GetValue(main)!;
+        var games = menubar.Items.OfType<ToolStripMenuItem>().Single(item => item.Name == "miniGameEditorsToolStripMenuItem");
+        Check(games.DropDownItems.Cast<ToolStripItem>().Count(item => item.Name == "miniGame.Fishing") == 1 &&
+            games.DropDownItems.Cast<ToolStripItem>().Select(item => item.Name).Distinct().Count() == games.DropDownItems.Count,
+            "Fishing and the reward mini-games share one menu without duplicate commands regardless of registration order.");
+    }
+
+    private static void TestFishingHubStartup(FrmMain main, EditorHubView hub, HubRegistry registry, MenuStrip menubar)
+    {
+        const string fishingId = "miniGame.Fishing";
+        var games = menubar.Items.OfType<ToolStripMenuItem>().Single(item => item.Name == "miniGameEditorsToolStripMenuItem");
+        var command = games.DropDownItems.Cast<ToolStripItem>().Single(item => item.Name == fishingId);
+        Check(!games.DropDown.Visible && hub.Visible && hub.CurrentEntries().FirstOrDefault()?.Id == fishingId,
+            "The real startup hub shows Fishing first without opening any historical menu or changing category.");
+        Check(ReferenceEquals(registry.Find(fishingId)?.Source, command) && registry.Entries.Count(entry => entry.Id == fishingId) == 1,
+            "The startup Fishing card is backed once by its real menu command.");
+
+        var oldCulture = CultureInfo.CurrentUICulture;
+        var oldConfiguration = FishingEditorState.Configuration.ToJson();
+        var editorField = typeof(FrmMain).GetField("_fishingEditor", Hidden)!;
+        var requestedField = typeof(FrmMain).GetField("_fishingEditorRequested", Hidden)!;
+        var canvas = Descendants(hub).Single(control => control.GetType().Name == "Canvas");
+        try
+        {
+            foreach (var (language, query) in new[] { ("en", "fishing"), ("fr", "pêche"), ("es", "pesca") })
+            {
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+                hub.SetQuery(query);
+                var entry = hub.CurrentEntries().Single();
+                Check(entry.Id == fishingId && entry.Definition.Name == FishingEditorText.Get("Fishing Editor"),
+                    "Fishing is searchable and correctly titled in " + language + ".");
+                canvas.GetType().GetMethod("OnKeyDown", Hidden)!.Invoke(canvas, [new KeyEventArgs(Keys.Enter)]);
+                Check((bool)requestedField.GetValue(main)! && editorField.GetValue(main) is not FrmFishing { IsDisposed: false },
+                    "Activating the real Fishing card requests its server configuration before opening the editor.");
+                main.ApplyFishingConfiguration(new FishingStatePacket { Editor = true, Draft = true, ConfigurationJson = new FishingConfiguration().ToJson() });
+                using var editor = (FrmFishing)editorField.GetValue(main)!;
+                Application.DoEvents();
+                Check(editor.Visible && ReferenceEquals(editor.Owner, main) && editor.Text == FishingEditorText.Get("Fishing Editor") &&
+                    !(bool)requestedField.GetValue(main)!,
+                    "The server response opens the actual owned Fishing Editor from the startup hub in " + language + ".");
+                hub.Open(fishingId);
+                Check(ReferenceEquals(editorField.GetValue(main), editor) && !(bool)requestedField.GetValue(main)!,
+                    "Opening Fishing again reuses the existing editor instead of creating another request or window.");
+            }
+            hub.SetQuery("peche");
+            Check(hub.CurrentEntries().Single().Id == fishingId, "Fishing search accepts the unaccented French spelling.");
+            hub.SetCategory("MiniGames");
+            Check(hub.CurrentEntries().Count(entry => entry.Id == fishingId) == 1,
+                "Fishing remains available exactly once in the mini-games category.");
+            main.ShowEditorHub(focusSearch: false); main.ShowEditorHub(focusSearch: false);
+            Check(registry.Entries.Count(entry => entry.Id == fishingId) == 1 && !games.DropDown.Visible,
+                "Repeated hub openings preserve one Fishing entry without touching the historical menu.");
+        }
+        finally
+        {
+            (editorField.GetValue(main) as FrmFishing)?.Dispose();
+            FishingEditorState.Apply(oldConfiguration);
+            CultureInfo.CurrentUICulture = oldCulture;
+            hub.SetCategory("Home");
+        }
+    }
     private static void TestIntegratedWorkspace()
     {
         var oldCulture = CultureInfo.CurrentUICulture;
@@ -113,6 +186,7 @@ internal static class EditorHubTests
             Console.WriteLine($"Hub chrome: menu visible={menubar.Visible}, menu={menubar.Bounds}, toolbar={toolbar.Bounds}");
             var registry = (HubRegistry)typeof(FrmMain).GetField("_hubRegistry", Hidden)!.GetValue(main)!;
             var hub = (EditorHubView)typeof(FrmMain).GetField("_editorHub", Hidden)!.GetValue(main)!;
+            TestFishingHubStartup(main, hub, registry, menubar);
             Check(HubRegistry.Definitions.All(d => registry.Find(d.Id) != null), "Every catalog entry is backed by a real current menu command or map workspace action.");
             Check(registry.Entries.Select(e => e.Id).ToHashSet().SetEquals(HubRegistry.Definitions.Select(d => d.Id)),
                 "The live menu and catalog have the same identities without unidentified duplicates. Extra: " + string.Join(", ", registry.Entries.Select(e => e.Id).Except(HubRegistry.Definitions.Select(d => d.Id))));
@@ -128,12 +202,16 @@ internal static class EditorHubTests
                 Check(hub.Visible && main.ClientRectangle.Contains(hub.Bounds), "Hub fits the workspace at " + size);
                 Check(ReferenceEquals(parent, Globals.MapEditorWindow.picMap.Parent) && ReferenceEquals(map, Globals.CurrentMap) && Globals.MapEditorWindow.MapUndoStates.Count == undoCount,
                     "Opening/resizing the hub never reparents or reloads the map or resets its undo history.");
-                Check(hub.CurrentEntries().Length == 8, "The home page provides eight working primary cards.");
+                Check(hub.CurrentEntries().Length == 17 && EditorHubView.LatestIds.All(id => hub.CurrentEntries().Any(e => e.Id == id)), "The home page provides nine recent modules, including Fishing, and eight working primary cards without duplicates.");
                 Capture(main, hub, size.Width + "x" + size.Height);
                 foreach (var category in new[] { "Game", "System", "MiniGames", "Events", "Tools" })
                 { hub.SetCategory(category); Application.DoEvents(); Check(hub.CurrentEntries().Length > 0, "Each category has real tools: " + category); }
                 hub.SetCategory("Home");
             }
+            var latestFilter = Descendants(hub).OfType<Button>().Single(b => Equals(b.Tag, "Latest"));
+            latestFilter.PerformClick();
+            Check(hub.CurrentEntries().Select(e => e.Id).ToHashSet().SetEquals(EditorHubView.LatestIds), "Latest filter exposes exactly the recent native modules.");
+            Descendants(hub).OfType<Button>().Single(b => Equals(b.Tag, "All")).PerformClick();
             hub.SetQuery("npc"); Check(hub.CurrentEntries().Any(e => e.Id == "npcEditorToolStripMenuItem"), "Search reaches actual integrated entries.");
             var key = Message.Create(hub.Handle, 0x100, (IntPtr)Keys.K, IntPtr.Zero);
             typeof(FrmMain).GetMethod("ProcessCmdKey", Hidden)!.Invoke(main, [key, Keys.Control | Keys.K]);

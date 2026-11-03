@@ -14,6 +14,7 @@ internal static class EditorWindowTests
 
     internal static void Run()
     {
+        CheckLowResolutionScrolling();
         using var owner = new Form { ClientSize = new Size(640, 480), ShowInTaskbar = false, Opacity = 0 };
         owner.Show();
         using var window = new Form { ClientSize = new Size(850, 620), ShowInTaskbar = false, Opacity = 0 };
@@ -114,6 +115,18 @@ internal static class EditorWindowTests
             else
             {
                 var lists = form.Controls.Find("ShopEditorSections", true).Single();
+                foreach (var name in new[] { "grpItemsSold", "grpItemsBought" })
+                {
+                    var group = form.Controls.Find(name, true).Single();
+                    var viewport = (Panel)group.Parent!;
+                    Check(group.Dock == DockStyle.None && group.Height >= group.MinimumSize.Height &&
+                        viewport.DisplayRectangle.Height >= group.Height,
+                        "Shop offer fields retain real scrollable bounds at laptop resolutions.");
+                    var action = group.Controls.OfType<Button>().OrderBy(control => control.Bottom).Last();
+                    viewport.ScrollControlIntoView(action);
+                    Check(viewport.ClientRectangle.Contains(viewport.RectangleToClient(action.RectangleToScreen(action.ClientRectangle))),
+                        "The last shop offer action scrolls fully into view.");
+                }
                 Check(lists is TableLayoutPanel table && table.ColumnStyles.Cast<ColumnStyle>().All(style => style.SizeType == SizeType.Percent),
                     "Shop offer columns share the available width.");
             }
@@ -134,8 +147,95 @@ internal static class EditorWindowTests
                     "Window labels include compatible en/fr/es translations.");
             Check(QualityOfLifeText.Get(text, "unknown") == text, "Window labels fall back to English.");
         }
+        foreach (var factory in new Func<Form>[] { () => new FrmItem(), () => new FrmNpc(), () => new FrmSpell(), () => new FrmProjectile(),
+            () => new FrmResource(), () => new FrmCrafts(), () => new FrmAnimation(), () => new FrmSwitchVariable() })
+        using (var legacy = factory())
+        {
+            RemoveLoad(legacy); legacy.ShowInTaskbar = false; legacy.Opacity = 0;
+            foreach (var body in legacy.Controls.Find("pnlContainer", true)) body.Visible = true;
+            EditorWindows.Show(legacy, owner); Application.DoEvents();
+            var split = legacy.Controls.Find("EditorWorkspaceSplit", true).OfType<SplitContainer>().SingleOrDefault();
+            var footer = legacy.Controls.Find("EditorActions", true).SingleOrDefault();
+            foreach (var size in new[] { new Size(1100, 730), new Size(1600, 900), new Size(800, 580) })
+            {
+                legacy.Size = size; Application.DoEvents(); legacy.PerformLayout();
+                if (split != null && footer != null)
+                {
+                    Check(legacy.ClientRectangle.Contains(split.Bounds) && legacy.ClientRectangle.Contains(footer.Bounds), "Global workspace bounds escaped " + legacy.GetType().Name);
+                    Check(split.Width >= legacy.ClientSize.Width - 10 && split.Panel2.Width > 350, "Legacy content still has a narrow fixed width: " + legacy.GetType().Name);
+                    Check(footer.Top >= split.Bottom, "Save/Cancel overlay the global workspace: " + legacy.GetType().Name);
+                    Check(split.Panel2.Controls.Cast<Control>().All(c => split.Panel2.ClientRectangle.Contains(c.Bounds)), "Content viewport is clipped inside its split pane: " + legacy.GetType().Name);
+                }
+                else
+                {
+                    var content = legacy.Controls.Find("pnlContainer", true).Single();
+                    Check(legacy is FrmItem or FrmNpc or FrmSpell && legacy.ClientRectangle.Contains(content.Bounds), "Custom layout was replaced or clipped: " + legacy.GetType().Name);
+                    Check(content.Width > legacy.ClientSize.Width / 2, "Custom content failed to resize: " + legacy.GetType().Name);
+                }
+            }
+            legacy.Hide();
+        }
+        foreach (var factory in new Func<Form>[] { () => new FrmCommonEvent(), () => new FrmTime(),
+            () => new FrmDynamicRequirements(new Intersect.Framework.Core.GameObjects.Conditions.ConditionLists(), RequirementType.Item) })
+        using (var editor = factory())
+        {
+            RemoveLoad(editor); editor.ShowInTaskbar = false; editor.Opacity = 0;
+            EditorWindows.Show(editor, owner); Application.DoEvents();
+            editor.Size = new Size(1500, 850); Application.DoEvents(); editor.PerformLayout();
+            Check(editor.Controls.Cast<Control>().Where(c => c.Visible).All(c => editor.ClientRectangle.Contains(c.Bounds)), "Resizing clipped a selector, time editor or requirement workspace: " + editor.GetType().Name);
+            editor.Hide();
+        }
+        CheckEditorCoverage(owner);
         owner.Hide();
         Console.WriteLine("PASS editor windows: native ownership, reopen/restore, F11/Escape, held keys, monitor bounds, class/shop responsive layouts and locales");
+    }
+
+    private static void CheckEditorCoverage(Form owner)
+    {
+        var types = typeof(EditorForm).Assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(EditorForm)) &&
+            !type.IsAbstract && type.GetConstructor(Type.EmptyTypes) != null).OrderBy(type => type.Name);
+        foreach (var type in types)
+        {
+            using var form = (Form)Activator.CreateInstance(type)!;
+            var designed = form.ClientSize;
+            var designedMinimum = form.MinimumSize;
+            RemoveLoad(form); form.ShowInTaskbar = false; form.Opacity = 0;
+            EditorWindows.Show(form, owner); Application.DoEvents();
+            form.MinimumSize = Size.Empty;
+            foreach (var size in new[] { new Size(1024, 600), new Size(800, 500), new Size(1200, 700) })
+            {
+                form.ClientSize = size; Application.DoEvents();
+                Check((form.ClientSize.Width >= designed.Width && form.ClientSize.Height >= designed.Height) ||
+                    form.Controls.Find("EditorWorkspaceSplit", true).Length > 0 ||
+                    (form is FrmItem or FrmNpc or FrmSpell && form.Width >= designedMinimum.Width && form.Height >= designedMinimum.Height) ||
+                    form.Controls.Find("EditorScrollViewport", true).SingleOrDefault() is Panel { AutoScroll: true },
+                    type.Name + " exposes a scrolling viewport when reduced to laptop dimensions.");
+            }
+            Console.WriteLine("PASS low resolution window: " + type.Name);
+            form.Hide();
+        }
+    }
+
+    private static void CheckLowResolutionScrolling()
+    {
+        using var dialog = new Form { ClientSize = new Size(900, 600), ShowInTaskbar = false, Opacity = 0 };
+        var fill = new Panel { Dock = DockStyle.Fill };
+        var bottom = new Button { Location = new System.Drawing.Point(700, 530), Size = new Size(150, 30),
+            Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+        dialog.Controls.Add(fill); dialog.PerformLayout(); fill.Controls.Add(bottom);
+        EditorScrollLayout.Attach(dialog);
+        dialog.ClientSize = new Size(600, 350);
+        dialog.Show(); Application.DoEvents(); dialog.PerformLayout();
+        var viewport = (Panel)dialog.Controls.Find("EditorScrollViewport", true).Single();
+        viewport.PerformLayout();
+        Check(viewport.AutoScroll && viewport.DisplayRectangle.Width >= 900 && viewport.DisplayRectangle.Height >= 600,
+            "Legacy docked dialogs preserve content in both scroll directions at low resolution.");
+        viewport.ScrollControlIntoView(bottom);
+        Check(viewport.ClientRectangle.Contains(viewport.RectangleToClient(bottom.RectangleToScreen(bottom.ClientRectangle))),
+            "The final bottom/right action can be scrolled fully into view.");
+        dialog.ClientSize = new Size(1200, 700); dialog.PerformLayout(); viewport.PerformLayout();
+        Check(!viewport.HorizontalScroll.Visible && !viewport.VerticalScroll.Visible,
+            "Scrollbars disappear when the window fits the content again.");
     }
 
     private static void RemoveLoad(Form form)

@@ -205,7 +205,7 @@ public sealed class InvasionDefinition
         {
             var date = now.Date.AddDays(offset);
             var candidate = new DateTimeOffset(date.Year, date.Month, date.Day, StartHour, StartMinute, 0, now.Offset);
-            var lead = Math.Max(FirstReminderMinutes * 60, PreStartCinematicEnabled ? PreStartCinematicLeadSeconds : 0) + EnvironmentLeadSeconds;
+            const int lead = 5 * 60; // Ambience is independent of earlier warning/cinematic schedules.
             if (RunsOn(candidate.DayOfWeek) && now >= candidate.AddSeconds(-lead) && now < candidate)
             { start = candidate; return true; }
         }

@@ -1240,6 +1240,7 @@ internal sealed partial class PacketHandler
     //EntityDiePacket
     public void HandlePacket(IPacketSender packetSender, EntityDiePacket packet)
     {
+        Intersect.Client.Interface.Interface.InGameUiOrNull?.OnWorldBossNpcDied(packet.Id);
         var id = packet.Id;
         var type = packet.Type;
         var mapId = packet.MapId;
@@ -1681,6 +1682,7 @@ internal sealed partial class PacketHandler
                 {
                     positionedAnimation.ParentOffsetX = packet.OffsetX;
                     positionedAnimation.ParentOffsetY = packet.OffsetY;
+                    positionedAnimation.SetTimedLifetime(packet.DurationMilliseconds);
                 }
 
                 break;
@@ -1886,6 +1888,7 @@ internal sealed partial class PacketHandler
         {
             Globals.GameShop = new ShopDescriptor();
             Globals.GameShop.Load(Intersect.Client.Localization.ClientLanguages.ContentJson(packet.ShopData));
+            Globals.GameShop.SynchronizePricingTime(packet.ServerTimeUnixMilliseconds);
             Interface.Interface.EnqueueInGame(gameInterface => gameInterface.NotifyOpenShop());
         }
         else

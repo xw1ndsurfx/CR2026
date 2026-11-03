@@ -68,10 +68,12 @@ public partial class FrmMapEditor
         return SmartBrush.Area(start, end, shape, preset.Radius, preset.Round);
     }
     private List<SmartEdit> SmartPlan(MapInstance map, SmartPreset preset, SmartShape shape, SmartCell start, SmartCell end, bool preserve, bool erase, int seed) =>
-        SmartBrush.Plan(map, preset, SmartCells(map, preset, shape, start, end), preserve, erase, seed, shape == SmartShape.Stamp);
+        shape == SmartShape.ConnectWater ? SmartBrush.ConnectWater(map, preset, start, erase)
+        : SmartBrush.Plan(map, preset, SmartCells(map, preset, shape, start, end), preserve, erase, seed, shape == SmartShape.Stamp);
 
     internal void PreviewSmartBuilder(MapInstance preview)
     {
+        if (_dockLandingSelected != null || _dockLandingConsumeRelease) return;
         if (_smartMap != null && _smartMap == Globals.CurrentMap && _smartPreset != null)
         {
             _smartEdits ??= SmartPlan(_smartMap, _smartPreset, _smartShape, _smartStart, _smartEnd, _smartPreserve, _smartErase, _smartSeed);
@@ -113,6 +115,7 @@ public partial class FrmMapEditor
     }
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
+        if (_dockLandingSelected != null && keyData == Keys.Escape) { CancelDockLandingSelection(); return true; }
         if (_smartMap != null && keyData == Keys.Escape) { CancelSmartStroke(); return true; }
         return base.ProcessCmdKey(ref msg, keyData);
     }

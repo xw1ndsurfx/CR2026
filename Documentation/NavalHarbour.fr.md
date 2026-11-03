@@ -1,5 +1,43 @@
 # Capitainerie, boutique PNJ et System Editor
 
+## Choisir le point de débarquement d’un quai
+
+Dans **Map Layers → Attributes → Q - Quai**, cocher **Choisir la case d’arrivée**.
+Renseigner X/Y ou cliquer **Choisir sur la map**, puis la case où le personnage
+doit apparaître. Ce clic choisit uniquement les coordonnées : il ne pose pas
+d’attribut et ne modifie pas la map. Clic droit ou Échap annule la sélection.
+
+Poser ensuite le Q, ou repeindre un Q existant, pour lui associer ces coordonnées,
+puis sauvegarder la map. Chaque Q peut avoir son propre point sur sa carte.
+Choisir une case **praticable du ponton**, sans Q ni Block : Q reste le repère
+solide avec lequel le bateau interagit. Le point peut être plus loin sur le
+ponton ; le navire doit toujours être proche du Q pour accoster. Le serveur
+refuse une arrivée hors map, bloquée, occupée ou recouverte par une coque, sans
+la remplacer silencieusement par une autre case.
+
+Décocher la case conserve le placement automatique. Les anciens Q restent dans
+ce mode ; leurs identifiants et leur sérialisation native sont conservés. Mettre
+à jour le serveur, l’éditeur et le client pour les nouveaux champs d’attribut.
+
+## Accoster sur plusieurs îles
+
+Placer l’attribut **Quai (Q)** sur le bord de chaque île accessible par le réseau
+naval du dossier **Ocean**. Q est bloquant : laisser au moins une case cardinale
+libre à côté du quai, hors de la coque. Arrêter le navire près de Q, puis utiliser
+l’action de débarquement. Le capitaine et l’équipage débarquent sur **la carte du
+quai actuel**. Un quai sans sortie libre refuse le débarquement.
+
+Un accostage réussi mémorise ce nouveau quai dans la flotte et le passage de
+l’équipage. Le retour de secours d’un prochain voyage utilise ce nouveau port ;
+il n’est plus figé au port de départ précédent. Le bateau personnel reste dans
+la flotte : depuis un Q d’une autre île du réseau Ocean, le même bateau peut être
+remis à l’eau avec son identité, sa coque et son chargement conservés.
+
+La destination est sauvegardée avant de libérer la barre. En cas d’échec de
+sauvegarde, le personnage reste à bord et l’ancien point de secours est conservé.
+Un naufrage ou une déconnexion en pleine mer garde le mécanisme de secours ;
+une simple proximité avec un quai ne remplace pas le dernier accostage réussi.
+
 ## Installation et compatibilité
 
 Mettre à jour ensemble le serveur, le client, le Game Editor et les ressources Ocean issus de la même compilation. Les échanges de configuration navale et la commande d’événement `OpenNavalShop` sont nouveaux ; les fenêtres de flotte et de boutique échangent désormais un mode distinct. Aucun déploiement cloud n’est effectué par cette modification.

@@ -8,6 +8,7 @@ public partial class FrmMain
 {
     private FrmRoyalCombatConfiguration? _royalCombatEditor;
     private bool _royalMasteries;
+    private bool _royalCombatEditorRequested;
     private void AddRoyalCombatEditorMenus()
     {
         foreach (var masteries in new[] { true, false })
@@ -17,6 +18,7 @@ public partial class FrmMain
             item.Click += (_, _) => {
                 if (_royalCombatEditor is { IsDisposed: false }) { _royalCombatEditor.ShowMode(masteries); EditorWindows.Show(_royalCombatEditor, this); return; }
                 _royalMasteries = masteries;
+                _royalCombatEditorRequested = true;
                 Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.GetConfiguration });
             };
             var menu = masteries ? "contentEditorsToolStripMenuItem" : "miniGameEditorsToolStripMenuItem";
@@ -25,8 +27,10 @@ public partial class FrmMain
     }
     internal void ApplyRoyalCombatConfiguration(ArcheryStatePacket packet)
     {
+        RoyalCombatEditorState.Apply(packet.ConfigurationJson);
         if (_royalCombatEditor is { IsDisposed: false }) { _royalCombatEditor.Response(packet); return; }
-        if (packet.ConfigurationJson.Length == 0) return;
+        if (packet.ConfigurationJson.Length == 0 || !_royalCombatEditorRequested) return;
+        _royalCombatEditorRequested = false;
         _royalCombatEditor = new(packet.ConfigurationJson, _royalMasteries); EditorWindows.Show(_royalCombatEditor, this);
     }
 }

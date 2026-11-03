@@ -28,6 +28,7 @@ public partial class FrmCraftingTables : EditorForm
         ApplyHooks();
         InitializeComponent();
         InitializeCampfireCreator();
+        InitializeResponsiveLayout();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
@@ -57,6 +58,11 @@ public partial class FrmCraftingTables : EditorForm
     {
         if (mEditorItem != null)
         {
+            if (!mChanged.Contains(mEditorItem))
+            {
+                mChanged.Add(mEditorItem);
+                mEditorItem.MakeBackup();
+            }
             pnlContainer.Show();
 
             txtName.Text = mEditorItem.Name;
@@ -66,11 +72,6 @@ public partial class FrmCraftingTables : EditorForm
             UpdateList();
             UpdateCampfireCreator();
 
-            if (mChanged.IndexOf(mEditorItem) == -1)
-            {
-                mChanged.Add(mEditorItem);
-                mEditorItem.MakeBackup();
-            }
         }
         else
         {
@@ -238,6 +239,7 @@ public partial class FrmCraftingTables : EditorForm
 
     public void UpdateList()
     {
+        if (mEditorItem.CampfireCreator) ConfigureCampfireTable(mEditorItem, true);
         UpdateCampfireCreator();
         lstCrafts.Items.Clear();
         foreach (var id in mEditorItem.Crafts)

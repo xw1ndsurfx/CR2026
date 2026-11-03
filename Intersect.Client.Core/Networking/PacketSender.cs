@@ -290,14 +290,14 @@ public static partial class PacketSender
 
     //Admin Action Packet Should be Here
 
-    public static void SendSellItem(int slot, int amount)
+    public static void SendSellItem(int slot, int amount, bool allCopies = false)
     {
-        Network.SendPacket(new SellItemPacket(slot, amount));
+        Network.SendPacket(new SellItemPacket(slot, amount) { AllCopies = allCopies });
     }
 
-    public static void SendBuyItem(int slot, int amount)
+    public static void SendBuyItem(int slot, int amount, int? expectedUnitPrice = null)
     {
-        Network.SendPacket(new BuyItemPacket(slot, amount));
+        Network.SendPacket(new BuyItemPacket(slot, amount) { ExpectedUnitPrice = expectedUnitPrice });
     }
 
     public static void SendCloseShop()

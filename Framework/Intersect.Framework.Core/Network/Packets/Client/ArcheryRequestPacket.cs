@@ -1,6 +1,6 @@
 using MessagePack;
 namespace Intersect.Network.Packets.Client;
-public enum ArcheryAction { Open, Start, Draw, Release, Leave, Masteries, GetConfiguration, SaveConfiguration, Ammunition, SelectAmmunition, BuyTalent, JoinCompetition, Leaderboard, Respec, InspectMasteries }
+public enum ArcheryAction { Open, Start, Draw, Release, Leave, Masteries, GetConfiguration, SaveConfiguration, Ammunition, SelectAmmunition, BuyTalent, JoinCompetition, Leaderboard, Respec, InspectMasteries, UseWeaponSkill, SyncMasteries }
 [MessagePackObject]
 public sealed partial class ArcheryRequestPacket : IntersectPacket
 {

@@ -190,7 +190,7 @@ internal sealed class NavalCargoWindow : Window
             icon.SetBounds(20,20,44,44);
             if(!string.IsNullOrWhiteSpace(descriptor?.Icon))
             {
-                icon.Texture=GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
+                icon.Texture=Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor);
                 icon.RenderColor=descriptor.Color;
             }
             // Missing resources keep a visible empty icon frame without substituting a different item.

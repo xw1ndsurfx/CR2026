@@ -1,4 +1,4 @@
-using Intersect.Core;
+﻿using Intersect.Core;
 using Microsoft.Extensions.Logging;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -13,6 +13,7 @@ namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
     private static readonly Dictionary<Guid,Dictionary<NavalTaskKind,long>> QuestUpdates=[];
+    private static readonly Dictionary<Guid,int> BoardingContractUpdates=[];
     private static void QueueNavalTask(Guid actor,NavalTaskKind kind,long amount)
     {if(actor==Guid.Empty || amount<=0)return;if(!QuestUpdates.TryGetValue(actor,out var changes))QuestUpdates[actor]=changes=[];changes[kind]=Math.Min(200000000000000L,changes.GetValueOrDefault(kind)+amount);}
     private static bool SaveManagement(Player p)
@@ -85,7 +86,7 @@ internal static partial class NavalSystem
         var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
         if(shop?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalAmmunition)return(default,0,false);
         var entry=(sell?shop.BuyingItems:shop.SellingItems).FirstOrDefault(i=>i.ItemId==ammo.ItemId);
-        if(entry!=null)return (entry.CostItemId==Guid.Empty?shop.DefaultCurrencyId:entry.CostItemId,sell?shop.BuybackPrice(entry.CostItemQuantity):entry.CostItemQuantity,entry.CostItemQuantity>=0);
+        if(entry!=null)return (entry.CostItemId==Guid.Empty?shop.DefaultCurrencyId:entry.CostItemId,sell?shop.BuybackPrice(entry.CostItemQuantity):shop.SellingPrice(entry,DateTimeOffset.UtcNow),entry.CostItemQuantity>=0);
         if(sell && !shop.BuyingWhitelist && ItemDescriptor.Get(ammo.ItemId) is {} item)return(shop.DefaultCurrencyId,shop.BuybackPrice(item.Price),true);
         return(default,0,false);
     }
@@ -154,7 +155,8 @@ internal static partial class NavalSystem
                     else
                     {
                         var sell=mode==NavalManageAction.SellAmmo;var trade=AmmoTrade(p,a,sell);
-                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && trade.Allowed;
+                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && trade.Allowed &&
+                            (!packet.ExpectedUnitPrice.HasValue || packet.ExpectedUnitPrice==trade.Price);
                         var currency=NavalCurrency(trade.Currency,"Aureons");var cost=(long)trade.Price*count;
                         if(sell)
                         {
@@ -312,6 +314,9 @@ internal static partial class NavalSystem
         }
         else if(p.NavalShipId==Guid.Empty)p.NavalPartyExitRequested=false;
 
+        int boardings;
+        lock(Gate) BoardingContractUpdates.Remove(p.Id,out boardings);
+        if(boardings>0) Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(p,Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.ShipsBoarded,Guid.Empty,boardings);
         Dictionary<NavalTaskKind,long> changes;lock(Gate){QuestUpdates.Remove(p.Id,out changes);}
         if(changes!=null)foreach(var pair in changes)p.UpdateNavalQuestTasks(pair.Key,pair.Value);
         if(p.Quests.Count>0){p.UpdateNavalQuestTasks(NavalTaskKind.SailingLevel,_settings.Sailing.Progress(p.SailingExperience).Level);
