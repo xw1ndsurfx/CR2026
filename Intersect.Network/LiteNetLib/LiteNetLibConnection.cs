@@ -65,6 +65,11 @@ public sealed class LiteNetLibConnection : AbstractConnection
         ApplicationContext.Context.Value?.Logger.LogDebug($"Created {_symmetric.GetFullishName()} for {_peer} ({Guid})");
     }
 
+    // LiteNetLib owns the peer lifecycle; its notifications do not update the base flag.
+    // An address migration keeps the established session alive until the endpoint is replaced.
+    public override bool IsConnected =>
+        _peer.ConnectionState is ConnectionState.Connected or ConnectionState.EndPointChange;
+
     public override string Ip => _peer.Address.ToString();
 
     public override int Port => _peer.Port;

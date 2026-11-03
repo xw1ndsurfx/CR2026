@@ -107,11 +107,17 @@ public partial class Player
         }
     }
 
-    private void LogFishingOpening(Event? source, Guid zoneId, string outcome, string reason = "") =>
+    private void LogFishingOpening(Event? source, Guid zoneId, string outcome, string reason = "")
+    {
+        var client = Client;
+        var connection = client?.Connection;
         ApplicationContext.Context.Value?.Logger.LogInformation(
-            "Fishing opening {Outcome}: CharacterId={CharacterId} EventInstanceId={EventInstanceId} EventId={EventId} ZoneId={ZoneId} MapId={MapId} SessionId={SessionId} ToolItemId={ToolItemId} Reason={Reason}",
+            "Fishing opening {Outcome}: CharacterId={CharacterId} EventInstanceId={EventInstanceId} EventId={EventId} ZoneId={ZoneId} MapId={MapId} SessionId={SessionId} ToolItemId={ToolItemId} Reason={Reason} InGame={InGame} HasClient={HasClient} ClientIsEditor={ClientIsEditor} HasConnection={HasConnection} ConnectionConnected={ConnectionConnected} HasEventDescriptor={HasEventDescriptor} EventStackDepth={EventStackDepth}",
             outcome, Id, source?.PageInstance?.Id ?? Guid.Empty, source?.Descriptor?.Id ?? Guid.Empty, zoneId, MapId,
-            _fishing?.State.SessionId ?? Guid.Empty, _fishing?.Tool.ItemId ?? Guid.Empty, reason);
+            _fishing?.State.SessionId ?? Guid.Empty, _fishing?.Tool.ItemId ?? Guid.Empty, reason,
+            InGame, client != null, client?.IsEditor, connection != null, connection?.IsConnected,
+            source?.Descriptor != null, source?.CallStack.Count ?? 0);
+    }
 
     private FishingToolDefinition? EquippedFishingTool(FishingConfiguration config)
     {
