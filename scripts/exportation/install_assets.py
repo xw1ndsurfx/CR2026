@@ -49,14 +49,18 @@ def install(archive: Path, check: bool) -> None:
             try:
                 data = zip_file.read(item["zip"])
             except KeyError:
-                if item["path"] != "resources/gui/exportation/background.png":
-                    raise
-                candidates = [name for name in zip_file.namelist()
-                              if name.startswith("exportation_work/panneau_nautique_")
-                              and name.endswith("_vide_et_localisable.png")]
-                if len(candidates) != 1:
-                    raise ValueError("Approved background not found in ZIP")
-                data = zip_file.read(candidates[0])
+                if item["path"] in zip_file.namelist():
+                    # The install-ready ZIP has the final resources/ paths.
+                    data = zip_file.read(item["path"])
+                elif item["path"] == "resources/gui/exportation/background.png":
+                    candidates = [name for name in zip_file.namelist()
+                                  if name.startswith("exportation_work/panneau_nautique_")
+                                  and name.endswith("_vide_et_localisable.png")]
+                    if len(candidates) != 1:
+                        raise ValueError("Approved background not found in ZIP")
+                    data = zip_file.read(candidates[0])
+                else:
+                    raise ValueError(f"Approved asset missing: {item['path']}")
             verify(data, item)
             destination = (ROOT / item["path"]).resolve()
             if not destination.is_relative_to(ROOT):
