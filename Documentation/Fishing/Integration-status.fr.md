@@ -48,6 +48,8 @@ Deux clés de défis futurs sont signalées comme réservées ; le défi implém
 | Éditeur Windows et suite de tests de contrôles | Compilation croisée réussie ; tests WinForms non exécutés dans cet environnement Linux. |
 | Textes | Catalogues anglais, français et espagnol ; paramètres de substitution contrôlés. |
 
+Une première exécution Windows a également confirmé les quatre compilations et les 269 contrôles serveur. Elle a ensuite révélé un accès prématuré à un onglet dans la fixture de test WinForms. La fixture initialise maintenant la vraie fenêtre et utilise ses événements natifs ; cette correction et les résultats de cette première exécution sont conservés dans [le relevé CI](windows-ci-attempts.json). Le statut actuel se consulte dans la demande de revue GitHub.
+
 Les [preuves des tests](test-evidence.json) contiennent les commandes, périmètres et empreintes des assemblages. Le [rapport des ressources](asset-verification.json) couvre les vérifications de fichiers. `scripts/Verify-Fishing.ps1` et `.github/workflows/fishing.yml` fournissent la vérification native Windows, incluant `--fishing-only` pour les contrôles de l’éditeur.
 
 La vérification locale utilise le SDK .NET 8 et MSBuild directement. Une adaptation temporaire hors dépôt exécute la tâche existante de génération des clés dans le processus MSBuild, car son hôte séparé échoue ici. Un numéro de build explicite évite la tâche locale de compteur. Aucune clé privée, sortie binaire ni modification de ces tâches du moteur n’est incluse dans la livraison. Les avertissements de dépendances existantes n’ont pas été traités dans ce lot.

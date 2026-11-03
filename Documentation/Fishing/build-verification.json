@@ -47,10 +47,10 @@
     {
       "project": "editor_tests",
       "output": "Utilities/InterfaceEditorTests/bin/Debug/net8.0-windows/win-x64/Intersect.Tests.Editor.dll",
-      "sha256": "dad9c30253cc822429122b44e86a2d27199221be9c227980d3c425186edf995b",
-      "bytes": 821248,
+      "sha256": "4dc16c47afb29e245f0e2da1b7e7639b646878e41028252fb4522077e83e7871",
+      "bytes": 821760,
       "exit_code": 0,
-      "build_log": "editor-tests-build.log",
+      "build_log": "editor-fixture-restored.log",
       "runtime_executed": false
     }
   ],

@@ -28,12 +28,19 @@ internal static class FishingEditorTests
     }
     private static T Input<T>(FrmFishing form, string source) where T : Control
     {
-        var page = Field<TabControl>(form, "_tabs").SelectedTab!;
+        var page = Field<TabControl>(form, "_tabs").SelectedTab
+            ?? throw new InvalidOperationException("Show the fishing editor before accessing its selected tab.");
         var table = page.Controls.OfType<TableLayoutPanel>().Single();
         var label = table.Controls.OfType<Label>().Single(l => l.Text == FishingEditorText.Get(source));
         return (T)table.GetControlFromPosition(1, table.GetPositionFromControl(label).Row)!;
     }
-    private static void Tab(FrmFishing form, int index) { Field<TabControl>(form, "_tabs").SelectedIndex = index; Call(form, "BuildSelectedPage"); }
+    private static void Tab(FrmFishing form, int index)
+    {
+        var tabs = Field<TabControl>(form, "_tabs");
+        tabs.SelectedIndex = index;
+        Application.DoEvents();
+        Check(tabs.SelectedTab == tabs.TabPages[index], "Selecting a fishing tab must activate the requested native page.");
+    }
     private static void Select(ComboBox picker, string caption) => picker.SelectedItem = picker.Items.Cast<object>().Single(i => i.ToString() == caption);
 
     internal static void Run()
@@ -59,6 +66,13 @@ internal static class FishingEditorTests
                         Catches = [new() { ItemId = fish.Id, ToolItemIds = [rod.Id] }] }],
                 };
                 using var form = new FrmFishing(source.ToJson());
+                // TabControl selects its initial page during native handle creation.
+                // Exercise the same Show lifecycle as EditorWindows.Show before reading controls.
+                form.ShowInTaskbar = false; form.StartPosition = FormStartPosition.Manual; form.Location = new(-20000, -20000);
+                form.Show(); Application.DoEvents();
+                var tabs = Field<TabControl>(form, "_tabs");
+                Check(form.IsHandleCreated && tabs.IsHandleCreated && tabs.SelectedTab == tabs.TabPages[0],
+                    "Showing the fishing editor must create its native controls and select the Zones page.");
                 var draft = Field<FishingConfiguration>(form, "_config");
                 Check(form.Text == FishingEditorText.Get("Fishing Editor") && Field<TabControl>(form, "_tabs").TabCount == 7,
                     "All seven fishing tabs open in every supported language.");

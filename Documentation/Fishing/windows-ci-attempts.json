@@ -1,0 +1,23 @@
+{
+  "runs": [
+    {
+      "run_id": 41573497632,
+      "commit": "a12763bdc42ff0473e9eabfef0d29db6db3adb1f",
+      "url": "https://github.com/xw1ndsurfx/CR2026/actions/runs/41573497632/job/125711596241",
+      "conclusion": "failure",
+      "started_at_utc": "2026-11-03T03:39:27Z",
+      "completed_at_utc": "2026-11-03T03:43:36Z",
+      "passed": [
+        "Network build: 0 errors",
+        "Server build: 0 errors",
+        "Client build: 0 errors",
+        "Editor build: 0 errors",
+        "Fishing rules: 269 checks passed",
+        "Native editor startup prerequisite"
+      ],
+      "failed": "FishingEditorTests accessed SelectedTab before native window/handle creation.",
+      "assets_step": "Not executed after editor test failure."
+    }
+  ],
+  "correction": "The fixture now shows the real WinForms editor off-screen, pumps pending UI messages, checks initial native handles and selection, and switches tabs through the actual SelectedIndexChanged event. No production behavior or domain assertion is removed."
+}
