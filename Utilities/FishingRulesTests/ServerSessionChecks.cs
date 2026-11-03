@@ -126,10 +126,11 @@ internal static class ServerSessionChecks
 
     private static void CheckAutomaticFailure(Action<bool, string> check)
     {
-        // Exercise the actual server session with guaranteed failure, rather than relying
-        // on statistical outcomes. The whole automatic attempt consumes bait and time,
-        // but must not grant either the configured reward or profession XP.
+        // Exercise the real Event and state machine with a guaranteed idle failure.
+        // The lightweight Event fixture has no persisted User, so keep this no-bait:
+        // bait persistence is exercised by the separate native reward tests.
         using var fixture = new Fixture(withDialogue: true, worldProfile: false, customProfession: true);
+        fixture.Configuration.Tools.Single().BaitItemId = Guid.Empty;
         var zone = fixture.Configuration.Zones.Single();
         zone.AutomaticFailureChance = 1;
         zone.AutomaticExperienceMultiplier = .20;
@@ -143,8 +144,8 @@ internal static class ServerSessionChecks
         var waiting = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
         check(waiting.Phase == FishingPhase.Waiting && waiting.Automatic,
             "Enabling automatic fishing casts from the native Event session");
-        check(fixture.Player.Items.Where(item => item.ItemId == fixture.BaitItemId).Sum(item => item.Quantity) == 16,
-            "An automatic attempt consumes its regular bait before determining success");
+        check(waiting.RemainingBait == 0,
+            "The native Event test can enter automatic fishing without a bait item");
         fixture.TickFishing(120_000);
         var fighting = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
         check(fighting.Phase == FishingPhase.Fighting && fighting.Automatic,
