@@ -22,13 +22,13 @@ public partial class FrmItem
         {
             Name = "btnConsumableStatEffects",
             Text = ConsumableText("Timed stat effects...", "Effets de stats temporaires...", "Efectos temporales de estadísticas..."),
-            Location = new Point(11, 130),
+            Location = new System.Drawing.Point(11, 130),
             Size = new Size(231, 27),
-            BackColor = Color.FromArgb(63, 63, 67),
-            ForeColor = Color.Gainsboro,
+            BackColor = System.Drawing.Color.FromArgb(63, 63, 67),
+            ForeColor = System.Drawing.Color.Gainsboro,
             FlatStyle = FlatStyle.Flat,
         };
-        editButton.FlatAppearance.BorderColor = Color.FromArgb(96, 96, 99);
+        editButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(96, 96, 99);
         editButton.Click += (_, _) => EditConsumableStatEffects();
         grpConsumable.Controls.Add(editButton);
         grpConsumable.Height = Math.Max(grpConsumable.Height, 171);
@@ -50,12 +50,12 @@ public partial class FrmItem
             MinimizeBox = false,
             ShowInTaskbar = false,
             ClientSize = new Size(486, 410),
-            BackColor = Color.FromArgb(45, 45, 48),
-            ForeColor = Color.Gainsboro,
+            BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            ForeColor = System.Drawing.Color.Gainsboro,
         };
         var header = new TableLayoutPanel
         {
-            Location = new Point(14, 15),
+            Location = new System.Drawing.Point(14, 15),
             Size = new Size(458, 238),
             ColumnCount = 3,
             RowCount = 6,
@@ -68,7 +68,7 @@ public partial class FrmItem
 
         static Label Heading(string label) => new()
         {
-            Text = label, AutoSize = true, ForeColor = Color.Gainsboro,
+            Text = label, AutoSize = true, ForeColor = System.Drawing.Color.Gainsboro,
             Anchor = AnchorStyles.Left, TextAlign = ContentAlignment.MiddleLeft,
         };
 
@@ -93,15 +93,15 @@ public partial class FrmItem
             {
                 Minimum = -1000, Maximum = 1000,
                 Value = Math.Clamp(mEditorItem.StatsGiven[i], -1000, 1000),
-                Width = 105, BackColor = Color.FromArgb(65, 65, 69),
-                ForeColor = Color.White,
+                Width = 105, BackColor = System.Drawing.Color.FromArgb(65, 65, 69),
+                ForeColor = System.Drawing.Color.White,
             };
             percentageInputs[i] = new NumericUpDown
             {
                 Minimum = -80, Maximum = 200,
                 Value = Math.Clamp(mEditorItem.PercentageStatsGiven[i], -80, 200),
-                Width = 105, BackColor = Color.FromArgb(65, 65, 69),
-                ForeColor = Color.White,
+                Width = 105, BackColor = System.Drawing.Color.FromArgb(65, 65, 69),
+                ForeColor = System.Drawing.Color.White,
             };
             header.Controls.Add(flatInputs[i], 1, i + 1);
             header.Controls.Add(percentageInputs[i], 2, i + 1);
@@ -109,41 +109,41 @@ public partial class FrmItem
 
         var durationLabel = new Label
         {
-            Location = new Point(17, 261),
+            Location = new System.Drawing.Point(17, 261),
             Size = new Size(272, 24),
             Text = ConsumableText("Stat effect duration (seconds):", "Durée des bonus (secondes) :", "Duración de efectos (segundos):"),
-            ForeColor = Color.Gainsboro,
+            ForeColor = System.Drawing.Color.Gainsboro,
         };
         var durationInput = new NumericUpDown
         {
-            Location = new Point(331, 260),
+            Location = new System.Drawing.Point(331, 260),
             Size = new Size(127, 26),
             Minimum = 0,
             Maximum = 3600,
             Value = Math.Clamp(mEditorItem.ConsumableStatDurationSeconds, 0, 3600),
-            BackColor = Color.FromArgb(65, 65, 69),
-            ForeColor = Color.White,
+            BackColor = System.Drawing.Color.FromArgb(65, 65, 69),
+            ForeColor = System.Drawing.Color.White,
         };
         var note = new Label
         {
-            Location = new Point(17, 297),
+            Location = new System.Drawing.Point(17, 297),
             Size = new Size(452, 56),
             Text = ConsumableText(
                 "0 seconds uses the previous item cooldown / Grog / 30s fallback. Otherwise, this duration is independent of item cooldown.",
                 "0 seconde conserve l'ancienne durée (cooldown / Grog / 30 s). Sinon, ce réglage est indépendant du cooldown.",
                 "0 segundos mantiene la duración anterior (espera / Grog / 30 s). Si no, es independiente de la espera."),
-            ForeColor = Color.Silver,
+            ForeColor = System.Drawing.Color.Silver,
         };
         var save = new Button
         {
             Text = ConsumableText("Apply", "Appliquer", "Aplicar"),
-            DialogResult = DialogResult.OK, Location = new Point(292, 368),
+            DialogResult = DialogResult.OK, Location = new System.Drawing.Point(292, 368),
             Size = new Size(86, 29),
         };
         var cancel = new Button
         {
             Text = ConsumableText("Cancel", "Annuler", "Cancelar"),
-            DialogResult = DialogResult.Cancel, Location = new Point(387, 368),
+            DialogResult = DialogResult.Cancel, Location = new System.Drawing.Point(387, 368),
             Size = new Size(86, 29),
         };
         dialog.Controls.Add(header);
