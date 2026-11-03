@@ -22,7 +22,7 @@ python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royau
 python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royaux_Exportation_GFX_Sons.zip"
 ```
 
-The installer is standard-library-only, reads 23 explicitly allowlisted ZIP entries, verifies SHA-256 and asset types/dimensions, refuses bad packs, and writes only to:
+The installer accepts either the original concept ZIP or the install-ready ZIP. It is standard-library-only, reads 23 explicitly allowlisted ZIP entries, verifies SHA-256 and asset types/dimensions, refuses bad packs, and writes only to:
 - `resources/gui/exportation/background.png`
 - `resources/gui/exportation/sprites/*.png`
 - `resources/sounds/exportation/*.wav`
