@@ -17,4 +17,6 @@ internal static class FishingEditorState
     }
     internal static void Request() => Networking.Network.SendPacket(new FishingRequestPacket
     { Action = FishingAction.GetConfiguration });
+    internal static void RequestDraft() => Networking.Network.SendPacket(new FishingRequestPacket
+    { Action = FishingAction.GetDraftConfiguration });
 }

@@ -964,6 +964,161 @@
       "en": "A save is pending. Wait for the server response before closing.",
       "fr": "Un enregistrement est en cours. Attendez la réponse du serveur avant de fermer.",
       "es": "Hay un guardado en curso. Espera la respuesta del servidor antes de cerrar."
+    },
+    "Search maps": {
+      "en": "Search maps",
+      "fr": "Rechercher des cartes",
+      "es": "Buscar mapas"
+    },
+    "Fishing maps": {
+      "en": "Fishing maps",
+      "fr": "Cartes de pêche",
+      "es": "Mapas de pesca"
+    },
+    "Add current map": {
+      "en": "Add current map",
+      "fr": "Ajouter la carte actuelle",
+      "es": "Añadir el mapa actual"
+    },
+    "Remove selected map": {
+      "en": "Remove selected map",
+      "fr": "Retirer la carte sélectionnée",
+      "es": "Quitar el mapa seleccionado"
+    },
+    "Missing map: {0}": {
+      "en": "Missing map: {0}",
+      "fr": "Carte introuvable : {0}",
+      "es": "Mapa no encontrado: {0}"
+    },
+    "Open a map before adding the current map.": {
+      "en": "Open a map before adding the current map.",
+      "fr": "Ouvrez une carte avant d’ajouter la carte actuelle.",
+      "es": "Abre un mapa antes de añadir el mapa actual."
+    },
+    "{0} map(s) selected. Filtering does not change the selection.": {
+      "en": "{0} map(s) selected. Filtering does not change the selection.",
+      "fr": "{0} carte(s) sélectionnée(s). Le filtre ne modifie pas la sélection.",
+      "es": "{0} mapa(s) seleccionado(s). El filtro no cambia la selección."
+    },
+    "Limit each map to a tile radius": {
+      "en": "Limit each map to a tile radius",
+      "fr": "Limiter chaque carte à un rayon de cases",
+      "es": "Limitar cada mapa a un radio de casillas"
+    },
+    "The same tile area is used on every selected map. Existing zones keep their original radius until you change this option.": {
+      "en": "The same tile area is used on every selected map. Existing zones keep their original radius until you change this option.",
+      "fr": "La même zone de cases s’applique à chaque carte sélectionnée. Les anciennes zones conservent leur rayon jusqu’à modification de cette option.",
+      "es": "La misma zona de casillas se aplica a cada mapa seleccionado. Las zonas existentes conservan su radio hasta cambiar esta opción."
+    },
+    "Fishing is available throughout the selected maps. Events still control where the fishing window opens.": {
+      "en": "Fishing is available throughout the selected maps. Events still control where the fishing window opens.",
+      "fr": "La pêche est disponible sur l’ensemble des cartes sélectionnées. Les événements contrôlent toujours l’ouverture de la fenêtre de pêche.",
+      "es": "La pesca está disponible en todos los mapas seleccionados. Los eventos siguen controlando dónde se abre la ventana de pesca."
+    },
+    "Tool #{0} — {1}": {
+      "en": "Tool #{0} — {1}",
+      "fr": "Équipement n°{0} — {1}",
+      "es": "Herramienta n.º {0} — {1}"
+    },
+    "Tool #{0}: choose an equipment item before applying to the game.": {
+      "en": "Tool #{0}: choose an equipment item before applying to the game.",
+      "fr": "Équipement n°{0} : choisissez un objet équipable avant d’appliquer au jeu.",
+      "es": "Herramienta n.º {0}: elige un objeto equipable antes de aplicar al juego."
+    },
+    "Enabled zone {0} needs at least one fishing map.": {
+      "en": "Enabled zone {0} needs at least one fishing map.",
+      "fr": "La zone active {0} nécessite au moins une carte de pêche.",
+      "es": "La zona activa {0} necesita al menos un mapa de pesca."
+    },
+    "Enabled zone {0} needs at least one catch.": {
+      "en": "Enabled zone {0} needs at least one catch.",
+      "fr": "La zone active {0} nécessite au moins une prise.",
+      "es": "La zona activa {0} necesita al menos una captura."
+    },
+    "Catch #{0} in {1}: choose a reward item and allowed equipment before applying to the game.": {
+      "en": "Catch #{0} in {1}: choose a reward item and allowed equipment before applying to the game.",
+      "fr": "Prise n°{0} dans {1} : choisissez un objet remis et des équipements autorisés avant d’appliquer au jeu.",
+      "es": "Captura n.º {0} en {1}: elige un objeto de recompensa y equipos permitidos antes de aplicar al juego."
+    },
+    "A zone can include at most {0} maps.": {
+      "en": "A zone can include at most {0} maps.",
+      "fr": "Une zone peut inclure au maximum {0} cartes.",
+      "es": "Una zona puede incluir como máximo {0} mapas."
+    },
+    "Save draft": {
+      "en": "Save draft",
+      "fr": "Enregistrer le brouillon",
+      "es": "Guardar borrador"
+    },
+    "Apply to game": {
+      "en": "Apply to game",
+      "fr": "Appliquer au jeu",
+      "es": "Aplicar al juego"
+    },
+    "Saving draft...": {
+      "en": "Saving draft...",
+      "fr": "Enregistrement du brouillon…",
+      "es": "Guardando borrador…"
+    },
+    "Applying to game...": {
+      "en": "Applying to game...",
+      "fr": "Application au jeu…",
+      "es": "Aplicando al juego…"
+    },
+    "Draft saved. Apply to the game when ready.": {
+      "en": "Draft saved. Apply to the game when ready.",
+      "fr": "Brouillon enregistré. Appliquez au jeu quand il sera prêt.",
+      "es": "Borrador guardado. Aplícalo al juego cuando esté listo."
+    },
+    "Draft saved. Newer changes are still unsaved.": {
+      "en": "Draft saved. Newer changes are still unsaved.",
+      "fr": "Brouillon enregistré. Les modifications plus récentes restent à enregistrer.",
+      "es": "Borrador guardado. Los cambios más recientes siguen sin guardarse."
+    },
+    "Applied to game.": {
+      "en": "Applied to game.",
+      "fr": "Appliqué au jeu.",
+      "es": "Aplicado al juego."
+    },
+    "Applied to game. Newer changes are still unsaved.": {
+      "en": "Applied to game. Newer changes are still unsaved.",
+      "fr": "Appliqué au jeu. Les modifications plus récentes restent à enregistrer.",
+      "es": "Aplicado al juego. Los cambios más recientes siguen sin guardarse."
+    },
+    "The draft cannot be saved. Check collection limits, numeric ranges and resource paths. Your changes are preserved.": {
+      "en": "The draft cannot be saved. Check collection limits, numeric ranges and resource paths. Your changes are preserved.",
+      "fr": "Impossible d’enregistrer ce brouillon. Vérifiez les limites des listes, les valeurs numériques et les chemins de ressources. Vos modifications sont conservées.",
+      "es": "No se puede guardar este borrador. Comprueba los límites de las listas, los valores numéricos y las rutas de recursos. Tus cambios se conservan."
+    },
+    "Save draft preserves unfinished entries. Apply to game updates the active configuration.": {
+      "en": "Save draft preserves unfinished entries. Apply to game updates the active configuration.",
+      "fr": "Enregistrer le brouillon conserve les entrées incomplètes. Appliquer au jeu met à jour la configuration active.",
+      "es": "Guardar borrador conserva las entradas incompletas. Aplicar al juego actualiza la configuración activa."
+    },
+    "Tool deleted from the draft.": {
+      "en": "Tool deleted from the draft.",
+      "fr": "Équipement supprimé du brouillon.",
+      "es": "Herramienta eliminada del borrador."
+    },
+    "Catch deleted from the draft.": {
+      "en": "Catch deleted from the draft.",
+      "fr": "Prise supprimée du brouillon.",
+      "es": "Captura eliminada del borrador."
+    },
+    "No tool profile: {0}": {
+      "en": "No tool profile: {0}",
+      "fr": "Aucun profil d’équipement : {0}",
+      "es": "Sin perfil de herramienta: {0}"
+    },
+    "Tool #{0}: the selected item is missing or is not equipment. Choose an equipment item.": {
+      "en": "Tool #{0}: the selected item is missing or is not equipment. Choose an equipment item.",
+      "fr": "Équipement n°{0} : l’objet sélectionné est introuvable ou non équipable. Choisissez un objet équipable.",
+      "es": "Herramienta n.º {0}: el objeto seleccionado no existe o no es equipable. Elige un objeto equipable."
+    },
+    "Catch #{0} in {1}: an allowed item has no fishing tool profile. Create its profile or remove that association.": {
+      "en": "Catch #{0} in {1}: an allowed item has no fishing tool profile. Create its profile or remove that association.",
+      "fr": "Prise n°{0} dans {1} : un objet autorisé n’a aucun profil d’équipement de pêche. Créez son profil ou retirez cette association.",
+      "es": "Captura n.º {0} en {1}: un objeto permitido no tiene perfil de herramienta de pesca. Crea su perfil o quita esa asociación."
     }
   }
 }

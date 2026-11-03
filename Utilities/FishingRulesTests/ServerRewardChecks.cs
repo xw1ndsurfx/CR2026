@@ -1,19 +1,24 @@
 #if FISHING_SERVER_TESTS
+using System.Reflection;
+using System.Text.Json;
 using Intersect;
 using Intersect.Framework.Core.Fishing;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.Professions;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.Fishing;
+using Intersect.Server.Maps;
 
 internal static class ServerRewardChecks
 {
     internal static void Run(Action<bool, string> check)
     {
         Options.EnsureCreated();
+        CheckZonePersistence(check);
         var fish = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 10 };
         var bait = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 100 };
         ItemDescriptor.Lookup.Set(fish.Id, fish); ItemDescriptor.Lookup.Set(bait.Id, bait);
@@ -113,6 +118,88 @@ internal static class ServerRewardChecks
             check((int)new Intersect.Framework.Core.GameObjects.Events.Commands.OpenFishingCommand().Type == 1100, "Fishing Event ID is stable and distinct");
         }
         finally { ItemDescriptor.Lookup.DeleteAt(fish.Id); ItemDescriptor.Lookup.DeleteAt(bait.Id); }
+    }
+
+    private static void CheckZonePersistence(Action<bool, string> check)
+    {
+        var maps = new[] { new MapController(Guid.NewGuid()), new MapController(Guid.NewGuid()) };
+        foreach (var map in maps) GC.SuppressFinalize(map);
+        var cache = typeof(FishingRuntime).GetField("_current", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var previousConfiguration = cache.GetValue(null);
+        var previousDirectory = Environment.CurrentDirectory;
+        var temporary = Path.Combine(Path.GetTempPath(), "cr-fishing-maps-" + Guid.NewGuid().ToString("N"));
+        void Reject(Action action, string message)
+        {
+            try { action(); }
+            catch (InvalidDataException) { check(true, message); return; }
+            check(false, message);
+        }
+        try
+        {
+            // The server registry forwards additions to the descriptor registry, not the reverse.
+            foreach (var map in maps) MapController.Lookup.Set(map.Id, map);
+            check(maps.All(map => ReferenceEquals(MapController.Get(map.Id), map) &&
+                ReferenceEquals(MapDescriptor.Lookup.Get(map.Id), map)),
+                "Fixture maps are registered in both native server and descriptor lookups");
+            Directory.CreateDirectory(temporary); Environment.CurrentDirectory = temporary;
+            var configuration = new FishingConfiguration
+            {
+                Zones = [new() { Name = "Map persistence", Enabled = false, MapIds = maps.Select(m => m.Id).ToList() }],
+            };
+            FishingRuntime.Save(configuration.ToJson());
+            var activeFile = Path.Combine("resources", "fishing.json");
+            var persisted = File.ReadAllText(activeFile);
+            cache.SetValue(null, null);
+            var reloaded = FishingRuntime.Current;
+            check(reloaded.Zones[0].MapIds.SequenceEqual(maps.Select(m => m.Id)) && !reloaded.Zones[0].UseTileRadius,
+                "The native server persists and reloads every selected map in whole-map mode");
+
+            configuration.Zones[0].MapIds[1] = Guid.NewGuid();
+            Reject(() => FishingRuntime.Save(configuration.ToJson()),
+                "Native validation checks the second selected map even on a disabled zone");
+            check(File.ReadAllText(activeFile) == persisted && ReferenceEquals(FishingRuntime.Current, reloaded),
+                "A missing map reference cannot change the active file or in-memory configuration");
+
+            configuration.Zones[0].MapIds = [maps[1].Id];
+            FishingRuntime.Save(configuration.ToJson()); cache.SetValue(null, null);
+            check(FishingRuntime.Current.Zones[0].MapIds.SequenceEqual([maps[1].Id]),
+                "Unchecking a map remains effective after a native save and reload");
+
+            configuration.Zones[0].X = Options.Instance.Map.MapWidth;
+            FishingRuntime.Save(configuration.ToJson());
+            check(!FishingRuntime.Current.Zones[0].UseTileRadius,
+                "Inactive tile coordinates do not restrict whole-map zones");
+            configuration.Zones[0].UseTileRadius = true;
+            Reject(() => FishingRuntime.Save(configuration.ToJson()),
+                "Explicit tile-radius mode still rejects a center outside the actual map dimensions");
+            configuration.Zones[0].X = 0; configuration.Zones[0].Y = 0; configuration.Zones[0].Radius = 2;
+            FishingRuntime.Save(configuration.ToJson()); cache.SetValue(null, null);
+            check(FishingRuntime.Current.Zones[0].UseTileRadius && FishingRuntime.Current.Zones[0].Radius == 2,
+                "Explicit radius mode survives native persistence");
+
+            var legacy = JsonSerializer.Serialize(new
+            {
+                Version = 1,
+                Zones = new[] { new { Name = "Legacy server area", Enabled = false, MapId = maps[0].Id, X = 0, Y = 0, Radius = 2 } },
+            });
+            File.WriteAllText(activeFile, legacy); cache.SetValue(null, null);
+            var migrated = FishingRuntime.Current;
+            check(migrated.Zones[0].MapIds.SequenceEqual([maps[0].Id]) && migrated.Zones[0].UseTileRadius && migrated.Zones[0].Radius == 2,
+                "Loading a real legacy server file preserves its original map and restricted area");
+            FishingRuntime.Save(migrated.ToJson()); cache.SetValue(null, null);
+            check(FishingRuntime.Current.Zones[0].MapIds.SequenceEqual([maps[0].Id]) && FishingRuntime.Current.Zones[0].UseTileRadius,
+                "Applying and reloading migrated server data never widens its area");
+            using var canonical = JsonDocument.Parse(File.ReadAllText(activeFile));
+            check(!canonical.RootElement.GetProperty("Zones")[0].TryGetProperty("MapId", out _),
+                "Native persistence writes only the canonical map selection");
+        }
+        finally
+        {
+            Environment.CurrentDirectory = previousDirectory;
+            cache.SetValue(null, previousConfiguration);
+            foreach (var map in maps) MapController.Lookup.Delete(map);
+            if (Directory.Exists(temporary)) Directory.Delete(temporary, true);
+        }
     }
 }
 #endif

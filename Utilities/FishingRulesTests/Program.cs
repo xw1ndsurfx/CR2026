@@ -14,7 +14,7 @@ var rod = Guid.NewGuid(); var cage = Guid.NewGuid(); var map = Guid.NewGuid(); v
 var fish = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [rod], Weight = 1 };
 var lobster = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [cage], Weight = 99 };
 var rare = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [rod], Legendary = true, Weight = 1000000 };
-var zone = new FishingZoneDefinition { Name = "Test", MapId = map, X = 10, Y = 20, Radius = 2, Catches = [fish, lobster, rare] };
+var zone = new FishingZoneDefinition { Name = "Test", MapIds = [map], UseTileRadius = true, X = 10, Y = 20, Radius = 2, Catches = [fish, lobster, rare] };
 var config = new FishingConfiguration { Tools = [new() { ItemId = rod }, new() { ItemId = cage, Type = FishingToolType.Cage }], Zones = [zone] };
 FishingRules.Validate(config); checks++;
 Check(FishingRules.WithinZone(zone, map, 12, 22), "Zone includes its boundary");
@@ -51,6 +51,156 @@ Check(FishingRules.SafeAssetPath("fishing/backgrounds/Water_Background4.png", ".
 var restored = FishingConfiguration.FromJson(config.ToJson());
 FishingRules.Validate(restored);
 Check(restored.Zones[0].Id == zone.Id && restored.Tools[0].ItemId == rod, "Configuration round-trip keeps GUIDs");
+
+var secondMap = Guid.NewGuid();
+var multipleMaps = new FishingZoneDefinition
+{
+    Name = "Several whole maps", MapIds = [map, secondMap], X = 10, Y = 20, Radius = 2, Catches = [fish],
+};
+var mapConfig = new FishingConfiguration { Tools = config.Tools, Zones = [multipleMaps] };
+FishingRules.Validate(mapConfig); checks++;
+Check(!new FishingZoneDefinition().UseTileRadius && new FishingZoneDefinition().MapIds.Count == 0,
+    "New zones default to whole maps without inventing a map selection");
+Check(FishingRules.WithinZone(multipleMaps, map, 0, 0) && FishingRules.WithinZone(multipleMaps, secondMap, 31, 31),
+    "Every selected map is eligible beyond the inactive radius");
+Check(!FishingRules.WithinZone(multipleMaps, Guid.NewGuid(), 10, 20) && !FishingRules.WithinZone(multipleMaps, Guid.Empty, 10, 20),
+    "Whole-map scope cannot authorize unselected or empty map identities");
+Check(!FishingRules.WithinZone(multipleMaps, secondMap, double.PositiveInfinity, 20) &&
+    !FishingRules.WithinZone(multipleMaps, secondMap, -1, 20), "Whole-map scope still rejects invalid authoritative positions");
+multipleMaps.Enabled = false;
+Check(!FishingRules.WithinZone(multipleMaps, map, 10, 20), "A disabled multi-map zone cannot start fishing");
+multipleMaps.Enabled = true; multipleMaps.UseTileRadius = true;
+Check(FishingRules.WithinZone(multipleMaps, map, 12, 22) && FishingRules.WithinZone(multipleMaps, secondMap, 12, 22),
+    "Explicit radius mode keeps its inclusive boundary on each selected map");
+Check(!FishingRules.WithinZone(multipleMaps, map, 13, 20) && !FishingRules.WithinZone(multipleMaps, secondMap, 13, 20),
+    "Explicit radius mode cannot expand to the rest of any selected map");
+multipleMaps.UseTileRadius = false;
+multipleMaps.MapIds = [map, map];
+Invalid(() => FishingRules.Validate(mapConfig), "Duplicate selected maps are rejected");
+multipleMaps.MapIds = [map, Guid.Empty];
+Invalid(() => FishingRules.Validate(mapConfig), "Empty selected map identities are rejected");
+multipleMaps.MapIds = null!;
+Invalid(() => FishingRules.Validate(mapConfig), "Null map collections are rejected");
+Check(!FishingRules.WithinZone(multipleMaps, map, 10, 20), "Malformed null map scope fails closed");
+multipleMaps.MapIds = [];
+Invalid(() => FishingRules.Validate(mapConfig), "Active zones require at least one selected map");
+multipleMaps.Enabled = false;
+FishingRules.Validate(mapConfig); checks++;
+Check(!FishingRules.WithinZone(multipleMaps, map, 10, 20), "An empty disabled zone remains unavailable");
+multipleMaps.Enabled = true;
+multipleMaps.MapIds = Enumerable.Range(0, FishingRules.MaximumMapsPerZone + 1).Select(_ => Guid.NewGuid()).ToList();
+Invalid(() => FishingRules.Validate(mapConfig), "Selected maps respect the bounded configuration size");
+multipleMaps.MapIds.RemoveAt(multipleMaps.MapIds.Count - 1);
+FishingRules.Validate(mapConfig); checks++;
+multipleMaps.MapIds = [map, secondMap];
+var multipleMapsCopy = FishingConfiguration.FromJson(mapConfig.ToJson()).Zones.Single();
+Check(multipleMapsCopy.MapIds.SequenceEqual([map, secondMap]) && !multipleMapsCopy.UseTileRadius,
+    "Saving and loading a multi-map zone preserves its full-map mode and ordered selection");
+var duplicatedZone = JsonSerializer.Deserialize<FishingZoneDefinition>(JsonSerializer.Serialize(multipleMaps, FishingConfiguration.JsonOptions), FishingConfiguration.JsonOptions)!;
+duplicatedZone.Id = Guid.NewGuid(); duplicatedZone.MapIds.Remove(map); duplicatedZone.Catches[0].Weight = 7;
+Check(duplicatedZone.Id != multipleMaps.Id && duplicatedZone.MapIds.SequenceEqual([secondMap]) &&
+    multipleMaps.MapIds.SequenceEqual([map, secondMap]) && multipleMaps.Catches[0].Weight == 1,
+    "The editor's JSON duplication produces independent map selections and catches");
+
+var legacyJson = JsonSerializer.Serialize(new
+{
+    Version = 1, Tools = config.Tools,
+    Zones = new[] { new { Id = zone.Id, Name = "Legacy point", MapId = map, X = 10, Y = 20, Radius = 2, Catches = zone.Catches } },
+});
+var migrated = FishingConfiguration.FromJson(legacyJson);
+FishingRules.Validate(migrated); checks++;
+var migratedZone = migrated.Zones.Single();
+Check(migratedZone.MapIds.SequenceEqual([map]) && migratedZone.MapId == Guid.Empty && migratedZone.UseTileRadius,
+    "Legacy MapId migrates to a canonical single-map radius without widening the area");
+Check(FishingRules.WithinZone(migratedZone, map, 12, 22) && !FishingRules.WithinZone(migratedZone, map, 13, 20) &&
+    !FishingRules.WithinZone(migratedZone, secondMap, 10, 20), "Legacy eligibility preserves both tile and map boundaries");
+using (var canonical = JsonDocument.Parse(migrated.ToJson()))
+{
+    var savedZone = canonical.RootElement.GetProperty("Zones")[0];
+    Check(!savedZone.TryGetProperty("MapId", out _) && savedZone.GetProperty("MapIds").GetArrayLength() == 1 &&
+        savedZone.GetProperty("UseTileRadius").GetBoolean(), "Canonical saves retire the legacy field and make radius mode explicit");
+}
+var remigrated = FishingConfiguration.FromJson(migrated.ToJson()).Zones.Single();
+Check(remigrated.MapIds.SequenceEqual([map]) && remigrated.UseTileRadius && remigrated.X == 10 && remigrated.Y == 20 && remigrated.Radius == 2,
+    "Repeated save and load preserves the migrated rectangle exactly");
+var lowerCaseLegacy = FishingConfiguration.FromJson(legacyJson.Replace("\"MapId\"", "\"mApId\""));
+Check(lowerCaseLegacy.Zones[0].MapIds.SequenceEqual([map]) && lowerCaseLegacy.Zones[0].UseTileRadius,
+    "Legacy map migration honors case-insensitive configuration properties");
+var conservativeLegacy = FishingConfiguration.FromJson(legacyJson.Replace("\"Radius\":2", "\"UseTileRadius\":false,\"Radius\":2"));
+Check(conservativeLegacy.Zones[0].UseTileRadius, "A legacy-only map definition cannot silently become a whole-map zone");
+var explicitEmpty = FishingConfiguration.FromJson(legacyJson.Replace("\"MapId\":", "\"MapIds\":[],\"MapId\":"));
+Check(explicitEmpty.Zones[0].MapIds.Count == 0 && explicitEmpty.Zones[0].MapId == Guid.Empty,
+    "Explicitly unchecking all maps never restores a stale legacy map");
+Invalid(() => FishingRules.Validate(explicitEmpty), "An explicitly empty active selection is rejected after migration");
+explicitEmpty.Zones[0].Enabled = false;
+FishingRules.Validate(explicitEmpty); checks++;
+var explicitNull = FishingConfiguration.FromJson(legacyJson.Replace("\"MapId\":", "\"MapIds\":null,\"MapId\":"));
+Invalid(() => FishingRules.Validate(explicitNull), "A null modern selection cannot hide behind a valid legacy map");
+var explicitModern = FishingConfiguration.FromJson(legacyJson.Replace("\"MapId\":", "\"MapIds\":[\"" + secondMap + "\"],\"MapId\":"));
+Check(explicitModern.Zones[0].MapIds.SequenceEqual([secondMap]) && !explicitModern.Zones[0].UseTileRadius &&
+    !FishingRules.WithinZone(explicitModern.Zones[0], map, 10, 20), "Modern map selections take precedence over stale legacy data");
+var legacyZoneJson = JsonSerializer.Serialize(new { Name = "Legacy duplicate", MapId = map, X = 10, Y = 20, Radius = 2 });
+var legacyZoneCopy = JsonSerializer.Deserialize<FishingZoneDefinition>(legacyZoneJson, FishingConfiguration.JsonOptions)!;
+Check(legacyZoneCopy.MapIds.SequenceEqual([map]) && legacyZoneCopy.UseTileRadius,
+    "Direct zone deserialization also migrates legacy data for editor duplication");
+
+var unfinishedCatch = new FishingCatchDefinition { ItemId = Guid.Empty, ToolItemIds = [] };
+var unfinishedZone = new FishingZoneDefinition { Name = "Unfinished lagoon", Catches = [unfinishedCatch] };
+var draft = new FishingConfiguration { Tools = [new(), new()], Zones = [unfinishedZone] };
+var draftSnapshot = draft.ToJson();
+FishingRules.ValidateDraft(draft); checks++;
+Check(draft.ToJson() == draftSnapshot && draft.Tools.All(t => t.ItemId == Guid.Empty && t.BaitItemId == Guid.Empty),
+    "Draft validation preserves multiple unassigned tools and empty bait without changing authored data");
+Invalid(() => FishingRules.Validate(draft), "An incomplete draft cannot pass active configuration validation");
+var unfinishedRoundTrip = FishingConfiguration.FromJson(draftSnapshot);
+FishingRules.ValidateDraft(unfinishedRoundTrip); checks++;
+Check(unfinishedRoundTrip.Tools.Count == 2 && unfinishedRoundTrip.Zones[0].Enabled && unfinishedRoundTrip.Zones[0].MapIds.Count == 0 &&
+    unfinishedRoundTrip.Zones[0].Catches[0].ItemId == Guid.Empty && unfinishedRoundTrip.Zones[0].Catches[0].ToolItemIds.Count == 0,
+    "Draft JSON retains unfinished tools, catches and an intended active zone without dropping them");
+var unresolvedConfig = new FishingConfiguration
+{
+    Tools = [new() { ItemId = rod }],
+    Zones = [new() { Name = "Unresolved references", MapIds = [map],
+        Catches = [new() { ItemId = Guid.NewGuid(), ToolItemIds = [Guid.NewGuid()] }] }],
+};
+FishingRules.ValidateDraft(unresolvedConfig); checks++;
+Invalid(() => FishingRules.Validate(unresolvedConfig), "Unresolved tool references remain blocked from activation");
+var emptyActiveZone = new FishingConfiguration { Zones = [new() { Name = "Planned active zone" }] };
+FishingRules.ValidateDraft(emptyActiveZone); checks++;
+Invalid(() => FishingRules.Validate(emptyActiveZone), "An intended active zone without maps or catches is draft-only");
+draft.Tools[0].ItemId = rod; draft.Tools[1].ItemId = rod;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject duplicate assigned tool identities");
+draft.Tools[1].ItemId = Guid.Empty; draft.Tools[0].BaitItemId = rod;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts cannot configure a tool as its own bait");
+draft.Tools[0].ItemId = Guid.Empty; draft.Tools[0].BaitItemId = Guid.Empty;
+draft.Tools[0].Power = double.NaN;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts preserve finite physics bounds");
+draft.Tools[0].Power = 1;
+unfinishedCatch.ToolItemIds = [Guid.Empty];
+Invalid(() => FishingRules.ValidateDraft(draft), "An empty tool selection is allowed but an empty identity inside it is not");
+unfinishedCatch.ToolItemIds = null!;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject null catch selections");
+unfinishedCatch.ToolItemIds = [];
+unfinishedZone.MapIds = [map, map];
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject duplicate map selections");
+unfinishedZone.MapIds = null!;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject null map selections");
+unfinishedZone.MapIds = [];
+unfinishedZone.Assets.Background = "../outside.png";
+Invalid(() => FishingRules.ValidateDraft(draft), "Incomplete authoring never permits unsafe asset paths");
+unfinishedZone.Assets.Background = new FishingAssets().Background;
+draft.Zones.Add(unfinishedZone);
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts retain unique zone identities");
+draft.Zones.RemoveAt(1); unfinishedZone.Catches.Add(unfinishedCatch);
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts retain unique catch identities within a zone");
+unfinishedZone.Catches.RemoveAt(1); unfinishedZone.Catches = null!;
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject null catch collections");
+unfinishedZone.Catches = [unfinishedCatch];
+draft.Tools = Enumerable.Range(0, 129).Select(_ => new FishingToolDefinition()).ToList();
+Invalid(() => FishingRules.ValidateDraft(draft), "Unassigned tool profiles still respect the total count limit");
+draft.Tools = [null!];
+Invalid(() => FishingRules.ValidateDraft(draft), "Drafts still reject null tool entries");
+Invalid(() => FishingRules.ValidateDraft(null!), "Null draft configurations are rejected consistently");
 
 var held = new FishingFight(0, 10, 1);
 for (var time = 100; time <= 30000 && !held.Broken; time += 100) held.Advance(time, true);
@@ -168,5 +318,6 @@ foreach (var entry in document.RootElement.GetProperty("Entries").EnumerateObjec
 }
 #if FISHING_SERVER_TESTS
 ServerRewardChecks.Run(Check);
+ServerDraftChecks.Run(Check);
 #endif
 Console.WriteLine($"Fishing rules: {checks} checks passed.");

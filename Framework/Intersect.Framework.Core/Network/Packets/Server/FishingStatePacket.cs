@@ -11,4 +11,5 @@ public sealed partial class FishingStatePacket : IntersectPacket
     [Key(4)] public bool Editor { get; set; }
     [Key(5)] public bool Saved { get; set; }
     [Key(6)] public string NoticeSoundJson { get; set; } = "";
+    [Key(7)] public bool Draft { get; set; }
 }

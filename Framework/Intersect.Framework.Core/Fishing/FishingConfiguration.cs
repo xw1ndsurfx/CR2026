@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Intersect.Framework.Core.Fishing;
 
@@ -90,12 +91,23 @@ public sealed class FishingCatchDefinition
     public int SpriteHeight { get; set; } = 32;
 }
 
-public sealed class FishingZoneDefinition
+public sealed class FishingZoneDefinition : IJsonOnDeserialized
 {
+    private List<Guid> _mapIds = [];
+    private bool _mapIdsSpecified;
+
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "";
     public Dictionary<string, string> LocalizedNames { get; set; } = new();
     public bool Enabled { get; set; } = true;
+    public List<Guid> MapIds
+    {
+        get => _mapIds;
+        set { _mapIds = value; _mapIdsSpecified = true; }
+    }
+    public bool UseTileRadius { get; set; }
+    /// <summary>Legacy JSON input. Deserialization migrates it without widening the original tile area.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Guid MapId { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
@@ -111,6 +123,19 @@ public sealed class FishingZoneDefinition
     public FishingAssets Assets { get; set; } = new();
     public FishingSounds Sounds { get; set; } = new();
     public List<FishingCatchDefinition> Catches { get; set; } = [];
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (!_mapIdsSpecified)
+        {
+            _mapIds = MapId == Guid.Empty ? [] : [MapId];
+            UseTileRadius = true;
+        }
+        // An explicit empty or null MapIds value must never resurrect the legacy map.
+        // Validation rejects null; an enabled zone needs a selection before it can be applied.
+        MapId = Guid.Empty;
+        _mapIdsSpecified = true;
+    }
 }
 
 public sealed class FishingConfiguration
