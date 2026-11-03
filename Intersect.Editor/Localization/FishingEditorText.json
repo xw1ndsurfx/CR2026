@@ -1,0 +1,969 @@
+{
+  "Entries": {
+    "Fishing Editor": {
+      "en": "Fishing Editor",
+      "fr": "Éditeur de pêche",
+      "es": "Editor de pesca"
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Validate": {
+      "en": "Validate",
+      "fr": "Valider",
+      "es": "Validar"
+    },
+    "Reload resources": {
+      "en": "Reload resources",
+      "fr": "Actualiser les ressources",
+      "es": "Actualizar recursos"
+    },
+    "New zone": {
+      "en": "New zone",
+      "fr": "Nouvelle zone",
+      "es": "Nueva zona"
+    },
+    "Duplicate": {
+      "en": "Duplicate",
+      "fr": "Dupliquer",
+      "es": "Duplicar"
+    },
+    "Delete": {
+      "en": "Delete",
+      "fr": "Supprimer",
+      "es": "Eliminar"
+    },
+    "Search zones": {
+      "en": "Search zones",
+      "fr": "Rechercher une zone",
+      "es": "Buscar zona"
+    },
+    "Zones": {
+      "en": "Zones",
+      "fr": "Zones",
+      "es": "Zonas"
+    },
+    "Tools": {
+      "en": "Tools",
+      "fr": "Équipements",
+      "es": "Equipos"
+    },
+    "Catches": {
+      "en": "Catches",
+      "fr": "Prises",
+      "es": "Capturas"
+    },
+    "Legendary creatures": {
+      "en": "Legendary creatures",
+      "fr": "Créatures légendaires",
+      "es": "Criaturas legendarias"
+    },
+    "Animations": {
+      "en": "Animations",
+      "fr": "Animations",
+      "es": "Animaciones"
+    },
+    "Sounds": {
+      "en": "Sounds",
+      "fr": "Sons",
+      "es": "Sonidos"
+    },
+    "Skills and progression": {
+      "en": "Skills and progression",
+      "fr": "Compétences et progression",
+      "es": "Habilidades y progreso"
+    },
+    "Configuration is valid.": {
+      "en": "Configuration is valid.",
+      "fr": "La configuration est valide.",
+      "es": "La configuración es válida."
+    },
+    "No server response. Your draft is still available.": {
+      "en": "No server response. Your draft is still available.",
+      "fr": "Aucune réponse du serveur. Votre brouillon est conservé.",
+      "es": "El servidor no responde. El borrador sigue disponible."
+    },
+    "Discard unsaved fishing changes?": {
+      "en": "Discard unsaved fishing changes?",
+      "fr": "Abandonner les modifications non enregistrées ?",
+      "es": "¿Descartar los cambios de pesca sin guardar?"
+    },
+    "Unsaved changes": {
+      "en": "Unsaved changes",
+      "fr": "Modifications non enregistrées",
+      "es": "Cambios sin guardar"
+    },
+    "New fishing zone": {
+      "en": "New fishing zone",
+      "fr": "Nouvelle zone de pêche",
+      "es": "Nueva zona de pesca"
+    },
+    "Copy of {0}": {
+      "en": "Copy of {0}",
+      "fr": "Copie de {0}",
+      "es": "Copia de {0}"
+    },
+    "Delete this zone? Events referencing it must be updated.": {
+      "en": "Delete this zone? Events referencing it must be updated.",
+      "fr": "Supprimer cette zone ? Les événements qui la référencent devront être mis à jour.",
+      "es": "¿Eliminar esta zona? Habrá que actualizar los eventos que la utilizan."
+    },
+    "Create or select a fishing zone.": {
+      "en": "Create or select a fishing zone.",
+      "fr": "Créez ou sélectionnez une zone de pêche.",
+      "es": "Crea o selecciona una zona de pesca."
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Name (en)": {
+      "en": "Name (en)",
+      "fr": "Nom en anglais",
+      "es": "Nombre en inglés"
+    },
+    "Name (fr)": {
+      "en": "Name (fr)",
+      "fr": "Nom en français",
+      "es": "Nombre en francés"
+    },
+    "Name (es)": {
+      "en": "Name (es)",
+      "fr": "Nom en espagnol",
+      "es": "Nombre en español"
+    },
+    "Enabled": {
+      "en": "Enabled",
+      "fr": "Activé",
+      "es": "Activado"
+    },
+    "Map": {
+      "en": "Map",
+      "fr": "Carte",
+      "es": "Mapa"
+    },
+    "X (tiles)": {
+      "en": "X (tiles)",
+      "fr": "X (cases)",
+      "es": "X (casillas)"
+    },
+    "Y (tiles)": {
+      "en": "Y (tiles)",
+      "fr": "Y (cases)",
+      "es": "Y (casillas)"
+    },
+    "Zone radius (tiles)": {
+      "en": "Zone radius (tiles)",
+      "fr": "Rayon de zone (cases)",
+      "es": "Radio de zona (casillas)"
+    },
+    "Use current map": {
+      "en": "Use current map",
+      "fr": "Utiliser la carte actuelle",
+      "es": "Usar el mapa actual"
+    },
+    "Background": {
+      "en": "Background",
+      "fr": "Arrière-plan",
+      "es": "Fondo"
+    },
+    "Foreground": {
+      "en": "Foreground",
+      "fr": "Premier plan",
+      "es": "Primer plano"
+    },
+    "Allow automatic fishing": {
+      "en": "Allow automatic fishing",
+      "fr": "Autoriser la pêche automatique",
+      "es": "Permitir pesca automática"
+    },
+    "Legendary encounters during automatic fishing": {
+      "en": "Legendary encounters during automatic fishing",
+      "fr": "Rencontres légendaires en pêche automatique",
+      "es": "Encuentros legendarios en pesca automática"
+    },
+    "Legendary chance (%)": {
+      "en": "Legendary chance (%)",
+      "fr": "Probabilité légendaire (%)",
+      "es": "Probabilidad legendaria (%)"
+    },
+    "Minimum wait (ms)": {
+      "en": "Minimum wait (ms)",
+      "fr": "Attente minimale (ms)",
+      "es": "Espera mínima (ms)"
+    },
+    "Maximum wait (ms)": {
+      "en": "Maximum wait (ms)",
+      "fr": "Attente maximale (ms)",
+      "es": "Espera máxima (ms)"
+    },
+    "Automatic catch time (ms)": {
+      "en": "Automatic catch time (ms)",
+      "fr": "Durée de capture automatique (ms)",
+      "es": "Duración de captura automática (ms)"
+    },
+    "Active time limit (ms)": {
+      "en": "Active time limit (ms)",
+      "fr": "Limite de pêche active (ms)",
+      "es": "Límite de pesca activa (ms)"
+    },
+    "Legendary invitation time (ms)": {
+      "en": "Legendary invitation time (ms)",
+      "fr": "Délai d'invitation légendaire (ms)",
+      "es": "Plazo de invitación legendaria (ms)"
+    },
+    "An Event opens this zone. The equipped tool and catch conditions are checked by the server.": {
+      "en": "An Event opens this zone. The equipped tool and catch conditions are checked by the server.",
+      "fr": "Un événement ouvre cette zone. Le serveur vérifie l'équipement et les conditions de prise.",
+      "es": "Un evento abre esta zona. El servidor comprueba el equipo y las condiciones de captura."
+    },
+    "Tool": {
+      "en": "Tool",
+      "fr": "Équipement",
+      "es": "Equipo"
+    },
+    "New tool": {
+      "en": "New tool",
+      "fr": "Nouvel équipement",
+      "es": "Nuevo equipo"
+    },
+    "Delete tool": {
+      "en": "Delete tool",
+      "fr": "Supprimer l'équipement",
+      "es": "Eliminar equipo"
+    },
+    "This tool is used by catches. Remove those associations first.": {
+      "en": "This tool is used by catches. Remove those associations first.",
+      "fr": "Cet équipement est associé à des prises. Retirez d'abord ces associations.",
+      "es": "Este equipo está asociado a capturas. Elimina primero esas asociaciones."
+    },
+    "Create or select an equipped fishing tool.": {
+      "en": "Create or select an equipped fishing tool.",
+      "fr": "Créez ou sélectionnez un équipement de pêche.",
+      "es": "Crea o selecciona un equipo de pesca."
+    },
+    "Equipment item": {
+      "en": "Equipment item",
+      "fr": "Objet à équiper",
+      "es": "Objeto equipable"
+    },
+    "Tool type": {
+      "en": "Tool type",
+      "fr": "Type d'équipement",
+      "es": "Tipo de equipo"
+    },
+    "Bait item": {
+      "en": "Bait item",
+      "fr": "Objet d'appât",
+      "es": "Objeto de cebo"
+    },
+    "No bait": {
+      "en": "No bait",
+      "fr": "Aucun appât",
+      "es": "Sin cebo"
+    },
+    "Bait consumed per attempt": {
+      "en": "Bait consumed per attempt",
+      "fr": "Appâts consommés par tentative",
+      "es": "Cebos consumidos por intento"
+    },
+    "Tool power": {
+      "en": "Tool power",
+      "fr": "Puissance de l'équipement",
+      "es": "Potencia del equipo"
+    },
+    "The item must be equipped. Merely carrying it does not allow fishing.": {
+      "en": "The item must be equipped. Merely carrying it does not allow fishing.",
+      "fr": "L'objet doit être équipé. Le posséder dans l'inventaire ne suffit pas.",
+      "es": "El objeto debe estar equipado. Llevarlo en el inventario no basta."
+    },
+    "Catch": {
+      "en": "Catch",
+      "fr": "Prise",
+      "es": "Captura"
+    },
+    "New catch": {
+      "en": "New catch",
+      "fr": "Nouvelle prise",
+      "es": "Nueva captura"
+    },
+    "Duplicate catch": {
+      "en": "Duplicate catch",
+      "fr": "Dupliquer la prise",
+      "es": "Duplicar captura"
+    },
+    "Delete catch": {
+      "en": "Delete catch",
+      "fr": "Supprimer la prise",
+      "es": "Eliminar captura"
+    },
+    "Add a catch and select its allowed equipment.": {
+      "en": "Add a catch and select its allowed equipment.",
+      "fr": "Ajoutez une prise et sélectionnez ses équipements autorisés.",
+      "es": "Añade una captura y selecciona sus equipos permitidos."
+    },
+    "Reward item": {
+      "en": "Reward item",
+      "fr": "Objet remis",
+      "es": "Objeto de recompensa"
+    },
+    "Allowed equipment": {
+      "en": "Allowed equipment",
+      "fr": "Équipements autorisés",
+      "es": "Equipos permitidos"
+    },
+    "Relative weight": {
+      "en": "Relative weight",
+      "fr": "Poids relatif",
+      "es": "Peso relativo"
+    },
+    "Minimum profession level": {
+      "en": "Minimum profession level",
+      "fr": "Niveau minimal du métier",
+      "es": "Nivel mínimo del oficio"
+    },
+    "Minimum quantity": {
+      "en": "Minimum quantity",
+      "fr": "Quantité minimale",
+      "es": "Cantidad mínima"
+    },
+    "Maximum quantity": {
+      "en": "Maximum quantity",
+      "fr": "Quantité maximale",
+      "es": "Cantidad máxima"
+    },
+    "Experience": {
+      "en": "Experience",
+      "fr": "Expérience",
+      "es": "Experiencia"
+    },
+    "Difficulty": {
+      "en": "Difficulty",
+      "fr": "Difficulté",
+      "es": "Dificultad"
+    },
+    "Minimum depth": {
+      "en": "Minimum depth",
+      "fr": "Profondeur minimale",
+      "es": "Profundidad mínima"
+    },
+    "Maximum depth": {
+      "en": "Maximum depth",
+      "fr": "Profondeur maximale",
+      "es": "Profundidad máxima"
+    },
+    "Start hour (UTC)": {
+      "en": "Start hour (UTC)",
+      "fr": "Heure de début (UTC)",
+      "es": "Hora de inicio (UTC)"
+    },
+    "End hour (UTC, exclusive)": {
+      "en": "End hour (UTC, exclusive)",
+      "fr": "Heure de fin exclue (UTC)",
+      "es": "Hora de fin excluida (UTC)"
+    },
+    "Required player variable": {
+      "en": "Required player variable",
+      "fr": "Variable de joueur requise",
+      "es": "Variable de jugador requerida"
+    },
+    "No condition": {
+      "en": "No condition",
+      "fr": "Aucune condition",
+      "es": "Sin condición"
+    },
+    "Required variable value": {
+      "en": "Required variable value",
+      "fr": "Valeur minimale de la variable",
+      "es": "Valor mínimo de la variable"
+    },
+    "Legendary": {
+      "en": "Legendary",
+      "fr": "Légendaire",
+      "es": "Legendaria"
+    },
+    "Challenge steps": {
+      "en": "Challenge steps",
+      "fr": "Étapes du défi",
+      "es": "Etapas del desafío"
+    },
+    "Challenge response window (ms)": {
+      "en": "Challenge response window (ms)",
+      "fr": "Délai de réponse au défi (ms)",
+      "es": "Plazo de respuesta del desafío (ms)"
+    },
+    "Sprite sheet": {
+      "en": "Sprite sheet",
+      "fr": "Planche de sprites",
+      "es": "Hoja de sprites"
+    },
+    "Sprite X (pixels)": {
+      "en": "Sprite X (pixels)",
+      "fr": "X du sprite (pixels)",
+      "es": "X del sprite (píxeles)"
+    },
+    "Sprite Y (pixels)": {
+      "en": "Sprite Y (pixels)",
+      "fr": "Y du sprite (pixels)",
+      "es": "Y del sprite (píxeles)"
+    },
+    "Sprite width": {
+      "en": "Sprite width",
+      "fr": "Largeur du sprite",
+      "es": "Ancho del sprite"
+    },
+    "Sprite height": {
+      "en": "Sprite height",
+      "fr": "Hauteur du sprite",
+      "es": "Alto del sprite"
+    },
+    "Only eligible catches participate in the weighted draw. Reward items must support inventory stacks.": {
+      "en": "Only eligible catches participate in the weighted draw. Reward items must support inventory stacks.",
+      "fr": "Seules les prises admissibles participent au tirage pondéré. Les objets remis doivent être empilables.",
+      "es": "Solo las capturas admisibles participan en el sorteo ponderado. Los objetos de recompensa deben ser apilables."
+    },
+    "Automatic fishing pauses for a legendary encounter. A player must accept and complete the challenge.": {
+      "en": "Automatic fishing pauses for a legendary encounter. A player must accept and complete the challenge.",
+      "fr": "La pêche automatique s'interrompt lors d'une rencontre légendaire. Le joueur doit accepter et réussir le défi.",
+      "es": "La pesca automática se pausa ante un encuentro legendario. El jugador debe aceptar y superar el desafío."
+    },
+    "Cast animation": {
+      "en": "Cast animation",
+      "fr": "Animation de lancer",
+      "es": "Animación de lanzamiento"
+    },
+    "Use animation": {
+      "en": "Use animation",
+      "fr": "Animation d'utilisation",
+      "es": "Animación de uso"
+    },
+    "Catch animation": {
+      "en": "Catch animation",
+      "fr": "Animation de capture",
+      "es": "Animación de captura"
+    },
+    "No animation": {
+      "en": "No animation",
+      "fr": "Aucune animation",
+      "es": "Sin animación"
+    },
+    "Use animation interval (ms)": {
+      "en": "Use animation interval (ms)",
+      "fr": "Intervalle d'animation d'utilisation (ms)",
+      "es": "Intervalo de animación de uso (ms)"
+    },
+    "These animations play on the real player in the world. The fishing window contains no character or dock.": {
+      "en": "These animations play on the real player in the world. The fishing window contains no character or dock.",
+      "fr": "Ces animations s'appliquent au joueur réel dans le monde. La fenêtre de pêche n'affiche ni personnage ni quai.",
+      "es": "Estas animaciones se aplican al jugador real en el mundo. La ventana de pesca no muestra personajes ni muelles."
+    },
+    "Fishing Net sheets use 128 × 128 cells. B/F are complementary back/front layers; confirm direction order and anchors in game.": {
+      "en": "Fishing Net sheets use 128 × 128 cells. B/F are complementary back/front layers; confirm direction order and anchors in game.",
+      "fr": "Les planches Fishing Net utilisent des cellules de 128 × 128. B/F sont des couches arrière/avant complémentaires ; vérifiez les directions et l'alignement en jeu.",
+      "es": "Las hojas Fishing Net usan celdas de 128 × 128. B/F son capas trasera/delantera complementarias; comprueba las direcciones y la alineación en el juego."
+    },
+    "Fishing profession": {
+      "en": "Fishing profession",
+      "fr": "Métier de pêche",
+      "es": "Oficio de pesca"
+    },
+    "Automatic detection / built-in progression": {
+      "en": "Automatic detection / built-in progression",
+      "fr": "Détection automatique / progression intégrée",
+      "es": "Detección automática / progreso integrado"
+    },
+    "Cooldown (ms)": {
+      "en": "Cooldown (ms)",
+      "fr": "Délai de recharge (ms)",
+      "es": "Tiempo de reutilización (ms)"
+    },
+    "Duration (ms)": {
+      "en": "Duration (ms)",
+      "fr": "Durée (ms)",
+      "es": "Duración (ms)"
+    },
+    "Effect amount": {
+      "en": "Effect amount",
+      "fr": "Puissance de l'effet",
+      "es": "Potencia del efecto"
+    },
+    "Tension cost": {
+      "en": "Tension cost",
+      "fr": "Coût en tension",
+      "es": "Coste de tensión"
+    },
+    "Select an equipment item for every tool.": {
+      "en": "Select an equipment item for every tool.",
+      "fr": "Sélectionnez un objet équipable pour chaque équipement de pêche.",
+      "es": "Selecciona un objeto equipable para cada equipo de pesca."
+    },
+    "Each equipment item can have only one fishing tool profile.": {
+      "en": "Each equipment item can have only one fishing tool profile.",
+      "fr": "Chaque objet équipable ne peut avoir qu'un profil de pêche.",
+      "es": "Cada objeto equipable solo puede tener un perfil de pesca."
+    },
+    "Enabled zone {0} needs a map and at least one catch.": {
+      "en": "Enabled zone {0} needs a map and at least one catch.",
+      "fr": "La zone active {0} doit avoir une carte et au moins une prise.",
+      "es": "La zona activa {0} debe tener un mapa y al menos una captura."
+    },
+    "A catch in {0} needs a reward item and allowed equipment.": {
+      "en": "A catch in {0} needs a reward item and allowed equipment.",
+      "fr": "Une prise de {0} doit avoir un objet de récompense et des équipements autorisés.",
+      "es": "Una captura de {0} necesita un objeto de recompensa y equipos permitidos."
+    },
+    "Invalid fishing configuration. Check references, time ranges, quantities and sound settings.": {
+      "en": "Invalid fishing configuration. Check references, time ranges, quantities and sound settings.",
+      "fr": "Configuration de pêche invalide. Vérifiez les références, horaires, quantités et réglages sonores.",
+      "es": "Configuración de pesca no válida. Revisa referencias, horarios, cantidades y ajustes de sonido."
+    },
+    "Saving...": {
+      "en": "Saving...",
+      "fr": "Enregistrement…",
+      "es": "Guardando…"
+    },
+    "Saved": {
+      "en": "Saved",
+      "fr": "Enregistré",
+      "es": "Guardado"
+    },
+    "Unassigned item": {
+      "en": "Unassigned item",
+      "fr": "Objet non attribué",
+      "es": "Objeto sin asignar"
+    },
+    "Missing item: {0}": {
+      "en": "Missing item: {0}",
+      "fr": "Objet manquant : {0}",
+      "es": "Objeto ausente: {0}"
+    },
+    "Select a resource": {
+      "en": "Select a resource",
+      "fr": "Sélectionner une ressource",
+      "es": "Seleccionar un recurso"
+    },
+    "Missing resource: {0}": {
+      "en": "Missing resource: {0}",
+      "fr": "Ressource manquante : {0}",
+      "es": "Recurso ausente: {0}"
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "Select an image": {
+      "en": "Select an image",
+      "fr": "Sélectionner une image",
+      "es": "Seleccionar una imagen"
+    },
+    "Preview image": {
+      "en": "Preview image",
+      "fr": "Aperçu de l'image",
+      "es": "Vista previa de imagen"
+    },
+    "Image is not available in the local resources.": {
+      "en": "Image is not available in the local resources.",
+      "fr": "L'image n'est pas disponible dans les ressources locales.",
+      "es": "La imagen no está disponible en los recursos locales."
+    },
+    "Use supplied Fishing Net profile": {
+      "en": "Use supplied Fishing Net profile",
+      "fr": "Utiliser le profil Fishing Net fourni",
+      "es": "Usar el perfil Fishing Net incluido"
+    },
+    "Create empty world profile": {
+      "en": "Create empty world profile",
+      "fr": "Créer un profil d'animation vide",
+      "es": "Crear un perfil de animación vacío"
+    },
+    "World paperdoll profile": {
+      "en": "World paperdoll profile",
+      "fr": "Profil d'équipement animé dans le monde",
+      "es": "Perfil de equipo animado en el mundo"
+    },
+    "Enable world paperdoll": {
+      "en": "Enable world paperdoll",
+      "fr": "Activer l'équipement animé dans le monde",
+      "es": "Activar equipo animado en el mundo"
+    },
+    "Frame width": {
+      "en": "Frame width",
+      "fr": "Largeur d'une image",
+      "es": "Ancho de un fotograma"
+    },
+    "Frame height": {
+      "en": "Frame height",
+      "fr": "Hauteur d'une image",
+      "es": "Alto de un fotograma"
+    },
+    "Frames per second": {
+      "en": "Frames per second",
+      "fr": "Images par seconde",
+      "es": "Fotogramas por segundo"
+    },
+    "Scale": {
+      "en": "Scale",
+      "fr": "Échelle",
+      "es": "Escala"
+    },
+    "Offset X": {
+      "en": "Offset X",
+      "fr": "Décalage X",
+      "es": "Desplazamiento X"
+    },
+    "Offset Y": {
+      "en": "Offset Y",
+      "fr": "Décalage Y",
+      "es": "Desplazamiento Y"
+    },
+    "Direction {0}: row": {
+      "en": "Direction {0}: row",
+      "fr": "Direction {0} : rangée",
+      "es": "Dirección {0}: fila"
+    },
+    "Front layer": {
+      "en": "Front layer",
+      "fr": "Couche avant",
+      "es": "Capa delantera"
+    },
+    "Back layer": {
+      "en": "Back layer",
+      "fr": "Couche arrière",
+      "es": "Capa trasera"
+    },
+    "Frame count": {
+      "en": "Frame count",
+      "fr": "Nombre d'images",
+      "es": "Número de fotogramas"
+    },
+    "Loop": {
+      "en": "Loop",
+      "fr": "Boucle",
+      "es": "Bucle"
+    },
+    "Body animation": {
+      "en": "Body animation",
+      "fr": "Animation du corps",
+      "es": "Animación del cuerpo"
+    },
+    "Global": {
+      "en": "Global",
+      "fr": "Global",
+      "es": "Global"
+    },
+    "Selected zone": {
+      "en": "Selected zone",
+      "fr": "Zone sélectionnée",
+      "es": "Zona seleccionada"
+    },
+    "Selected tool": {
+      "en": "Selected tool",
+      "fr": "Équipement sélectionné",
+      "es": "Equipo seleccionado"
+    },
+    "Selected catch": {
+      "en": "Selected catch",
+      "fr": "Prise sélectionnée",
+      "es": "Captura seleccionada"
+    },
+    "Sound scope": {
+      "en": "Sound scope",
+      "fr": "Portée du réglage sonore",
+      "es": "Ámbito del ajuste sonoro"
+    },
+    "Select the zone, tool or catch for this scope.": {
+      "en": "Select the zone, tool or catch for this scope.",
+      "fr": "Sélectionnez la zone, l'équipement ou la prise de cette portée.",
+      "es": "Selecciona la zona, el equipo o la captura de este ámbito."
+    },
+    "Sound event": {
+      "en": "Sound event",
+      "fr": "Événement sonore",
+      "es": "Evento sonoro"
+    },
+    "Inherit": {
+      "en": "Inherit",
+      "fr": "Hériter",
+      "es": "Heredar"
+    },
+    "Silent": {
+      "en": "Silent",
+      "fr": "Silence",
+      "es": "Silencio"
+    },
+    "Custom sound": {
+      "en": "Custom sound",
+      "fr": "Son personnalisé",
+      "es": "Sonido personalizado"
+    },
+    "Override": {
+      "en": "Override",
+      "fr": "Remplacement local",
+      "es": "Sustitución local"
+    },
+    "Sound file": {
+      "en": "Sound file",
+      "fr": "Fichier sonore",
+      "es": "Archivo de sonido"
+    },
+    "Missing sound: {0}": {
+      "en": "Missing sound: {0}",
+      "fr": "Son manquant : {0}",
+      "es": "Sonido ausente: {0}"
+    },
+    "Volume (%)": {
+      "en": "Volume (%)",
+      "fr": "Volume (%)",
+      "es": "Volumen (%)"
+    },
+    "Maximum simultaneous sounds": {
+      "en": "Maximum simultaneous sounds",
+      "fr": "Nombre maximal de sons simultanés",
+      "es": "Número máximo de sonidos simultáneos"
+    },
+    "Spatial sound": {
+      "en": "Spatial sound",
+      "fr": "Son spatialisé",
+      "es": "Sonido espacial"
+    },
+    "Sound range (tiles)": {
+      "en": "Sound range (tiles)",
+      "fr": "Portée sonore (cases)",
+      "es": "Alcance sonoro (casillas)"
+    },
+    "Preview sound": {
+      "en": "Preview sound",
+      "fr": "Écouter le son",
+      "es": "Escuchar sonido"
+    },
+    "This event is silent.": {
+      "en": "This event is silent.",
+      "fr": "Cet événement est silencieux.",
+      "es": "Este evento está silenciado."
+    },
+    "Editor preview supports WAV files. Other formats must be checked in game.": {
+      "en": "Editor preview supports WAV files. Other formats must be checked in game.",
+      "fr": "L'aperçu de l'éditeur lit les WAV. Vérifiez les autres formats en jeu.",
+      "es": "La vista previa del editor reproduce WAV. Comprueba otros formatos en el juego."
+    },
+    "Sound is not available in the local resources.": {
+      "en": "Sound is not available in the local resources.",
+      "fr": "Le son n'est pas disponible dans les ressources locales.",
+      "es": "El sonido no está disponible en los recursos locales."
+    },
+    "Sound could not be played.": {
+      "en": "Sound could not be played.",
+      "fr": "Impossible de lire ce son.",
+      "es": "No se pudo reproducir el sonido."
+    },
+    "Stop preview": {
+      "en": "Stop preview",
+      "fr": "Arrêter l'aperçu",
+      "es": "Detener vista previa"
+    },
+    "Preview uses system volume. The configured volume is applied in game.": {
+      "en": "Preview uses system volume. The configured volume is applied in game.",
+      "fr": "L'aperçu utilise le volume système. Le volume configuré s'applique en jeu.",
+      "es": "La vista previa usa el volumen del sistema. El volumen configurado se aplica en el juego."
+    },
+    "Inheritance: catch → tool → zone → global → default. Silent overrides prevent fallback.": {
+      "en": "Inheritance: catch → tool → zone → global → default. Silent overrides prevent fallback.",
+      "fr": "Héritage : prise → équipement → zone → global → défaut. Un silence explicite bloque le repli.",
+      "es": "Herencia: captura → equipo → zona → global → predeterminado. El silencio explícito impide el repliegue."
+    },
+    "Looped sounds must stop when their state or the fishing session ends.": {
+      "en": "Looped sounds must stop when their state or the fishing session ends.",
+      "fr": "Les sons en boucle doivent s'arrêter à la fin de leur état ou de la session de pêche.",
+      "es": "Los sonidos en bucle deben detenerse cuando termina su estado o la sesión de pesca."
+    },
+    "Open Fishing": {
+      "en": "Open Fishing",
+      "fr": "Ouvrir la pêche",
+      "es": "Abrir pesca"
+    },
+    "Refresh zones": {
+      "en": "Refresh zones",
+      "fr": "Actualiser les zones",
+      "es": "Actualizar zonas"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Select an existing fishing zone.": {
+      "en": "Select an existing fishing zone.",
+      "fr": "Sélectionnez une zone de pêche existante.",
+      "es": "Selecciona una zona de pesca existente."
+    },
+    "Select a fishing zone": {
+      "en": "Select a fishing zone",
+      "fr": "Sélectionner une zone de pêche",
+      "es": "Seleccionar una zona de pesca"
+    },
+    "Disabled": {
+      "en": "Disabled",
+      "fr": "Désactivé",
+      "es": "Desactivado"
+    },
+    "Choose a saved zone. The server requires compatible equipped fishing equipment.": {
+      "en": "Choose a saved zone. The server requires compatible equipped fishing equipment.",
+      "fr": "Choisissez une zone enregistrée. Le serveur exige un équipement de pêche compatible et équipé.",
+      "es": "Elige una zona guardada. El servidor exige un equipo de pesca compatible y equipado."
+    },
+    "Rod": {
+      "en": "Rod",
+      "fr": "Canne",
+      "es": "Caña"
+    },
+    "Cage": {
+      "en": "Cage",
+      "fr": "Cage",
+      "es": "Jaula"
+    },
+    "Net": {
+      "en": "Net",
+      "fr": "Filet",
+      "es": "Red"
+    },
+    "Stabilize": {
+      "en": "Stabilize",
+      "fr": "Stabiliser",
+      "es": "Estabilizar"
+    },
+    "Pull": {
+      "en": "Pull",
+      "fr": "Traction",
+      "es": "Tirar"
+    },
+    "Repair": {
+      "en": "Repair",
+      "fr": "Réparer",
+      "es": "Reparar"
+    },
+    "Dive": {
+      "en": "Dive",
+      "fr": "Plonger",
+      "es": "Hundir"
+    },
+    "Stop": {
+      "en": "Stop",
+      "fr": "Arrêt",
+      "es": "Parada"
+    },
+    "Idle": {
+      "en": "Idle",
+      "fr": "Repos",
+      "es": "Reposo"
+    },
+    "Throw": {
+      "en": "Throw",
+      "fr": "Lancer",
+      "es": "Lanzamiento"
+    },
+    "Fishing": {
+      "en": "Fishing",
+      "fr": "Pêche",
+      "es": "Pesca"
+    },
+    "Move": {
+      "en": "Move",
+      "fr": "Déplacement",
+      "es": "Movimiento"
+    },
+    "Normal": {
+      "en": "Normal",
+      "fr": "Normal",
+      "es": "Normal"
+    },
+    "Attack": {
+      "en": "Attack",
+      "fr": "Attaque",
+      "es": "Ataque"
+    },
+    "Shoot": {
+      "en": "Shoot",
+      "fr": "Tir",
+      "es": "Disparo"
+    },
+    "Cast": {
+      "en": "Cast",
+      "fr": "Incantation",
+      "es": "Lanzamiento mágico"
+    },
+    "Weapon": {
+      "en": "Weapon",
+      "fr": "Arme",
+      "es": "Arma"
+    },
+    "": {
+      "en": "",
+      "fr": "",
+      "es": ""
+    },
+    "Decorations": {
+      "en": "Decorations",
+      "fr": "Décorations",
+      "es": "Decoraciones"
+    },
+    "Tool deleted. Save to apply the change.": {
+      "en": "Tool deleted. Save to apply the change.",
+      "fr": "Outil supprimé. Enregistrez pour appliquer la modification.",
+      "es": "Herramienta eliminada. Guarda para aplicar el cambio."
+    },
+    "Catch deleted. Save to apply the change.": {
+      "en": "Catch deleted. Save to apply the change.",
+      "fr": "Prise supprimée. Enregistrez pour appliquer la modification.",
+      "es": "Captura eliminada. Guarda para aplicar el cambio."
+    },
+    "Reward item {0} must allow inventory stacks.": {
+      "en": "Reward item {0} must allow inventory stacks.",
+      "fr": "L’objet de récompense {0} doit pouvoir s’empiler dans l’inventaire.",
+      "es": "El objeto de recompensa {0} debe poder apilarse en el inventario."
+    },
+    "Saved. Newer changes are still unsaved.": {
+      "en": "Saved. Newer changes are still unsaved.",
+      "fr": "Enregistré. Les modifications plus récentes restent à enregistrer.",
+      "es": "Guardado. Los cambios más recientes siguen sin guardarse."
+    },
+    "Image could not be opened.": {
+      "en": "Image could not be opened.",
+      "fr": "L’image n’a pas pu être ouverte.",
+      "es": "No se pudo abrir la imagen."
+    },
+    "The server returned an invalid fishing configuration. Your draft was preserved.": {
+      "en": "The server returned an invalid fishing configuration. Your draft was preserved.",
+      "fr": "Le serveur a renvoyé une configuration de pêche invalide. Votre brouillon a été conservé.",
+      "es": "El servidor devolvió una configuración de pesca no válida. Se conservó tu borrador."
+    },
+    "The server did not return a fishing configuration.": {
+      "en": "The server did not return a fishing configuration.",
+      "fr": "Le serveur n’a renvoyé aucune configuration de pêche.",
+      "es": "El servidor no devolvió ninguna configuración de pesca."
+    },
+    "Reserved: this challenge type is not implemented.": {
+      "en": "Reserved: this challenge type is not implemented.",
+      "fr": "Réservé : ce type de défi n’est pas implémenté.",
+      "es": "Reservado: este tipo de desafío no está implementado."
+    },
+    "Add missing skills": {
+      "en": "Add missing skills",
+      "fr": "Ajouter les compétences manquantes",
+      "es": "Añadir habilidades faltantes"
+    },
+    "{0} is not configured.": {
+      "en": "{0} is not configured.",
+      "fr": "{0} n’est pas configuré.",
+      "es": "{0} no está configurado."
+    },
+    "A save is pending. Wait for the server response before closing.": {
+      "en": "A save is pending. Wait for the server response before closing.",
+      "fr": "Un enregistrement est en cours. Attendez la réponse du serveur avant de fermer.",
+      "es": "Hay un guardado en curso. Espera la respuesta del servidor antes de cerrar."
+    }
+  }
+}

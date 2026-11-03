@@ -635,6 +635,7 @@ public partial class Entity : IEntity
 
     public virtual void Dispose()
     {
+        Intersect.Client.Interface.Game.FishingWorldPresentation.Remove(Id);
         if (RenderList != null)
         {
             _ = RenderList.Remove(this);
@@ -1374,6 +1375,7 @@ public partial class Entity : IEntity
 
         //Order the layers of paperdolls and sprites
         var cinematicDirection = Graphics.CinematicDrawDirection(_lastDirection);
+        DrawFishingEquipment(false, renderColor);
         for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection].Count; z++)
         {
             var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection][z];
@@ -1409,7 +1411,7 @@ public partial class Entity : IEntity
                         var itemPaperdoll = Gender == 0
                             ? itemDescriptor.MalePaperdoll
                             : itemDescriptor.FemalePaperdoll;
-                        DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
+                        if (!IsFishingEquipment(itemId)) DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
                         drewEquipment = true;
                     }
 
@@ -1424,6 +1426,7 @@ public partial class Entity : IEntity
                 }
             }
         }
+        DrawFishingEquipment(true, renderColor);
         EndMountDraw(renderColor);
         if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
             Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
@@ -2277,6 +2280,7 @@ public partial class Entity : IEntity
                 SpriteFrameTimer = timingMilliseconds;
             }
         }
+        ApplyFishingBodyAnimation();
     }
 
     public void ResetSpriteFrame()

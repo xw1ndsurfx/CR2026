@@ -1,0 +1,124 @@
+{
+  "Entries": {
+    "Automatic resumption cancelled. Accept the challenge to fish manually.": {
+      "en": "Automatic resumption cancelled. Accept the challenge to fish manually.",
+      "fr": "Reprise automatique annulée. Accepte le défi pour pêcher manuellement.",
+      "es": "Reanudación automática cancelada. Acepta el desafío para pescar manualmente."
+    },
+    "The legendary creature escaped. Automatic fishing will resume.": {
+      "en": "The legendary creature escaped. Automatic fishing will resume.",
+      "fr": "La créature légendaire s’est échappée. La pêche automatique va reprendre.",
+      "es": "La criatura legendaria escapó. La pesca automática se reanudará."
+    },
+    "Fishing": {
+      "en": "Fishing",
+      "fr": "Pêche",
+      "es": "Pesca"
+    },
+    "Fishing is unavailable here.": {
+      "en": "Fishing is unavailable here.",
+      "fr": "La pêche n’est pas disponible ici.",
+      "es": "La pesca no está disponible aquí."
+    },
+    "Equip a compatible fishing tool.": {
+      "en": "Equip a compatible fishing tool.",
+      "fr": "Équipe un outil de pêche compatible.",
+      "es": "Equipa una herramienta de pesca compatible."
+    },
+    "Finish your current activity before fishing.": {
+      "en": "Finish your current activity before fishing.",
+      "fr": "Termine ton activité actuelle avant de pêcher.",
+      "es": "Termina tu actividad actual antes de pescar."
+    },
+    "Fishing stopped because your position or equipment changed.": {
+      "en": "Fishing stopped because your position or equipment changed.",
+      "fr": "La pêche s’est arrêtée car ta position ou ton équipement a changé.",
+      "es": "La pesca se detuvo porque cambió tu posición o tu equipo."
+    },
+    "No eligible catch is available with this tool and these conditions.": {
+      "en": "No eligible catch is available with this tool and these conditions.",
+      "fr": "Aucune prise n’est disponible avec cet outil dans ces conditions.",
+      "es": "No hay capturas disponibles con esta herramienta en estas condiciones."
+    },
+    "Your bait is missing.": {
+      "en": "Your bait is missing.",
+      "fr": "Tu n’as pas les appâts nécessaires.",
+      "es": "Te falta el cebo necesario."
+    },
+    "Your inventory is full. Make room and cast again.": {
+      "en": "Your inventory is full. Make room and cast again.",
+      "fr": "Ton inventaire est plein. Libère de la place et relance.",
+      "es": "Tu inventario está lleno. Libera espacio y vuelve a lanzar."
+    },
+    "Fishing could not be saved. Please try again.": {
+      "en": "Fishing could not be saved. Please try again.",
+      "fr": "La pêche n’a pas pu être sauvegardée. Réessaie.",
+      "es": "No se pudo guardar la pesca. Inténtalo de nuevo."
+    },
+    "Fishing configuration saved.": {
+      "en": "Fishing configuration saved.",
+      "fr": "Configuration de la pêche enregistrée.",
+      "es": "Configuración de pesca guardada."
+    },
+    "Invalid fishing configuration.": {
+      "en": "Invalid fishing configuration.",
+      "fr": "La configuration de la pêche n’est pas valide.",
+      "es": "La configuración de pesca no es válida."
+    },
+    "Fishing configuration references a missing item, map, profession or animation.": {
+      "en": "Fishing configuration references a missing item, map, profession or animation.",
+      "fr": "La configuration de la pêche référence un objet, une carte, un métier ou une animation absent ou incompatible.",
+      "es": "La configuración de pesca hace referencia a un objeto, mapa, profesión o animación inexistente o incompatible."
+    },
+    "Your line broke.": {
+      "en": "Your line broke.",
+      "fr": "Ta ligne a cassé.",
+      "es": "Se rompió tu sedal."
+    },
+    "The catch escaped.": {
+      "en": "The catch escaped.",
+      "fr": "La prise s’est échappée.",
+      "es": "La presa escapó."
+    },
+    "A legendary creature appeared. Take control before time runs out.": {
+      "en": "A legendary creature appeared. Take control before time runs out.",
+      "fr": "Une créature légendaire est apparue. Reprends le contrôle avant la fin du délai.",
+      "es": "Ha aparecido una criatura legendaria. Toma el control antes de que se agote el tiempo."
+    },
+    "The legendary creature escaped. Choose a mode to resume fishing.": {
+      "en": "The legendary creature escaped. Choose a mode to resume fishing.",
+      "fr": "La créature légendaire s’est échappée. Choisis un mode pour reprendre la pêche.",
+      "es": "La criatura legendaria escapó. Elige un modo para seguir pescando."
+    },
+    "Complete the sequence to subdue this creature.": {
+      "en": "Complete the sequence to subdue this creature.",
+      "fr": "Complète la séquence pour maîtriser cette créature.",
+      "es": "Completa la secuencia para dominar a esta criatura."
+    },
+    "Catch secured.": {
+      "en": "Catch secured.",
+      "fr": "Prise capturée.",
+      "es": "Captura conseguida."
+    },
+    "Automatic fishing started.": {
+      "en": "Automatic fishing started.",
+      "fr": "Pêche automatique activée.",
+      "es": "Pesca automática activada."
+    },
+    "Manual fishing selected.": {
+      "en": "Manual fishing selected.",
+      "fr": "Pêche manuelle sélectionnée.",
+      "es": "Pesca manual seleccionada."
+    },
+    "Fishing interrupted.": {
+      "en": "Fishing interrupted.",
+      "fr": "Pêche interrompue.",
+      "es": "Pesca interrumpida."
+    },
+    "Change fishing mode between catches.": {
+      "en": "Change fishing mode between catches.",
+      "fr": "Change de mode entre deux prises.",
+      "es": "Cambia de modo entre capturas."
+    }
+  }
+}

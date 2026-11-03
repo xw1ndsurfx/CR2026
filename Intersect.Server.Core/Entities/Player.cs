@@ -476,6 +476,7 @@ public partial class Player : Entity
 
     public override void Dispose()
     {
+        EndFishing();
         EndArchery();
         EndJoust(true);
         if (IsDisposed)
@@ -521,6 +522,7 @@ public partial class Player : Entity
 
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        EndFishing();
         CompleteConfiguredDeath();
         EndArchery();
         EndJoust(true);
@@ -787,6 +789,7 @@ public partial class Player : Entity
                 UpdateIntoxication();
                 UpdateJoust();
                 UpdateArchery();
+                UpdateFishing();
                 // Detect inactivity from authoritative player position, including map changes.
                 if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
                 {
@@ -1248,6 +1251,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        EndFishing("Fishing interrupted.");
         Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
         if(Intersect.Server.Pvp.PvpRuntime.HandleDeath(this,killer))return;
@@ -6242,6 +6246,7 @@ public partial class Player : Entity
 
     public void ProcessEquipmentUpdated(bool sendPackets, bool ignoreEvents = false)
     {
+        ValidateFishingEquipment();
         FixVitals();
         if (!ignoreEvents)
         {
