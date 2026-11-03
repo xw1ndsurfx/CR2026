@@ -43,7 +43,20 @@ def install(archive: Path, check: bool) -> None:
         validated = []
         # Validate the entire archive *before* writing any asset.
         for item in manifest["assets"]:
-            data = zip_file.read(item["zip"])
+            # Some legacy ZIP tools encode the accented background filename
+            # as CP437 without the UTF-8 flag. Match only that known entry,
+            # then verify the original bytes against the SHA-256 manifest.
+            try:
+                data = zip_file.read(item["zip"])
+            except KeyError:
+                if item["path"] != "resources/gui/exportation/background.png":
+                    raise
+                candidates = [name for name in zip_file.namelist()
+                              if name.startswith("exportation_work/panneau_nautique_")
+                              and name.endswith("_vide_et_localisable.png")]
+                if len(candidates) != 1:
+                    raise ValueError("Approved background not found in ZIP")
+                data = zip_file.read(candidates[0])
             verify(data, item)
             destination = (ROOT / item["path"]).resolve()
             if not destination.is_relative_to(ROOT):
