@@ -52,6 +52,8 @@ public static class FishingRules
                 zone.MapIds.Distinct().Count() != zone.MapIds.Count ||
                 zone.X is < 0 or > 10000 || zone.Y is < 0 or > 10000 || zone.Radius is < 0 or > 64 ||
                 zone.MinimumWaitMs is < 1000 or > 120000 || zone.MaximumWaitMs < zone.MinimumWaitMs || zone.MaximumWaitMs > 120000 ||
+                !double.IsFinite(zone.AutomaticFailureChance) || zone.AutomaticFailureChance is < 0 or > 1 ||
+                !double.IsFinite(zone.AutomaticExperienceMultiplier) || zone.AutomaticExperienceMultiplier is < 0 or > 1 ||
                 zone.AutomaticCatchMs is < 5000 or > 600000 || zone.ActiveLimitMs is < 10000 or > 180000 ||
                 zone.LegendaryPromptMs is < 5000 or > 120000 || zone.Assets is null ||
                 !double.IsFinite(zone.LegendaryChance) || zone.LegendaryChance is < 0 or > 1 ||
@@ -99,6 +101,14 @@ public static class FishingRules
 
     public static bool DuringHours(int start, int end, int utcHour) => utcHour is >= 0 and < 24 &&
         (start < end ? utcHour >= start && utcHour < end : utcHour >= start || utcHour < end);
+
+    /// <summary>A roll in [0,1) decides whether an ordinary automatic catch succeeds.</summary>
+    public static bool AutomaticCatchSucceeds(FishingZoneDefinition zone, double roll) =>
+        double.IsFinite(roll) && roll >= 0 && roll < 1 && roll >= zone.AutomaticFailureChance;
+
+    /// <summary>Automatic fishing grants a configurable, rounded-down fraction of the normal base XP.</summary>
+    public static int AutomaticExperience(FishingZoneDefinition zone, int baseExperience) =>
+        (int)Math.Floor(Math.Max(0, baseExperience) * zone.AutomaticExperienceMultiplier);
 
     public static bool ShouldAutoCast(FishingState state, long now, long nextCastAt) =>
         state.Automatic && state.Phase is FishingPhase.Ready or FishingPhase.Caught or FishingPhase.Failed && now >= nextCastAt;
