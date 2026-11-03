@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 import sys
 import wave
+import zipfile
 
 from PIL import Image
 
@@ -21,6 +22,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--archive", type=Path, help="Also verify the Windows release bundle ZIP produced in dist/")
     args = parser.parse_args()
     root = args.root.resolve()
     errors: list[str] = []
@@ -121,10 +123,69 @@ def main() -> None:
     for event, binding in audio["events"].items():
         check(binding["sound_id"] is None or binding["sound_id"] in sound_ids, f"Unknown sound at event {event}")
 
+    # Build the required delivery paths from the independent art/audio manifests.
+    # A successful CopyToPublishDirectory does not imply that the release bundler
+    # includes those files: its explicit include list also needs to cover them.
+    runtime_files = {
+        entry["repository_path"]: ("Client and Editor/" + entry["runtime_path"], entry["sha256"])
+        for entry in manifest["assets"]
+    }
+    runtime_files.update({
+        "resources/sounds/" + sound["runtime_path"]:
+            ("Client and Editor/resources/sounds/" + sound["runtime_path"], sound["sha256"])
+        for sound in audio["assets"]
+    })
+    for path in sorted((root / "resources/fishing").rglob("*.json")):
+        relative = path.relative_to(root).as_posix()
+        runtime_files[relative] = (
+            "Client and Editor/resources/gui/" + relative.removeprefix("resources/"),
+            hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
+
+    bundle_count = 0
+    for variant in ("full", "patch", "upgrade"):
+        for platform in ("win-x64", "linux-x64", "osx-x64"):
+            bundle_path = f".github/bundles/{variant}.{platform}.json"
+            check((root / bundle_path).is_file(), f"Missing release bundle: {bundle_path}")
+            if not (root / bundle_path).is_file():
+                continue
+            bundle_count += 1
+            bundle = read_json(bundle_path)
+            delivered = {}
+            for include in bundle["includes"]:
+                source = include["source"].replace("\\", "/")
+                # Fishing assets use the bundler's recursive directory mapping.
+                # Resolve the preserved suffix instead of merely checking that
+                # an include mentions the word "fishing" or an expected target.
+                if not source.endswith("/**") or any(c in source[:-3] for c in "*?["):
+                    continue
+                prefix = source[:-3] + "/"
+                for relative in runtime_files:
+                    if relative.startswith(prefix):
+                        target = include["target"].replace("\\", "/").rstrip("/")
+                        delivered.setdefault(relative, set()).add(target + "/" + relative[len(prefix):])
+            for relative, (destination, _) in runtime_files.items():
+                check(destination in delivered.get(relative, set()),
+                      f"Release bundle {bundle_path} omits {relative} at {destination}")
+
+    archive_files = 0
+    if args.archive:
+        with zipfile.ZipFile(args.archive) as archive:
+            members = {info.filename.replace("\\", "/"): info for info in archive.infolist()}
+            for destination, digest in runtime_files.values():
+                info = members.get(destination)
+                check(info is not None, f"Archive omits {destination}")
+                if info is not None:
+                    archive_files += 1
+                    check(hashlib.sha256(archive.read(info)).hexdigest() == digest,
+                          f"Archive contains changed bytes: {destination}")
+
     report = {"checks": checks, "passed": not errors, "errors": errors,
               "images": len(manifest["assets"]), "audio_files": len(audio["assets"]),
               "audio_event_bindings": len(audio["events"]), "max_pcm_peak": max_peak,
-              "scope": "File integrity, atlas bounds, source coverage and numerical audio checks. Not a listening or game-render test."}
+              "release_bundles": bundle_count, "runtime_files_per_bundle": len(runtime_files),
+              "archive_files_verified": archive_files,
+              "scope": "File integrity, atlas bounds, source coverage, numerical audio checks and release bundle coverage. Optional ZIP byte verification. Not a listening or game-render test."}
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -22,6 +22,10 @@ Dans les dossiers de sortie ou de publication correspondant à cette constructio
 
 La règle [FishingAssets.props](../../Shared/FishingAssets.props) copie les GFX dans `resources/gui/fishing/` et les WAV dans `resources/sounds/fishing/` du client et de l’éditeur. Les sources graphiques restent dans `resources/fishing/` du dépôt. Ne pas déplacer les originaux pour corriger un chemin de lancement.
 
+Les archives **patch**, **full** et **upgrade** des trois plateformes incluent maintenant ces ressources sous `Client and Editor/resources/`, avec leurs sous-dossiers. Les anciennes listes de distribution les omettaient, même lorsque la publication .NET les avait copiées : remplacer uniquement les exécutables d’une ancienne archive pouvait laisser les GFX et sons manquants. Copier aussi le dossier `resources` livré dans la nouvelle archive. Les fichiers de configuration actifs et brouillons du serveur ne sont pas fournis par ce pack.
+
+Le vérificateur couvre les neuf listes de distribution. Le workflow de PR vérifie aussi les chemins et les empreintes des **57 fichiers de pêche** dans le ZIP Windows effectivement produit : 20 PNG, 32 WAV et 5 JSON de ressources. Pour reproduire ce contrôle, utiliser `python scripts/fishing/verify_assets.py --archive <chemin-du-zip-bundle>`. Cette option attend le ZIP de distribution produit dans `dist/`, pas l’enveloppe ZIP téléchargée depuis Actions.
+
 ## 2. Créer les objets et choisir la progression
 
 Dans l’éditeur, ouvrir l’**Éditeur d’objets** et créer ou sélectionner les ressources réelles nécessaires :
@@ -143,7 +147,7 @@ Si **Dernier état confirmé par le serveur : Activé** est déjà affiché, con
 
 Les refus d’ouverture utilisent désormais le chat normal, indépendamment de l’interface et du son de pêche. Le refus d’équipement donne le nom des objets configurés. Une exception de création ou de mise à jour de la fenêtre est signalée dans le chat et le journal du client ; les contrôles de pêche sont libérés et la session est quittée pour permettre une nouvelle tentative.
 
-Pour un blocage persistant, faire **une interaction dans le client**, puis conserver le fichier le plus récent `logs/client-loop-*.log` dans le dossier du client lancé, ainsi que le journal du serveur sur la même période. Les marqueurs permettent de localiser l’arrêt :
+Pour un blocage persistant, faire **une interaction dans le client**, puis conserver le fichier le plus récent `logs/client-loop-*.log`, le journal `logs/Corps Royaux-*.log` et `logs/errors-Corps Royaux.log` s’il existe, dans le dossier du client lancé. Conserver également le journal `logs/Intersect Server-*.log` du serveur sur la même période. Le journal d’erreurs contient le détail d’une exception d’affichage ; les marqueurs permettent de localiser l’arrêt :
 
 | Marqueur | Ce qu’il établit |
 | --- | --- |

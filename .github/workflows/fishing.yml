@@ -29,6 +29,7 @@ on:
       - 'Utilities/InterfaceEditorTests/EditorHubTests.cs'
       - 'scripts/fishing/**'
       - 'scripts/Verify-Fishing.ps1'
+      - '.github/bundles/**'
       - '.github/workflows/fishing.yml'
   workflow_dispatch:
 jobs:
