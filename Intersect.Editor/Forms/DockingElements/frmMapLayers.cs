@@ -1,4 +1,4 @@
-using Intersect.Config;
+﻿using Intersect.Config;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
 using Intersect.Editor.General;
@@ -58,6 +58,11 @@ public partial class FrmMapLayers : DockContent
     public FrmMapLayers()
     {
         InitializeComponent();
+        picTileset.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        picTileset.Dock = DockStyle.None;
+        void SyncTilesetScroll() => pnlTilesetContainer.AutoScrollMinSize = picTileset.Size;
+        picTileset.SizeChanged += (_, _) => SyncTilesetScroll();
+        SyncTilesetScroll();
         // Scroll each page: the outer dock only sees the fill-sized panels.
         foreach (var page in new[] { pnlNpcs, pnlAttributes, pnlLights, pnlEvents })
         {
@@ -345,6 +350,8 @@ public partial class FrmMapLayers : DockContent
         {
             if (File.Exists("resources/tilesets/" + tSet.Name))
             {
+                pnlTilesetContainer.AutoScrollPosition = System.Drawing.Point.Empty;
+                picTileset.Location = System.Drawing.Point.Empty;
                 picTileset.Show();
                 Globals.CurrentTileset = tSet;
                 Globals.CurSelX = 0;

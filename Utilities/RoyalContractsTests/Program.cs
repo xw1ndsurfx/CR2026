@@ -180,4 +180,45 @@ static byte[] TestPng(int width,int height,byte[] raw)
 foreach(var (source,versions) in Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Catalog.Entries)
     foreach(var language in GameTextCatalog.Languages)
         if(!versions.TryGetValue(language,out var translated) || !GameTextTokens.Compatible(source,translated)) throw new Exception("QOL locale coverage/placeholder mismatch: "+source+"/"+language);
+
+var sealItem=new ItemDescriptor(Guid.NewGuid()){Name="Seal shop reward",ItemType=ItemType.Currency,MaxInventoryStack=10};
+ItemDescriptor.Lookup.Set(sealItem.Id,sealItem);
+try
+{
+    var sealBuyer=new Player();GC.SuppressFinalize(sealBuyer);sealBuyer.PetCollection.RoyalContracts.Seals=100;
+    var sealOffer=new Intersect.GameObjects.ShopItemDescriptor(sealItem.Id,Guid.Empty,25);
+    var savedPurchase=RoyalSealShopRuntime.CommitPurchase(sealBuyer,sealOffer,3,()=>
+    {
+        Check(sealBuyer.PetCollection.RoyalContracts.Seals==25,"Seals debit is staged in the item save");
+        Check(sealBuyer.Items.Where(i=>i.ItemId==sealItem.Id).Sum(i=>i.Quantity)==3,"Purchased items staged before save");return true;
+    });
+    Check(savedPurchase=="" && sealBuyer.PetCollection.RoyalContracts.Seals==25,"Successful purchase spends exactly the authoritative seal price");
+    var called=false;
+    Check(RoyalSealShopRuntime.CommitPurchase(sealBuyer,sealOffer,2,()=>{called=true;return true;})=="Not enough Royal Seals." && !called,"Insufficient seals cannot save or grant items");
+    sealBuyer.PetCollection.RoyalContracts.Seals=100;
+    foreach(var throws in new[]{false,true})
+    {
+        var failure=RoyalSealShopRuntime.CommitPurchase(sealBuyer,sealOffer,1,()=>{if(throws)throw new IOException();return false;});
+        Check(failure.Length>0 && sealBuyer.PetCollection.RoyalContracts.Seals==100 && sealBuyer.Items.Where(i=>i.ItemId==sealItem.Id).Sum(i=>i.Quantity)==3,"Failed or throwing saves restore seals and inventory together");
+    }
+    Check(RoyalSealShopRuntime.CommitPurchase(sealBuyer,sealOffer,0,()=>true).Length>0,"Zero purchase quantity rejected");
+    foreach(var slot in Enumerable.Range(0,Options.Instance.Player.MaxInventory))sealBuyer.Items[slot].Set(new Item(sealItem.Id,10));
+    Check(RoyalSealShopRuntime.CommitPurchase(sealBuyer,sealOffer,1,()=>true)=="Make room in your inventory." && sealBuyer.PetCollection.RoyalContracts.Seals==100,"Full inventory never consumes Royal Seals");
+    var equipment=new ItemDescriptor(Guid.NewGuid()){Name="Seal equipment",ItemType=ItemType.Equipment,Stackable=false};
+    ItemDescriptor.Lookup.Set(equipment.Id,equipment);
+    try
+    {
+        var empty=Enumerable.Range(0,4).Select(_=>Item.None).ToArray();
+        Check(ShopInventoryPlan.Grant(empty,equipment,3,out var equipmentPlan)==ShopPlanError.None && equipmentPlan.Count(i=>i.ItemId==equipment.Id)==3,"Seal rewards support independent non-stackable equipment copies");
+        Check(equipmentPlan.Where(i=>i.ItemId==equipment.Id).All(i=>i.Quantity==1),"Equipment quantity never becomes an invalid stack");
+    }
+    finally {ItemDescriptor.Lookup.DeleteAt(equipment.Id);}
+    var sealShop=new Intersect.GameObjects.ShopDescriptor(Guid.NewGuid()){ConfigurationKind=Intersect.GameObjects.ShopConfigurationKind.RoyalSeals,SellingItems=[sealOffer]};
+    var restoredShop=new Intersect.GameObjects.ShopDescriptor{JsonBuyingItems=sealShop.JsonBuyingItems,JsonSellingItems=sealShop.JsonSellingItems};
+    Check(restoredShop.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.RoyalSeals && restoredShop.SellingItems.Single().CostItemQuantity==25,"Specialized seal shop and prices survive native persistence");
+    var request=new Intersect.Network.Packets.RoyalContracts.RoyalSealShopRequestPacket{Action=Intersect.Network.Packets.RoyalContracts.RoyalSealShopAction.Buy,ShopId=sealShop.Id,Slot=0,Quantity=3,ExpectedPrice=25,ExpectedItemId=sealItem.Id};
+    var copy=MessagePackSerializer.Deserialize<Intersect.Network.Packets.RoyalContracts.RoyalSealShopRequestPacket>(MessagePackSerializer.Serialize(request));
+    Check(copy.ShopId==request.ShopId && copy.Quantity==3 && copy.ExpectedPrice==25 && copy.ExpectedItemId==sealItem.Id,"Seal purchase quote round trip");
+}
+finally {ItemDescriptor.Lookup.DeleteAt(sealItem.Id);}
 Console.WriteLine($"Royal Contracts: {count} checks passed.");

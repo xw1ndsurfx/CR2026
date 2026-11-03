@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Framework.Content;
@@ -620,6 +620,7 @@ public static partial class Graphics
 
         UpdateView();
 
+        renderer.BeginWorldBlur(gameState==GameStates.InGame ? Intersect.Client.Interface.Game.IntoxicationVisuals.BlurStrength : 0);
         switch (gameState)
         {
             case GameStates.Intro:
@@ -649,6 +650,7 @@ public static partial class Graphics
         if (gameState == GameStates.InGame && Cinematics.CinematicCamera.PerspectiveRequested && Globals.Me?.MapInstance is MapInstance weatherMap)
         { weatherMap.DrawWeather(); weatherMap.DrawStormFlash(); }
         if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
+        renderer.EndWorldBlur();
         renderer.Scale = Globals.Database.UIScale;
 
         Interface.Interface.DrawGui(deltaTime, totalTime);

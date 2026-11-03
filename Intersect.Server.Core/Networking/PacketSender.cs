@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -1763,6 +1763,8 @@ public static partial class PacketSender
             return;
         }
 
+        if(shop.ConfigurationKind==ShopConfigurationKind.RoyalSeals)
+        {player.InShop=null;Intersect.Server.RoyalContracts.RoyalSealShopRuntime.Open(player,shop.Id);return;}
         if(shop.ConfigurationKind is ShopConfigurationKind.Spells or ShopConfigurationKind.PremiumMusic)
         {Intersect.Server.Shops.ServiceShopRuntime.Send(player);return;}
         player.SendPacket(new ShopPacket(shop.JsonData, false));

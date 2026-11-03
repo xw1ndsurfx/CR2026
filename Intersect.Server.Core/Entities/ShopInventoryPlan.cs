@@ -1,4 +1,4 @@
-using Intersect.Framework.Core.GameObjects.Items;
+﻿using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Server.Database;
 
 namespace Intersect.Server.Entities;
@@ -52,6 +52,15 @@ internal static class ShopInventoryPlan
             if (count == 0) return true;
         }
         return false;
+    }
+
+    internal static ShopPlanError Grant(Item[] inventory,ItemDescriptor product,int quantity,out Item[] result)
+    {
+        result=null;
+        if(product==null || quantity is <1 or >999)return ShopPlanError.Invalid;
+        var draft=inventory.Select(item=>item?.Clone()??Item.None).ToArray();
+        if(!Give(draft,product,quantity))return ShopPlanError.NoSpace;
+        result=draft;return ShopPlanError.None;
     }
 
     private static bool Give(Item[] slots, ItemDescriptor descriptor, int count)
