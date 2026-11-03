@@ -549,8 +549,9 @@ public partial class Player : Entity
 
         RemoveFromInstanceController(MapInstanceId);
 
-        //Update parties
-        LeaveParty();
+        // A disconnect keeps dungeon membership and instance identity for recovery.
+        if (DungeonRunRuntime.PrepareDisconnect(this)) LeavePartyForDungeonDisconnect();
+        else LeaveParty();
 
         //Update trade
         CancelTrade();
@@ -2015,6 +2016,11 @@ public partial class Player : Entity
         }
 
         base.TryAttack(target, spellDescriptor, onHitTrigger, trapTrigger);
+    }
+
+    protected override void TryAttackWeaponEffect(Entity target, SpellDescriptor spellDescriptor, ItemDescriptor sourceWeapon)
+    {
+        if (ValidTauntTarget(target)) base.TryAttackWeaponEffect(target, spellDescriptor, sourceWeapon);
     }
 
     /// <summary>
@@ -5492,6 +5498,7 @@ public partial class Player : Entity
                 if (oldMember != null)
                 {
                     if(oldMember.NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(oldMember))oldMember.NavalPartyExitRequested=true;
+                    DungeonRunRuntime.OnPartyDeparture(oldMember);
                     oldMember.Party = new List<Player>();
                     PacketSender.SendParty(oldMember);
                     PacketSender.SendChatMsg(oldMember, Strings.Parties.Kicked, ChatMessageType.Party, CustomColors.Alerts.Error);
@@ -5535,9 +5542,10 @@ public partial class Player : Entity
         lock (PartyMembershipLock) { LeavePartyCore(); }
     }
 
-    private void LeavePartyCore()
+    private void LeavePartyCore(bool preserveDungeon = false)
     {
-        if (Options.Instance.Instancing.KickPartyMembersOnKick && InstanceType == MapInstanceType.Shared)
+        if (!preserveDungeon) DungeonRunRuntime.OnPartyDeparture(this);
+        if (!preserveDungeon && Options.Instance.Instancing.KickPartyMembersOnKick && InstanceType == MapInstanceType.Shared)
         {
             WarpToLastOverworldLocation(false);
         }
@@ -5548,7 +5556,7 @@ public partial class Player : Entity
             return;
         }
 
-        if(NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(this))NavalPartyExitRequested=true;
+        if(!preserveDungeon && (NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(this)))NavalPartyExitRequested=true;
         var remainingPartyMembers = Party.Except([this]).ToList();
 
         var partyIsDisbanding = remainingPartyMembers.Count <= 1;

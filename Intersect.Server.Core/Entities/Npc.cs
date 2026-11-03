@@ -123,7 +123,7 @@ public partial class Npc : Entity
 
     internal void ConfigureBoardingCombat(bool enabled = true)
     {
-        if (PetOwner != null || Descriptor.IsPet) return;
+        if (PetOwner != null) return; // A pet-capable template on the deck is still an enemy; summoned companions have an owner.
         if (!enabled)
         {
             _boardingCombatant = false;

@@ -15,6 +15,57 @@ namespace Intersect.Tests.Server;
 
 public sealed partial class RoyalCombatTests
 {
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    public void NormalWhipAttackCreditsConfiguredMasteryThroughActualNpcDeath(int mode)
+    {
+        using var world = new World();
+        var oldPath = RoyalCombatRuntime.ProgressPath;
+        var path = Path.Combine(Path.GetTempPath(), "whip-kill-" + Guid.NewGuid().ToString("N") + ".db");
+        var formulas = typeof(Intersect.Server.General.Formulas).GetField("_formulas", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var oldFormulas = formulas.GetValue(null);
+        formulas.SetValue(null, new Intersect.Server.General.Formulas { PhysicalDamage = "BaseDamage", MagicDamage = "BaseDamage", TrueDamage = "BaseDamage" });
+        RoyalCombatRuntime.ProgressPath = path;
+        var whip = new ItemDescriptor(Guid.NewGuid()) { Name = "Whip", ItemType = ItemType.Equipment,
+            EquipmentSlot = Options.Instance.Equipment.WeaponSlot, Damage = mode == 2 ? 0 : 100, DamageType = (int)Intersect.Enums.DamageType.True };
+        var category = new MasteryCategory { Key = "whips", Name = "Whips", WeaponIds = [whip.Id] };
+        Config.SetValue(null, new RoyalCombatConfiguration { Masteries = [category] });
+        ItemDescriptor.Lookup.Set(whip.Id, whip);
+        world.Map.SurroundingMaps = []; world.Map.SurroundingMapIds = [];
+        var instance = new Intersect.Server.Maps.MapInstance(world.Map, Guid.Empty, world.Player);
+        var instances = (System.Collections.IDictionary)typeof(Intersect.Server.Maps.MapController).GetField("mInstances", Hidden)!.GetValue(world.Map)!;
+        instances[Guid.Empty] = instance;
+        world.Player.Client = null; world.Player.Level = Options.Instance.Player.MaxLevel;
+        world.Player.Items[0].Set(new Intersect.Server.Database.Item(whip.Id, 1));
+        world.Player.Equipment[Options.Instance.Equipment.WeaponSlot] = 0;
+        typeof(Player).GetField("_masteryExperience", Hidden)!.SetValue(world.Player, new Dictionary<string, long>());
+        var descriptor = new Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor(Guid.NewGuid()) { Experience = 123, ExperienceMaximum = 123 };
+        descriptor.MaxVitals[(int)Intersect.Enums.Vital.Health] = 50;
+        var target = new Npc(descriptor) { MapId = world.Map.Id, MapInstanceId = Guid.Empty, X = 4, Y = 5 };
+        GC.SuppressFinalize(target); instance.AddEntity(target);
+        var effect = new Intersect.GameObjects.SpellDescriptor(Guid.NewGuid());
+        effect.SpellType = Intersect.Enums.SpellType.CombatSpell;
+        effect.Combat.TargetType = Intersect.Enums.SpellTargetType.Single;
+        effect.Combat.DamageType = (int)Intersect.Enums.DamageType.True;
+        effect.Combat.VitalDiff[(int)Intersect.Enums.Vital.Health] = 100;
+        Intersect.GameObjects.SpellDescriptor.Lookup.Set(effect.Id, effect);
+        try
+        {
+            if (mode == 3) world.Player.TryAttack(target, effect);
+            else if (mode > 0) world.Player.TryAttack(target, new Intersect.GameObjects.ProjectileDescriptor(Guid.NewGuid()) { SpellId = mode == 2 ? effect.Id : Guid.Empty }, null, whip, Intersect.Enums.Direction.Down);
+            else world.Player.TryAttack(target);
+            Assert.That(target.IsDead, Is.True, "The normal whip attack kills the NPC through the real combat path.");
+            Assert.That(RoyalCombatRuntime.Load(world.Player.Id).GetValueOrDefault("whips"), Is.EqualTo(mode == 3 ? 0 : 123));
+        }
+        finally
+        {
+            instances.Clear(); Intersect.GameObjects.SpellDescriptor.Lookup.DeleteAt(effect.Id); ItemDescriptor.Lookup.DeleteAt(whip.Id); formulas.SetValue(null, oldFormulas);
+            RoyalCombatRuntime.ProgressPath = oldPath; if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
     [Test]
     public void MasteryLevelUpBroadcastsOneConfiguredAnimationOnThePlayerAfterCommittedExperience()
     {

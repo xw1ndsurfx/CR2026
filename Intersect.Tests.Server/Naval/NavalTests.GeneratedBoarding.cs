@@ -24,7 +24,7 @@ public sealed partial class NavalTests
         var formulas = typeof(Intersect.Server.General.Formulas).GetField("_formulas", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
         var previousFormulas = formulas.GetValue(null);
         formulas.SetValue(null, new Intersect.Server.General.Formulas { PhysicalDamage = "BaseDamage", MagicDamage = "BaseDamage", TrueDamage = "BaseDamage" });
-        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2, Movement = (byte)NpcMovement.Static };
+        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2, IsPet = true, Movement = (byte)NpcMovement.Static };
         NPCDescriptor.Lookup.Set(source.Id, source);
         MapController? deck = null;
         Guid crewId = default;
@@ -101,6 +101,10 @@ public sealed partial class NavalTests
             passiveCrew.ConfigureBoardingCombat();
             Assert.That(passiveCrew.ShouldAttackPlayerOnSight(boarder), Is.True, "A passive source NPC becomes hostile only for the boarding encounter.");
             Assert.That(passiveCrew.CanMoveInDirection(Direction.Up, out _, out _), Is.True, "A static source NPC can pursue boarders after runtime configuration.");
+            var companion = instance.SpawnNpc((byte)layout.EntryX, (byte)(layout.EntryY - 1), Direction.Down, source.Id,
+                configure: pet => pet.PetOwner = boarder);
+            Assert.That(companion.ShouldAttackPlayerOnSight(boarder), Is.False, "An actually owned companion remains friendly on the boarding deck.");
+            instance.RemoveEntity(companion);
             passiveCrew.ConfigureBoardingCombat(false);
             Assert.That(passiveCrew.ShouldAttackPlayerOnSight(boarder), Is.False, "Finishing the encounter restores authored aggression.");
             Assert.That(passiveCrew.CanMoveInDirection(Direction.Up, out _, out _), Is.False, "Finishing the encounter restores authored static movement.");
