@@ -197,6 +197,10 @@ public sealed partial class FrmFishing : Form
         FileField(table, "Foreground", zone.Assets.Foreground, "backgrounds", s => zone.Assets.Foreground = s, true);
         FileField(table, "Decorations", zone.Assets.Decorations, "gui", s => zone.Assets.Decorations = s, true);
         Check(table, "Allow automatic fishing", zone.AllowAutomatic, b => zone.AllowAutomatic = b);
+        Number(table, "Automatic failure chance (%)", zone.AutomaticFailureChance * 100, 0, 100,
+            v => zone.AutomaticFailureChance = (double)v / 100, 2);
+        Number(table, "Automatic XP (% of active)", zone.AutomaticExperienceMultiplier * 100, 0, 100,
+            v => zone.AutomaticExperienceMultiplier = (double)v / 100, 2);
         Check(table, "Legendary encounters during automatic fishing", zone.LegendaryDuringAutomatic, b => zone.LegendaryDuringAutomatic = b);
         Number(table, "Legendary chance (%)", zone.LegendaryChance * 100, 0, 100, v => zone.LegendaryChance = (double)v / 100, 2);
         Number(table, "Minimum wait (ms)", zone.MinimumWaitMs, 1000, 120000, v => zone.MinimumWaitMs = (int)v);

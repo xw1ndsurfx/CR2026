@@ -101,6 +101,11 @@ internal static class FishingEditorTests
                     "All seven fishing tabs open in every supported language.");
                 Input<TextBox>(form, "Name").Text = "Authored lagoon";
                 Input<NumericUpDown>(form, "Legendary chance (%)").Value = 7.25m;
+                Input<NumericUpDown>(form, "Automatic failure chance (%)").Value = 65.25m;
+                Input<NumericUpDown>(form, "Automatic XP (% of active)").Value = 15m;
+                Check(Math.Abs(draft.Zones[0].AutomaticFailureChance - .6525) < 0.00001 &&
+                    Math.Abs(draft.Zones[0].AutomaticExperienceMultiplier - .15) < 0.00001,
+                    "Localized fishing-zone controls persist independent automatic failure and XP settings.");
                 Check(source.Zones[0].Name == "Fixture lagoon", "Editing a draft cannot mutate the server snapshot.");
                 var mapSearch = (TextBox)form.Controls.Find("FishingMapSearch", true).Single();
                 var maps = (CheckedListBox)form.Controls.Find("FishingMapChoices", true).Single();

@@ -117,6 +117,10 @@ public sealed class FishingZoneDefinition : IJsonOnDeserialized
     public double LegendaryChance { get; set; } = .02;
     public int MinimumWaitMs { get; set; } = 3500;
     public int MaximumWaitMs { get; set; } = 7000;
+    /// <summary>Probability that an ordinary automatic catch escapes (0 to 1). Missing legacy JSON uses 50%.</summary>
+    public double AutomaticFailureChance { get; set; } = .50;
+    /// <summary>Share of ordinary catch XP awarded for successful automatic fishing (0 to 1). Missing legacy JSON uses 20%.</summary>
+    public double AutomaticExperienceMultiplier { get; set; } = .20;
     public int AutomaticCatchMs { get; set; } = 15000;
     public int ActiveLimitMs { get; set; } = 60000;
     public int LegendaryPromptMs { get; set; } = 30000;

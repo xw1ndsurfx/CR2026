@@ -366,7 +366,18 @@ public partial class Player
         if (!ValidFishing() || s.Catch == null || s.Catch.Legendary && s.Legendary?.Completed != true) return;
         if (!EligibleFishing().Any(c => c.Id == s.Catch.Id))
         { FailFishing("No eligible catch is available with this tool and these conditions.", now, "tool_incompatible", stopAutomatic: true); return; }
-        var award = FishingRewards.Progress(this, s.Configuration, s.Catch.Experience);
+        // Ordinary idle fishing is deliberately less reliable. Resolve only at the end
+        // of the attempt so failures still consume their normal wait, time and bait.
+        // Accepted legendary encounters are manual and retain their own challenge rules.
+        if (s.State.Automatic && !FishingRules.AutomaticCatchSucceeds(s.Zone, Random.Shared.NextDouble()))
+        {
+            FailFishing("The catch escaped.", now);
+            return;
+        }
+        var experience = s.State.Automatic
+            ? FishingRules.AutomaticExperience(s.Zone, s.Catch.Experience)
+            : s.Catch.Experience;
+        var award = FishingRewards.Progress(this, s.Configuration, experience);
         var result = FishingRewards.Reward(this, s.AttemptId, s.Catch.ItemId, s.State.CatchQuantity, award);
         if (result is not (FishingRewardResult.Success or FishingRewardResult.AlreadyCommitted))
         {

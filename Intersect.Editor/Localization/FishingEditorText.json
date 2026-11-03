@@ -180,6 +180,16 @@
       "fr": "Autoriser la pêche automatique",
       "es": "Permitir pesca automática"
     },
+    "Automatic failure chance (%)": {
+      "en": "Automatic failure chance (%)",
+      "fr": "Probabilité d'échec automatique (%)",
+      "es": "Probabilidad de fallo automático (%)"
+    },
+    "Automatic XP (% of active)": {
+      "en": "Automatic XP (% of active)",
+      "fr": "XP automatique (% de la pêche active)",
+      "es": "XP automática (% de pesca activa)"
+    },
     "Legendary encounters during automatic fishing": {
       "en": "Legendary encounters during automatic fishing",
       "fr": "Rencontres légendaires en pêche automatique",
