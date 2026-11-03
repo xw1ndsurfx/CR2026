@@ -1888,6 +1888,7 @@ public partial class Player : Entity, IPlayer
                 break;
         }
 
+        Guid? resourceTarget = null;
         if (TryGetRealLocation(ref x, ref y, ref map))
         {
             // Iterate through all entities
@@ -1913,6 +1914,14 @@ public partial class Player : Entity, IPlayer
 
                 if (en.Value.X != x || en.Value.Y != y)
                 {
+                    continue;
+                }
+
+                // An authored Action Button event on a harvesting tile must remain reachable.
+                // Defer resources until after the event lookup; combat targets retain priority.
+                if (en.Value is Resource)
+                {
+                    resourceTarget ??= en.Key;
                     continue;
                 }
 
@@ -1945,6 +1954,14 @@ public partial class Player : Entity, IPlayer
                     }
                 }
             }
+        }
+
+        if (resourceTarget is { } resourceId)
+        {
+            PacketSender.SendAttack(resourceId);
+            AttackTimer = Timing.Global.Milliseconds + CalculateAttackTime();
+
+            return true;
         }
 
         // Use the native interact control at a painted quay after ordinary event/NPC interaction.
