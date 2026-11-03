@@ -11,7 +11,10 @@ public sealed class CargoLine
     public Guid ItemId { get; set; }
     public CargoGroup Group { get; set; }
     public int Quantity { get; set; }
-    public bool IsValid => ItemId != Guid.Empty && Quantity is >= 1 and <= 10000 && Enum.IsDefined(Group);
+    // Optional icon from the approved Exportation sprites, otherwise use the item editor icon.
+    public string Sprite { get; set; } = "";
+    public bool IsValid => ItemId != Guid.Empty && Quantity is >= 1 and <= 10000 &&
+                           Enum.IsDefined(Group) && ExportationArt.IsGoodsSprite(Sprite);
 }
 
 public sealed class ExportationRoute

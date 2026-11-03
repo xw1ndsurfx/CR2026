@@ -56,7 +56,7 @@ public partial class GameInterface : MutableInterface
 
     private WorldMapWindow? _worldMapWindow;
     public bool IsWorldMapVisible => _worldMapWindow is { IsHidden: false };
-    public bool SuppressStatusHuds => _invasionAlertWindow?.IsVisibleInTree == true || IsWorldMapVisible || _cookingWindow != null || _pokerWindow != null || _blackjackWindow != null || _potionWindow != null;
+    public bool SuppressStatusHuds => _invasionAlertWindow?.IsVisibleInTree == true || IsWorldMapVisible || _cookingWindow != null || _pokerWindow != null || _blackjackWindow != null || _potionWindow != null || _exportationWindow is { IsVisibleInTree: true };
     public int MinimapBottom => _minimapHud is { IsVisibleInTree: true } ? _minimapHud.Bottom : 10;
     private LogiklikNewsWindow? _logiklikNewsWindow;
     private DailyRewardWindow? _dailyRewardWindow;
@@ -497,6 +497,7 @@ public partial class GameInterface : MutableInterface
         UpdateRoulette();
         UpdateDice();
         UpdateFishing();
+        UpdateExportation();
         UpdateLockpicking();
         UpdateQuestGuidance();
 
@@ -739,6 +740,7 @@ public partial class GameInterface : MutableInterface
         closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = CloseDiceWindow() || closedWindows;
         closedWindows = CloseFishingWindow() || closedWindows;
+        closedWindows = CloseExportationWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -801,6 +803,7 @@ public partial class GameInterface : MutableInterface
         DisposeRoulette();
         DisposeDice();
         DisposeFishing();
+        DisposeExportation();
         DisposeLockpicking();
         DisposeQuestGuidance();
         DisposeSoundSequence();
