@@ -47,6 +47,20 @@ Les [preuves locales de ce correctif](activation-feedback-evidence.json) couvren
 
 Les deux configurations transmises pendant le diagnostic passent les règles structurelles partagées et conservent leur valeur `Enabled` après sérialisation. Leurs noms de fichiers et les définitions des ressources de production n’étaient pas fournis : cela ne permet pas d’attribuer avec certitude le refus à une ressource particulière. Les tests utilisent des références synthétiques ; aucun identifiant de contenu de production n’est ajouté au dépôt.
 
+## Ouverture depuis un événement
+
+Le parcours d’interaction du client examinait les ressources avant les événements. Lorsqu’une ressource et **Fishing Spot** partageaient la case visée, il envoyait une attaque de récolte puis quittait la méthode avant **Ouvrir la pêche**. Le message demandant une hache pouvait donc apparaître même avec un filet correctement équipé. Les ressources sont désormais différées jusqu’à la recherche d’un événement **Action Button** sur cette même case ; les cibles de combat conservent leur priorité. Les ressources seules et les autres déclencheurs ne changent pas de comportement.
+
+Les régressions ajoutées exécutent les vraies classes du moteur :
+
+- `FishingEventInteractionTests` : interaction avec filet équipé, événement sans image et inspecteur désactivé, superposition de ressource, autre case, autres déclencheurs et priorité du combat.
+- `ServerSessionChecks` : événement sauvegardé puis rechargé, activation réseau, affichage et réponse au dialogue, ouverture de pêche, fin de l’événement et tick suivant, refus explicites et interruption par déplacement.
+- `FishingWindowTests` : registre réseau, sérialisation du paquet, vraie fenêtre à 1600 × 900 et 800 × 600, rendu sans ressources optionnelles, clic de lancement, fermeture et réouverture, refus dans le chat.
+
+Le script Windows exécute ces contrôles client en plus des contrôles serveur et éditeur. Les tests de fenêtre utilisent un renderer de test sans GPU ; ils ne remplacent pas une recette visuelle sur les cartes de production. La superposition est un défaut reproduit, mais les captures seules ne prouvent pas qu’elle explique un essai ultérieur sur une case libre. La présence de **Test pêche** dans la liste des commandes ne prouve pas non plus que ce dialogue est apparu dans le client.
+
+Validation locale sur la base `2a3d594edf501fb50ed8d192c77a53c0dde950c5` : **695 contrôles serveur réussis**, dont le parcours réel d’ouverture, et **15 tests client réussis**. Avant la correction, les deux variantes événement + ressource envoyaient une attaque au lieu d’activer l’événement ; le cas de superposition avec un PNJ vérifiait aussi la priorité du combat. Les 12 autres cas passaient déjà. Le client et le serveur ont été compilés en .NET 8 ; les tests client ont été exécutés par le runner NUnit dans le processus car l’hôte VSTest de l’environnement local échoue avant leur lancement. Le workflow Windows utilise `dotnet test` normalement.
+
 ## GFX et audio
 
 Le [manifeste](../../resources/fishing/assets-manifest.json) répertorie **20 PNG de jeu** : les deux planches d’objets, les cinq décors, les neuf planches du filet et quatre nouveaux GFX. Les fichiers reçus sont conservés octet pour octet. L’archive originale du filet et la capture de référence sont également conservées dans ce dossier.

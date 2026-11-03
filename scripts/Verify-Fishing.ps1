@@ -13,6 +13,8 @@ try {
     }
     & dotnet run --project Utilities/FishingRulesTests/FishingRulesTests.csproj -c $Configuration -p:TestServer=true -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" "-p:NetworkHandshakePrivateKey=$fishingPrivate"
     if ($LASTEXITCODE -ne 0) { throw 'Fishing domain and native reward checks failed.' }
+    & dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c $Configuration -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" --filter "FullyQualifiedName~FishingEventInteractionTests|FullyQualifiedName~FishingWindowTests"
+    if ($LASTEXITCODE -ne 0) { throw 'Fishing event interaction and native window checks failed.' }
     & dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --fishing-only
     if ($LASTEXITCODE -ne 0) { throw 'Fishing editor checks failed.' }
     & dotnet run --no-build --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --hub-only
