@@ -38,7 +38,7 @@ public sealed class FrmExportationEditor : DarkForm
     private bool _loading, _dirty, _pending;
     private readonly System.Windows.Forms.Timer _timeout = new() { Interval = 15000 };
     private readonly ListBox _routeList = new() { Name = "ExportationRoutes", Dock = DockStyle.Fill, IntegralHeight = false };
-    private readonly TextBox _search = new() { Name = "ExportationSearch", PlaceholderText = "Rechercher une route...", Dock = DockStyle.Fill };
+    private readonly TextBox _search = new() { Name = "ExportationSearch", PlaceholderText = T("Search routes..."), Dock = DockStyle.Fill };
     private readonly TabControl _tabs = new() { Name = "ExportationTabs", Dock = DockStyle.Fill };
     private readonly Label _status = new() { Dock = DockStyle.Fill, AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft };
     private readonly Button _save = Button("Enregistrer", "ExportationSave");

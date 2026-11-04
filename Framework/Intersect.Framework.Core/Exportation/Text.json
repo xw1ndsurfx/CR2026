@@ -824,6 +824,26 @@
       "en": "MAX LEVEL",
       "fr": "NIVEAU MAXIMAL",
       "es": "NIVEL MÁXIMO"
+    },
+    "Search routes...": {
+      "en": "Search routes...",
+      "fr": "Rechercher une route...",
+      "es": "Buscar ruta..."
+    },
+    "Materials": {
+      "en": "Materials",
+      "fr": "Matériaux",
+      "es": "Materiales"
+    },
+    "Fragile": {
+      "en": "Fragile",
+      "fr": "Fragiles",
+      "es": "Frágiles"
+    },
+    "Provisions": {
+      "en": "Provisions",
+      "fr": "Provisions",
+      "es": "Provisiones"
     }
   }
 }

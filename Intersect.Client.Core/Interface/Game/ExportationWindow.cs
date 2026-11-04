@@ -289,6 +289,21 @@ internal sealed class ExportationWindow : Base
         skin.Renderer.DrawColor = new Color(180, 15, 12, 9);
         skin.Renderer.DrawFilledRect(new Rect(0, 0, Width, Height));
         DrawTexture(skin, Background, 0, 0, DesignWidth, DesignHeight);
+        // Profession experience is the server-authoritative custom profession
+        // progression, not mini-game-only points.
+        skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
+        skin.Renderer.DrawFilledRect(SceneRect(1245, 149, 236, 11));
+        if (_maximumLevel || _experienceRequired > 0)
+        {
+            var progress = _maximumLevel ? 236 :
+                (int)Math.Clamp((decimal)_experienceInLevel * 236m /
+                    Math.Max(1L, _experienceRequired), 0m, 236m);
+            if (progress > 0)
+            {
+                skin.Renderer.DrawColor = Green;
+                skin.Renderer.DrawFilledRect(SceneRect(1245, 149, progress, 11));
+            }
+        }
         if (_route is { } r && _run is { } s)
         {
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
