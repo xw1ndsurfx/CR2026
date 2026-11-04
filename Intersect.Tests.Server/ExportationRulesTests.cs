@@ -118,6 +118,37 @@ public sealed class ExportationRulesTests
     }
 
     [Test]
+    public void ReplacementCargoCanBeSealedAndDeliveredAfterADeath()
+    {
+        var r = Route();
+        var firstShip = Guid.NewGuid();
+        var replacementShip = Guid.NewGuid();
+        var run = Packed(r, firstShip);
+
+        Assert.That(ExportationRules.TrySeal(r, run, Source(r, firstShip)), Is.True);
+        var firstSeal = run.CargoSealId;
+        Assert.That(ExportationRules.TryLose(run, CargoFailure.Death), Is.True);
+        Assert.That(ExportationRules.TryRestart(r, run, Source(r, replacementShip)), Is.True);
+
+        // The same order/run is re-prepared at the original merchant.
+        foreach (var line in r.Lines)
+            Assert.That(ExportationRules.TryPack(r, run, Source(r, replacementShip),
+                line.ItemId, line.Group, line.Quantity), Is.True);
+        Assert.That(ExportationRules.TrySeal(r, run, Source(r, replacementShip)), Is.True);
+        Assert.That(run.CargoSealId, Is.Not.EqualTo(firstSeal));
+        Assert.That(run.Attempt, Is.EqualTo(2));
+
+        Assert.That(ExportationRules.TryEmbark(r, run,
+            Source(r, replacementShip) with { IsAboard = true }), Is.True);
+        Assert.That(ExportationRules.TryDock(r, run, Recipient(r, replacementShip)), Is.True);
+        Assert.That(ExportationRules.TryDeliver(r, run,
+            Recipient(r, replacementShip), out var payout), Is.True);
+        Assert.That(payout.Quantity, Is.EqualTo(r.RewardQuantity));
+        Assert.That(ExportationRules.TryDeliver(r, run,
+            Recipient(r, replacementShip), out _), Is.False);
+    }
+
+    [Test]
     public void DeathAfterDockingStillLosesCargoButLaterShipSinkDoesNot()
     {
         var r = Route(); var ship = Guid.NewGuid(); var run = Packed(r, ship);
