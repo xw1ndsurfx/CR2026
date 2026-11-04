@@ -4,7 +4,7 @@ namespace Intersect.Framework.Core.Exportation;
 
 public enum CargoGroup { Materials, Fragile, Provisions }
 public enum DeliveryStage { Preparing, InTransit, Lost, Delivered, Abandoned }
-public enum CargoFailure { Death, ShipSunk }
+public enum CargoFailure { Death, ShipSunk, QuestAbandoned }
 
 public sealed class CargoLine
 {
