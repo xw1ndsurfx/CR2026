@@ -784,6 +784,9 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenLogiklikNewsCommand();
 
                 break;
+            case EventCommandType.OpenCraftingOrders:
+                tmpCommand = new OpenCraftingOrdersCommand();
+                break;
             case EventCommandType.OpenMarketplace:
                 tmpCommand = new OpenMarketplaceCommand();
 
@@ -890,6 +893,9 @@ public partial class FrmEvent : Form
             { Name = "openexportation", Tag = (int)EventCommandType.OpenExportation });
         fishingNode?.Nodes.Add(new TreeNode(Intersect.Editor.Localization.FishingEditorText.Get("Open Fishing"))
             { Name = "openfishing", Tag = (int)EventCommandType.OpenFishing });
+        var craftingOrdersNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        craftingOrdersNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.CraftingOrders.CraftingOrdersText.Get("Open Crafting Orders", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+            { Name = "opencraftingorders", Tag = (int)EventCommandType.OpenCraftingOrders });
         var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         contractsNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
             System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
@@ -1763,6 +1769,7 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenLogiklikNews:
                 break;
+            case EventCommandType.OpenCraftingOrders:
             case EventCommandType.OpenMarketplace:
                 break;
             case EventCommandType.OpenStable:
