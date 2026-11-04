@@ -887,6 +887,7 @@ public partial class Player : Entity
                 UpdateActivePet(timeMs);
                 UpdatePremiumStatus(timeMs);
                 Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
+                UpdateExportationSinking();
                 if(User!=null && timeMs-IncomingGiftAt>=5000)
                 {IncomingGiftAt=timeMs;try{Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.TryResumePending(this);}catch(Exception error){ApplicationContext.Context.Value?.Logger.LogError(error,"Pending shop delivery failed for {PlayerId}",Id);}}
 
@@ -1256,6 +1257,7 @@ public partial class Player : Entity
         EndFishing("Fishing interrupted.");
         Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
+        ExportationDied();
         if(Intersect.Server.Pvp.PvpRuntime.HandleDeath(this,killer))return;
         var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
 
