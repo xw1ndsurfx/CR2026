@@ -1242,6 +1242,15 @@ public static partial class CommandPrinter
         return "Open Marketplace";
     }
 
+    private static string GetCommandText(OpenCraftingOrdersCommand command, MapInstance map) =>
+        Intersect.Framework.Core.CraftingOrders.CraftingOrdersText.Get("Open Crafting Orders",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    // Keep the event editor usable when a newly introduced command has not yet
+    // received its own display overload. Specific overloads still take priority.
+    private static string GetCommandText(EventCommand command, MapInstance map) =>
+        command.Type.ToString();
+
     private static string GetCommandText(OpenBankCommand command, MapInstance map)
     {
         return Strings.EventCommandList.openbank;
