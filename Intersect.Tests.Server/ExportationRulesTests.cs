@@ -149,6 +149,23 @@ public sealed class ExportationRulesTests
     }
 
     [Test]
+    public void AbandonedQuestLosesSealAndAllowsOriginalMerchantRetry()
+    {
+        var route = Route();
+        var ship = Guid.NewGuid();
+        var run = Packed(route, ship);
+        Assert.That(ExportationRules.TrySeal(route, run, Source(route, ship)), Is.True);
+        Assert.That(ExportationRules.TryLose(run, CargoFailure.QuestAbandoned), Is.True);
+        Assert.That(run.Stage, Is.EqualTo(DeliveryStage.Lost));
+        Assert.That(run.LastFailure, Is.EqualTo(CargoFailure.QuestAbandoned));
+        Assert.That(run.CargoSealId, Is.EqualTo(Guid.Empty));
+        Assert.That(ExportationRules.TryDeliver(route, run, Recipient(route, ship), out _), Is.False);
+        Assert.That(ExportationRules.TryRestart(route, run, Source(route, ship)), Is.True);
+        Assert.That(run.Stage, Is.EqualTo(DeliveryStage.Preparing));
+        Assert.That(run.Attempt, Is.EqualTo(2));
+    }
+
+    [Test]
     public void DeathAfterDockingStillLosesCargoButLaterShipSinkDoesNot()
     {
         var r = Route(); var ship = Guid.NewGuid(); var run = Packed(r, ship);
