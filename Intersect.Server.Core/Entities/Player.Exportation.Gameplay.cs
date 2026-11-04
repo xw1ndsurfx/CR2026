@@ -139,13 +139,19 @@ public partial class Player
         ExportationRun run, ExportationActor actor)
     {
         var quest = QuestDescriptor.Get(route.QuestId);
-        if (quest is not { Tasks.Count: 1 } || !CanStartQuest(quest) ||
-            !ExportationRules.TrySeal(route, run, actor)) return;
+        if (quest is not { Tasks.Count: 1 }) return;
 
         var existing = FindQuest(quest.Id);
+        // After a loss the existing quest remains in the journal. Sealing a
+        // replacement cargo must reuse that quest, not try to start a duplicate.
+        var retry = run.Attempt > 1 && existing is { Completed: false } &&
+                    existing.TaskId == quest.Tasks[0].Id;
+        if ((!retry && !CanStartQuest(quest)) ||
+            !ExportationRules.TrySeal(route, run, actor)) return;
+
         var previous = existing is null ? (Guid.Empty, 0, false) :
             (existing.TaskId, existing.TaskProgress, existing.Completed);
-        StartQuest(quest);
+        if (!retry) StartQuest(quest);
         if (!SaveExportation(old, run))
         {
             if (existing is null) Quests.RemoveAll(q => q.QuestId == quest.Id);
