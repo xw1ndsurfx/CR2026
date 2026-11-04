@@ -20,6 +20,7 @@ internal sealed class CraftingOrdersWindow : Window
     private readonly TextBox _quantity;
     private readonly TextBox _hours;
     private readonly Base _postPanel;
+    private readonly Base _postOptions;
     private readonly Button _browseTab;
     private readonly Button _mineTab;
     private readonly Button _postTab;
@@ -60,6 +61,8 @@ internal sealed class CraftingOrdersWindow : Window
         _reward = Input(_postPanel, "Reward", "500", 498, 54, 110);
         LabelAt(_postPanel, "HoursLabel", T("Hours"), 621, 54, 83, 29, 11, Gold);
         _hours = Input(_postPanel, "Hours", "72", 705, 54, 97);
+        _postOptions = new Base(_postPanel, "PostOptions");
+        _postOptions.SetBounds(0, 100, 816, 310);
         SelectTab(0);
         Hide();
     }
@@ -114,8 +117,8 @@ internal sealed class CraftingOrdersWindow : Window
 
     private void Rebuild()
     {
-        _postPanel.SetHidden(_tab != 2);
-        _list.SetHidden(_tab == 2);
+        if (_tab == 2) { _postPanel.Show(); _list.Hide(); }
+        else { _postPanel.Hide(); _list.Show(); }
         if (_tab == 2) { RenderPost(); return; }
         _list.DeleteAll();
         var rows = _state.Orders.Where(order => _tab == 0
@@ -150,14 +153,13 @@ internal sealed class CraftingOrdersWindow : Window
     private void RenderPost()
     {
         // Preserve terms while rebuilding the list of eligible recipe outputs.
-        foreach (var child in _postPanel.Children.ToArray())
-            if (child.Name.StartsWith("Craftable_")) child.DelayedDelete();
+        _postOptions.DeleteAll();
         var y = 106;
         foreach (var itemId in _state.CraftableItemIds.Take(16))
         {
             var id = itemId;
-            Action(_postPanel, "Craftable_" + id.ToString("N"), ItemDescriptor.GetName(id),
-                12 + (y / 40 % 2) * 401, y / 80 * 0 + 104 + ((y - 106) / 80) * 46, 390, 37, () =>
+            Action(_postOptions, "Craftable_" + id.ToString("N"), ItemDescriptor.GetName(id),
+                12 + ((y - 106) / 40 % 2) * 401, ((y - 106) / 80) * 46, 390, 37, () =>
                 {
                     if (!int.TryParse(_quantity.Text, out var qty) ||
                         !int.TryParse(_reward.Text, out var reward) ||
