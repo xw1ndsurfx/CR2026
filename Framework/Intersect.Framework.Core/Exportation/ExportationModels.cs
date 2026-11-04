@@ -50,6 +50,8 @@ public sealed class ExportationRoute
 public sealed class ExportationConfiguration
 {
     public bool Enabled { get; set; } = true;
+    // Custom profession configured through the existing Profession Editor.
+    public Guid ProfessionId { get; set; }
     public ExportationRoute[] Routes { get; set; } = [];
     public bool IsValid => Routes is { Length: <= 128 } &&
         Routes.All(route => route is { IsValid: true }) &&
