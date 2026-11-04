@@ -2,6 +2,7 @@ using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.Exportation;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.GameObjects;
 using Intersect.Framework.Core.Naval;
 using Intersect.Server.Achievements;
 using Intersect.Server.Database.PlayerData;
