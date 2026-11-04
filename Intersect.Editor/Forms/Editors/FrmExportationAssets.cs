@@ -12,7 +12,7 @@ public sealed class FrmExportationAssets : Form
 {
     private readonly ListBox _files = new() { Dock = DockStyle.Fill, IntegralHeight = false };
     private readonly PictureBox _image = new() { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom,
-        BackColor = Color.FromArgb(31, 30, 24) };
+        BackColor = System.Drawing.Color.FromArgb(31, 30, 24) };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 48,
         Padding = new Padding(12), AutoEllipsis = true };
     private readonly Button _play = new() { AutoSize = true };
