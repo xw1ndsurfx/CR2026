@@ -97,8 +97,8 @@ public partial class Player
         SendPacket(new ExportationStatePacket
         {
             Open = open,
-            RouteJson = JsonSerializer.Serialize(route),
-            RunJson = JsonSerializer.Serialize(run),
+            RouteJson = System.Text.Json.JsonSerializer.Serialize(route),
+            RunJson = System.Text.Json.JsonSerializer.Serialize(run),
             MerchantName = EventDescriptor.Get(route.SourceNpcId)?.Name ?? route.Name,
             RecipientName = EventDescriptor.Get(route.RecipientNpcId)?.Name ?? route.Name,
             SourceMapName = MapDescriptor.Get(route.SourceMapId)?.Name ?? "",
