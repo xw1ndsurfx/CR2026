@@ -3,7 +3,7 @@ using Intersect.Core;
 using Intersect.Framework.Core.Exportation;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
-using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.Professions;
 using Intersect.GameObjects;
 using Intersect.Server.Professions;
@@ -95,15 +95,16 @@ internal static class ExportationRuntime
 
         foreach (var route in config.Routes)
         {
-            if (NPCDescriptor.Get(route.SourceNpcId) is not { IsPet: false } ||
-                NPCDescriptor.Get(route.RecipientNpcId) is not { IsPet: false } ||
+            if (EventDescriptor.Get(route.SourceNpcId) is not { CommonEvent: false } source ||
+                EventDescriptor.Get(route.RecipientNpcId) is not { CommonEvent: false } recipient ||
+                source.MapId != route.SourceMapId || recipient.MapId != route.RecipientMapId ||
                 MapDescriptor.Get(route.SourceMapId) == null ||
                 MapDescriptor.Get(route.RecipientMapId) == null ||
-                QuestDescriptor.Get(route.QuestId) is not { Tasks.Count: > 0 } ||
+                QuestDescriptor.Get(route.QuestId) is not { Tasks.Count: 1 } ||
                 route.Lines.Any(line => ItemDescriptor.Get(line.ItemId) == null) ||
                 (route.RewardQuantity > 0 &&
                     ItemDescriptor.Get(route.RewardItemId) is not { IsStackable: true, MaxInventoryStack: > 0 }))
-                throw new InvalidDataException("Exportation route references an invalid NPC, island, quest or item.");
+                throw new InvalidDataException("Exportation route references an invalid Event, island, single-task quest or item.");
         }
 
         return config;
