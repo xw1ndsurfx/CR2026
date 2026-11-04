@@ -24,6 +24,8 @@ public partial class FrmMain
     internal void ApplyExportationConfiguration(ExportationStatePacket packet)
     {
         if (!packet.Editor) return;
+        if (!string.IsNullOrWhiteSpace(packet.ConfigurationJson))
+            Intersect.Editor.Forms.Editors.Events.ExportationEditorState.Accept(packet.ConfigurationJson);
         if (packet.Open && packet.ConfigurationJson.Length > 0)
         {
             if (_exportationRoutes is not { IsDisposed: false })
