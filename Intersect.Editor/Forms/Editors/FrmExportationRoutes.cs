@@ -35,7 +35,7 @@ public sealed class FrmExportationRoutes : Form
             if (_dirty && MessageBox.Show(this, T("Discard the local draft?"), Text,
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             _dirty = false;
-            Network.SendPacket(new ExportationRequestPacket { Action = ExportationAction.GetConfiguration });
+            Intersect.Editor.Networking.Network.SendPacket(new ExportationRequestPacket { Action = ExportationAction.GetConfiguration });
         };
         buttons.Controls.Add(_apply); buttons.Controls.Add(reload);
         Controls.Add(_json); Controls.Add(buttons); Controls.Add(_status);
@@ -77,7 +77,7 @@ public sealed class FrmExportationRoutes : Form
             _status.Text = T("Invalid route JSON. Nothing was saved."); return;
         }
         _pending = true; _apply.Enabled = false; _timeout.Start();
-        Network.SendPacket(new ExportationRequestPacket
+        Intersect.Editor.Networking.Network.SendPacket(new ExportationRequestPacket
         {
             Action = ExportationAction.SaveConfiguration,
             ConfigurationJson = _json.Text,
