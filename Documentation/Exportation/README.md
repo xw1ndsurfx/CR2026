@@ -1,38 +1,63 @@
-# Exportation — integration stage
+# Corps Royaux — Exportation
 
-**Status: draft, NOT PLAYABLE yet.** This branch is a foundation, not a released feature.
+## État de l'intégration
 
-## Implemented in code
+**PR #228 en brouillon. Le parcours complet est codé, mais non compilé ni testé en conditions réelles. Ne pas merger dans main avant vérification.**
 
-- `ExportationRoute` and `ExportationConfiguration` define distinct source/destination maps, two NPCs, an authored quest, required profession level, per-good quantities and rewards.
-- `ExportationRules` guards packing, unique cargo seals, matching boat ID at embark and docking, one-time delivery, loss on death or sinking, and a retry at the original merchant.
-- `ExportationWindow` uses the **approved** pixel-art background and individual sprite files. It draws the requested goods, packed quantities, crate contents, route summary, level and progress. Current controls are **click-to-pack** and click-to-remove; drag/drop is still pending. Its callbacks intentionally await authoritative server changes, with no client-side award.
-- `ExportationAudio` plays one-shot WAV cues for pack/remove, complete order, seal, loss, delivery, open and close.
-- `FrmExportationAssets` is accessible via Mini-Game Editors / Editor Hub: previews all 13 PNGs, plays all 10 WAVs and clearly marks itself preview-only.
-- EN/FR/ES entries in the existing GameTextCatalog pattern.
-- `Shared/ExportationAssets.props` is imported by client and editor projects to copy PNGs and WAVs into both build and publish outputs.
-- NUnit rules tests were added, but not run in the current environment.
+### Fonctionnalités ajoutées au code
 
-## Install approved assets in the repository
+- Routes enregistrées côté serveur dans `resources/exportation.json`. Chaque route référence deux personnages **EventDescriptor**, deux maps d'îles distinctes, une **quête existante à une seule tâche**, les marchandises (identifiants, catégories, quantités), une profession personnalisée (`ProfessionId`), une récompense en objet monétaire empilable et de l'XP.
+- Commande d'événement **Open Exportation**, accessible dans l'éditeur d'événements. La même route est liée au marchand de départ et au destinataire, chacun sur sa carte.
+- Le serveur autorise les commandes grâce à un événement réel, un identifiant de cargaison, une position, une session et une séquence. Les objets sont fournis *virtuellement* par le marchand : les autres objets de l'inventaire du joueur ne sont pas consommés.
+- Au scellement, l'instance de cargaison est liée au bateau sélectionné et la quête existante démarre. La sauvegarde de la cargaison utilise une extension JSON persistée dans la colonne de flotte navale de la sauvegarde du personnage, avec les autres états du compte.
+- L'embarquement, la traversée et le débarquement doivent être confirmés par le système naval natif. Un voyage par téléportation seul ne satisfait pas l'objectif.
+- Livraison au bon personnage : la récompense et l'XP du métier sont inscrites avec la conclusion de la quête; une répétition du même scellement est refusée, avec tentative de restauration en cas de sauvegarde échouée.
+- Mort ou naufrage du bateau lié à la commande : cargaison perdue, retour au marchand pour refaire les caisses sans XP. Un abandon de la quête est aussi réconcilié, pour éviter de bloquer le joueur.
+- Interface client avec les GFX approuvés, affichage dynamique des commandes et des récompenses, boutons **Préparer / Sceller / Livrer**, dix bruitages originaux, textes FR/EN/ES. **Le remplissage fonctionne par clic, pas encore par glisser-déposer.**
+- Le hub de l'éditeur inclut un aperçu des GFX/sons et un éditeur de routes **JSON** soumis à la validation du serveur.
 
-Download `Corps_Royaux_Exportation_GFX_Sons.zip` from the ChatGPT attachment and run from the repository root:
+### Comment préparer une route de test
+
+1. Dans l'éditeur des métiers, crée un métier personnalisé « Exportation », note son GUID, et fais-le apprendre au personnage (par exemple commande `Modify Profession → Learn` dans l'événement du marchand avant `Open Exportation`).
+2. Place deux événements de personnages sur deux cartes d'îles distinctes et note les **ID des événements** (ce ne sont pas les identifiants des monstres ou des PNJ de combat).
+3. Crée une quête standard comprenant **exactement une tâche** qui reste active jusqu'à la remise de la cargaison. Évite que d'autres événements la complètent automatiquement. N'ajoute pas de récompenses dupliquées dans les événements de quête : le métier Exportation crédite déjà ses propres récompenses.
+4. Vérifie qu'un bateau appartenant au joueur peut être lancé au port de départ et amarré au port de destination.
+5. Dans **Mini-Game Editors → Exportation route editor**, configure `Enabled: true`, `ProfessionId`, puis une route avec `Id`, `SourceNpcId`, `RecipientNpcId`, `SourceMapId`, `RecipientMapId`, `QuestId`, `MinimumProfessionLevel`, `Lines`, `RewardItemId`, `RewardQuantity`, `ExperienceReward`.
+6. Dans `Lines`, les champs sont `ItemId`, `Group` (`Materials`, `Fragile` ou `Provisions`), `Quantity` et `Sprite` optionnel (`planches`, `lingots_fer`, `potion_rouge`, `tissu`, `pommes`). Choisis le véritable `ItemId` des Aureons comme `RewardItemId` pour cette monnaie.
+7. Ajoute **Open Exportation** dans l'événement de chaque personnage, sélectionne la **même** route et applique la configuration.
+8. Teste le cycle : préparer → sceller → vérifier le journal de quêtes → embarquer sur le bon bateau → traverser → accoster → remettre la commande → constater les Aureons et l'XP.
+
+### Installer les ressources
+
+Les **23 fichiers binaires** (13 images + 10 WAV) sont distribués dans le ZIP de cette conversation; ils **ne sont pas encore committés** dans la PR. La copie lors du build et du publish est configurée dans `Shared/ExportationAssets.props`.
+
+Depuis la racine du dépôt, avec `Corps_Royaux_Exportation_Ressources_Pretes.zip` téléchargé :
 
 ```sh
-python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royaux_Exportation_GFX_Sons.zip" --check
-python scripts/exportation/install_assets.py "C:/Users/you/Downloads/Corps_Royaux_Exportation_GFX_Sons.zip"
+python scripts/exportation/install_assets.py "C:/Downloads/Corps_Royaux_Exportation_Ressources_Pretes.zip" --check
+python scripts/exportation/install_assets.py "C:/Downloads/Corps_Royaux_Exportation_Ressources_Pretes.zip"
 ```
 
-The installer accepts either the original concept ZIP or the install-ready ZIP. It is standard-library-only, reads 23 explicitly allowlisted ZIP entries, verifies SHA-256 and asset types/dimensions, refuses bad packs, and writes only to:
-- `resources/gui/exportation/background.png`
-- `resources/gui/exportation/sprites/*.png`
-- `resources/sounds/exportation/*.wav`
+L'installateur vérifie SHA-256, dimensions des PNG et format audio avant d'écrire dans `resources/gui/exportation/` et `resources/sounds/exportation/`. Pour des builds Steam/CI reproductibles, ajoute ces fichiers au dépôt ou provisionne le ZIP via un pipeline contrôlé.
 
-The GitHub connector cannot directly upload binary files from the ChatGPT filesystem in this session, so the **23 binary assets are not yet part of the PR**. Build/publish includes them once installed in a local checkout; to make CI/public builds reproducible they must be checked in to Git or distributed through an approved asset channel.
+### Vérifications obligatoires avant fusion
 
-## Outstanding, do not merge as playable
+Dans un environnement avec le SDK .NET 8 et les dépendances du projet :
 
-- Wire event-command open, server-authoritative packets, session/replay protection, and persisted player `ExportationRun` state.
-- Link source merchant to quest activation on sealing; recipient to completion; revoke/restart on failure. Transactional state + economy + XP persistence and proper rollback are necessary.
-- Hook verified naval embark/dock and death/sinking notifications; prevent teleport shortcuts.
-- Add the actual Exportation profession XP store and route configuration editor (current editor only previews resources).
-- Finish drag-and-drop and gameplay integration tests; run a real .NET 8 client/editor/server build and test suite.
+```sh
+dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release
+dotnet build Intersect.Client/Intersect.Client.csproj -c Release
+# Sur Windows :
+dotnet build Intersect.Editor/Intersect.Editor.csproj -c Release
+```
+
+Puis effectuer des tests en jeu client + serveur + base de données : quête réelle, XP, inventaire plein, perte sur mort et naufrage, mauvais bateau, déconnexion/reconnexion, redémarrage du serveur, abandon de quête, double livraison et sauvegarde échouée.
+
+**Aucun résultat de compilation ou de tests .NET n'a été obtenu dans cet environnement; cette PR reste donc en brouillon.**
+
+### Limites connues
+
+- Aucun glisser-déposer (clic pour mettre/retirer des objets).
+- Choix automatique d'un bateau utilisable lors du scellement; une sélection manuelle serait préférable si le joueur possède plusieurs bateaux.
+- Éditeur de routes encore en JSON, pas en interface à champs guidés.
+- Les cas spéciaux de récompenses de la quête et d'événements de niveau de métier doivent être validés lors des tests d'intégration; éviter les paiements supplémentaires configurés dans la quête.
