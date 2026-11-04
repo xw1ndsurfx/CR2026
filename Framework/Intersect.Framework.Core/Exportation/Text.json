@@ -844,6 +844,21 @@
       "en": "Provisions",
       "fr": "Provisions",
       "es": "Provisiones"
+    },
+    "MERCHANT": {
+      "en": "MERCHANT",
+      "fr": "MARCHAND",
+      "es": "COMERCIANTE"
+    },
+    "DESTINATION": {
+      "en": "DESTINATION",
+      "fr": "DESTINATION",
+      "es": "DESTINO"
+    },
+    "REQUESTED GOODS": {
+      "en": "REQUESTED GOODS",
+      "fr": "MARCHANDISES DEMANDÉES",
+      "es": "MERCANCÍAS SOLICITADAS"
     }
   }
 }
