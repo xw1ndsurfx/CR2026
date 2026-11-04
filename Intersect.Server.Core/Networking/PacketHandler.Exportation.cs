@@ -38,7 +38,8 @@ internal sealed partial class PacketHandler
         // A game client must never read or publish editor configuration.
         if (packet.Action is ExportationAction.GetConfiguration or ExportationAction.SaveConfiguration) return;
 
-        // The server-owned gameplay request handler will be wired separately,
-        // after the player order / quest persistence is implemented.
+        if (packet.ConfigurationJson.Length != 0) return;
+        if (client.Entity is { InGame: true } player)
+            player.HandleExportationRequest(packet);
     }
 }
