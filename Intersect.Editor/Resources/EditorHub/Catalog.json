@@ -22,7 +22,7 @@
     }
   },
   {
-    "id": "miniGame.ExportationRoutes",
+    "id": "miniGame.Exportation",
     "oldMenu": "miniGameEditorsToolStripMenuItem",
     "category": "MiniGames",
     "subcategory": "MiniGameSettings",
@@ -31,38 +31,16 @@
       "Economy"
     ],
     "art": "navalSystemEditor.png",
-    "keywords": "exportation export exportación livraison delivery naval boat merchant marchand route cargo commerce trading",
+    "keywords": "exportation editor export exportación maritime route livraison delivery boat port cargo caisse marchandise métier profession exp graphismes sons",
     "title": {
-      "en": "Exportation Routes",
-      "fr": "Routes d’exportation",
-      "es": "Rutas de exportación"
+      "en": "Exportation Editor",
+      "fr": "Exportation Editor",
+      "es": "Editor de Exportación"
     },
     "description": {
-      "en": "Configure merchant orders, island destinations, cargo rules, quests, and rewards.",
-      "fr": "Configurez les commandes, les destinations, les cargaisons, les quêtes et les récompenses.",
-      "es": "Configura pedidos, islas de destino, cargas, misiones y recompensas."
-    }
-  },
-  {
-    "id": "miniGame.ExportationAssets",
-    "oldMenu": "miniGameEditorsToolStripMenuItem",
-    "category": "MiniGames",
-    "subcategory": "MiniGameSettings",
-    "tags": [
-      "Interface",
-      "Advanced"
-    ],
-    "art": "soundImportEditorToolStripMenuItem.png",
-    "keywords": "exportation export graphics graphismes sonidos sounds sons sprite pixel assets preview apercu vista previa",
-    "title": {
-      "en": "Exportation Graphics & Sounds",
-      "fr": "Graphismes et sons d’exportation",
-      "es": "Gráficos y sonidos de exportación"
-    },
-    "description": {
-      "en": "Preview the Exportation interface, cargo sprites, and sound effects.",
-      "fr": "Prévisualisez l’interface, les sprites et les effets sonores d’exportation.",
-      "es": "Previsualiza la interfaz, los sprites y los efectos de sonido de exportación."
+      "en": "Create delivery routes, pack merchant orders, set profession EXP, and manage graphics and sounds in one editor.",
+      "fr": "Créez des routes de livraison, configurez les marchandises et l’EXP du métier, ainsi que les graphismes et les sons.",
+      "es": "Crea rutas, configura pedidos y EXP del oficio, y administra gráficos y sonidos en un único editor."
     }
   },
   {

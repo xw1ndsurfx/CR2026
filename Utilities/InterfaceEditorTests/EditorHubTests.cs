@@ -8,6 +8,7 @@ using Intersect.Editor.Forms.Styling;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Framework.Core.Fishing;
+using Intersect.Framework.Core.Exportation;
 using Intersect.Localization;
 using Intersect.Network.Packets.Server;
 
@@ -17,7 +18,8 @@ internal static class EditorHubTests
     private static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
     internal static void Run()
     {
-        TestPreferences(); TestRegistry(); TestLocalizationAndArt(); TestFishingMenuRegistration(); TestIntegratedWorkspace();
+        TestPreferences(); TestRegistry(); TestLocalizationAndArt(); TestFishingMenuRegistration();
+        TestUnifiedExportationEditor(); TestIntegratedWorkspace();
         Console.WriteLine("PASS Editor Hub: exhaustive live-menu coverage, original command dispatch, live additions, trilingual/accent search, fishing startup and opening, filters, preferences, real recents, disposal, embedded artwork, keyboard and four responsive sizes");
     }
     private static void TestPreferences()
@@ -96,6 +98,34 @@ internal static class EditorHubTests
                 Check(!string.IsNullOrWhiteSpace(pair.Value[language]) && GameTextTokens.Compatible(pair.Value["en"], pair.Value[language]), "Hub labels have compatible translations: " + pair.Key);
         Check(art.Get("banner.png") is { Width: 720 }, "The banner is packaged with the application.");
     }
+    private static void TestUnifiedExportationEditor()
+    {
+        Check(HubRegistry.Definitions.Count(d => d.Id == "miniGame.Exportation") == 1 &&
+              HubRegistry.Definitions.All(d =>
+                  d.Id is not ("miniGame.ExportationRoutes" or "miniGame.ExportationAssets")),
+            "Exportation has one catalog card for both route and GFX/SFX tools.");
+        using var editor = new FrmExportationEditor(new ExportationConfiguration { Enabled = false }.ToJson())
+        {
+            ShowInTaskbar = false, StartPosition = FormStartPosition.Manual,
+            Location = new Point(-20000, -20000),
+        };
+        editor.Show(); Application.DoEvents();
+        var tabs = Descendants(editor).OfType<TabControl>()
+            .Single(t => t.Name == "ExportationTabs");
+        Check(tabs.TabPages.Count == 5 && tabs.TabPages.Cast<TabPage>()
+              .Any(page => page.Controls.OfType<ExportationAssetsPanel>().Any()),
+            "One real Exportation editor contains settings, goods, profession EXP, assets, and preview.");
+        var create = Descendants(editor).OfType<Button>().Single(b => b.Name == "ExportationNew");
+        create.PerformClick();
+        var routes = Descendants(editor).OfType<ListBox>().Single(b => b.Name == "ExportationRoutes");
+        var name = Descendants(editor).OfType<TextBox>().Single(b => b.Name == "ExportationRouteName");
+        Check(routes.Items.Count == 1 && !string.IsNullOrWhiteSpace(name.Text),
+            "A new Exportation route is editable with named fields instead of raw JSON.");
+        name.Text = "Test maritime";
+        Check(routes.Items.Count == 1 && routes.Items[0]!.ToString() == "Test maritime",
+            "Editing the route name updates the visible route list.");
+    }
+
     private static void TestFishingMenuRegistration()
     {
         using var main = new FrmMain();

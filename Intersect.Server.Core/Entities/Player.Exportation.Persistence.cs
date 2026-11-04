@@ -94,6 +94,14 @@ public partial class Player
 
     private void ExportationState(ExportationRoute route, ExportationRun run, bool open = false)
     {
+        var profession = ProfessionConfigurationRuntime.Current.Find(ExportationRuntime.Current.ProfessionId);
+        var professionExperience = profession is null ? 0L :
+            ProfessionRuntime.GetExperience(this, profession.Id);
+        var professionLevel = profession is null ? 0 : profession.LevelForExperience(professionExperience);
+        var maxLevel = profession is not null && professionLevel >= profession.MaximumLevel;
+        var needed = profession is null || maxLevel ? 0L : Math.Max(1L, profession.ExperienceForNextLevel(professionLevel));
+        var into = profession is null || maxLevel ? 0L :
+            Math.Clamp(professionExperience - profession.ExperienceToReachLevel(professionLevel), 0L, needed);
         SendPacket(new ExportationStatePacket
         {
             Open = open,
@@ -104,7 +112,10 @@ public partial class Player
             SourceMapName = MapDescriptor.Get(route.SourceMapId)?.Name ?? "",
             DestinationMapName = MapDescriptor.Get(route.RecipientMapId)?.Name ?? "",
             HasUsableBoat = ExportationBoat() is not null,
-            ProfessionLevel = ProfessionRuntime.GetLevel(this, ExportationRuntime.Current.ProfessionId),
+            ProfessionLevel = professionLevel,
+            ProfessionExperienceInLevel = into,
+            ProfessionExperienceRequired = needed,
+            ProfessionMaximumLevel = maxLevel,
         });
     }
 }

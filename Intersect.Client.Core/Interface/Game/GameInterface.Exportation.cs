@@ -40,7 +40,8 @@ public partial class GameInterface
             if (!packet.Open && _exportationWindow == null) return;
             ShowExportation(route, run, packet.MerchantName, packet.RecipientName,
                 packet.SourceMapName, packet.DestinationMapName, packet.HasUsableBoat,
-                packet.ProfessionLevel,
+                packet.ProfessionLevel, packet.ProfessionExperienceInLevel,
+                packet.ProfessionExperienceRequired, packet.ProfessionMaximumLevel,
                 (item, group, delta) => SendExportation(ExportationAction.Pack, item, group, delta),
                 () => SendExportation(ExportationAction.Seal),
                 () => SendExportation(ExportationAction.Deliver),
@@ -72,7 +73,8 @@ public partial class GameInterface
 
     private void ShowExportation(ExportationRoute route, ExportationRun run,
         string merchantName, string recipientName, string sourceMapName, string destinationMapName,
-        bool hasUsableBoat, int level, Action<Guid, CargoGroup, int> onPack,
+        bool hasUsableBoat, int level, long expInto, long expRequired, bool maxLevel,
+        Action<Guid, CargoGroup, int> onPack,
         Action onSeal, Action onDeliver, Action onRestart)
     {
         if (_exportationWindow == null)
@@ -82,7 +84,7 @@ public partial class GameInterface
             GameMenu?.HideWindows();
         }
         _exportationWindow.Apply(route, run, merchantName, recipientName,
-            sourceMapName, destinationMapName, hasUsableBoat, level);
+            sourceMapName, destinationMapName, hasUsableBoat, level, expInto, expRequired, maxLevel);
     }
 
     private void UpdateExportation()
