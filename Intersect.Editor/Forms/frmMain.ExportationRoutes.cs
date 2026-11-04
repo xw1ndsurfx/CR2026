@@ -17,7 +17,7 @@ public partial class FrmMain
             System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
             { Name = "miniGame.ExportationRoutes" };
         entry.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(
-            new ExportationRequestPacket { Action = ExportationAction.GetConfiguration });
+            new ExportationRequestPacket { Action = ExportationAction.GetConfiguration, OpenEditor = true });
         menu.DropDownItems.Add(entry);
     }
 
