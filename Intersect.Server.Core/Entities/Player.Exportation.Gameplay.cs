@@ -46,6 +46,29 @@ public partial class Player
                 ExportationNotice("Finish your current Exportation delivery first.");
                 return;
             }
+            // An abandoned or externally completed quest cannot be delivered:
+            // reconcile the sealed cargo with the authoritative quest journal.
+            // Without this recovery the merchant would refuse the player forever.
+            if (run is { Stage: DeliveryStage.InTransit } &&
+                FindQuest(route.QuestId)?.TaskId != quest.Tasks[0].Id)
+            {
+                var recovered = JsonConvert.DeserializeObject<ExportationRun>(
+                    JsonConvert.SerializeObject(run))!;
+                if (ExportationRules.TryLose(recovered, CargoFailure.QuestAbandoned))
+                {
+                    if (!SaveExportation(run, recovered))
+                    {
+                        ExportationNotice("Exportation could not be saved.");
+                        return;
+                    }
+                    run = recovered;
+                    if (recipientNpc)
+                    {
+                        ExportationNotice("Return to the original merchant");
+                        return;
+                    }
+                }
+            }
             if (run is null)
             {
                 if (!sourceNpc || !CanStartQuest(quest) ||
