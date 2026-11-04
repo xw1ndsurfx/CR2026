@@ -1,4 +1,5 @@
 using System.Globalization;
+using Intersect.Client.General;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Graphics;
@@ -31,6 +32,8 @@ internal sealed class ExportationWindow : Base
     private readonly Canvas _canvas;
     private readonly Action<Guid, CargoGroup, int> _packRequested;
     private readonly Action _sealRequested;
+    private readonly Action _deliverRequested;
+    private readonly Action _restartRequested;
     private readonly ExportationAudio _audio = new();
     private readonly Dictionary<string, IGameTexture?> _textures = new(StringComparer.Ordinal);
     private readonly List<(Base Control, int X, int Y, int Width, int Height, int Font)> _placements = [];
@@ -57,11 +60,13 @@ internal sealed class ExportationWindow : Base
         string.Format(CultureInfo.CurrentCulture, T(source), args);
 
     internal ExportationWindow(Canvas canvas, Action<Guid, CargoGroup, int> packRequested,
-        Action sealRequested) : base(canvas, nameof(ExportationWindow))
+        Action sealRequested, Action deliverRequested, Action restartRequested) : base(canvas, nameof(ExportationWindow))
     {
         _canvas = canvas;
         _packRequested = packRequested;
         _sealRequested = sealRequested;
+        _deliverRequested = deliverRequested;
+        _restartRequested = restartRequested;
         MouseInputEnabled = KeyboardInputEnabled = true;
         ShouldDrawBackground = false;
         Interface.InputBlockingComponents.Add(this);
@@ -178,7 +183,8 @@ internal sealed class ExportationWindow : Base
         _destinationMap.Text = ClientLanguages.ContentText(_destinationMapName);
         _boat.Text = T(_boatReady ? "Boat ready" : "Boat required");
         _boat.TextColorOverride = _boatReady ? Green : new Color(255, 255, 155, 138);
-        _reward.Text = route.RewardQuantity > 0 ? F("{0:N0} Aureons", route.RewardQuantity) : "";
+        _reward.Text = route.RewardQuantity > 0 ?
+            $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : "";
         _experience.Text = F("+{0:N0} Exportation XP", route.ExperienceReward);
         var total = route.Lines.Sum(line => line.Quantity);
         var packed = route.Lines.Sum(line => ExportationRules.Packed(run, line.ItemId));
@@ -192,10 +198,22 @@ internal sealed class ExportationWindow : Base
             _ => "Cargo preparation",
         });
         _warning.Text = T("Death or sinking destroys the cargo");
-        _seal.Text = T("SEAL THE CARGO");
-        _seal.IsDisabled = run.Stage != DeliveryStage.Preparing ||
-            !_boatReady || !ExportationRules.ReadyToSeal(route, run);
-        _seal.IsHidden = run.Stage != DeliveryStage.Preparing;
+        var onRecipientIsland = Globals.Me?.MapId == route.RecipientMapId;
+        var onSourceIsland = Globals.Me?.MapId == route.SourceMapId;
+        _seal.Text = T(run.Stage switch
+        {
+            DeliveryStage.InTransit => "DELIVER CARGO",
+            DeliveryStage.Lost => "PREPARE CARGO AGAIN",
+            _ => "SEAL THE CARGO",
+        });
+        _seal.IsHidden = run.Stage is DeliveryStage.Delivered or DeliveryStage.Abandoned;
+        _seal.IsDisabled = run.Stage switch
+        {
+            DeliveryStage.Preparing => !_boatReady || !ExportationRules.ReadyToSeal(route, run),
+            DeliveryStage.InTransit => !onRecipientIsland || !run.ArrivedByShip,
+            DeliveryStage.Lost => !onSourceIsland || !_boatReady,
+            _ => true,
+        };
         _orderPage = Math.Min(_orderPage, Math.Max(0, (route.Lines.Length - 1) / OrderSize));
         _goodsPage = Math.Min(_goodsPage, Math.Max(0, (route.Lines.Length - 1) / ShelfSize));
         _previousOrder.IsDisabled = _orderPage == 0;
@@ -238,10 +256,19 @@ internal sealed class ExportationWindow : Base
 
     private void RequestSeal()
     {
-        if (_route is not { } r || _run is not { } s ||
-            !_boatReady || s.Stage != DeliveryStage.Preparing ||
-            !ExportationRules.ReadyToSeal(r, s)) return;
-        _sealRequested();
+        if (_route is not { } r || _run is not { } s || _seal.IsDisabled) return;
+        switch (s.Stage)
+        {
+            case DeliveryStage.Preparing when _boatReady && ExportationRules.ReadyToSeal(r, s):
+                _sealRequested();
+                break;
+            case DeliveryStage.InTransit when s.ArrivedByShip && Globals.Me?.MapId == r.RecipientMapId:
+                _deliverRequested();
+                break;
+            case DeliveryStage.Lost when _boatReady && Globals.Me?.MapId == r.SourceMapId:
+                _restartRequested();
+                break;
+        }
     }
     private void ChangeGoodsPage(int direction) { _goodsPage = Math.Max(0, _goodsPage + direction); }
     private void ChangeOrderPage(int direction) { _orderPage = Math.Max(0, _orderPage + direction); }
