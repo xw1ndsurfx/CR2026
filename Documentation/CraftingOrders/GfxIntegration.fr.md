@@ -5,9 +5,7 @@ par `Open Crafting Orders` dans l'Event Editor.
 
 ## Déploiement des images
 
-Le pack `crafting-orders-gfx-pack.zip` généré séparément contient les PNG
-extraits des deux planches conceptuelles. Extraire l'archive **à la racine du dépôt**
-afin d'obtenir les fichiers sous :
+Les **trois icônes utilisées par le panneau** (`icon-tools.png`, `icon-scroll.png`, `icon-aureons.png`) sont commitées directement dans le dépôt, en version optimisée pour les petites dimensions UI. Le pack complet `crafting-orders-gfx-pack.zip` contient dix icônes supplémentaires optionnelles que l'on peut extraire à la racine du dépôt pour de futurs panneaux :
 
 ```text
 resources/gui/crafting-orders/
@@ -26,7 +24,7 @@ resources/gui/crafting-orders/
   icon-package.png
 ```
 
-Puis ajouter les PNG au commit de cette branche avant le merge. Le client charge
+Le client charge
 ces textures depuis `TextureType.Gui` et `Shared/CraftingOrdersAssets.props`
 les copie dans les sorties Windows/publish.
 
