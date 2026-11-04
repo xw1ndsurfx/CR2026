@@ -41,12 +41,14 @@ internal sealed class ExportationWindow : Base
     private readonly Label[] _shelfLabels = new Label[ShelfSize];
     private readonly Button[] _shelfButtons = new Button[ShelfSize];
     private readonly Label _merchant, _recipient, _routeName, _boat, _reward, _experience;
-    private readonly Label _level, _progress, _warning, _sourceMap, _destinationMap, _status, _shelfPageLabel, _orderPageLabel;
+    private readonly Label _level, _professionXp, _progress, _warning, _sourceMap, _destinationMap, _status, _shelfPageLabel, _orderPageLabel;
     private readonly Button _seal, _nextGoods, _previousGoods, _nextOrder, _previousOrder;
     private readonly List<(Base Control, string Source)> _translated = [];
     private ExportationRoute? _route;
     private ExportationRun? _run;
     private int _goodsPage, _orderPage, _professionLevel = 1;
+    private long _experienceInLevel, _experienceRequired;
+    private bool _maximumLevel;
     private string _merchantName = "", _recipientName = "", _sourceMapName = "", _destinationMapName = "";
     private string _language = "";
     private bool _boatReady, _destroyed;
@@ -74,6 +76,7 @@ internal sealed class ExportationWindow : Base
         Title("Title", "Exportation", 582, 54, 575, 65, 42);
         Title("Subtitle", "Cargo preparation", 613, 111, 470, 40, 25);
         _level = Title("Profession", "Level {0}", 1247, 80, 169, 34, 21);
+        _professionXp = Title("ProfessionXp", "", 1245, 113, 260, 32, 15);
         Title("OrderTitle", "ORDER SLIP", 144, 193, 323, 47, 28, dark: true);
         Title("CrateTitle", "PACK THE CRATES", 549, 193, 494, 43, 28);
         Title("DeliveryTitle", "DELIVERY", 1144, 193, 331, 48, 27);
@@ -124,7 +127,7 @@ internal sealed class ExportationWindow : Base
 
     internal void Apply(ExportationRoute route, ExportationRun run,
         string merchant, string recipient, string sourceMap, string destinationMap,
-        bool boatReady, int professionLevel)
+        bool boatReady, int professionLevel, long expInto, long expRequired, bool maxLevel)
     {
         if (route is not { IsValid: true } || run.RouteId != route.Id)
             return;
@@ -138,6 +141,9 @@ internal sealed class ExportationWindow : Base
         _destinationMapName = destinationMap;
         _boatReady = boatReady;
         _professionLevel = Math.Max(1, professionLevel);
+        _experienceInLevel = expInto;
+        _experienceRequired = expRequired;
+        _maximumLevel = maxLevel;
 
         if (priorStage.HasValue && priorStage != run.Stage)
         {
@@ -176,6 +182,8 @@ internal sealed class ExportationWindow : Base
     {
         if (_route is not { } route || _run is not { } run) return;
         _level.Text = F("Level {0}", _professionLevel);
+        _professionXp.Text = _maximumLevel ? T("MAX LEVEL") :
+            F("XP: {0:N0} / {1:N0}", _experienceInLevel, _experienceRequired);
         _merchant.Text = ClientLanguages.ContentText(_merchantName);
         _recipient.Text = F("Recipient: {0}", ClientLanguages.ContentText(_recipientName));
         _routeName.Text = ClientLanguages.ContentText(route.Name);

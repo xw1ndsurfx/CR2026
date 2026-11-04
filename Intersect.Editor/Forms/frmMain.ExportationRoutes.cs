@@ -7,17 +7,31 @@ namespace Intersect.Editor.Forms;
 
 public partial class FrmMain
 {
-    private FrmExportationRoutes? _exportationRoutes;
+    private FrmExportationEditor? _exportationEditor;
+    private bool _exportationEditorRequested;
 
-    private void AddExportationRoutesMenu()
+    private void AddExportationEditorMenu()
     {
         var menu = GetOrCreateMiniGameEditorsMenu();
-        if (menu.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "miniGame.ExportationRoutes")) return;
-        var entry = new ToolStripMenuItem(ExportationText.Get("Exportation route editor",
-            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
-            { Name = "miniGame.ExportationRoutes" };
-        entry.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(
-            new ExportationRequestPacket { Action = ExportationAction.GetConfiguration, OpenEditor = true });
+        if (menu.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "miniGame.Exportation")) return;
+        var entry = new ToolStripMenuItem("Exportation Editor") { Name = "miniGame.Exportation" };
+        entry.Click += (_, _) =>
+        {
+            if (_exportationEditor is { IsDisposed: false })
+            {
+                Styling.EditorWindows.Show(_exportationEditor, this);
+                _exportationEditor.BringToFront();
+                return;
+            }
+            if (_exportationEditorRequested) return;
+            _exportationEditorRequested = true;
+            Intersect.Editor.Networking.Network.SendPacket(
+                new ExportationRequestPacket
+                {
+                    Action = ExportationAction.GetConfiguration,
+                    OpenEditor = true,
+                });
+        };
         menu.DropDownItems.Add(entry);
     }
 
@@ -26,13 +40,33 @@ public partial class FrmMain
         if (!packet.Editor) return;
         if (!string.IsNullOrWhiteSpace(packet.ConfigurationJson))
             Intersect.Editor.Forms.Editors.Events.ExportationEditorState.Accept(packet.ConfigurationJson);
-        if (packet.Open && packet.ConfigurationJson.Length > 0)
+
+        if (_exportationEditor is { IsDisposed: false })
         {
-            if (_exportationRoutes is not { IsDisposed: false })
-                _exportationRoutes = new FrmExportationRoutes(packet.ConfigurationJson);
-            Styling.EditorWindows.Show(_exportationRoutes, this);
-            _exportationRoutes.BringToFront();
+            _exportationEditor.Response(packet);
+            return;
         }
-        if (_exportationRoutes is { IsDisposed: false }) _exportationRoutes.Response(packet);
+
+        if (!_exportationEditorRequested) return;
+        if (!string.IsNullOrWhiteSpace(packet.Message) &&
+            string.IsNullOrWhiteSpace(packet.ConfigurationJson))
+        {
+            _exportationEditorRequested = false;
+            MessageBox.Show(this, packet.Message, "Exportation Editor",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        if (!packet.Open || string.IsNullOrWhiteSpace(packet.ConfigurationJson)) return;
+        _exportationEditorRequested = false;
+        try
+        {
+            _exportationEditor = new FrmExportationEditor(packet.ConfigurationJson);
+            Styling.EditorWindows.Show(_exportationEditor, this);
+        }
+        catch (Exception error) when (error is InvalidDataException or System.Text.Json.JsonException)
+        {
+            MessageBox.Show(this, error.Message, "Exportation Editor",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

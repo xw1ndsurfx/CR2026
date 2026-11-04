@@ -19,4 +19,7 @@ public sealed partial class ExportationStatePacket : IntersectPacket
     [Key(11)] public int ProfessionLevel { get; set; }
     [Key(12)] public string Message { get; set; } = "";
     [Key(13)] public bool Close { get; set; }
+    [Key(14)] public long ProfessionExperienceInLevel { get; set; }
+    [Key(15)] public long ProfessionExperienceRequired { get; set; }
+    [Key(16)] public bool ProfessionMaximumLevel { get; set; }
 }

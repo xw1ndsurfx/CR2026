@@ -208,7 +208,7 @@
     "Reload from server": {
       "en": "Reload from server",
       "fr": "Recharger depuis le serveur",
-      "es": "Recargar desde el servidor"
+      "es": "Recargar del servidor"
     },
     "Discard the local draft?": {
       "en": "Discard the local draft?",
@@ -324,6 +324,506 @@
       "en": "Exportation data could not be read.",
       "fr": "Impossible de lire les données d’Exportation.",
       "es": "No se pudieron leer los datos de Exportación."
+    },
+    "Changes are saved only after server acknowledgement.": {
+      "en": "Changes are saved only after server acknowledgement.",
+      "fr": "Les modifications sont enregistrées seulement après confirmation du serveur.",
+      "es": "Los cambios se guardan solo tras la confirmación del servidor."
+    },
+    "Save to server": {
+      "en": "Save to server",
+      "fr": "Enregistrer sur le serveur",
+      "es": "Guardar en el servidor"
+    },
+    "Merchant orders, cargo, sea deliveries and profession EXP": {
+      "en": "Merchant orders, cargo, sea deliveries and profession EXP",
+      "fr": "Commandes, cargaisons, livraisons maritimes et EXP du métier",
+      "es": "Pedidos, cargamentos, entregas marítimas y EXP del oficio"
+    },
+    "Routes": {
+      "en": "Routes",
+      "fr": "Routes",
+      "es": "Rutas"
+    },
+    "New": {
+      "en": "New",
+      "fr": "Nouvelle",
+      "es": "Nueva"
+    },
+    "Duplicate": {
+      "en": "Duplicate",
+      "fr": "Dupliquer",
+      "es": "Duplicar"
+    },
+    "Delete": {
+      "en": "Delete",
+      "fr": "Supprimer",
+      "es": "Eliminar"
+    },
+    "General": {
+      "en": "General",
+      "fr": "Général",
+      "es": "General"
+    },
+    "System": {
+      "en": "System",
+      "fr": "Système",
+      "es": "Sistema"
+    },
+    "Enable Exportation": {
+      "en": "Enable Exportation",
+      "fr": "Activer Exportation",
+      "es": "Activar Exportación"
+    },
+    "Activity enabled": {
+      "en": "Activity enabled",
+      "fr": "Fonction activée",
+      "es": "Función activada"
+    },
+    "Profession used": {
+      "en": "Profession used",
+      "fr": "Métier utilisé",
+      "es": "Oficio utilizado"
+    },
+    "Route information": {
+      "en": "Route information",
+      "fr": "Informations de la route",
+      "es": "Información de la ruta"
+    },
+    "Route name": {
+      "en": "Route name",
+      "fr": "Nom de la route",
+      "es": "Nombre de la ruta"
+    },
+    "Source map / island": {
+      "en": "Source map / island",
+      "fr": "Île / carte de départ",
+      "es": "Isla / mapa de salida"
+    },
+    "Merchant event": {
+      "en": "Merchant event",
+      "fr": "Événement marchand (PNJ)",
+      "es": "Evento comerciante (PNJ)"
+    },
+    "Destination map / island": {
+      "en": "Destination map / island",
+      "fr": "Île / carte de destination",
+      "es": "Isla / mapa de destino"
+    },
+    "Recipient event": {
+      "en": "Recipient event",
+      "fr": "Événement destinataire (PNJ)",
+      "es": "Evento destinatario (PNJ)"
+    },
+    "Delivery quest (one task)": {
+      "en": "Delivery quest (one task)",
+      "fr": "Quête de livraison (une tâche)",
+      "es": "Misión de entrega (una tarea)"
+    },
+    "Delivery rules": {
+      "en": "Delivery rules",
+      "fr": "Règles de livraison",
+      "es": "Reglas de entrega"
+    },
+    "Boat required. Cargo is lost on death, shipwreck or quest abandonment. Return to merchant to retry.": {
+      "en": "Boat required. Cargo is lost on death, shipwreck or quest abandonment. Return to merchant to retry.",
+      "fr": "Bateau obligatoire. La mort, le naufrage ou l’abandon de quête font perdre la cargaison. Retournez chez le marchand pour recommencer.",
+      "es": "Barco obligatorio. La muerte, el naufragio o abandonar la misión pierden la carga. Regresa al comerciante para reintentar."
+    },
+    "Rewards (on delivery only)": {
+      "en": "Rewards (on delivery only)",
+      "fr": "Récompenses (livraison uniquement)",
+      "es": "Recompensas (solo al entregar)"
+    },
+    "Reward item / currency": {
+      "en": "Reward item / currency",
+      "fr": "Objet / monnaie en récompense",
+      "es": "Objeto / moneda de recompensa"
+    },
+    "Reward quantity": {
+      "en": "Reward quantity",
+      "fr": "Quantité récompensée",
+      "es": "Cantidad de recompensa"
+    },
+    "Profession EXP": {
+      "en": "Profession EXP",
+      "fr": "EXP du métier",
+      "es": "EXP del oficio"
+    },
+    "Goods and crates": {
+      "en": "Goods and crates",
+      "fr": "Marchandises et caisses",
+      "es": "Mercancías y cajas"
+    },
+    "Item": {
+      "en": "Item",
+      "fr": "Objet",
+      "es": "Objeto"
+    },
+    "Quantity": {
+      "en": "Quantity",
+      "fr": "Quantité",
+      "es": "Cantidad"
+    },
+    "Crate group": {
+      "en": "Crate group",
+      "fr": "Groupe de caisse",
+      "es": "Grupo de caja"
+    },
+    "Sprite": {
+      "en": "Sprite",
+      "fr": "Sprite",
+      "es": "Sprite"
+    },
+    "Optional sprite": {
+      "en": "Optional sprite",
+      "fr": "Sprite facultatif",
+      "es": "Sprite opcional"
+    },
+    "Add / update item": {
+      "en": "Add / update item",
+      "fr": "Ajouter / modifier",
+      "es": "Añadir / actualizar"
+    },
+    "Remove selected": {
+      "en": "Remove selected",
+      "fr": "Retirer la sélection",
+      "es": "Quitar selección"
+    },
+    "Profession and EXP": {
+      "en": "Profession and EXP",
+      "fr": "Métier et EXP",
+      "es": "Oficio y EXP"
+    },
+    "Native profession level and EXP": {
+      "en": "Native profession level and EXP",
+      "fr": "Niveaux et EXP du métier natif",
+      "es": "Niveles y EXP del oficio nativo"
+    },
+    "Minimum level for this route": {
+      "en": "Minimum level for this route",
+      "fr": "Niveau requis pour cette route",
+      "es": "Nivel requerido para esta ruta"
+    },
+    "EXP is awarded only when the quest and cargo delivery succeed.": {
+      "en": "EXP is awarded only when the quest and cargo delivery succeed.",
+      "fr": "L’EXP est gagnée uniquement lorsque la quête et la livraison sont réussies.",
+      "es": "La EXP solo se otorga cuando la misión y la entrega se completan."
+    },
+    "EXP simulator (not a live character)": {
+      "en": "EXP simulator (not a live character)",
+      "fr": "Simulation d’EXP (pas un personnage réel)",
+      "es": "Simulador de EXP (no es un personaje real)"
+    },
+    "Simulated total EXP": {
+      "en": "Simulated total EXP",
+      "fr": "EXP totale simulée",
+      "es": "EXP total simulada"
+    },
+    "Open Profession Editor": {
+      "en": "Open Profession Editor",
+      "fr": "Ouvrir l’éditeur de métiers",
+      "es": "Abrir el editor de oficios"
+    },
+    "Refresh professions": {
+      "en": "Refresh professions",
+      "fr": "Actualiser les métiers",
+      "es": "Actualizar oficios"
+    },
+    "Graphics and sounds": {
+      "en": "Graphics and sounds",
+      "fr": "Graphismes et sons",
+      "es": "Gráficos y sonidos"
+    },
+    "Graphics": {
+      "en": "Graphics",
+      "fr": "Graphismes",
+      "es": "Gráficos"
+    },
+    "Sounds": {
+      "en": "Sounds",
+      "fr": "Sons",
+      "es": "Sonidos"
+    },
+    "Preview": {
+      "en": "Preview",
+      "fr": "Aperçu",
+      "es": "Vista previa"
+    },
+    "Import / replace": {
+      "en": "Import / replace",
+      "fr": "Importer / remplacer",
+      "es": "Importar / reemplazar"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Stop": {
+      "en": "Stop",
+      "fr": "Arrêter",
+      "es": "Detener"
+    },
+    "Asset not installed. Install the approved GFX/SFX pack first.": {
+      "en": "Asset not installed. Install the approved GFX/SFX pack first.",
+      "fr": "Ressource absente. Installez d’abord le pack GFX/Sons approuvé.",
+      "es": "Falta el recurso. Instala primero el pack aprobado."
+    },
+    "Unable to preview this graphic.": {
+      "en": "Unable to preview this graphic.",
+      "fr": "Aperçu du graphisme impossible.",
+      "es": "No se pudo previsualizar el gráfico."
+    },
+    "Sound missing from resources.": {
+      "en": "Sound missing from resources.",
+      "fr": "Fichier sonore absent des ressources.",
+      "es": "Falta el archivo de sonido."
+    },
+    "This WAV could not be played.": {
+      "en": "This WAV could not be played.",
+      "fr": "Lecture du WAV impossible.",
+      "es": "No se pudo reproducir el WAV."
+    },
+    "Choose a PNG resource": {
+      "en": "Choose a PNG resource",
+      "fr": "Choisir un graphisme PNG",
+      "es": "Elegir gráfico PNG"
+    },
+    "Choose a WAV resource": {
+      "en": "Choose a WAV resource",
+      "fr": "Choisir un son WAV",
+      "es": "Elegir sonido WAV"
+    },
+    "Invalid image dimensions. Expected ": {
+      "en": "Invalid image dimensions. Expected ",
+      "fr": "Dimensions invalides. Format attendu : ",
+      "es": "Dimensiones incorrectas. Se esperaba "
+    },
+    "Unable to import this image.": {
+      "en": "Unable to import this image.",
+      "fr": "Impossible d’importer cette image.",
+      "es": "No se pudo importar la imagen."
+    },
+    "Unable to import this WAV.": {
+      "en": "Unable to import this WAV.",
+      "fr": "Impossible d’importer ce WAV.",
+      "es": "No se pudo importar el WAV."
+    },
+    "Replace the existing resource?": {
+      "en": "Replace the existing resource?",
+      "fr": "Remplacer le fichier existant ?",
+      "es": "¿Reemplazar el recurso existente?"
+    },
+    "Resource installed locally. Rebuild and commit the binary file to distribute it.": {
+      "en": "Resource installed locally. Rebuild and commit the binary file to distribute it.",
+      "fr": "Ressource installée localement. Recompilez et commitez le fichier binaire pour la distribuer.",
+      "es": "Recurso instalado localmente. Compila y registra el binario para distribuirlo."
+    },
+    "Unsaved changes.": {
+      "en": "Unsaved changes.",
+      "fr": "Modifications non enregistrées.",
+      "es": "Cambios sin guardar."
+    },
+    "Missing reference": {
+      "en": "Missing reference",
+      "fr": "Référence introuvable",
+      "es": "Referencia ausente"
+    },
+    "Select a profession...": {
+      "en": "Select a profession...",
+      "fr": "Choisir un métier...",
+      "es": "Seleccionar oficio..."
+    },
+    "Select map event...": {
+      "en": "Select map event...",
+      "fr": "Choisir un événement de carte...",
+      "es": "Seleccionar evento de mapa..."
+    },
+    "Source map...": {
+      "en": "Source map...",
+      "fr": "Carte de départ...",
+      "es": "Mapa de salida..."
+    },
+    "Destination map...": {
+      "en": "Destination map...",
+      "fr": "Carte de destination...",
+      "es": "Mapa de destino..."
+    },
+    "One-task quest...": {
+      "en": "One-task quest...",
+      "fr": "Quête à une tâche...",
+      "es": "Misión de una tarea..."
+    },
+    "No item": {
+      "en": "No item",
+      "fr": "Aucun objet",
+      "es": "Ningún objeto"
+    },
+    "Select item...": {
+      "en": "Select item...",
+      "fr": "Choisir un objet...",
+      "es": "Seleccionar objeto..."
+    },
+    "Default item icon": {
+      "en": "Default item icon",
+      "fr": "Icône normale de l’objet",
+      "es": "Icono normal del objeto"
+    },
+    "Default": {
+      "en": "Default",
+      "fr": "Par défaut",
+      "es": "Predeterminado"
+    },
+    "Copy": {
+      "en": "Copy",
+      "fr": "Copie",
+      "es": "Copia"
+    },
+    "Maximum of 128 routes.": {
+      "en": "Maximum of 128 routes.",
+      "fr": "Maximum de 128 routes.",
+      "es": "Máximo de 128 rutas."
+    },
+    "Maximum 48 goods per route.": {
+      "en": "Maximum 48 goods per route.",
+      "fr": "Maximum de 48 marchandises par route.",
+      "es": "Máximo de 48 mercancías por ruta."
+    },
+    "New route": {
+      "en": "New route",
+      "fr": "Nouvelle route",
+      "es": "Nueva ruta"
+    },
+    "Deleting a route may interrupt active deliveries. Continue?": {
+      "en": "Deleting a route may interrupt active deliveries. Continue?",
+      "fr": "Supprimer une route peut interrompre les livraisons en cours. Continuer ?",
+      "es": "Eliminar una ruta puede interrumpir entregas activas. ¿Continuar?"
+    },
+    "Create or select a route.": {
+      "en": "Create or select a route.",
+      "fr": "Créez ou sélectionnez une route.",
+      "es": "Crea o selecciona una ruta."
+    },
+    "Route": {
+      "en": "Route",
+      "fr": "Route",
+      "es": "Ruta"
+    },
+    "Source map": {
+      "en": "Source map",
+      "fr": "Carte de départ",
+      "es": "Mapa de salida"
+    },
+    "Destination map": {
+      "en": "Destination map",
+      "fr": "Carte de destination",
+      "es": "Mapa de destino"
+    },
+    "Goods": {
+      "en": "Goods",
+      "fr": "Marchandises",
+      "es": "Mercancías"
+    },
+    "Minimum level": {
+      "en": "Minimum level",
+      "fr": "Niveau requis",
+      "es": "Nivel mínimo"
+    },
+    "EXP on delivery": {
+      "en": "EXP on delivery",
+      "fr": "EXP à la livraison",
+      "es": "EXP al entregar"
+    },
+    "Real sailing is required. Death or shipwreck destroys the cargo.": {
+      "en": "Real sailing is required. Death or shipwreck destroys the cargo.",
+      "fr": "La traversée réelle en bateau est obligatoire. Mort ou naufrage : cargaison perdue.",
+      "es": "El viaje real en barco es obligatorio. Muerte o naufragio: carga perdida."
+    },
+    "This is a configuration preview; test real deliveries in the game.": {
+      "en": "This is a configuration preview; test real deliveries in the game.",
+      "fr": "Ceci est un aperçu de configuration : testez les livraisons en jeu.",
+      "es": "Es una vista previa de configuración: prueba las entregas en el juego."
+    },
+    "Choose or create a custom profession in the existing Profession Editor.": {
+      "en": "Choose or create a custom profession in the existing Profession Editor.",
+      "fr": "Choisissez ou créez un métier dans l’éditeur de professions existant.",
+      "es": "Selecciona o crea un oficio en el editor de profesiones."
+    },
+    "Maximum level": {
+      "en": "Maximum level",
+      "fr": "Niveau maximal",
+      "es": "Nivel máximo"
+    },
+    "Base EXP": {
+      "en": "Base EXP",
+      "fr": "EXP de base",
+      "es": "EXP base"
+    },
+    "Growth": {
+      "en": "Growth",
+      "fr": "Croissance",
+      "es": "Crecimiento"
+    },
+    "Simulation": {
+      "en": "Simulation",
+      "fr": "Simulation",
+      "es": "Simulación"
+    },
+    "Level": {
+      "en": "Level",
+      "fr": "Niveau",
+      "es": "Nivel"
+    },
+    "Maximum level reached": {
+      "en": "Maximum level reached",
+      "fr": "Niveau maximal atteint",
+      "es": "Nivel máximo alcanzado"
+    },
+    "Choose the Exportation profession before saving.": {
+      "en": "Choose the Exportation profession before saving.",
+      "fr": "Sélectionnez le métier Exportation avant d’enregistrer.",
+      "es": "Selecciona el oficio Exportación antes de guardar."
+    },
+    "Complete the route: two maps, two events, a quest and the goods list.": {
+      "en": "Complete the route: two maps, two events, a quest and the goods list.",
+      "fr": "Complétez la route : deux cartes, deux événements, une quête et les marchandises.",
+      "es": "Completa la ruta: dos mapas, dos eventos, misión y mercancías."
+    },
+    "Could not contact the server. Your draft was preserved.": {
+      "en": "Could not contact the server. Your draft was preserved.",
+      "fr": "Impossible de joindre le serveur. Votre brouillon est conservé.",
+      "es": "No se pudo conectar con el servidor. Se conservó el borrador."
+    },
+    "Unable to contact the server.": {
+      "en": "Unable to contact the server.",
+      "fr": "Connexion au serveur impossible.",
+      "es": "No se pudo contactar con el servidor."
+    },
+    "The server returned invalid data; the local draft was preserved.": {
+      "en": "The server returned invalid data; the local draft was preserved.",
+      "fr": "Le serveur a retourné des données invalides : brouillon conservé.",
+      "es": "El servidor devolvió datos inválidos: borrador conservado."
+    },
+    "Server configuration loaded.": {
+      "en": "Server configuration loaded.",
+      "fr": "Configuration du serveur chargée.",
+      "es": "Configuración del servidor cargada."
+    },
+    "This item is already in the order.": {
+      "en": "This item is already in the order.",
+      "fr": "Cet objet figure déjà dans la commande.",
+      "es": "Este artículo ya figura en el pedido."
+    },
+    "XP: {0:N0} / {1:N0}": {
+      "en": "XP: {0:N0} / {1:N0}",
+      "fr": "EXP : {0:N0} / {1:N0}",
+      "es": "EXP: {0:N0} / {1:N0}"
+    },
+    "MAX LEVEL": {
+      "en": "MAX LEVEL",
+      "fr": "NIVEAU MAXIMAL",
+      "es": "NIVEL MÁXIMO"
     }
   }
 }
