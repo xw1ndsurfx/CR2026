@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -155,7 +156,7 @@ internal sealed class CraftingOrdersWindow : Window
     private void RenderPost()
     {
         // Preserve terms while rebuilding the list of eligible recipe outputs.
-        _postOptions.DeleteAll();
+        _postOptions.DeleteAllChildren();
         var y = 106;
         foreach (var itemId in _state.CraftableItemIds.Take(16))
         {
