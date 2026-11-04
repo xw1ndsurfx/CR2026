@@ -62,8 +62,8 @@ internal sealed class ExportationAssetsPanel : UserControl
         _tabs.TabPages.Add(graphicsPage);
         _tabs.TabPages.Add(soundsPage);
 
-        var layout = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 270,
-            Panel1MinSize = 150, Panel2MinSize = 240 };
+        var layout = new SplitContainer { Dock = DockStyle.Fill, Size = new Size(850, 530),
+            SplitterDistance = 270, Panel1MinSize = 150, Panel2MinSize = 240 };
         layout.Panel1.Controls.Add(_graphics);
         layout.Panel2.Controls.Add(_picture);
         var commands = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, Padding = new Padding(8) };
@@ -74,8 +74,8 @@ internal sealed class ExportationAssetsPanel : UserControl
         commands.Controls.Add(replaceGraphic); commands.Controls.Add(refreshGraphics);
         graphicsPage.Controls.Add(layout); graphicsPage.Controls.Add(commands);
 
-        var soundLayout = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 320,
-            Panel1MinSize = 160, Panel2MinSize = 160 };
+        var soundLayout = new SplitContainer { Dock = DockStyle.Fill, Size = new Size(850, 530),
+            SplitterDistance = 320, Panel1MinSize = 160, Panel2MinSize = 160 };
         soundLayout.Panel1.Controls.Add(_sounds);
         var right = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true,
             FlowDirection = FlowDirection.TopDown, Padding = new Padding(12) };

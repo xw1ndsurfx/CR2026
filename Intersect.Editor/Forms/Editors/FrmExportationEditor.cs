@@ -154,8 +154,8 @@ public sealed class FrmExportationEditor : DarkForm
         var bottom = new Panel { Dock = DockStyle.Bottom, Height = 42,
             BackColor = PanelBack, Padding = new Padding(12, 4, 12, 4) };
         bottom.Controls.Add(_status);
-        var split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 295,
-            Panel1MinSize = 200, Panel2MinSize = 480 };
+        var split = new SplitContainer { Dock = DockStyle.Fill, Size = new Size(1100, 680),
+            SplitterDistance = 295, Panel1MinSize = 200, Panel2MinSize = 480 };
         split.Panel1.Padding = new Padding(8);
         split.Panel2.Padding = new Padding(8);
         var left = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4, ColumnCount = 1 };

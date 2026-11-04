@@ -104,7 +104,12 @@ internal static class EditorHubTests
               HubRegistry.Definitions.All(d =>
                   d.Id is not ("miniGame.ExportationRoutes" or "miniGame.ExportationAssets")),
             "Exportation has one catalog card for both route and GFX/SFX tools.");
-        using var editor = new FrmExportationEditor(new ExportationConfiguration { Enabled = false }.ToJson());
+        using var editor = new FrmExportationEditor(new ExportationConfiguration { Enabled = false }.ToJson())
+        {
+            ShowInTaskbar = false, StartPosition = FormStartPosition.Manual,
+            Location = new Point(-20000, -20000),
+        };
+        editor.Show(); Application.DoEvents();
         var tabs = Descendants(editor).OfType<TabControl>()
             .Single(t => t.Name == "ExportationTabs");
         Check(tabs.TabPages.Count == 5 && tabs.TabPages.Cast<TabPage>()
