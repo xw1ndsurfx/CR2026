@@ -1,5 +1,6 @@
 using Intersect.Framework.Core.Exportation;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.GameObjects;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
