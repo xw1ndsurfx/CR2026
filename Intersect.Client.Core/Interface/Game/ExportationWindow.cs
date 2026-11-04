@@ -24,10 +24,21 @@ internal sealed class ExportationWindow : Base
     private const int DesignWidth = 1672, DesignHeight = 941, ShelfSize = 5, OrderSize = 3;
     private const string Background = "exportation/background.png";
     private const string SpriteDirectory = "exportation/sprites/";
-    private static readonly Color Cream = new(255, 250, 233, 197);
-    private static readonly Color DarkInk = new(255, 66, 33, 16);
-    private static readonly Color Gold = new(255, 247, 199, 100);
-    private static readonly Color Green = new(255, 132, 231, 107);
+    // The original art has transparent panels. At night, a 70%-opaque black
+    // screen dimmer made the world show through as almost black, and the dark
+    // parchment ink became unreadable. Give the UI its own warm, opaque
+    // backplate; dim only the outside world, never the minigame itself.
+    private const byte WorldDimOpacity = 82;
+    private static readonly Color WoodFrame = new(255, 64, 44, 31);
+    private static readonly Color ParchmentBacking = new(255, 135, 103, 71);
+    private static readonly Color CrateBacking = new(255, 99, 70, 48);
+    private static readonly Color DeliveryBacking = new(255, 100, 73, 51);
+    private static readonly Color WarmParchmentWash = new(59, 247, 204, 145);
+    private static readonly Color WarmWoodWash = new(44, 224, 173, 113);
+    private static readonly Color Cream = new(255, 255, 246, 220);
+    private static readonly Color DarkInk = new(255, 255, 222, 159);
+    private static readonly Color Gold = new(255, 255, 222, 134);
+    private static readonly Color Green = new(255, 142, 236, 107);
 
     private readonly Canvas _canvas;
     private readonly Action<Guid, CargoGroup, int> _packRequested;
@@ -286,9 +297,29 @@ internal sealed class ExportationWindow : Base
 
     protected override void Render(SkinBase skin)
     {
-        skin.Renderer.DrawColor = new Color(180, 15, 12, 9);
+        // Screen-wide dimmer is deliberately subtle. The warm mini-game frame
+        // below is opaque, so night / fog / the player sprite cannot shine
+        // through transparent portions of the approved artwork.
+        skin.Renderer.DrawColor = new Color(WorldDimOpacity, 15, 12, 9);
         skin.Renderer.DrawFilledRect(new Rect(0, 0, Width, Height));
+        FillScene(skin, WoodFrame, 98, 64, 1452, 824);
+        FillScene(skin, ParchmentBacking, 121, 202, 351, 581);
+        FillScene(skin, CrateBacking, 476, 202, 604, 590);
+        FillScene(skin, DeliveryBacking, 1087, 201, 428, 594);
         DrawTexture(skin, Background, 0, 0, DesignWidth, DesignHeight);
+
+        // This light wash lifts the dark pixels of the semi-transparent mockup
+        // without replacing its medieval wood/parchment detail or textures.
+        FillScene(skin, WarmParchmentWash, 131, 211, 329, 561);
+        FillScene(skin, WarmWoodWash, 489, 212, 570, 568);
+        FillScene(skin, WarmWoodWash, 1098, 213, 405, 568);
+
+        // Explicit button surfaces remain visible over the detailed sprite
+        // sheet. The GWEN buttons stay fully clickable over these rectangles.
+        PaintAction(skin, 139, 808, 163, 61, new Color(255, 70, 50, 34));
+        if (!_seal.IsHidden)
+            PaintAction(skin, 1092, 804, 405, 66,
+                _seal.IsDisabled ? new Color(255, 78, 59, 39) : new Color(255, 45, 91, 47));
         // Profession experience is the server-authoritative custom profession
         // progression, not mini-game-only points.
         skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
@@ -339,6 +370,11 @@ internal sealed class ExportationWindow : Base
 
     private void DrawGood(SkinBase skin, CargoLine line, int x, int y, int w, int h)
     {
+        // Opaque warm slot: transparent portions of item PNGs no longer inherit
+        // the night-darkened world, even on a very dark map.
+        FillScene(skin, new Color(245, 112, 81, 51), x, y, w, h);
+        FillScene(skin, new Color(255, 202, 157, 99), x, y, w, 2);
+        FillScene(skin, new Color(255, 202, 157, 99), x, y, 2, h);
         if (!string.IsNullOrEmpty(line.Sprite) && ExportationArt.IsGoodsSprite(line.Sprite))
         {
             DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h);
@@ -350,6 +386,20 @@ internal sealed class ExportationWindow : Base
             if (texture is not null)
                 skin.Renderer.DrawTexturedRect(texture, SceneRect(x, y, w, h), Color.White);
         }
+    }
+
+    private void FillScene(SkinBase skin, Color color, int x, int y, int w, int h)
+    {
+        if (w <= 0 || h <= 0) return;
+        skin.Renderer.DrawColor = color;
+        skin.Renderer.DrawFilledRect(SceneRect(x, y, w, h));
+    }
+
+    private void PaintAction(SkinBase skin, int x, int y, int w, int h, Color fill)
+    {
+        FillScene(skin, new Color(255, 174, 126, 67), x, y, w, h);
+        FillScene(skin, fill, x + 3, y + 3, w - 6, h - 6);
+        FillScene(skin, new Color(255, 236, 188, 112), x + 5, y + 5, w - 10, 2);
     }
 
     private void DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
