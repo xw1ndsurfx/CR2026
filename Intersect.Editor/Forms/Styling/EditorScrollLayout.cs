@@ -14,6 +14,12 @@ internal static class EditorScrollLayout
         Attached.Add(window, new object());
         // These workspaces already keep their action footer outside scrolling sections.
         if (window.Controls.Find("EditorWorkspaceSplit", true).Length > 0) return;
+        // Modern docked split/tab editors already resize their content against the
+        // real client area. Moving them into a fixed-size scroll canvas makes
+        // panels overflow at their supported minimum window size (e.g. cinematic
+        // chapters at 800x550) and can hide controls from automation/accessibility.
+        if (window.Controls.Cast<Control>().Any(child =>
+            child.Dock == DockStyle.Fill && (child is SplitContainer || child is TabControl))) return;
         // Responsive tab editors arrange fields against the form's client size.
         // Keep their native resize handlers active down to their supported minimum.
         var minimum = window is FrmItem or FrmNpc or FrmSpell
