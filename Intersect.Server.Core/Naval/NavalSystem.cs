@@ -171,6 +171,7 @@ internal static partial class NavalSystem
             { Notice(player,"Ship damage could not be saved. Try disembarking again shortly."); return; }
             ApplyCharacterExperience(player,Timing.Global.Milliseconds);
             ShipState anchor = null;
+            Guid exportationDockShip = Guid.Empty;
             OwnedShip returnPoint = null;
             (Guid MapId, int X, int Y)? dock = null;
             lock (Gate)
@@ -197,6 +198,7 @@ internal static partial class NavalSystem
                         ReturnDockX=exit.DockX, ReturnDockY=exit.DockY };
                     Emit(NavalEffectKind.Disembark,s.MapId,s.X,s.Y,s.Heading,Timing.Global.Milliseconds);
                     active.Mooring = exit;
+                    exportationDockShip = s.Id;
                     ReleaseLocked(player);
                     dock = (exit.MapId,exit.X,exit.Y);
                 }
@@ -226,6 +228,7 @@ internal static partial class NavalSystem
             {
                 WarpAnchor(player, anchor);
                 if (player.MapId != anchor.MapId) { Release(player); return; }
+                player.ExportationBoarded(anchor.Id);
                 Notice(player, "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.");
             }
             else if (dock is { } landing)
@@ -234,6 +237,8 @@ internal static partial class NavalSystem
                 else player.Warp(landing.MapId, landing.X, landing.Y);
                 player.User?.Save(force:true);
                 player.UpdateNavalQuestTasks(NavalTaskKind.Dockings,1);
+                if (exportationDockShip != Guid.Empty && player.MapId == landing.MapId)
+                    player.ExportationDocked(exportationDockShip);
                 Notice(player, "You have left the helm.");
             }
             lock (Gate) SendSnapshot(player);

@@ -1,0 +1,329 @@
+{
+  "Entries": {
+    "Exportation": {
+      "en": "Exportation",
+      "fr": "Exportation",
+      "es": "Exportación"
+    },
+    "ORDER SLIP": {
+      "en": "ORDER SLIP",
+      "fr": "BON DE COMMANDE",
+      "es": "HOJA DE PEDIDO"
+    },
+    "PACK THE CRATES": {
+      "en": "PACK THE CRATES",
+      "fr": "PRÉPARER LES CAISSES",
+      "es": "PREPARAR LAS CAJAS"
+    },
+    "Drag the goods into the crates": {
+      "en": "Drag the goods into the crates",
+      "fr": "Glissez les marchandises dans les caisses",
+      "es": "Arrastra las mercancías a las cajas"
+    },
+    "Goods provided by the merchant": {
+      "en": "Goods provided by the merchant",
+      "fr": "Objets fournis par le marchand",
+      "es": "Artículos proporcionados por el comerciante"
+    },
+    "MATERIALS": {
+      "en": "MATERIALS",
+      "fr": "MATÉRIAUX",
+      "es": "MATERIALES"
+    },
+    "FRAGILE": {
+      "en": "FRAGILE",
+      "fr": "FRAGILES",
+      "es": "FRÁGILES"
+    },
+    "PROVISIONS": {
+      "en": "PROVISIONS",
+      "fr": "PROVISIONS",
+      "es": "PROVISIONES"
+    },
+    "DELIVERY": {
+      "en": "DELIVERY",
+      "fr": "LIVRAISON",
+      "es": "ENTREGA"
+    },
+    "Recipient: {0}": {
+      "en": "Recipient: {0}",
+      "fr": "Destinataire : {0}",
+      "es": "Destinatario: {0}"
+    },
+    "Boat ready": {
+      "en": "Boat ready",
+      "fr": "Bateau amarré",
+      "es": "Barco amarrado"
+    },
+    "Boat required": {
+      "en": "Boat required",
+      "fr": "Bateau requis",
+      "es": "Se requiere un barco"
+    },
+    "At delivery": {
+      "en": "At delivery",
+      "fr": "À la livraison",
+      "es": "Al entregar"
+    },
+    "After sealing": {
+      "en": "After sealing",
+      "fr": "Après le scellement",
+      "es": "Después de sellar"
+    },
+    "Delivery quest started": {
+      "en": "Delivery quest started",
+      "fr": "Quête de livraison commencée",
+      "es": "Misión de entrega iniciada"
+    },
+    "SEAL THE CARGO": {
+      "en": "SEAL THE CARGO",
+      "fr": "SCELLER LA CARGAISON",
+      "es": "SELLAR LA CARGA"
+    },
+    "Complete the order": {
+      "en": "Complete the order",
+      "fr": "Complétez la commande",
+      "es": "Completa el pedido"
+    },
+    "{0} / {1} items packed": {
+      "en": "{0} / {1} items packed",
+      "fr": "{0} / {1} objets préparés",
+      "es": "{0} / {1} artículos preparados"
+    },
+    "Level {0}": {
+      "en": "Level {0}",
+      "fr": "Niveau {0}",
+      "es": "Nivel {0}"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Cargo lost — return to the merchant": {
+      "en": "Cargo lost — return to the merchant",
+      "fr": "Cargaison perdue — retournez voir le marchand",
+      "es": "Carga perdida — regresa con el comerciante"
+    },
+    "Death or sinking destroys the cargo": {
+      "en": "Death or sinking destroys the cargo",
+      "fr": "Mort ou naufrage : cargaison perdue",
+      "es": "Muerte o naufragio: carga perdida"
+    },
+    "PREPARE CARGO AGAIN": {
+      "en": "PREPARE CARGO AGAIN",
+      "fr": "REPRÉPARER LA CARGAISON",
+      "es": "VOLVER A PREPARAR LA CARGA"
+    },
+    "DELIVER CARGO": {
+      "en": "DELIVER CARGO",
+      "fr": "REMETTRE LA CARGAISON",
+      "es": "ENTREGAR LA CARGA"
+    },
+    "Delivery successful": {
+      "en": "Delivery successful",
+      "fr": "Livraison réussie",
+      "es": "Entrega completada"
+    },
+    "Wrong recipient": {
+      "en": "Wrong recipient",
+      "fr": "Mauvais destinataire",
+      "es": "Destinatario incorrecto"
+    },
+    "Voyage by boat required": {
+      "en": "Voyage by boat required",
+      "fr": "Traversée en bateau requise",
+      "es": "Se requiere cruzar en barco"
+    },
+    "Return to the original merchant": {
+      "en": "Return to the original merchant",
+      "fr": "Retournez voir le marchand de départ",
+      "es": "Vuelve con el comerciante de origen"
+    },
+    "Cargo preparation": {
+      "en": "Cargo preparation",
+      "fr": "Préparation de la cargaison",
+      "es": "Preparación de la carga"
+    },
+    "Click goods to pack a matching crate": {
+      "en": "Click goods to pack a matching crate",
+      "fr": "Cliquez sur les marchandises pour remplir les caisses",
+      "es": "Haz clic en las mercancías para llenar las cajas"
+    },
+    "Exportation graphics and sounds": {
+      "en": "Exportation graphics and sounds",
+      "fr": "Exportation : graphismes et sons",
+      "es": "Exportación: gráficos y sonidos"
+    },
+    "Play sound": {
+      "en": "Play sound",
+      "fr": "Écouter le son",
+      "es": "Reproducir sonido"
+    },
+    "Refresh assets": {
+      "en": "Refresh assets",
+      "fr": "Actualiser les ressources",
+      "es": "Actualizar recursos"
+    },
+    "Preview only: route editing and live quest integration are not connected yet.": {
+      "en": "Preview only: route editing and live quest integration are not connected yet.",
+      "fr": "Aperçu seulement : l’édition des routes et les quêtes en jeu ne sont pas encore connectées.",
+      "es": "Solo vista previa: el editor de rutas y las misiones todavía no están conectados."
+    },
+    "Exportation assets are missing. Install the approved ZIP and rebuild the editor.": {
+      "en": "Exportation assets are missing. Install the approved ZIP and rebuild the editor.",
+      "fr": "Les ressources d’Exportation sont absentes. Installez le ZIP approuvé et recompilez l’éditeur.",
+      "es": "Faltan recursos de Exportación. Instala el ZIP aprobado y vuelve a compilar el editor."
+    },
+    "Missing asset: {0}": {
+      "en": "Missing asset: {0}",
+      "fr": "Ressource manquante : {0}",
+      "es": "Recurso faltante: {0}"
+    },
+    "Cannot preview: {0}": {
+      "en": "Cannot preview: {0}",
+      "fr": "Aperçu impossible : {0}",
+      "es": "No se puede previsualizar: {0}"
+    },
+    "{0:N0} Aureons": {
+      "en": "{0:N0} Aureons",
+      "fr": "{0:N0} Aureons",
+      "es": "{0:N0} Aureons"
+    },
+    "+{0:N0} Exportation XP": {
+      "en": "+{0:N0} Exportation XP",
+      "fr": "+{0:N0} XP Exportation",
+      "es": "+{0:N0} EXP Exportación"
+    },
+    "Exportation route editor": {
+      "en": "Exportation route editor",
+      "fr": "Éditeur des routes d’Exportation",
+      "es": "Editor de rutas de Exportación"
+    },
+    "Apply to server": {
+      "en": "Apply to server",
+      "fr": "Appliquer au serveur",
+      "es": "Aplicar al servidor"
+    },
+    "Reload from server": {
+      "en": "Reload from server",
+      "fr": "Recharger depuis le serveur",
+      "es": "Recargar desde el servidor"
+    },
+    "Discard the local draft?": {
+      "en": "Discard the local draft?",
+      "fr": "Abandonner le brouillon local ?",
+      "es": "¿Descartar el borrador local?"
+    },
+    "Unsaved route changes.": {
+      "en": "Unsaved route changes.",
+      "fr": "Routes modifiées, non enregistrées.",
+      "es": "Rutas modificadas, sin guardar."
+    },
+    "Server did not confirm the save. Your draft is preserved.": {
+      "en": "Server did not confirm the save. Your draft is preserved.",
+      "fr": "Le serveur n’a pas confirmé l’enregistrement. Votre brouillon est conservé.",
+      "es": "El servidor no confirmó el guardado. Tu borrador se ha conservado."
+    },
+    "Configure source and recipient NPCs, maps, goods, quest and rewards.": {
+      "en": "Configure source and recipient NPCs, maps, goods, quest and rewards.",
+      "fr": "Configurez les PNJ, les îles, les marchandises, la quête et les récompenses.",
+      "es": "Configura los PNJ, las islas, los artículos, la misión y las recompensas."
+    },
+    "Invalid route JSON. Nothing was saved.": {
+      "en": "Invalid route JSON. Nothing was saved.",
+      "fr": "JSON des routes invalide. Rien n’a été enregistré.",
+      "es": "JSON de rutas no válido. No se guardó nada."
+    },
+    "Waiting for the server to confirm.": {
+      "en": "Waiting for the server to confirm.",
+      "fr": "En attente de la confirmation du serveur.",
+      "es": "Esperando la confirmación del servidor."
+    },
+    "Exportation routes saved.": {
+      "en": "Exportation routes saved.",
+      "fr": "Routes d’Exportation enregistrées.",
+      "es": "Rutas de Exportación guardadas."
+    },
+    "Exportation routes were not saved. Check the route IDs and references.": {
+      "en": "Exportation routes were not saved. Check the route IDs and references.",
+      "fr": "Routes non enregistrées. Vérifiez les ID et les références.",
+      "es": "Las rutas no se guardaron. Comprueba los ID y las referencias."
+    },
+    "Open Exportation": {
+      "en": "Open Exportation",
+      "fr": "Ouvrir l’Exportation",
+      "es": "Abrir Exportación"
+    },
+    "Select an Exportation route": {
+      "en": "Select an Exportation route",
+      "fr": "Sélectionnez une route d’Exportation",
+      "es": "Selecciona una ruta de Exportación"
+    },
+    "Refresh routes": {
+      "en": "Refresh routes",
+      "fr": "Actualiser les routes",
+      "es": "Actualizar rutas"
+    },
+    "Choose a saved Exportation route.": {
+      "en": "Choose a saved Exportation route.",
+      "fr": "Choisissez une route d’Exportation enregistrée.",
+      "es": "Elige una ruta de Exportación guardada."
+    },
+    "Route not available": {
+      "en": "Route not available",
+      "fr": "Route indisponible",
+      "es": "Ruta no disponible"
+    },
+    "Use this command at the original merchant and destination events.": {
+      "en": "Use this command at the original merchant and destination events.",
+      "fr": "Utilisez cette commande sur les événements du marchand et du destinataire.",
+      "es": "Utiliza este comando en los eventos del comerciante y del destinatario."
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Finish your current Exportation delivery first.": {
+      "en": "Finish your current Exportation delivery first.",
+      "fr": "Termine d’abord ta livraison d’Exportation en cours.",
+      "es": "Termina primero tu entrega de Exportación actual."
+    },
+    "A usable ship and the required Exportation level are needed.": {
+      "en": "A usable ship and the required Exportation level are needed.",
+      "fr": "Il te faut un bateau utilisable et le niveau d’Exportation requis.",
+      "es": "Necesitas un barco disponible y el nivel de Exportación requerido."
+    },
+    "Exportation could not be saved.": {
+      "en": "Exportation could not be saved.",
+      "fr": "Impossible d’enregistrer l’Exportation. Réessaie.",
+      "es": "No se pudo guardar la Exportación. Vuelve a intentarlo."
+    },
+    "Repair or obtain a ship to prepare the cargo again.": {
+      "en": "Repair or obtain a ship to prepare the cargo again.",
+      "fr": "Répare ou procure-toi un bateau pour préparer la cargaison à nouveau.",
+      "es": "Repara o consigue un barco para volver a preparar la carga."
+    },
+    "Deliver your sealed cargo to the recipient.": {
+      "en": "Deliver your sealed cargo to the recipient.",
+      "fr": "Livre ta cargaison scellée au destinataire.",
+      "es": "Entrega tu carga sellada al destinatario."
+    },
+    "Make room in your inventory before delivery.": {
+      "en": "Make room in your inventory before delivery.",
+      "fr": "Libère de la place dans ton inventaire avant la livraison.",
+      "es": "Haz espacio en tu inventario antes de entregar la carga."
+    },
+    "Exportation data could not be read.": {
+      "en": "Exportation data could not be read.",
+      "fr": "Impossible de lire les données d’Exportation.",
+      "es": "No se pudieron leer los datos de Exportación."
+    }
+  }
+}

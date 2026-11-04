@@ -24,6 +24,8 @@ public partial class FrmMain
         AddJoustEditorMenu();
         AddRoyalCombatEditorMenus();
         AddFishingEditorMenu();
+        AddExportationAssetsMenu();
+        AddExportationRoutesMenu();
         if (requestConfigurations) PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestDungeonConfiguration(openEditor: false);
@@ -62,8 +64,10 @@ public partial class FrmMain
     private void InitializeEditorHub(HubPreferences? preferences = null)
     {
         if (_editorHub != null) return;
-        // Register the native command before the hub captures its menu roots.
+        // Register the native commands before the hub captures its menu roots.
         AddFishingEditorMenu();
+        AddExportationAssetsMenu();
+        AddExportationRoutesMenu();
         _hubPreferences = preferences ?? new HubPreferences();
         var rootNames = new[] { "contentEditorsToolStripMenuItem", "miniGameEditorsToolStripMenuItem", "worldEventsToolStripMenuItem", "systemEditorToolStripMenuItem", "toolsToolStripMenuItem" };
         var roots = menuStrip.Items.OfType<ToolStripMenuItem>().Where(item => rootNames.Contains(item.Name)).ToArray();

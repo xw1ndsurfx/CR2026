@@ -179,4 +179,5 @@ public enum EventCommandType
     OpenFurnitureShop = 1092,
     OpenHouseDirectory = 1093,
     OpenFishing = 1100,
+    OpenExportation = 1101,
 }

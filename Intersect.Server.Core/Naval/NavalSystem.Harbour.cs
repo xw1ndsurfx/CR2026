@@ -155,6 +155,7 @@ internal static partial class NavalSystem
                         PacketSender.SendEntityDataToProximity(player);
                         lock (Gate) SendSnapshot(player);
                         InvitePartyToBoard(player,launched.Id);
+                        player.ExportationBoarded(launched.Id); // Native launch; never from a client cargo action.
                         Notice(player, "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.");
                         return;
                     }
