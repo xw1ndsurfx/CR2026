@@ -1,0 +1,18 @@
+<Project>
+  <!-- Cosmetic crafting-order textures are optional for compilation and copied
+       to runtime output when installed under resources/gui/crafting-orders. -->
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/gui/crafting-orders/*.png">
+      <Link>resources/gui/crafting-orders/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/sounds/crafting-orders/*.wav">
+      <Link>resources/sounds/crafting-orders/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+</Project>

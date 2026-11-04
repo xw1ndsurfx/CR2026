@@ -15,6 +15,7 @@ internal sealed class CraftingOrdersWindow : Window
     private static readonly Color Gold = new(a: 255, r: 220, g: 188, b: 111);
     private static readonly Color Cream = new(a: 255, r: 241, g: 225, b: 195);
     private static readonly Color Muted = new(a: 255, r: 184, g: 171, b: 151);
+    private readonly CraftingOrdersAudio _audio = new();
     private readonly ScrollControl _list;
     private readonly Label _status;
     private readonly Label _balance;
@@ -40,12 +41,14 @@ internal sealed class CraftingOrdersWindow : Window
 
         var frame = new MarketplaceWindow.MarketChrome(this, "CraftingOrderFrame", MarketplaceWindow.FrameStyle.Window);
         frame.SetBounds(12, 28, 875, 630);
-        LabelAt(this, "Title", T("Crafting Orders"), 36, 46, 620, 36, 22, Gold);
-        _balance = LabelAt(this, "Balance", "", 630, 49, 215, 30, 12, Gold);
+        IconAt(this, "CraftingTools", "icon-tools.png", 36, 42, 43, 43);
+        LabelAt(this, "Title", T("Crafting Orders"), 88, 46, 530, 36, 22, Gold);
+        IconAt(this, "GoldIcon", "icon-aureons.png", 616, 52, 29, 29);
+        _balance = LabelAt(this, "Balance", "", 650, 49, 195, 30, 12, Gold);
 
-        _browseTab = Action(this, "Browse", T("Available Orders"), 38, 102, 233, 39, () => SelectTab(0));
-        _mineTab = Action(this, "Mine", T("My Orders"), 280, 102, 233, 39, () => SelectTab(1));
-        _postTab = Action(this, "Post", T("Post an Order"), 522, 102, 233, 39, () => SelectTab(2));
+        _browseTab = Action(this, "Browse", T("Available Orders"), 38, 102, 233, 39, () => { _audio.Play("ui_select"); SelectTab(0); });
+        _mineTab = Action(this, "Mine", T("My Orders"), 280, 102, 233, 39, () => { _audio.Play("ui_select"); SelectTab(1); });
+        _postTab = Action(this, "Post", T("Post an Order"), 522, 102, 233, 39, () => { _audio.Play("ui_select"); SelectTab(2); });
         Action(this, "Refresh", T("Refresh"), 756, 102, 106, 39, Networking.PacketSender.RequestCraftingOrders);
 
         _status = LabelAt(this, "Status", "", 41, 154, 810, 34, 11, Cream);
@@ -56,7 +59,8 @@ internal sealed class CraftingOrdersWindow : Window
         _list.SetBounds(37, 198, 827, 430);
         _postPanel = new Base(this, "PostOrderPanel");
         _postPanel.SetBounds(37, 198, 827, 430);
-        LabelAt(_postPanel, "PostHelp", T("Choose a craftable recipe output to request."), 12, 9, 790, 30, 12, Cream);
+        IconAt(_postPanel, "PostScroll", "icon-scroll.png", 11, 5, 35, 35);
+        LabelAt(_postPanel, "PostHelp", T("Choose a craftable recipe output to request."), 53, 9, 745, 30, 12, Cream);
         LabelAt(_postPanel, "QuantityLabel", T("Quantity"), 12, 54, 145, 29, 11, Gold);
         _quantity = Input(_postPanel, "Quantity", "1", 169, 54, 115);
         LabelAt(_postPanel, "RewardLabel", T("Reward (Aureons)"), 304, 54, 194, 29, 11, Gold);
@@ -83,6 +87,18 @@ internal sealed class CraftingOrdersWindow : Window
         return label;
     }
 
+    private static void IconAt(Base parent, string id, string filename, int x, int y, int width, int height)
+    {
+        var image = new ImagePanel(parent, id)
+        {
+            Texture = GameContentManager.Current.GetTexture(TextureType.Gui, "crafting-orders/" + filename),
+            MaintainAspectRatio = true,
+            MouseInputEnabled = false,
+            ShouldDrawBackground = false,
+        };
+        image.SetBounds(x, y, width, height);
+    }
+
     private static TextBox Input(Base parent, string id, string text, int x, int y, int width)
     {
         var box = new TextBox(parent, id) { Text = text };
@@ -103,6 +119,21 @@ internal sealed class CraftingOrdersWindow : Window
 
     public void Apply(CraftingOrdersStatePacket packet)
     {
+        if (packet.OpenWindow && IsHidden) _audio.Play("ui_open");
+        if (!string.IsNullOrWhiteSpace(packet.MessageKey))
+        {
+            var cue = packet.MessageKey switch
+            {
+                "Posted" => "order_posted",
+                "Accepted" => "order_accepted",
+                "Delivered" => "order_delivered",
+                "Cancelled" => "order_cancelled",
+                "MissingItems" or "InsufficientFunds" or "InvalidTerms" or "InvalidRecipe" or "Unavailable" or "MissingCurrency" => "ui_error",
+                _ => "",
+            };
+            if (cue.Length > 0) _audio.Play(cue);
+            if (packet.MessageKey == "Delivered") _audio.Play("reward_aureons");
+        }
         _state = packet;
         _status.Text = packet.MessageKey.Length == 0 ? T("Commissions are backed by secure Aureons escrow.") : T("CraftingOrders." + packet.MessageKey);
         _balance.Text = $"{packet.Aureons:N0} {T("Aureons")}";
@@ -134,17 +165,18 @@ internal sealed class CraftingOrdersWindow : Window
             card.SetBounds(4, y, 785, 84);
             var chrome = new MarketplaceWindow.MarketChrome(card, "Card", MarketplaceWindow.FrameStyle.Card);
             chrome.SetBounds(0, 0, 785, 84);
-            LabelAt(card, "Item", $"{order.Quantity} x {ItemDescriptor.GetName(order.ItemId)}", 17, 9, 340, 28, 12, Cream);
-            LabelAt(card, "Person", order.Customer + (order.Crafter.Length > 0 ? " / " + order.Crafter : ""), 17, 41, 340, 29, 10, Muted);
+            IconAt(card, "OrderScroll", "icon-scroll.png", 14, 14, 52, 52);
+            LabelAt(card, "Item", $"{order.Quantity} x {ItemDescriptor.GetName(order.ItemId)}", 73, 9, 286, 28, 12, Cream);
+            LabelAt(card, "Person", order.Customer + (order.Crafter.Length > 0 ? " / " + order.Crafter : ""), 73, 41, 286, 29, 10, Muted);
             LabelAt(card, "Gold", $"{order.Reward:N0} {T("Aureons")}", 375, 9, 167, 28, 12, Gold);
             LabelAt(card, "Time", DateTimeOffset.FromUnixTimeMilliseconds(order.DeadlineUtcMs).ToLocalTime().ToString("g"),
                 375, 42, 170, 28, 10, Muted);
             if (order.Status == 0 && !order.IsCustomer)
-                Action(card, "Accept", T("Accept Order"), 561, 23, 206, 38, () => Networking.PacketSender.CraftingOrderAction(order.Id, 0));
+                Action(card, "Accept", T("Accept Order"), 561, 23, 206, 38, () => { _audio.Play("ui_select"); Networking.PacketSender.CraftingOrderAction(order.Id, 0); });
             else if (order.Status == 1 && order.IsCrafter)
-                Action(card, "Deliver", T("Deliver Crafted Items"), 561, 23, 206, 38, () => Networking.PacketSender.CraftingOrderAction(order.Id, 1));
+                Action(card, "Deliver", T("Deliver Crafted Items"), 561, 23, 206, 38, () => { _audio.Play("craft_hit"); Networking.PacketSender.CraftingOrderAction(order.Id, 1); });
             else if (order.Status == 0 && order.IsCustomer)
-                Action(card, "Cancel", T("Cancel Order"), 561, 23, 206, 38, () => Networking.PacketSender.CraftingOrderAction(order.Id, 2));
+                Action(card, "Cancel", T("Cancel Order"), 561, 23, 206, 38, () => { _audio.Play("ui_select"); Networking.PacketSender.CraftingOrderAction(order.Id, 2); });
             else LabelAt(card, "OrderStatus", T("CraftingOrders.Status." + order.Status), 563, 24, 200, 36, 11, Gold);
             y += 92;
         }
@@ -170,8 +202,10 @@ internal sealed class CraftingOrdersWindow : Window
                         qty < 1 || reward < 1 || hours < 1)
                     {
                         _status.Text = T("Enter valid order terms.");
+                        _audio.Play("ui_error");
                         return;
                     }
+                    _audio.Play("ui_select");
                     Networking.PacketSender.PostCraftingOrder(id, qty, reward, hours);
                 });
             y += 40;
