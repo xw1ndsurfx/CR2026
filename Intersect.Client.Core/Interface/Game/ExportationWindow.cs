@@ -33,10 +33,10 @@ internal sealed class ExportationWindow : Base
     private static readonly Color ParchmentBacking = new(255, 135, 103, 71);
     private static readonly Color CrateBacking = new(255, 99, 70, 48);
     private static readonly Color DeliveryBacking = new(255, 100, 73, 51);
-    private static readonly Color WarmParchmentWash = new(59, 247, 204, 145);
-    private static readonly Color WarmWoodWash = new(44, 224, 173, 113);
+    private static readonly Color WarmParchmentWash = new(12, 247, 204, 145);
+    private static readonly Color WarmWoodWash = new(12, 224, 173, 113);
     private static readonly Color Cream = new(255, 255, 246, 220);
-    private static readonly Color DarkInk = new(255, 255, 222, 159);
+    private static readonly Color DarkInk = new(255, 69, 41, 23);
     private static readonly Color Gold = new(255, 255, 222, 134);
     private static readonly Color Green = new(255, 142, 236, 107);
 
@@ -48,6 +48,7 @@ internal sealed class ExportationWindow : Base
     private readonly ExportationAudio _audio = new();
     private readonly Dictionary<string, IGameTexture?> _textures = new(StringComparer.Ordinal);
     private readonly List<(Base Control, int X, int Y, int Width, int Height, int Font)> _placements = [];
+    private readonly Dictionary<Label, float> _textScaleCache = [];
     private readonly Label[] _orderLabels = new Label[OrderSize];
     private readonly Label[] _shelfLabels = new Label[ShelfSize];
     private readonly Button[] _shelfButtons = new Button[ShelfSize];
@@ -84,52 +85,75 @@ internal sealed class ExportationWindow : Base
         ShouldDrawBackground = false;
         Interface.InputBlockingComponents.Add(this);
 
-        Title("Title", "Exportation", 582, 54, 575, 65, 42);
-        Title("Subtitle", "Cargo preparation", 613, 111, 470, 40, 25);
-        _level = Title("Profession", "Level {0}", 1247, 80, 169, 34, 21);
-        _professionXp = Title("ProfessionXp", "", 1245, 113, 260, 32, 15);
-        Title("OrderTitle", "ORDER SLIP", 144, 193, 323, 47, 28, dark: true);
-        Title("CrateTitle", "PACK THE CRATES", 549, 193, 494, 43, 28);
-        Title("DeliveryTitle", "DELIVERY", 1144, 193, 331, 48, 27);
-        Title("Instruction", "Click goods to pack a matching crate", 549, 237, 495, 31, 17);
-        Title("Provided", "Goods provided by the merchant", 156, 684, 310, 38, 18, dark: true);
-        Title("AtDelivery", "At delivery", 1158, 535, 287, 33, 19);
+        // Coordinates are authored for the approved 1672×941 GFX, not the
+        // generated preview. Text must sit inside the original plaque artwork.
+        Title("Title", "Exportation", 586, 69, 506, 54, 40, center: true);
+        Title("Subtitle", "Cargo preparation", 632, 126, 410, 31, 24, center: true);
+        _level = Title("Profession", "Level {0}", 1245, 78, 210, 33, 22);
+        _professionXp = Title("ProfessionXp", "", 1245, 112, 252, 31, 16);
 
-        _merchant = Title("Merchant", "", 257, 304, 205, 67, 22, dark: true);
-        _sourceMap = Title("Source", "", 1136, 245, 170, 39, 19, dark: true);
-        _destinationMap = Title("Destination", "", 1340, 357, 177, 39, 18, dark: true);
-        _recipient = Title("Recipient", "", 1210, 418, 284, 58, 18);
-        _boat = Title("Boat", "", 1200, 483, 249, 35, 19);
-        _reward = Title("Reward", "", 1218, 573, 270, 36, 22);
-        _experience = Title("Experience", "", 1218, 609, 270, 34, 19);
-        Title("AfterSeal", "After sealing", 1196, 685, 253, 30, 18, dark: true);
-        _status = Title("Status", "", 1173, 717, 317, 45, 17, dark: true);
-        _routeName = Title("Route", "", 275, 364, 191, 29, 15, dark: true);
-        _progress = Title("Progress", "", 618, 581, 385, 31, 22);
-        _warning = Title("Warning", "Death or sinking destroys the cargo", 435, 820, 572, 42, 20);
-        _shelfPageLabel = Title("ShelfPage", "", 850, 766, 80, 30, 16);
-        _orderPageLabel = Title("OrderPage", "", 192, 636, 155, 30, 16, dark: true);
+        Title("OrderTitle", "ORDER SLIP", 143, 199, 322, 45, 28, dark: true, center: true);
+        Title("CrateTitle", "PACK THE CRATES", 510, 200, 532, 43, 28, center: true);
+        Title("DeliveryTitle", "DELIVERY", 1099, 200, 395, 44, 27, center: true);
+        Title("Instruction", "Click goods to pack a matching crate",
+            526, 246, 526, 32, 17, center: true);
+        Title("Provided", "Goods provided by the merchant",
+            150, 686, 310, 35, 17, dark: true, center: true);
+        Title("AtDelivery", "At delivery", 1155, 543, 300, 34, 20, center: true);
+
+        // Preserve the portrait, parchment and route art, while adding the
+        // missing headings from the original concept in their own empty areas.
+        Title("MerchantCaption", "MERCHANT", 252, 280, 204, 23, 14, dark: true);
+        _merchant = Title("Merchant", "", 252, 308, 215, 40, 22, dark: true, wrap: true);
+        Title("DestinationCaption", "DESTINATION", 252, 350, 204, 22, 14, dark: true);
+        _routeName = Title("Route", "", 252, 371, 215, 29, 17, dark: true, wrap: true);
+        Title("GoodsCaption", "REQUESTED GOODS",
+            144, 400, 319, 23, 17, dark: true, center: true);
+
+        _sourceMap = Title("Source", "", 1117, 254, 181, 42, 17, center: true, wrap: true);
+        _destinationMap = Title("Destination", "",
+            1334, 349, 178, 52, 17, center: true, wrap: true);
+        _recipient = Title("Recipient", "", 1211, 423, 284, 54, 19, wrap: true);
+        _boat = Title("Boat", "", 1183, 485, 283, 35, 19, center: true);
+        _reward = Title("Reward", "", 1196, 578, 302, 36, 21, center: true, wrap: true);
+        _experience = Title("Experience", "",
+            1200, 613, 298, 36, 19, center: true);
+        Title("AfterSeal", "After sealing", 1194, 683, 268, 32, 18, dark: true);
+        _status = Title("Status", "", 1170, 715, 326, 47, 17, dark: true, wrap: true);
+        _progress = Title("Progress", "", 590, 573, 386, 39, 22, center: true);
+        _warning = Title("Warning", "Death or sinking destroys the cargo",
+            407, 819, 633, 44, 20, center: true);
+        _shelfPageLabel = Title("ShelfPage", "", 794, 760, 173, 32, 17, center: true);
+        _orderPageLabel = Title("OrderPage", "", 196, 644, 182, 31, 16,
+            dark: true, center: true);
 
         for (var i = 0; i < OrderSize; ++i)
         {
             var index = i;
-            _orderLabels[i] = Title("OrderLine" + i, "", 223, 402 + i * 82, 246, 51, 19, dark: true);
-            Button("Remove" + i, "-", 145, 406 + i * 82, 48, 46, 19, () => RequestRemove(index));
+            _orderLabels[i] = Title("OrderLine" + i, "", 229, 426 + i * 78,
+                192, 52, 18, dark: true, wrap: true);
+            Button("Remove" + i, "−", 425, 432 + i * 78, 34, 29, 17,
+                () => RequestRemove(index));
         }
         for (var i = 0; i < ShelfSize; ++i)
         {
             var index = i;
-            _shelfButtons[i] = Button("Good" + i, "", 505 + i * 115, 652, 108, 95, 18, () => RequestPack(index));
-            _shelfLabels[i] = Title("GoodLabel" + i, "", 509 + i * 115, 744, 107, 35, 14);
+            _shelfButtons[i] = Button("Good" + i, "", 497 + i * 111,
+                656, 105, 87, 18, () => RequestPack(index));
+            _shelfLabels[i] = Title("GoodLabel" + i, "", 500 + i * 111,
+                740, 104, 39, 15, center: true, wrap: true);
         }
 
-        _seal = Button("Seal", "SEAL THE CARGO", 1096, 808, 397, 58, 23, RequestSeal);
-        Button("Close", "×", 1479, 35, 63, 59, 33, () => ExitRequested = true);
-        Button("Exit", "Close", 143, 812, 158, 57, 22, () => ExitRequested = true);
-        _previousGoods = Button("PreviousGoods", "‹", 503, 765, 45, 33, 24, () => ChangeGoodsPage(-1));
-        _nextGoods = Button("NextGoods", "›", 1033, 765, 45, 33, 24, () => ChangeGoodsPage(1));
-        _previousOrder = Button("PreviousOrders", "‹", 137, 642, 40, 27, 20, () => ChangeOrderPage(-1));
-        _nextOrder = Button("NextOrders", "›", 406, 642, 40, 27, 20, () => ChangeOrderPage(1));
+        _seal = Button("Seal", "SEAL THE CARGO", 1106, 806, 391, 61, 23, RequestSeal);
+        Button("Exit", "Close", 146, 812, 155, 55, 22, () => ExitRequested = true);
+        _previousGoods = Button("PreviousGoods", "‹", 506, 761, 45, 33,
+            24, () => ChangeGoodsPage(-1));
+        _nextGoods = Button("NextGoods", "›", 1010, 761, 45, 33,
+            24, () => ChangeGoodsPage(1));
+        _previousOrder = Button("PreviousOrders", "‹", 143, 644, 36, 30,
+            20, () => ChangeOrderPage(-1));
+        _nextOrder = Button("NextOrders", "›", 407, 644, 38, 30,
+            20, () => ChangeOrderPage(1));
         UpdateLayout();
         _audio.Play("ui_open");
         BringToFront();
@@ -185,8 +209,10 @@ internal sealed class ExportationWindow : Base
 
     internal void Update()
     {
-        UpdateLayout();
+        // Text is refreshed first so its actual length participates in
+        // native pixel-font fitting, including language changes.
         RefreshLabels();
+        UpdateLayout();
     }
 
     private void RefreshLabels()
@@ -316,10 +342,10 @@ internal sealed class ExportationWindow : Base
 
         // Explicit button surfaces remain visible over the detailed sprite
         // sheet. The GWEN buttons stay fully clickable over these rectangles.
-        PaintAction(skin, 139, 808, 163, 61, new Color(255, 70, 50, 34));
+        PaintAction(skin, 143, 808, 160, 62, new Color(45, 83, 56, 29));
         if (!_seal.IsHidden)
-            PaintAction(skin, 1092, 804, 405, 66,
-                _seal.IsDisabled ? new Color(255, 78, 59, 39) : new Color(255, 45, 91, 47));
+            PaintAction(skin, 1103, 802, 396, 68,
+                _seal.IsDisabled ? new Color(45, 88, 63, 38) : new Color(50, 190, 132, 44));
         // Profession experience is the server-authoritative custom profession
         // progression, not mini-game-only points.
         skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
@@ -345,12 +371,12 @@ internal sealed class ExportationWindow : Base
             for (var i = 0; i < OrderSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
-                if (line is not null) DrawGood(skin, line, 147, 397 + i * 82, 74, 65);
+                if (line is not null) DrawGood(skin, line, 147, 421 + i * 78, 74, 65);
             }
             for (var i = 0; i < ShelfSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
-                if (line is not null) DrawGood(skin, line, 522 + i * 115, 651, 79, 74);
+                if (line is not null) DrawGood(skin, line, 510 + i * 111, 653, 79, 74);
             }
             var materials = r.Lines.Where(line => line.Group == CargoGroup.Materials && ExportationRules.Packed(s, line.ItemId) > 0).Take(3).ToArray();
             var fragile = r.Lines.Where(line => line.Group != CargoGroup.Materials && ExportationRules.Packed(s, line.ItemId) > 0).Take(4).ToArray();
@@ -397,9 +423,10 @@ internal sealed class ExportationWindow : Base
 
     private void PaintAction(SkinBase skin, int x, int y, int w, int h, Color fill)
     {
-        FillScene(skin, new Color(255, 174, 126, 67), x, y, w, h);
-        FillScene(skin, fill, x + 3, y + 3, w - 6, h - 6);
-        FillScene(skin, new Color(255, 236, 188, 112), x + 5, y + 5, w - 10, 2);
+        // The background PNG already contains ornate action plaques. A solid
+        // rectangle covered them in the previous patch; retain their detailing.
+        FillScene(skin, fill, x + 7, y + 7, w - 14, h - 14);
+        FillScene(skin, new Color(125, 235, 191, 115), x + 7, y + 6, w - 14, 2);
     }
 
     private void DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
@@ -413,13 +440,16 @@ internal sealed class ExportationWindow : Base
         new(_left + (int)Math.Round(x * _scale), _top + (int)Math.Round(y * _scale),
             Math.Max(1, (int)Math.Round(width * _scale)), Math.Max(1, (int)Math.Round(height * _scale)));
 
-    private Label Title(string name, string source, int x, int y, int w, int h, int font, bool dark = false)
+    private Label Title(string name, string source, int x, int y, int w, int h, int font,
+        bool dark = false, bool center = false, bool wrap = false)
     {
         var label = new Label(this, "Exportation" + name)
         {
             Text = T(source), Font = Skin.DefaultFont, FontSize = font,
-            AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped,
-            TextColorOverride = dark ? DarkInk : Cream, TextAlign = Pos.Left | Pos.CenterV,
+            AutoSizeToContents = false,
+            WrappingBehavior = wrap ? WrappingBehavior.Wrapped : WrappingBehavior.NoWrap,
+            TextColorOverride = dark ? DarkInk : Cream,
+            TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
             MouseInputEnabled = false, KeyboardInputEnabled = false,
         };
         Place(label, x, y, w, h, font);
@@ -444,6 +474,47 @@ internal sealed class ExportationWindow : Base
     private void Place(Base control, int x, int y, int w, int h, int font) =>
         _placements.Add((control, x, y, w, h, font));
 
+    /// <summary>
+    /// GWEN's bitmap fonts only expose their packed atlas sizes. Requesting
+    /// 28px from a font with a single 10px atlas silently renders at 10px:
+    /// this caused the tiny, displaced labels in the approved 1672×941 art.
+    /// Render the native glyphs at a text scale rather than changing the art.
+    /// </summary>
+    internal static (int NativeSize, float TextScale) ResolvePixelFont(
+        IFont font, int desiredSize)
+    {
+        var wanted = Math.Max(8, desiredSize);
+        var native = font.SupportedSizes.Count > 0 ? font.PickBestMatchFor(wanted) : wanted;
+        return (native, wanted / (float)Math.Max(1, native));
+    }
+
+    private void FitLabel(Label label, int designFont, int availableWidth)
+    {
+        var wanted = Math.Max(8, (int)Math.Round(designFont * _scale));
+        var font = label.Font ?? Skin.DefaultFont;
+        if (font is null) { label.FontSize = wanted; return; }
+        var (nativeSize, textScale) = ResolvePixelFont(font, wanted);
+
+        // Keep titles and buttons on one line. Merchant names, item stacks and
+        // long map names have their own explicitly wrapped fields.
+        if (label.WrappingBehavior == WrappingBehavior.NoWrap &&
+            !string.IsNullOrWhiteSpace(label.Text))
+        {
+            var measured = Skin.Renderer.MeasureText(font, nativeSize, label.Text, textScale);
+            var maxWidth = Math.Max(12, availableWidth - 8);
+            if (measured.X > maxWidth)
+                textScale *= maxWidth / (float)measured.X;
+        }
+
+        label.FontSize = nativeSize;
+        if (!_textScaleCache.TryGetValue(label, out var last) ||
+            Math.Abs(last - textScale) > .005f)
+        {
+            label.SetTextScale(textScale);
+            _textScaleCache[label] = textScale;
+        }
+    }
+
     private void UpdateLayout()
     {
         SetPosition(0, 0); SetSize(_canvas.Width, _canvas.Height);
@@ -451,19 +522,21 @@ internal sealed class ExportationWindow : Base
             Math.Max(1, _canvas.Height) / (double)DesignHeight);
         _left = (int)((_canvas.Width - DesignWidth * _scale) / 2);
         _top = (int)((_canvas.Height - DesignHeight * _scale) / 2);
+
+        if (_language != ClientLanguages.Current)
+        {
+            _language = ClientLanguages.Current;
+            foreach (var (control, source) in _translated)
+            {
+                if (control is Label label) label.Text = T(source);
+            }
+        }
+
         foreach (var (control, x, y, w, h, font) in _placements)
         {
             var rect = SceneRect(x, y, w, h);
             control.SetBounds(rect.X, rect.Y, rect.Width, rect.Height);
-            if (control is Label label) label.FontSize = Math.Max(8, (int)Math.Round(font * _scale));
-            if (control is Button button) button.FontSize = Math.Max(8, (int)Math.Round(font * _scale));
-        }
-        if (_language == ClientLanguages.Current) return;
-        _language = ClientLanguages.Current;
-        foreach (var (control, source) in _translated)
-        {
-            if (control is Label label) label.Text = T(source);
-            else if (control is Button button) button.Text = T(source);
+            if (control is Label label) FitLabel(label, font, rect.Width);
         }
     }
 
