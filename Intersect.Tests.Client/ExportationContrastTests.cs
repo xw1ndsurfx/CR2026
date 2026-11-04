@@ -1,5 +1,6 @@
 using System.Reflection;
 using Intersect.Client.Interface.Game;
+using Intersect.Client.Framework.Graphics;
 using NUnit.Framework;
 
 namespace Intersect.Tests.Client;
@@ -41,4 +42,40 @@ public sealed class ExportationContrastTests
             Assert.That(window.GetMethod("PaintAction", BindingFlags.Instance | BindingFlags.NonPublic), Is.Not.Null);
         });
     }
+
+    [TestCase(10, 28, 2.8f)]
+    [TestCase(10, 17, 1.7f)]
+    [TestCase(12, 24, 2f)]
+    public void SingleSizePixelFontKeepsOriginalDesignTextSize(
+        int atlasSize, int desiredPixelSize, float expectedScale)
+    {
+        var font = new TestBitmapFont(atlasSize);
+        var (native, scaling) = ExportationWindow.ResolvePixelFont(font, desiredPixelSize);
+        Assert.Multiple(() =>
+        {
+            Assert.That(native, Is.EqualTo(atlasSize));
+            Assert.That(scaling, Is.EqualTo(expectedScale).Within(.0001f),
+                "A 10px Empire atlas must be magnified instead of silently drawing 28px headings at 10px.");
+            Assert.That(native * scaling, Is.EqualTo(desiredPixelSize).Within(.0001f));
+        });
+    }
+
+    [Test]
+    public void ExactAtlasSizeDoesNotUnnecessarilyScaleText()
+    {
+        var font = new TestBitmapFont(12, 16, 20, 28);
+        var (native, scaling) = ExportationWindow.ResolvePixelFont(font, 28);
+        Assert.That(native, Is.EqualTo(28));
+        Assert.That(scaling, Is.EqualTo(1f));
+    }
+
+    private sealed class TestBitmapFont(params int[] sizes) : IFont
+    {
+        public string Name => "Empire";
+        public ICollection<int> SupportedSizes { get; } = sizes;
+        public int PickBestMatchFor(int size) =>
+            SupportedSizes.OrderBy(supported => Math.Abs(size - supported)).First();
+        public int GetNextFontSize(int startSize, int direction, int limit = 0) => startSize;
+    }
+
 }
