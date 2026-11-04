@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets;
 using Intersect.Network.Packets.Server;
+using Intersect.Utilities;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -90,10 +91,11 @@ internal sealed class CraftingOrdersWindow : Window
 
     private static Button Action(Base parent, string id, string caption, int x, int y, int width, int height, Action onClick)
     {
-        var button = new Button(parent, id) { Text = caption, FontSize = 11, TextColorOverride = Cream };
+        var button = new Button(parent, id) { Text = string.Empty };
         button.SetBounds(x, y, width, height);
         var chrome = new MarketplaceWindow.MarketChrome(button, id + "Frame", MarketplaceWindow.FrameStyle.PrimaryAction);
         chrome.SetBounds(0, 0, width, height);
+        LabelAt(button, id + "Caption", caption, 8, 4, width - 16, height - 8, 11, Cream);
         button.Clicked += (_, _) => onClick();
         return button;
     }
