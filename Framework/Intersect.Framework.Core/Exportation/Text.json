@@ -194,6 +194,61 @@
       "en": "+{0:N0} Exportation XP",
       "fr": "+{0:N0} XP Exportation",
       "es": "+{0:N0} EXP Exportación"
+    },
+    "Exportation route editor": {
+      "en": "Exportation route editor",
+      "fr": "Éditeur des routes d’Exportation",
+      "es": "Editor de rutas de Exportación"
+    },
+    "Apply to server": {
+      "en": "Apply to server",
+      "fr": "Appliquer au serveur",
+      "es": "Aplicar al servidor"
+    },
+    "Reload from server": {
+      "en": "Reload from server",
+      "fr": "Recharger depuis le serveur",
+      "es": "Recargar desde el servidor"
+    },
+    "Discard the local draft?": {
+      "en": "Discard the local draft?",
+      "fr": "Abandonner le brouillon local ?",
+      "es": "¿Descartar el borrador local?"
+    },
+    "Unsaved route changes.": {
+      "en": "Unsaved route changes.",
+      "fr": "Routes modifiées, non enregistrées.",
+      "es": "Rutas modificadas, sin guardar."
+    },
+    "Server did not confirm the save. Your draft is preserved.": {
+      "en": "Server did not confirm the save. Your draft is preserved.",
+      "fr": "Le serveur n’a pas confirmé l’enregistrement. Votre brouillon est conservé.",
+      "es": "El servidor no confirmó el guardado. Tu borrador se ha conservado."
+    },
+    "Configure source and recipient NPCs, maps, goods, quest and rewards.": {
+      "en": "Configure source and recipient NPCs, maps, goods, quest and rewards.",
+      "fr": "Configurez les PNJ, les îles, les marchandises, la quête et les récompenses.",
+      "es": "Configura los PNJ, las islas, los artículos, la misión y las recompensas."
+    },
+    "Invalid route JSON. Nothing was saved.": {
+      "en": "Invalid route JSON. Nothing was saved.",
+      "fr": "JSON des routes invalide. Rien n’a été enregistré.",
+      "es": "JSON de rutas no válido. No se guardó nada."
+    },
+    "Waiting for the server to confirm.": {
+      "en": "Waiting for the server to confirm.",
+      "fr": "En attente de la confirmation du serveur.",
+      "es": "Esperando la confirmación del servidor."
+    },
+    "Exportation routes saved.": {
+      "en": "Exportation routes saved.",
+      "fr": "Routes d’Exportation enregistrées.",
+      "es": "Rutas de Exportación guardadas."
+    },
+    "Exportation routes were not saved. Check the route IDs and references.": {
+      "en": "Exportation routes were not saved. Check the route IDs and references.",
+      "fr": "Routes non enregistrées. Vérifiez les ID et les références.",
+      "es": "Las rutas no se guardaron. Comprueba los ID y las referencias."
     }
   }
 }
