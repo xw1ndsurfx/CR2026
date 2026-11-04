@@ -27,7 +27,7 @@ internal sealed class CraftingOrdersWindow : Window
     private CraftingOrdersStatePacket _state = new();
     private int _tab;
 
-    private static string T(string key) => Intersect.Client.Localization.ClientLanguages.Text(key);
+    private static string T(string key) => Intersect.Framework.Core.CraftingOrders.CraftingOrdersText.Get(key, Intersect.Client.Localization.ClientLanguages.Current);
 
     public CraftingOrdersWindow(Canvas parent) : base(parent, "Crafting Orders", false, nameof(CraftingOrdersWindow))
     {
