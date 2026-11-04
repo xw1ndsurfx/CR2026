@@ -24,7 +24,7 @@ internal sealed class ExportationAudio
         // Optional audio must never prevent the minigame's UI from opening.
         try
         {
-            var sound = Audio.AddGameSound("exportation/" + cue + ".wav", false);
+            var sound = Intersect.Client.Core.Audio.AddGameSound("exportation/" + cue + ".wav", false);
             if (sound is { Loaded: true }) sound.Volume = cue == "cargo_lost" ? 70 : 65;
         }
         catch (Exception error) when (error is IOException or InvalidOperationException or
