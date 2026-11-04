@@ -19,7 +19,7 @@ internal sealed partial class PacketHandler
                 var json = save ? ExportationRuntime.Save(packet.ConfigurationJson) : ExportationRuntime.Current.ToJson();
                 client.Send(new ExportationStatePacket
                 {
-                    Editor = true, Open = !save, Saved = save, ConfigurationJson = json,
+                    Editor = true, Open = !save && packet.OpenEditor, Saved = save, ConfigurationJson = json,
                     Message = save ? ExportationText.Get("Exportation routes saved.", client.LanguageCode ?? "en") : "",
                 });
             }
