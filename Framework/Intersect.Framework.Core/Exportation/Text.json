@@ -249,6 +249,46 @@
       "en": "Exportation routes were not saved. Check the route IDs and references.",
       "fr": "Routes non enregistrées. Vérifiez les ID et les références.",
       "es": "Las rutas no se guardaron. Comprueba los ID y las referencias."
+    },
+    "Open Exportation": {
+      "en": "Open Exportation",
+      "fr": "Ouvrir l’Exportation",
+      "es": "Abrir Exportación"
+    },
+    "Select an Exportation route": {
+      "en": "Select an Exportation route",
+      "fr": "Sélectionnez une route d’Exportation",
+      "es": "Selecciona una ruta de Exportación"
+    },
+    "Refresh routes": {
+      "en": "Refresh routes",
+      "fr": "Actualiser les routes",
+      "es": "Actualizar rutas"
+    },
+    "Choose a saved Exportation route.": {
+      "en": "Choose a saved Exportation route.",
+      "fr": "Choisissez une route d’Exportation enregistrée.",
+      "es": "Elige una ruta de Exportación guardada."
+    },
+    "Route not available": {
+      "en": "Route not available",
+      "fr": "Route indisponible",
+      "es": "Ruta no disponible"
+    },
+    "Use this command at the original merchant and destination events.": {
+      "en": "Use this command at the original merchant and destination events.",
+      "fr": "Utilisez cette commande sur les événements du marchand et du destinataire.",
+      "es": "Utiliza este comando en los eventos del comerciante y del destinatario."
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
     }
   }
 }
