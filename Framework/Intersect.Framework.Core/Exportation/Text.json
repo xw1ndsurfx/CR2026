@@ -289,6 +289,41 @@
       "en": "Cancel",
       "fr": "Annuler",
       "es": "Cancelar"
+    },
+    "Finish your current Exportation delivery first.": {
+      "en": "Finish your current Exportation delivery first.",
+      "fr": "Termine d’abord ta livraison d’Exportation en cours.",
+      "es": "Termina primero tu entrega de Exportación actual."
+    },
+    "A usable ship and the required Exportation level are needed.": {
+      "en": "A usable ship and the required Exportation level are needed.",
+      "fr": "Il te faut un bateau utilisable et le niveau d’Exportation requis.",
+      "es": "Necesitas un barco disponible y el nivel de Exportación requerido."
+    },
+    "Exportation could not be saved.": {
+      "en": "Exportation could not be saved.",
+      "fr": "Impossible d’enregistrer l’Exportation. Réessaie.",
+      "es": "No se pudo guardar la Exportación. Vuelve a intentarlo."
+    },
+    "Repair or obtain a ship to prepare the cargo again.": {
+      "en": "Repair or obtain a ship to prepare the cargo again.",
+      "fr": "Répare ou procure-toi un bateau pour préparer la cargaison à nouveau.",
+      "es": "Repara o consigue un barco para volver a preparar la carga."
+    },
+    "Deliver your sealed cargo to the recipient.": {
+      "en": "Deliver your sealed cargo to the recipient.",
+      "fr": "Livre ta cargaison scellée au destinataire.",
+      "es": "Entrega tu carga sellada al destinatario."
+    },
+    "Make room in your inventory before delivery.": {
+      "en": "Make room in your inventory before delivery.",
+      "fr": "Libère de la place dans ton inventaire avant la livraison.",
+      "es": "Haz espacio en tu inventario antes de entregar la carga."
+    },
+    "Exportation data could not be read.": {
+      "en": "Exportation data could not be read.",
+      "fr": "Impossible de lire les données d’Exportation.",
+      "es": "No se pudieron leer los datos de Exportación."
     }
   }
 }
