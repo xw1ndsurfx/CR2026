@@ -835,6 +835,9 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenRoyalContracts:
                 tmpCommand = new OpenRoyalContractsCommand();
                 break;
+            case EventCommandType.OpenExportation:
+                tmpCommand = new OpenExportationCommand();
+                break;
             case EventCommandType.OpenFishing:
                 tmpCommand = new OpenFishingCommand();
                 break;
@@ -882,6 +885,9 @@ public partial class FrmEvent : Form
         AddRoyalStylistCommand();
         var fishingNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "interface")
             ?? lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        fishingNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.Exportation.ExportationText.Get("Open Exportation",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+            { Name = "openexportation", Tag = (int)EventCommandType.OpenExportation });
         fishingNode?.Nodes.Add(new TreeNode(Intersect.Editor.Localization.FishingEditorText.Get("Open Fishing"))
             { Name = "openfishing", Tag = (int)EventCommandType.OpenFishing });
         var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
@@ -1782,6 +1788,9 @@ public partial class FrmEvent : Form
                 cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
                 break;
             case EventCommandType.OpenRoyalContracts:
+                break;
+            case EventCommandType.OpenExportation:
+                cmdWindow = new EventCommandExportation((OpenExportationCommand)command, this);
                 break;
             case EventCommandType.OpenFishing:
                 cmdWindow = new EventCommandFishing((OpenFishingCommand)command, this);
