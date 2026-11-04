@@ -25,4 +25,5 @@ public sealed partial class ExportationRequestPacket : IntersectPacket
     [Key(4)] public CargoGroup Group { get; set; }
     [Key(5)] public int QuantityChange { get; set; }
     [Key(6)] public string ConfigurationJson { get; set; } = "";
+    [Key(7)] public bool OpenEditor { get; set; }
 }
