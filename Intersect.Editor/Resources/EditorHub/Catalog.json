@@ -22,6 +22,50 @@
     }
   },
   {
+    "id": "miniGame.ExportationRoutes",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "art": "navalSystemEditor.png",
+    "keywords": "exportation export exportación livraison delivery naval boat merchant marchand route cargo commerce trading",
+    "title": {
+      "en": "Exportation Routes",
+      "fr": "Routes d’exportation",
+      "es": "Rutas de exportación"
+    },
+    "description": {
+      "en": "Configure merchant orders, island destinations, cargo rules, quests, and rewards.",
+      "fr": "Configurez les commandes, les destinations, les cargaisons, les quêtes et les récompenses.",
+      "es": "Configura pedidos, islas de destino, cargas, misiones y recompensas."
+    }
+  },
+  {
+    "id": "miniGame.ExportationAssets",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "art": "soundImportEditorToolStripMenuItem.png",
+    "keywords": "exportation export graphics graphismes sonidos sounds sons sprite pixel assets preview apercu vista previa",
+    "title": {
+      "en": "Exportation Graphics & Sounds",
+      "fr": "Graphismes et sons d’exportation",
+      "es": "Gráficos y sonidos de exportación"
+    },
+    "description": {
+      "en": "Preview the Exportation interface, cargo sprites, and sound effects.",
+      "fr": "Prévisualisez l’interface, les sprites et les effets sonores d’exportation.",
+      "es": "Previsualiza la interfaz, los sprites y los efectos de sonido de exportación."
+    }
+  },
+  {
     "id": "lobbyEditor",
     "oldMenu": "contentEditorsToolStripMenuItem",
     "category": "Game",
@@ -43,16 +87,47 @@
     }
   },
   {
-    "id": "royalContractsEditorToolStripMenuItem", "oldMenu": "Game Editors", "category": "Game", "subcategory": "WorldAndProgression",
-    "tags": ["Gameplay", "Economy"], "art": "questEditorToolStripMenuItem.png", "keywords": "royal contracts daily weekly mission contract contrat quotidien hebdomadaire collectif intendant",
-    "title": {"en":"Royal Contracts", "fr":"Contrats royaux", "es":"Contratos reales"},
-    "description": {"en":"Manage automatic daily and weekly commissions, deliveries and collective goals.", "fr":"Gérer les missions quotidiennes et hebdomadaires, les livraisons et les objectifs collectifs.", "es":"Gestiona misiones diarias y semanales, entregas y objetivos colectivos."}
+    "id": "royalContractsEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "art": "questEditorToolStripMenuItem.png",
+    "keywords": "royal contracts daily weekly mission contract contrat quotidien hebdomadaire collectif intendant",
+    "title": {
+      "en": "Royal Contracts",
+      "fr": "Contrats royaux",
+      "es": "Contratos reales"
+    },
+    "description": {
+      "en": "Manage automatic daily and weekly commissions, deliveries and collective goals.",
+      "fr": "Gérer les missions quotidiennes et hebdomadaires, les livraisons et les objectifs collectifs.",
+      "es": "Gestiona misiones diarias y semanales, entregas y objetivos colectivos."
+    }
   },
   {
-    "id": "royalCinematicDirector", "oldMenu": "contentEditorsToolStripMenuItem", "category": "Game", "subcategory": "WorldAndProgression",
-    "tags": ["World"], "art": "commonEventEditorToolStripMenuItem.png", "keywords": "cinematic camera timeline actor story dialogue movement saga chapitre",
-    "title": {"en":"Royal Cinematic Director", "fr":"Royal Cinematic Director", "es":"Royal Cinematic Director"},
-    "description": {"en":"Author map cinematics with actor paths, camera shots and interactive Events.", "fr":"Créer des cinématiques sur carte avec trajectoires, caméra et Events interactifs.", "es":"Crear cinemáticas en mapas con rutas, cámara y Events interactivos."}
+    "id": "royalCinematicDirector",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "World"
+    ],
+    "art": "commonEventEditorToolStripMenuItem.png",
+    "keywords": "cinematic camera timeline actor story dialogue movement saga chapitre",
+    "title": {
+      "en": "Royal Cinematic Director",
+      "fr": "Royal Cinematic Director",
+      "es": "Royal Cinematic Director"
+    },
+    "description": {
+      "en": "Author map cinematics with actor paths, camera shots and interactive Events.",
+      "fr": "Créer des cinématiques sur carte avec trajectoires, caméra et Events interactifs.",
+      "es": "Crear cinemáticas en mapas con rutas, cámara y Events interactivos."
+    }
   },
   {
     "id": "map",
@@ -1294,28 +1369,28 @@
     "keywords": "Lockpicking Lockpicking Crochetage Ganzúas",
     "subcategory": "MiniGameSettings"
   },
-{
-  "id": "miniGame.Jousting",
-  "oldMenu": "Mini-Game",
-  "category": "MiniGames",
-  "subcategory": "MiniGameSettings",
-  "tags": [
-    "Gameplay"
-  ],
-  "title": {
-    "en": "Jousting Editor",
-    "fr": "Éditeur de joutes",
-    "es": "Editor de justas"
+  {
+    "id": "miniGame.Jousting",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Jousting Editor",
+      "fr": "Éditeur de joutes",
+      "es": "Editor de justas"
+    },
+    "description": {
+      "en": "Place a training lane and configure AI rules and native cinematic Events.",
+      "fr": "Placez une lice et configurez les règles IA et les Events cinématiques natifs.",
+      "es": "Coloca una liza y configura reglas de IA y eventos cinemáticos nativos."
+    },
+    "art": "mountEditorToolStripMenuItem.png",
+    "keywords": "jousting joutes justas Herbonia William"
   },
-  "description": {
-    "en": "Place a training lane and configure AI rules and native cinematic Events.",
-    "fr": "Placez une lice et configurez les règles IA et les Events cinématiques natifs.",
-    "es": "Coloca una liza y configura reglas de IA y eventos cinemáticos nativos."
-  },
-  "art": "mountEditorToolStripMenuItem.png",
-  "keywords": "jousting joutes justas Herbonia William"
-},
-{
+  {
     "id": "SmartMapBuilderTool",
     "oldMenu": "toolsToolStripMenuItem",
     "category": "Tools",
@@ -1336,28 +1411,28 @@
       "es": "Islas en Ground, orillas conectadas y edición del suelo."
     }
   },
-{
-  "id": "miniGame.Archery",
-  "oldMenu": "miniGameEditorsToolStripMenuItem",
-  "category": "MiniGames",
-  "subcategory": "MiniGameSettings",
-  "tags": [
-    "Gameplay"
-  ],
-  "art": "itemEditorToolStripMenuItem.png",
-  "title": {
-    "en": "Archery Editor",
-    "fr": "Éditeur de tir à l’arc",
-    "es": "Editor de tiro con arco"
+  {
+    "id": "miniGame.Archery",
+    "oldMenu": "miniGameEditorsToolStripMenuItem",
+    "category": "MiniGames",
+    "subcategory": "MiniGameSettings",
+    "tags": [
+      "Gameplay"
+    ],
+    "art": "itemEditorToolStripMenuItem.png",
+    "title": {
+      "en": "Archery Editor",
+      "fr": "Éditeur de tir à l’arc",
+      "es": "Editor de tiro con arco"
+    },
+    "description": {
+      "en": "Configure archery training, targets and ranked challenges.",
+      "fr": "Configurez l’entraînement au tir à l’arc, les cibles et les épreuves classées.",
+      "es": "Configure el entrenamiento de tiro con arco, los blancos y los desafíos clasificatorios."
+    },
+    "keywords": "archery tir arc weapon mastery armes munition"
   },
-  "description": {
-    "en": "Configure archery training, targets and ranked challenges.",
-    "fr": "Configurez l’entraînement au tir à l’arc, les cibles et les épreuves classées.",
-    "es": "Configure el entrenamiento de tiro con arco, los blancos y los desafíos clasificatorios."
-  },
-  "keywords": "archery tir arc weapon mastery armes munition"
-},
-{
+  {
     "id": "weaponMasteryEditor",
     "oldMenu": "contentEditorsToolStripMenuItem",
     "category": "Game",

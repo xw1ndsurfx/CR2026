@@ -80,7 +80,9 @@ internal static class SaveProtectionTests
             using (var pvp = new FrmPvpConfiguration(JsonConvert.SerializeObject(config)))
             {
                 pvp.Show(); Application.DoEvents();
-                var tabs = pvp.Controls.OfType<TabControl>().Single();
+                // A small CI display may wrap the dialog in EditorScrollViewport/EditorScrollContent.
+                // Find the real tabs through its current control tree without assuming direct parentage.
+                var tabs = All(pvp).OfType<TabControl>().Single();
                 var grades = tabs.TabPages[1].Controls.OfType<DataGridView>().Single();
                 Check(grades.Rows.Count == 10, "Opening a server snapshot must not append default grades");
                 tabs.SelectedIndex = 1;
