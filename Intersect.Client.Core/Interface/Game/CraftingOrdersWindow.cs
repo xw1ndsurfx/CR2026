@@ -91,14 +91,15 @@ internal sealed class CraftingOrdersWindow : Window
         IconAt(_postPanel, "RecipeIcon", "icon-scroll.png", 19, 12, 32, 32);
         LabelAt(_postPanel, "RecipeHeading", T("CraftingOrders.SelectRecipe"), 57, 12, 245, 33, 15, Gold, bold: true);
         _recipeCount = LabelAt(_postPanel, "RecipeCount", "", 305, 12, 86, 31, 11, Muted, center: true);
-        _search = Input(_postPanel, "RecipeSearch", "", 18, 57, 373, 39);
+        LabelAt(_postPanel, "SearchLabel", T("CraftingOrders.Search"), 19, 49, 372, 23, 12, Muted);
+        _search = Input(_postPanel, "RecipeSearch", "", 18, 74, 373, 37);
         _search.TextChanged += (_, _) => { RenderRecipes(); _recipeList.ScrollToTop(); };
 
         _recipeList = new ScrollControl(_postPanel, "RecipeChoices")
         {
             OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true,
         };
-        _recipeList.SetBounds(17, 109, 379, 297);
+        _recipeList.SetBounds(17, 121, 379, 286);
 
         LabelAt(_postPanel, "TermsHeading", T("CraftingOrders.Terms"), 441, 16, 405, 33, 16, Gold, bold: true);
         _selectedIcon = new ImagePanel(_postPanel, "SelectedItemIcon")
@@ -395,7 +396,7 @@ internal sealed class CraftingOrdersWindow : Window
                 16, 26, 321, 150, 14, Muted, center: true);
             y = 216;
         }
-        _recipeList.SetInnerSize(358, Math.Max(295, y + 8));
+        _recipeList.SetInnerSize(358, Math.Max(284, y + 8));
         _recipeList.UpdateScrollBars();
         UpdateSelection();
     }
