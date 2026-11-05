@@ -859,6 +859,21 @@
       "en": "REQUESTED GOODS",
       "fr": "MARCHANDISES DEMANDÉES",
       "es": "MERCANCÍAS SOLICITADAS"
+    },
+    "Boat owned": {
+      "en": "Boat owned",
+      "fr": "Bateau possédé",
+      "es": "Barco propio"
+    },
+    "SAIL TO DESTINATION": {
+      "en": "SAIL TO DESTINATION",
+      "fr": "NAVIGUER VERS LA DESTINATION",
+      "es": "NAVEGAR AL DESTINO"
+    },
+    "An owned, unsunk ship and the required Exportation level are needed.": {
+      "en": "An owned, unsunk ship and the required Exportation level are needed.",
+      "fr": "Tu dois posséder un bateau non coulé et avoir le niveau d’Exportation requis.",
+      "es": "Debes tener un barco propio no hundido y el nivel de Exportación requerido."
     }
   }
 }

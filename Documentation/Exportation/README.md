@@ -61,3 +61,34 @@ Puis effectuer des tests en jeu client + serveur + base de données : quête ré
 - Choix automatique d'un bateau utilisable lors du scellement; une sélection manuelle serait préférable si le joueur possède plusieurs bateaux.
 - Éditeur de routes encore en JSON, pas en interface à champs guidés.
 - Les cas spéciaux de récompenses de la quête et d'événements de niveau de métier doivent être validés lors des tests d'intégration; éviter les paiements supplémentaires configurés dans la quête.
+
+## Mise à jour — bateau possédé et rendu du client
+
+Le marchand **n'exige plus que le bateau soit amarré sur la carte du marchand**.
+Le serveur vérifie uniquement la possession d'au moins un bateau non coulé
+avec des points de vie positifs, même si son port de retour est ailleurs.
+On peut préparer, sceller puis rejoindre un port pour embarquer.
+
+Pour éviter de lier par erreur une commande au premier bateau du joueur,
+le scellement laisse l'identifiant du navire vide. Ce dernier est renseigné
+uniquement lors de l'embarquement confirmé par le système naval natif,
+et le bateau doit appartenir au joueur et être opérationnel. Une traversée
+et un accostage sur le **même bateau** restent obligatoires pour la remise.
+Une téléportation ne peut pas valider la livraison. Le naufrage du bateau
+transporteur et la mort conservent les règles habituelles de perte.
+
+La barre verte indique un **bateau possédé**, et non un bateau amarré.
+Le client affiche « Naviguer vers la destination » après scellement si
+le personnage est encore sur l'île de départ; l'action de livraison n'est
+disponible qu'après la traversée et à proximité du destinataire.
+
+Pour les polices Empire ou assimilées, le client calibre l'échelle sur la
+hauteur **réelle** fournie par le renderer après l'éventuelle surcharge
+`GlobalFontSize`. Les boutons « X » de retrait sont masqués quand aucune
+quantité ne peut être retirée et les fonds de cargaison ne recouvrent plus
+les caisses GFX.
+
+Validation manuelle à faire après build : tester 1600×900 et 1280×720
+avec de vrais GFX (jour et nuit); navire possédé et amarré ailleurs;
+aucun bateau; bateau coulé; puis préparation, scellement, embarquement,
+accostage, livraison et mort/naufrage.
