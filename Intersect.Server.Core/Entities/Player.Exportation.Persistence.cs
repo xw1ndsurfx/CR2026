@@ -62,9 +62,10 @@ public partial class Player
         return false;
     }
 
+    // A merchant checks fleet ownership and seaworthiness, NOT dock location.
+    // The real vessel is selected only by the authenticated naval embarkation.
     private OwnedShip? ExportationBoat() => NavalFleet.FirstOrDefault(ship =>
-        ship.Health > 0 && !ship.Sunk && !ship.AtSea &&
-        (ship.ReturnMapId == Guid.Empty || ship.ReturnMapId == MapId));
+        ship.Health > 0 && !ship.Sunk);
 
     private ExportationActor ExportationActor(ExportationRoute route, bool recipient)
     {

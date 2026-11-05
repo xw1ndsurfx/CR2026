@@ -71,13 +71,26 @@ public partial class Player
             }
             if (run is null)
             {
-                if (!sourceNpc || !CanStartQuest(quest) ||
-                    !ExportationRules.TryStart(route, ExportationActor(route, false),
-                        ProfessionRuntime.GetLevel(this, config.ProfessionId), out run))
+                if (!sourceNpc) return;
+                if (!CanStartQuest(quest))
                 {
-                    ExportationNotice("A usable ship and the required Exportation level are needed.");
+                    ExportationNotice("The delivery quest is not available right now.");
                     return;
                 }
+                var actor = ExportationActor(route, false);
+                if (!actor.HasUsableBoat)
+                {
+                    ExportationNotice("Own an unsunk ship to prepare an Exportation order.");
+                    return;
+                }
+                var level = ProfessionRuntime.GetLevel(this, config.ProfessionId);
+                if (level < route.MinimumProfessionLevel)
+                {
+                    ExportationNotice("Your Exportation profession level is too low for this route.");
+                    return;
+                }
+                if (!ExportationRules.TryStart(route, actor, level, out run))
+                    return;
                 if (!SaveExportation(old, run!))
                 {
                     ExportationNotice("Exportation could not be saved.");

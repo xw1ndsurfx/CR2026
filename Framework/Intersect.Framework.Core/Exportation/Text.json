@@ -859,6 +859,36 @@
       "en": "REQUESTED GOODS",
       "fr": "MARCHANDISES DEMANDÉES",
       "es": "MERCANCÍAS SOLICITADAS"
+    },
+    "Boat owned": {
+      "en": "Boat owned",
+      "fr": "Bateau possédé",
+      "es": "Barco propio"
+    },
+    "SAIL TO DESTINATION": {
+      "en": "SAIL TO DESTINATION",
+      "fr": "NAVIGUER VERS LA DESTINATION",
+      "es": "NAVEGAR AL DESTINO"
+    },
+    "An owned, unsunk ship and the required Exportation level are needed.": {
+      "en": "An owned, unsunk ship and the required Exportation level are needed.",
+      "fr": "Tu dois posséder un bateau non coulé et avoir le niveau d’Exportation requis.",
+      "es": "Debes tener un barco propio no hundido y el nivel de Exportación requerido."
+    },
+    "The delivery quest is not available right now.": {
+      "en": "The delivery quest is not available right now.",
+      "fr": "La quête de livraison n’est pas disponible actuellement.",
+      "es": "La misión de entrega no está disponible ahora."
+    },
+    "Own an unsunk ship to prepare an Exportation order.": {
+      "en": "Own an unsunk ship to prepare an Exportation order.",
+      "fr": "Tu dois posséder un bateau non coulé pour préparer une commande d’Exportation.",
+      "es": "Debes tener un barco propio no hundido para preparar un pedido de Exportación."
+    },
+    "Your Exportation profession level is too low for this route.": {
+      "en": "Your Exportation profession level is too low for this route.",
+      "fr": "Ton niveau dans le métier Exportation est insuffisant pour cette route.",
+      "es": "Tu nivel de profesión Exportación es insuficiente para esta ruta."
     }
   }
 }

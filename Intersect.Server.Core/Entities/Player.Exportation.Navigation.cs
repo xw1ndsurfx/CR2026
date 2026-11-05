@@ -15,6 +15,9 @@ public partial class Player
             var original = ReadExportation();
             if (original is not { Stage: DeliveryStage.InTransit } ||
                 ExportationRuntime.Find(original.RouteId) is not { } route) return;
+            // Never accept a vessel that is not in this player's owned fleet,
+            // even though this callback is emitted by the native naval server.
+            if (!NavalFleet.Any(ship => ship.Id == shipId && ship.Health > 0 && !ship.Sunk)) return;
             var draft = JsonConvert.DeserializeObject<ExportationRun>(
                 JsonConvert.SerializeObject(original))!;
             if (ExportationRules.TryEmbark(route, draft,

@@ -69,6 +69,18 @@ public sealed class ExportationContrastTests
         Assert.That(scaling, Is.EqualTo(1f));
     }
 
+    [TestCase(40, 16, 2.5f)]
+    [TestCase(18, 16, 1.125f)]
+    [TestCase(28, 32, 0.875f)]
+    [TestCase(16, 48, 0.35f)]
+    public void ExportationHeadingsScaleUsingActualRenderedHeightEvenWithGlobalFontOverride(
+        int desiredHeight, int measuredHeight, float expectedScale)
+    {
+        var scale = ExportationWindow.ScaleForMeasuredFont(desiredHeight, measuredHeight);
+        Assert.That(scale, Is.EqualTo(expectedScale).Within(.001f),
+            "Bitmap glyphs must be measured after global UI font size overrides.");
+    }
+
     private sealed class TestBitmapFont(params int[] sizes) : IFont
     {
         public string Name => "Empire";

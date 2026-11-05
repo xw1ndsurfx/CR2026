@@ -51,7 +51,9 @@ public sealed class ExportationRulesTests
         var r = Route(); var boat = Guid.NewGuid();
         Assert.That(ExportationRules.TryStart(r, Source(r, boat), 1, out _), Is.False);
         Assert.That(ExportationRules.TryStart(r, Source(r, boat, false), 2, out _), Is.False);
-        Assert.That(ExportationRules.TryStart(r, Source(r, Guid.Empty), 2, out _), Is.False);
+        // No ship needs to be moored to this NPC: the fleet-check remains
+        // server authoritative, even if no ship ID is selected yet.
+        Assert.That(ExportationRules.TryStart(r, Source(r, Guid.Empty), 2, out _), Is.True);
         Assert.That(ExportationRules.TryStart(r, Source(r, boat), 2, out _), Is.True);
     }
 
@@ -78,6 +80,8 @@ public sealed class ExportationRulesTests
         Assert.That(ExportationRules.TrySeal(r, run, Source(r, ship)), Is.True);
         var seal = run.CargoSealId;
         Assert.That(seal, Is.Not.EqualTo(Guid.Empty));
+        Assert.That(run.ShipId, Is.EqualTo(Guid.Empty),
+            "Sealing must not accidentally bind the cargo to a ship docked elsewhere.");
         Assert.That(ExportationRules.TrySeal(r, run, Source(r, ship)), Is.False);
         Assert.That(run.CargoSealId, Is.EqualTo(seal));
     }
@@ -88,8 +92,10 @@ public sealed class ExportationRulesTests
         var r = Route(); var ship = Guid.NewGuid(); var run = Packed(r, ship);
         ExportationRules.TrySeal(r, run, Source(r, ship));
         Assert.That(ExportationRules.TryDeliver(r, run, Recipient(r, ship), out _), Is.False);
-        Assert.That(ExportationRules.TryEmbark(r, run, Source(r, Guid.NewGuid()) with { IsAboard = true }), Is.False);
+        Assert.That(ExportationRules.TryEmbark(r, run, Source(r, Guid.Empty) with { IsAboard = true }), Is.False);
         Assert.That(ExportationRules.TryEmbark(r, run, Source(r, ship) with { IsAboard = true }), Is.True);
+        Assert.That(run.ShipId, Is.EqualTo(ship));
+        Assert.That(ExportationRules.TryEmbark(r, run, Source(r, Guid.NewGuid()) with { IsAboard = true }), Is.False);
         Assert.That(ExportationRules.TryDock(r, run, Recipient(r, Guid.NewGuid())), Is.False);
         Assert.That(ExportationRules.TryDock(r, run, Recipient(r, ship)), Is.True);
         Assert.That(ExportationRules.TryDeliver(r, run, Recipient(r, ship) with { NpcId = Guid.NewGuid() }, out _), Is.False);
@@ -106,7 +112,10 @@ public sealed class ExportationRulesTests
         var r = Route(); var ship = Guid.NewGuid(); var run = Packed(r, ship);
         ExportationRules.TrySeal(r, run, Source(r, ship));
         if (cause == CargoFailure.ShipSunk)
+        {
+            Assert.That(ExportationRules.TryEmbark(r, run, Source(r, ship) with { IsAboard = true }), Is.True);
             Assert.That(ExportationRules.TryLose(run, cause, Guid.NewGuid()), Is.False);
+        }
         Assert.That(ExportationRules.TryLose(run, cause, ship), Is.True);
         Assert.That(run.Stage, Is.EqualTo(DeliveryStage.Lost));
         Assert.That(run.CargoSealId, Is.EqualTo(Guid.Empty));
@@ -146,6 +155,36 @@ public sealed class ExportationRulesTests
         Assert.That(payout.Quantity, Is.EqualTo(r.RewardQuantity));
         Assert.That(ExportationRules.TryDeliver(r, run,
             Recipient(r, replacementShip), out _), Is.False);
+    }
+
+    [Test]
+    public void MerchantAcceptsOwnedShipFromAnyPortAndBindsOnlyTheVesselActuallyUsed()
+    {
+        var route = Route();
+        var remoteOwnedShip = Guid.NewGuid();
+        var boardedShip = Guid.NewGuid();
+        // Owning an undamaged ship on a different island is sufficient
+        // to read the order, pack, and seal it at the merchant.
+        Assert.That(ExportationRules.TryStart(route,
+            Source(route, Guid.Empty), 2, out var run), Is.True);
+        foreach (var line in route.Lines)
+            Assert.That(ExportationRules.TryPack(route, run!, Source(route, Guid.Empty),
+                line.ItemId, line.Group, line.Quantity), Is.True);
+        Assert.That(ExportationRules.TrySeal(route, run!,
+            Source(route, remoteOwnedShip)), Is.True);
+        Assert.That(run!.ShipId, Is.EqualTo(Guid.Empty));
+        Assert.That(ExportationRules.TryDock(route, run,
+            Recipient(route, boardedShip)), Is.False,
+            "Teleportation and docking without a real embarkation cannot deliver cargo.");
+        Assert.That(ExportationRules.TryEmbark(route, run,
+            Source(route, boardedShip) with { IsAboard = true }), Is.True);
+        Assert.That(run.ShipId, Is.EqualTo(boardedShip));
+        Assert.That(ExportationRules.TryDock(route, run,
+            Recipient(route, remoteOwnedShip)), Is.False);
+        Assert.That(ExportationRules.TryDock(route, run,
+            Recipient(route, boardedShip)), Is.True);
+        Assert.That(ExportationRules.TryDeliver(route, run,
+            Recipient(route, boardedShip), out _), Is.True);
     }
 
     [Test]

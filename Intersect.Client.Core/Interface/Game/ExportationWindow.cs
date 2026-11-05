@@ -30,10 +30,10 @@ internal sealed class ExportationWindow : Base
     // backplate; dim only the outside world, never the minigame itself.
     private const byte WorldDimOpacity = 82;
     private static readonly Color WoodFrame = new(255, 64, 44, 31);
-    private static readonly Color ParchmentBacking = new(255, 135, 103, 71);
+    private static readonly Color ParchmentBacking = new(255, 203, 170, 124);
     private static readonly Color CrateBacking = new(255, 99, 70, 48);
     private static readonly Color DeliveryBacking = new(255, 100, 73, 51);
-    private static readonly Color WarmParchmentWash = new(12, 247, 204, 145);
+    private static readonly Color WarmParchmentWash = new(78, 255, 226, 181);
     private static readonly Color WarmWoodWash = new(12, 224, 173, 113);
     private static readonly Color Cream = new(255, 255, 246, 220);
     private static readonly Color DarkInk = new(255, 69, 41, 23);
@@ -52,6 +52,7 @@ internal sealed class ExportationWindow : Base
     private readonly Label[] _orderLabels = new Label[OrderSize];
     private readonly Label[] _shelfLabels = new Label[ShelfSize];
     private readonly Button[] _shelfButtons = new Button[ShelfSize];
+    private readonly Button[] _removeButtons = new Button[OrderSize];
     private readonly Label _merchant, _recipient, _routeName, _boat, _reward, _experience;
     private readonly Label _level, _professionXp, _progress, _warning, _sourceMap, _destinationMap, _status, _shelfPageLabel, _orderPageLabel;
     private readonly Button _seal, _nextGoods, _previousGoods, _nextOrder, _previousOrder;
@@ -132,8 +133,12 @@ internal sealed class ExportationWindow : Base
             var index = i;
             _orderLabels[i] = Title("OrderLine" + i, "", 229, 426 + i * 78,
                 192, 52, 18, dark: true, wrap: true);
-            Button("Remove" + i, "−", 425, 432 + i * 78, 34, 29, 17,
+            // This bitmap font does not contain the Unicode minus glyph:
+            // the old button rendered '?' even in empty order lines.
+            _removeButtons[i] = Button("Remove" + i, "X", 425, 432 + i * 78, 34, 29, 17,
                 () => RequestRemove(index));
+            _removeButtons[i].TextColorOverride = new Color(255, 255, 199, 153);
+            _removeButtons[i].IsHidden = true;
         }
         for (var i = 0; i < ShelfSize; ++i)
         {
@@ -226,7 +231,7 @@ internal sealed class ExportationWindow : Base
         _routeName.Text = ClientLanguages.ContentText(route.Name);
         _sourceMap.Text = ClientLanguages.ContentText(_sourceMapName);
         _destinationMap.Text = ClientLanguages.ContentText(_destinationMapName);
-        _boat.Text = T(_boatReady ? "Boat ready" : "Boat required");
+        _boat.Text = T(_boatReady ? "Boat owned" : "Boat required");
         _boat.TextColorOverride = _boatReady ? Green : new Color(255, 255, 155, 138);
         _reward.Text = route.RewardQuantity > 0 ?
             $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : "";
@@ -247,7 +252,7 @@ internal sealed class ExportationWindow : Base
         var onSourceIsland = Globals.Me?.MapId == route.SourceMapId;
         _seal.Text = T(run.Stage switch
         {
-            DeliveryStage.InTransit => "DELIVER CARGO",
+            DeliveryStage.InTransit => onRecipientIsland ? "DELIVER CARGO" : "SAIL TO DESTINATION",
             DeliveryStage.Lost => "PREPARE CARGO AGAIN",
             _ => "SEAL THE CARGO",
         });
@@ -272,6 +277,9 @@ internal sealed class ExportationWindow : Base
             var line = route.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
             _orderLabels[i].Text = line is null ? "" :
                 $"{ItemName(line.ItemId)}\n{ExportationRules.Packed(run, line.ItemId)} / {line.Quantity}";
+            _removeButtons[i].IsHidden = line is null ||
+                run.Stage != DeliveryStage.Preparing ||
+                ExportationRules.Packed(run, line.ItemId) <= 0;
         }
         for (var i = 0; i < ShelfSize; ++i)
         {
@@ -396,11 +404,11 @@ internal sealed class ExportationWindow : Base
 
     private void DrawGood(SkinBase skin, CargoLine line, int x, int y, int w, int h)
     {
-        // Opaque warm slot: transparent portions of item PNGs no longer inherit
-        // the night-darkened world, even on a very dark map.
-        FillScene(skin, new Color(245, 112, 81, 51), x, y, w, h);
-        FillScene(skin, new Color(255, 202, 157, 99), x, y, w, 2);
-        FillScene(skin, new Color(255, 202, 157, 99), x, y, 2, h);
+        // Keep the wood/straw panels from the original GFX visible.
+        // Previous opaque square covers made packed crates look like UI errors.
+        // Give transparent item sprites a subtle backing on the shelf only.
+        if (y >= 640)
+            FillScene(skin, new Color(74, 103, 76, 50), x, y, w, h);
         if (!string.IsNullOrEmpty(line.Sprite) && ExportationArt.IsGoodsSprite(line.Sprite))
         {
             DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h);
@@ -488,21 +496,36 @@ internal sealed class ExportationWindow : Base
         return (native, wanted / (float)Math.Max(1, native));
     }
 
+    /// <summary>
+    /// Resolve actual rendered glyph height instead of trusting the requested
+    /// bitmap atlas size. MonoRenderer may override the font size through the
+    /// player's GlobalFontFamily / GlobalFontSize setting; that caused the
+    /// 40px Exportation heading to render at a tiny globally forced size.
+    /// </summary>
+    internal static float ScaleForMeasuredFont(int desiredHeight, int actualHeight) =>
+        Math.Clamp(Math.Max(8, desiredHeight) / (float)Math.Max(1, actualHeight), 0.35f, 5f);
+
     private void FitLabel(Label label, int designFont, int availableWidth)
     {
         var wanted = Math.Max(8, (int)Math.Round(designFont * _scale));
         var font = label.Font ?? Skin.DefaultFont;
         if (font is null) { label.FontSize = wanted; return; }
-        var (nativeSize, textScale) = ResolvePixelFont(font, wanted);
 
-        // Keep titles and buttons on one line. Merchant names, item stacks and
-        // long map names have their own explicitly wrapped fields.
-        if (label.WrappingBehavior == WrappingBehavior.NoWrap &&
-            !string.IsNullOrWhiteSpace(label.Text))
+        var (nativeSize, fallbackScale) = ResolvePixelFont(font, wanted);
+        // MeasureText goes through the same size override, bitmap scale and
+        // UI scale as the real text renderer. Avoid a hardcoded 10px assumption.
+        var naturalHeight = Skin.Renderer.MeasureText(font, nativeSize, "Hg", 1f).Y;
+        var textScale = naturalHeight > 0
+            ? ScaleForMeasuredFont(wanted, naturalHeight)
+            : fallbackScale;
+
+        if (!string.IsNullOrWhiteSpace(label.Text))
         {
+            // Fit the full label horizontally without letting it overlap a
+            // neighboring panel. The explicit multiline slots keep wrapping.
             var measured = Skin.Renderer.MeasureText(font, nativeSize, label.Text, textScale);
-            var maxWidth = Math.Max(12, availableWidth - 8);
-            if (measured.X > maxWidth)
+            var maxWidth = Math.Max(12, availableWidth - 12);
+            if (measured.X > maxWidth && label.WrappingBehavior == WrappingBehavior.NoWrap)
                 textScale *= maxWidth / (float)measured.X;
         }
 
