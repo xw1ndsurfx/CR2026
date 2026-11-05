@@ -514,6 +514,14 @@ public partial class Npc : Entity
             return;
         }
 
+        if (Options.Instance.Combat.EnableAdvancedCombat && Descriptor.IsBoss && PetOwner == null && target is Player bossTarget)
+        {
+            if (!IsAdvancedTelegraphReady(bossTarget))
+            {
+                return;
+            }
+        }
+
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
         var aliveAnimations = new List<KeyValuePair<Guid, Direction>>();
 

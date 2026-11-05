@@ -2096,6 +2096,20 @@ public abstract partial class Entity : IEntity
         //Let's save the entity's vitals before they takes damage to use in lifesteal/manasteal
         var enemyVitals = enemy.GetVitals();
         var invulnerable = enemy.CachedStatuses.Any(status => status.Type == SpellEffect.Invulnerable);
+        // Advanced combat is server-authoritative; protection applies only to PvE weapon hits.
+        if (Options.Instance.Combat.EnableAdvancedCombat && baseDamage > 0 && isAutoAttack &&
+            this is Npc meleeNpc && meleeNpc.PetOwner == null && enemy is Player defendingPlayer)
+        {
+            var now = Timing.Global.Milliseconds;
+            if (defendingPlayer.IsAdvancedDodging(now))
+            {
+                invulnerable = true;
+            }
+            else if (defendingPlayer.TryAdvancedPerfectParry(meleeNpc, now))
+            {
+                invulnerable = true;
+            }
+        }
 
         if (baseDamage > 0 && isAutoAttack && this is Player masteryPlayer && enemy is not Resource)
             baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(baseDamage * masteryPlayer.MasteryMultiplier(masteryWeapon)));
@@ -2151,6 +2165,14 @@ public abstract partial class Entity : IEntity
             );
         }
 
+        if (Options.Instance.Combat.EnableAdvancedCombat && baseDamage > 0 && isAutoAttack &&
+            this is Player counterAttacker && enemy is Npc counterTarget &&
+            counterAttacker.ConsumeAdvancedCounter(counterTarget.Id))
+        {
+            baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(
+                baseDamage * (1.0 + Math.Clamp(Options.Instance.Combat.AdvancedCounterBonusPercent, 0, 100) / 100.0)));
+        }
+
         //Check on each attack if the enemy is a player AND if they are blocking.
         if (enemy is Player player && player.IsBlocking)
         {
@@ -2194,6 +2216,12 @@ public abstract partial class Entity : IEntity
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Blocked, CustomColors.Combat.Blocked);
                 }
             }
+        }
+
+        // Dodge and perfect parry must not be overridden by ordinary shield logic.
+        if (invulnerable && enemy is Player && Options.Instance.Combat.EnableAdvancedCombat && this is Npc && isAutoAttack)
+        {
+            baseDamage = 0;
         }
 
         //Calculate Damages

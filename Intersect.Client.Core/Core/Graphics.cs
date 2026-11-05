@@ -346,6 +346,7 @@ public static partial class Graphics
         }
 
         Intersect.Client.Interface.Game.HousingWorld.DrawFloor();
+        DrawAdvancedCombatTelegraphs();
         // Handle our plugin drawing.
         Globals.OnGameDraw(DrawStates.GroundLayers, deltaTime);
 

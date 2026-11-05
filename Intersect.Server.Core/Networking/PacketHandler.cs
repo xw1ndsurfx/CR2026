@@ -1264,7 +1264,12 @@ internal sealed partial class PacketHandler
             }
         }
 
+        var wasBlocking = player.IsBlocking;
         client.Entity.TryBlock(packet.Blocking);
+        if (!wasBlocking && player.IsBlocking)
+        {
+            player.RegisterAdvancedParry();
+        }
     }
 
     //BumpPacket
