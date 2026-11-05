@@ -16,7 +16,7 @@ public static class ExportationRules
     public static bool TryStart(ExportationRoute r, ExportationActor a, int level, out ExportationRun? run)
     {
         run = null;
-        if (!r.IsValid || !AtSource(r, a) || !a.HasUsableBoat || a.ShipId == Guid.Empty ||
+        if (!r.IsValid || !AtSource(r, a) || !a.HasUsableBoat ||
             level < r.MinimumProfessionLevel) return false;
         run = new ExportationRun { RouteId = r.Id };
         return true;
@@ -44,9 +44,12 @@ public static class ExportationRules
     public static bool TrySeal(ExportationRoute r, ExportationRun s, ExportationActor a)
     {
         if (s.Stage != DeliveryStage.Preparing || !AtSource(r, a) ||
-            !a.HasUsableBoat || a.ShipId == Guid.Empty || !ReadyToSeal(r, s)) return false;
+            !a.HasUsableBoat || !ReadyToSeal(r, s)) return false;
         s.CargoSealId = Guid.NewGuid();
-        s.ShipId = a.ShipId;
+        // A player may own several vessels docked on different islands.
+        // Bind the cargo to the *actual* vessel when the server confirms
+        // boarding, never to the first arbitrary vessel in the fleet.
+        s.ShipId = Guid.Empty;
         s.BoardedByShip = s.ArrivedByShip = false;
         s.Stage = DeliveryStage.InTransit;
         return true;
@@ -57,7 +60,9 @@ public static class ExportationRules
     {
         if (!Match(r, s) || s.Stage != DeliveryStage.InTransit ||
             s.CargoSealId == Guid.Empty || a.MapId != r.SourceMapId ||
-            !a.Alive || !a.IsAboard || a.ShipId != s.ShipId) return false;
+            !a.Alive || !a.IsAboard || a.ShipId == Guid.Empty ||
+            (s.ShipId != Guid.Empty && a.ShipId != s.ShipId)) return false;
+        s.ShipId = a.ShipId;
         s.BoardedByShip = true;
         return true;
     }
@@ -68,7 +73,7 @@ public static class ExportationRules
         if (!Match(r, s) || s.Stage != DeliveryStage.InTransit ||
             s.CargoSealId == Guid.Empty || !s.BoardedByShip ||
             !a.Alive || a.IsAboard || a.MapId != r.RecipientMapId ||
-            a.ShipId != s.ShipId) return false;
+            a.ShipId == Guid.Empty || a.ShipId != s.ShipId) return false;
         s.ArrivedByShip = true;
         return true;
     }
@@ -112,7 +117,7 @@ public static class ExportationRules
     public static bool TryRestart(ExportationRoute r, ExportationRun s, ExportationActor a)
     {
         if (!Match(r, s) || s.Stage != DeliveryStage.Lost ||
-            !AtSource(r, a) || !a.HasUsableBoat || a.ShipId == Guid.Empty) return false;
+            !AtSource(r, a) || !a.HasUsableBoat) return false;
         s.Packed.Clear();
         s.CargoSealId = s.ShipId = Guid.Empty;
         s.BoardedByShip = s.ArrivedByShip = false;
