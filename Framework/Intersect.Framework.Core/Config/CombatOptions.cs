@@ -10,6 +10,15 @@ public partial class CombatOptions
 
     public int MaxDashSpeed { get; set; } = 200;
 
+    // Opt-in until client/server are upgraded together and PvE balance is verified.
+    public bool EnableAdvancedCombat { get; set; } = false;
+    public int AdvancedDodgeCooldownMs { get; set; } = 3000;
+    public int AdvancedDodgeInvulnerabilityMs { get; set; } = 180;
+    public int AdvancedParryWindowMs { get; set; } = 200;
+    public int AdvancedCounterWindowMs { get; set; } = 1500;
+    public int AdvancedCounterBonusPercent { get; set; } = 25;
+    public int BossTelegraphDurationMs { get; set; } = 650;
+
     public int MinAttackRate { get; set; } = 500; //2 attacks per second
 
     //Combat

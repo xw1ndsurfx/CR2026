@@ -252,6 +252,18 @@ public static partial class Input
 
                     switch (control)
                     {
+                        case Control.Dodge:
+                            if (Globals.Me is { } dodger)
+                            {
+                                var dodgeDirection = dodger.DirectionMoving > Direction.None ? dodger.DirectionMoving : dodger.DirectionFacing;
+                                PacketSender.SendAdvancedCombatAction(Intersect.Network.Packets.Client.AdvancedCombatAction.Dodge, dodgeDirection);
+                            }
+                            break;
+
+                        case Control.CounterAttack:
+                            PacketSender.SendAdvancedCombatAction(Intersect.Network.Packets.Client.AdvancedCombatAction.CounterAttack);
+                            break;
+
                         case Control.Block:
                             _ = (Globals.Me?.TryBlock());
                             break;

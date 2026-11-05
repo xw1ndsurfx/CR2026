@@ -867,6 +867,8 @@ public static partial class Strings
         {
             {"attackinteract", @"Attack/Interact:"},
             {"block", @"Block:"},
+            {"dodge", @"Dodge:"},
+            {"counterattack", @"Counterattack:"},
             {"autotarget", @"Auto Target:"},
             {"enter", @"Chat:"},
             {nameof(Control.HoldToSoftRetargetOnSelfCast).ToLowerInvariant(), @"Hold to Soft-Retarget on Self-Cast:"},

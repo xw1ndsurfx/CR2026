@@ -101,6 +101,8 @@ internal sealed class BuiltinControlsProvider : IControlsProvider
             { Control.HoldToZoomOut, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
             { Control.ToggleFullscreen, new ControlMapping(new ControlBinding(Keys.Alt, Keys.Enter), ControlBinding.Default) },
             { Control.ToggleMount, new ControlMapping(new ControlBinding(Keys.None, Keys.H), ControlBinding.Default) },
+            { Control.Dodge, new ControlMapping(new ControlBinding(Keys.None, Keys.LShiftKey), ControlBinding.Default) },
+            { Control.CounterAttack, new ControlMapping(new ControlBinding(Keys.None, Keys.R), ControlBinding.Default) },
 
             // Hotkeys should be at the end of the list
             { Control.Hotkey1, new ControlMapping(new ControlBinding(Keys.None, Keys.D1), ControlBinding.Default) },
