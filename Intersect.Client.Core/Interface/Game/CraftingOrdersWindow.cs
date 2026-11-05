@@ -266,8 +266,6 @@ internal sealed class CraftingOrdersWindow : Window
             _tabStyles[i].Style = i == index
                 ? MarketplaceWindow.FrameStyle.SelectedTab
                 : MarketplaceWindow.FrameStyle.Tab;
-        _list.SetHidden(index == 2);
-        _postPanel.SetHidden(index != 2);
         Rebuild();
     }
 
