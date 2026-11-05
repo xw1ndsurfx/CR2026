@@ -81,9 +81,13 @@ internal static class CraftingOrdersRuntime
              item.Name.Equals("Aureon", StringComparison.OrdinalIgnoreCase) ||
              item.Name.Equals("Auron", StringComparison.OrdinalIgnoreCase)));
 
+    // Commissions are player-to-player deliveries, not Marketplace listings.
+    // Marketplace selling is opt-in and defaults to false for most crafted items;
+    // eligibility must instead respect the item's actual trading permission.
     private static bool Craftable(Guid itemId) =>
-        ItemDescriptor.Get(itemId) is { CanSellInMarketplace: true } item &&
+        ItemDescriptor.Get(itemId) is { CanTrade: true } item &&
         item.ItemType != ItemType.Bag &&
+        item.ItemType != ItemType.Currency &&
         CraftingRecipeDescriptor.Lookup.Values.OfType<CraftingRecipeDescriptor>()
             .Any(recipe => recipe.ItemId == itemId && recipe.Quantity > 0);
 
@@ -156,8 +160,13 @@ internal static class CraftingOrdersRuntime
             OpenWindow = open,
             MessageKey = currency == null ? "MissingCurrency" : message,
             Aureons = currency == null ? 0 : player.FindInventoryItemQuantity(currency.Id),
-            CraftableItemIds = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>()
-                .Where(item => Craftable(item.Id)).Select(item => item.Id).OrderBy(id => id).ToArray(),
+            CraftableItemIds = CraftingRecipeDescriptor.Lookup.Values.OfType<CraftingRecipeDescriptor>()
+                .Where(recipe => recipe.ItemId != Guid.Empty && recipe.Quantity > 0)
+                .Select(recipe => recipe.ItemId)
+                .Distinct()
+                .Where(Craftable)
+                .OrderBy(ItemDescriptor.GetName, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
             Orders = Store.Orders.Where(order => order.Status < 2 || order.CustomerId == player.Id || order.CrafterId == player.Id)
                 .OrderBy(order => order.Status).ThenBy(order => order.Deadline)
                 .Take(250).Select(order => new CraftingOrderView
