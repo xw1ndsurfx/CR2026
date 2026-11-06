@@ -20,6 +20,8 @@ internal sealed class TutorialWindow : Window
     private TutorialHighlightStyle _style = TutorialHighlightStyle.Outline;
     private readonly Label _heading;
     private readonly Label _progress;
+    private readonly Panel _progressTrack, _progressFill;
+    private Guid _lastSubmittedUiStep;
     private readonly Label _body;
     private readonly ScrollControl _scroll;
     private readonly Button _next, _scene, _restart, _pause;
@@ -42,7 +44,17 @@ internal sealed class TutorialWindow : Window
         DrawShadow = true;
         _progress = NavalManagementWindow.Text(this, "RoyalGuideProgress", "", 20, 36, Width - 40, 24, 10);
         _progress.TextColorOverride = new Color(a: 255, r: 250, g: 202, b: 113);
-        _heading = NavalManagementWindow.Text(this, "TutorialHeading", "", 20, 65, Width - 40, 42, 14);
+        _progressTrack = new Panel(this, "RoyalGuideProgressTrack")
+        {
+            BackgroundColor = new Color(a: 255, r: 75, g: 53, b: 42),
+        };
+        _progressTrack.SetBounds(20, 62, Width - 40, 5);
+        _progressFill = new Panel(_progressTrack, "RoyalGuideProgressFill")
+        {
+            BackgroundColor = new Color(a: 255, r: 250, g: 202, b: 113),
+        };
+        _progressFill.SetBounds(0, 0, 0, 5);
+        _heading = NavalManagementWindow.Text(this, "TutorialHeading", "", 20, 77, Width - 40, 36, 14);
         _heading.WrappingBehavior = WrappingBehavior.Wrapped;
         _scroll = new ScrollControl(this, "TutorialScroll")
         {
@@ -109,6 +121,7 @@ internal sealed class TutorialWindow : Window
         string Content(string source) => ClientLanguages.ContentText(config.Translations.Get(source, ClientLanguages.Current));
         var number = step == null ? config.Steps.Count : config.Steps.IndexOf(step) + 1;
         _progress.Text = $"{T("Royal Guide")}  •  {number}/{config.Steps.Count}";
+        _progressFill.SetSize((int)((long)_progressTrack.Width * number / Math.Max(1, config.Steps.Count)), 5);
         _heading.Text = step == null ? T("Tutorial complete") : Content(step.Title);
         _body.Text = step == null ? T("You can replay this guide at any time.") : Content(step.Text);
         _next.IsDisabled = !state.CanAdvance;
@@ -135,6 +148,16 @@ internal sealed class TutorialWindow : Window
 
         RequestedOpen = state.Open;
         RefreshVisibility();
+    }
+
+    internal void CompleteOnHudAction(TutorialHighlightTarget action)
+    {
+        if (!RequestedOpen || _combatDrill || !_state.CanAdvance || _target != action ||
+            _lastSubmittedUiStep == _state.StepId)
+            return;
+
+        _lastSubmittedUiStep = _state.StepId;
+        Send(TutorialAction.Next);
     }
 
     private Base? ResolveTarget()
