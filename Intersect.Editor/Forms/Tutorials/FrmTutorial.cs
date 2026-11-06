@@ -27,6 +27,18 @@ internal sealed class FrmTutorial : Form
         _save = Action("Save", Save);
         Action("Add step", () => { Flush(); var step = new TutorialStep { Title = T("New step"), Text = T("New step") }; _config.Steps.Add(step); Select(step); _dirty = true; });
         Action("Delete step", () => { if (_selected == null || _config.Steps.Count <= 1) return; _config.Steps.Remove(_selected); _selected = null; Select(_config.Steps[0]); _dirty = true; });
+        Action("Add combat lessons", () =>
+        {
+            Flush();
+            var added = AdvancedCombatTutorialLessons.AppendTo(_config);
+            if (added == 0)
+            {
+                MessageBox.Show(this, T("Combat lessons already added."));
+                return;
+            }
+            Select(_config.Steps.First(step => step.Objective == TutorialObjective.CombatDodge));
+            _dirty = true;
+        });
         Action("Move up", () => Move(-1)); Action("Move down", () => Move(1));
         Action("Restore default", () => { if (MessageBox.Show(this, T("Replace this draft with the default guide?"), Text, MessageBoxButtons.YesNo) != DialogResult.Yes) return; var wasEnabled = _config.Enabled; var wasAuto = _config.AutoStart; _config = TutorialConfiguration.CreateDefault(); _config.Enabled = wasEnabled; _config.AutoStart = wasAuto; _selected = null; Select(_config.Steps[0]); _dirty = true; });
         var enabled = new CheckBox { Text = T("Enabled"), Checked = _config.Enabled, AutoSize = true };

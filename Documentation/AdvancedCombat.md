@@ -184,3 +184,24 @@ The window is clamped to 600–6000 ms; bonus percentages to 0–100%. The finis
 4. Repeat with less than 20 stamina. The third hit should not receive its bonus or spend stamina; the combo should reset normally. Confirm stamina is spent only after an eligible third hit inflicts real damage.
 5. Perfect-parry then retaliate on the same NPC, and confirm the counterattack is excluded from the three-hit chain.
 6. Test group combat, boss dungeon instances, low/high latency and all localization strings. Confirm the audio is packaged with the deployed client and `main` is untouched until review.
+
+## Seventh iteration: editor-authored combat training with server-verified objectives
+
+**Branch dependency:** phase 7 is stacked on #245, which depends on #244, #243, #242 and #241. Do not merge these out of order.
+
+Rather than introducing a competing tutorial engine, this phase extends the existing Corps Royaux **Tutorial editor** and persistent, per-character `TutorialProgress`. Existing first-login onboarding keeps its original nine steps and is unchanged until an editor explicitly chooses **Add combat lessons**.
+
+The editor button appends four stable-ID, translated exercises (FR/EN/ES) to the current guide, without duplicating them if clicked twice:
+
+| Combat tutorial objective | Server evidence | Default key |
+| --- | --- | --- |
+| Dodge | Successful validated one-tile advanced dodge | Left Shift |
+| Perfect parry | NPC weapon strike rejected by a valid shield perfect parry | Q |
+| Counterattack | Valid counter window consumed against its original NPC | R |
+| Player combo finisher | Real third-hit melee finisher with stamina bonus | E |
+
+The server recognizes events solely through `Player.AdvancedCombat` methods and credits **only the current tutorial step**. No client-supplied completion messages are accepted. Credit updates the same tutorial variable and is transmitted via `TutorialStatePacket` to the normal tutorial window. Paused, completed, inactive or irrelevant steps never accumulate early credit.
+
+If advanced combat is globally disabled, authored combat drills auto-complete instead of trapping characters. If player combos are disabled, only the finisher drill auto-completes. The default tutorial configuration remains nine steps, with no combat lesson added unless the editor requests it. The advanced combat HUD shows a short translated contextual hint during an active drill; the full tutorial window retains its normal controls (pause, resume, restart, next).
+
+**Testing:** verify localized text, stable IDs, persistent progress across reconnect, disabled-feature auto-skip, editor idempotence, active-step-only event credit, and the four validated actions. New `TutorialCombatLessonsTests` run alongside the earlier `TutorialTests` and all advanced combat rule tests. Build server, client and editor before merging. No database migration is necessary: these are additional values of the existing tutorial objective enum and persistent variable.

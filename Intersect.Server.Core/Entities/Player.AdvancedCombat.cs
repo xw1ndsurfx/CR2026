@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Combat;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities.Combat;
 using Intersect.Server.Maps;
+using Intersect.Framework.Core.Tutorials;
 using Intersect.Utilities;
 
 namespace Intersect.Server.Entities;
@@ -159,6 +160,8 @@ public partial class Player
         SendAdvancedCombatState(step == 3 && finisherBonusApplied
             ? AdvancedCombatFeedback.ComboFinisher
             : AdvancedCombatFeedback.ComboHit);
+        if (step == 3 && finisherBonusApplied)
+            RecordAdvancedCombatTutorialAction(TutorialObjective.CombatFinisher);
     }
 
     public void RegisterAdvancedParry()
@@ -186,6 +189,7 @@ public partial class Player
         _advancedCounterTarget = attacker.Id;
         _advancedCounterUntil = now + Math.Clamp(Options.Instance.Combat.AdvancedCounterWindowMs, 250, 3000);
         SendAdvancedCombatState(AdvancedCombatFeedback.PerfectParry);
+        RecordAdvancedCombatTutorialAction(TutorialObjective.CombatPerfectParry);
         return true;
     }
 
@@ -201,6 +205,7 @@ public partial class Player
         _advancedCounterTarget = Guid.Empty;
         _advancedCounterUntil = 0;
         SendAdvancedCombatState(AdvancedCombatFeedback.CounterAttack);
+        RecordAdvancedCombatTutorialAction(TutorialObjective.CombatCounterattack);
         return true;
     }
 
@@ -239,6 +244,7 @@ public partial class Player
         if (Client != null)
             Intersect.Server.Networking.PacketSender.SendEntityPositionTo(Client, this);
         SendAdvancedCombatState(AdvancedCombatFeedback.Dodge);
+        RecordAdvancedCombatTutorialAction(TutorialObjective.CombatDodge);
     }
 
     public void TryAdvancedCounter()

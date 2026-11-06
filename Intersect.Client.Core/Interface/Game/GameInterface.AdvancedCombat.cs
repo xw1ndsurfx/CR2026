@@ -17,6 +17,7 @@ public partial class GameInterface
         _advancedCombatEnabled = packet.Enabled;
         _advancedCombatHud ??= new AdvancedCombatHud(GameCanvas);
         _advancedCombatHud.Apply(packet);
+        _advancedCombatHud.SetTrainingHint(_combatTrainingHint);
         if (!packet.Enabled || packet.Feedback == AdvancedCombatFeedback.None)
             return;
 

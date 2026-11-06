@@ -12,6 +12,8 @@ internal sealed class TutorialWindow : Window
     private readonly ScrollControl _scroll;
     private readonly Button _next, _scene, _restart;
     internal bool RequestedOpen { get; private set; }
+    private bool _combatDrill;
+    private bool _combatGuideExplicitlyOpened;
     internal static string T(string source) => TutorialText.Get(source, ClientLanguages.Current);
     internal TutorialWindow(Canvas canvas) : base(canvas, T("Tutorial"), false, nameof(TutorialWindow))
     {
@@ -27,7 +29,15 @@ internal sealed class TutorialWindow : Window
         _restart = Add("Replay tutorial", 20, Height - 60, () => Send(TutorialAction.Restart));
         Add("Pause guide", 200, Height - 60, () => Send(TutorialAction.Pause));
         _next = Add("Next", Width - 170, Height - 60, () => Send(TutorialAction.Next));
-        Closed += (_, _) => { if (RequestedOpen) Send(TutorialAction.Pause); };
+        Closed += (_, _) =>
+        {
+            // Closing the drill instructions must never pause server-side
+            // credit; the player needs to fight with the window hidden.
+            if (_combatDrill)
+                _combatGuideExplicitlyOpened = false;
+            else if (RequestedOpen)
+                Send(TutorialAction.Pause);
+        };
         Hide();
     }
     private Button Add(string text, int x, int y, Action action)
@@ -44,6 +54,9 @@ internal sealed class TutorialWindow : Window
         var config = JsonConvert.DeserializeObject<TutorialConfiguration>(state.ConfigurationJson);
         if (config == null) return;
         var step = config.Steps.FirstOrDefault(s => s.Id == state.StepId);
+        _combatDrill = step != null && AdvancedCombatTutorialLessons.IsCombatObjective(step.Objective);
+        if (changedStep)
+            _combatGuideExplicitlyOpened = false;
         string Content(string source) => ClientLanguages.ContentText(config.Translations.Get(source, ClientLanguages.Current));
         _heading.Text = step == null ? T("Tutorial complete") : $"{config.Steps.IndexOf(step) + 1}/{config.Steps.Count} · {Content(step.Title)}";
         _body.Text = step == null ? T("You can replay this guide at any time.") : Content(step.Text);
@@ -57,11 +70,28 @@ internal sealed class TutorialWindow : Window
     internal void RefreshVisibility()
     {
         _body.SetSize(_body.Width, Math.Max(50, _body.TextHeight + 12));
-        if (RequestedOpen && !Cinematics.CinematicControls.Active) Show(); else Hide();
+        // Combat drills need keyboard/gameplay focus. The HUD keeps a
+        // localized action hint; the full text stays available on demand.
+        if (RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) &&
+            !Cinematics.CinematicControls.Active)
+            Show();
+        else
+            Hide();
     }
     internal void OpenGuide()
     {
-        if (_state.Finished) { RequestedOpen = true; Show(); BringToFront(); }
-        else Send(TutorialAction.Resume);
+        if (_state.Finished)
+        {
+            RequestedOpen = true; Show(); BringToFront();
+        }
+        else if (_combatDrill && RequestedOpen)
+        {
+            _combatGuideExplicitlyOpened = true;
+            Show(); BringToFront();
+        }
+        else
+        {
+            Send(TutorialAction.Resume);
+        }
     }
 }
