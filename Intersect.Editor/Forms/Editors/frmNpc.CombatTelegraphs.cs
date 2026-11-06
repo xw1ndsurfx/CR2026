@@ -80,12 +80,12 @@ public partial class FrmNpc
         };
         _grpCombatTelegraph.Controls.Add(_nudCombatTelegraphRange);
 
-        AddCombatTelegraphLabel("Warning duration (ms):", 215);
+        AddCombatTelegraphLabel("Warning duration (ms, 0 = server):", 215);
         _nudCombatTelegraphWindup.SetBounds(12, 236, 275, 26);
-        _nudCombatTelegraphWindup.Minimum = 250;
+        _nudCombatTelegraphWindup.Minimum = 0;
         _nudCombatTelegraphWindup.Maximum = 2000;
         _nudCombatTelegraphWindup.Increment = 50;
-        _nudCombatTelegraphWindup.Value = 650;
+        _nudCombatTelegraphWindup.Value = 0;
         _nudCombatTelegraphWindup.ValueChanged += (_, _) =>
         {
             if (!_updatingCombatTelegraph && mEditorItem != null)

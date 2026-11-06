@@ -45,10 +45,10 @@
       "fr": "Portée (cases) :",
       "es": "Alcance (casillas):"
     },
-    "Warning duration (ms):": {
-      "en": "Warning duration (ms):",
-      "fr": "Durée de l'avertissement (ms) :",
-      "es": "Duración del aviso (ms):"
+    "Warning duration (ms, 0 = server):": {
+      "en": "Warning duration (ms, 0 = server):",
+      "fr": "Durée (ms, 0 = serveur) :",
+      "es": "Duración (ms, 0 = servidor):"
     },
     "Preview (gold: monster, blue: target)": {
       "en": "Preview (gold: monster, blue: target)",

@@ -77,6 +77,14 @@ public partial class Npc
             return false;
         }
 
+        // A stun during the windup interrupts the charged attack immediately.
+        if (CachedStatuses.Any(status => status.Type is SpellEffect.Stun or SpellEffect.Sleep))
+        {
+            _advancedTelegraphEnd = 0;
+            _advancedTelegraphTiles.Clear();
+            return true;
+        }
+
         if (timeMs < _advancedTelegraphEnd)
             return true;
 

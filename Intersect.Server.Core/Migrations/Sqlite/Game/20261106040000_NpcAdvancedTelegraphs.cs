@@ -21,7 +21,7 @@ public partial class NpcAdvancedTelegraphs : Migration
             nullable: false, defaultValue: 1);
         migrationBuilder.AddColumn<int>(
             name: "AdvancedTelegraphWindupMs", table: "Npcs",
-            nullable: false, defaultValue: 650);
+            nullable: false, defaultValue: 0);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)

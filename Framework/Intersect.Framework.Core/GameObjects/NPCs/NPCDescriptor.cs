@@ -157,7 +157,7 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     public int AdvancedTelegraphRange { get; set; } = 1;
 
-    public int AdvancedTelegraphWindupMs { get; set; } = 650;
+    public int AdvancedTelegraphWindupMs { get; set; } // 0 inherits global boss warning time
 
 
     [Column("BossAnimation")]

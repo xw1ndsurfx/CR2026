@@ -11,7 +11,7 @@ Deploy the client and server together; set `Combat.EnableAdvancedCombat = true` 
 
 ## Second iteration: configurable monster warning patterns
 
-Use **NPC Editor > Combat > Attack telegraphs**. Bosses announce their melee strikes automatically when advanced combat is on, retaining their old single-tile setting unless configured. For other NPCs, check **Warn before this NPC attacks**. Pick a pattern, reach and warning duration and see the exact footprint in the 9×9 editor preview:
+Use **NPC Editor > Combat > Attack telegraphs**. Bosses announce their melee strikes automatically when advanced combat is on, retaining their old single-tile setting unless configured. For other NPCs, check **Warn before this NPC attacks**. Pick a pattern, reach and warning duration (0 uses the server's default) and see the exact footprint in the 9×9 editor preview:
 
 | Pattern | Resolution |
 | --- | --- |
