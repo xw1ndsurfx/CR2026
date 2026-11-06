@@ -657,6 +657,8 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+        if (_questsWindow.IsVisibleInTree)
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Quests);
     }
 
     private void DungeonsButton_Clicked(Base sender, MouseButtonState arguments)
@@ -682,6 +684,8 @@ public partial class MenuContainer : Panel
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleInventoryWindow();
+        if (_inventoryWindow.IsVisibleInTree)
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Inventory);
     }
 
     private void SpellsButton_Clicked(Base sender, MouseButtonState arguments)
