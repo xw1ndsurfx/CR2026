@@ -16,6 +16,7 @@ internal sealed class TutorialWindow : Window
 {
     private readonly Canvas _canvas;
     private readonly TutorialSpotlight _spotlight;
+    private readonly TutorialWorldMarker _worldMarker;
     private TutorialStatePacket _state = new();
     private TutorialHighlightTarget _target = TutorialHighlightTarget.None;
     private TutorialHighlightStyle _style = TutorialHighlightStyle.Outline;
@@ -35,6 +36,7 @@ internal sealed class TutorialWindow : Window
     {
         _canvas = canvas;
         _spotlight = new TutorialSpotlight(canvas);
+        _worldMarker = new TutorialWorldMarker(canvas);
         var width = Math.Min(460, Math.Max(240, canvas.Width - 20));
         var height = Math.Min(315, Math.Max(225, canvas.Height - 20));
         SetSize(width, height);
@@ -78,6 +80,7 @@ internal sealed class TutorialWindow : Window
         Closed += (_, _) =>
         {
             _spotlight.Hide();
+            _worldMarker.Hide();
             if (_combatDrill)
                 _combatGuideExplicitlyOpened = false;
             else if (RequestedOpen)
@@ -144,8 +147,22 @@ internal sealed class TutorialWindow : Window
                 "Naval adventures" => TutorialHighlightTarget.Minimap,
                 _ => TutorialHighlightTarget.None,
             };
+        // Old imported guides with movement objectives also receive a visible
+        // player-foot marker without changing persisted step identifiers.
+        if (step?.Objective == TutorialObjective.Move && _target == TutorialHighlightTarget.None)
+            _target = TutorialHighlightTarget.Player;
+
         if (_target == TutorialHighlightTarget.Minimap)
             _style = TutorialHighlightStyle.Circle;
+
+        _worldMarker.SetStep(step == null ? null : new TutorialStep
+        {
+            HighlightTarget = _target,
+            MapId = step.MapId,
+            TargetX = step.TargetX,
+            TargetY = step.TargetY,
+            TargetNpcId = step.TargetNpcId,
+        });
 
         RequestedOpen = state.Open;
         RefreshVisibility();
@@ -187,14 +204,27 @@ internal sealed class TutorialWindow : Window
         if (!display)
         {
             _spotlight.Hide();
+            _worldMarker.Hide();
             Hide();
             return;
         }
 
-        // Combat drills show instructions only on demand; no focus is stolen.
-        var highlighted = _combatDrill ? null : ResolveTarget();
-        _spotlight.Highlight(highlighted, _style);
-        PositionGuide(_spotlight.GetTargetBounds());
+        // World cues replace the darkened HUD spotlight, leaving walking and
+        // NPC interactions unobstructed. Combat always disables both overlays.
+        var worldTarget = _target is TutorialHighlightTarget.Player or
+            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc;
+        if (worldTarget && !_combatDrill)
+        {
+            _spotlight.Hide();
+            _worldMarker.RefreshVisibility();
+            PositionGuide(_worldMarker.GetTargetBounds());
+        }
+        else
+        {
+            _worldMarker.Hide();
+            _spotlight.Highlight(_combatDrill ? null : ResolveTarget(), _style);
+            PositionGuide(_spotlight.GetTargetBounds());
+        }
         if (IsHidden)
             Show();
         // Keep the card above the translucent spotlight, which must never
