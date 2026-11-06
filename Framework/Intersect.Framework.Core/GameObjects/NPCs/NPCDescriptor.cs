@@ -153,6 +153,12 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     // Optional second combat phase for boss NPCs only; existing bosses stay unchanged.
     public bool AdvancedBossEnrageEnabled { get; set; }
+    // Optional multi-strike boss sequence. Old bosses remain single-strike.
+    public bool AdvancedBossComboEnabled { get; set; }
+    public int AdvancedBossComboCount { get; set; } = 2;
+    public int AdvancedBossComboSecondShape { get; set; } = (int)CombatTelegraphShape.Cone;
+    public int AdvancedBossComboThirdShape { get; set; } = (int)CombatTelegraphShape.Circle;
+    public int AdvancedBossComboFollowupWindupMs { get; set; } = 550;
     // Optional monster telegraphs; bosses retain their warning by default.
     public bool AdvancedTelegraphEnabled { get; set; }
 

@@ -65,6 +65,46 @@
       "fr": "Attaques plus rapides et plus puissantes en phase deux.",
       "es": "Ataques más rápidos y fuertes en fase dos."
     },
+    "Boss attack combos": {
+      "en": "Boss attack combos",
+      "fr": "Enchaînements d'attaques de boss",
+      "es": "Combos de ataques del jefe"
+    },
+    "Enable multi-hit boss attacks": {
+      "en": "Enable multi-hit boss attacks",
+      "fr": "Activer les enchaînements du boss",
+      "es": "Activar combos del jefe"
+    },
+    "Warn before each strike; no invisible hits.": {
+      "en": "Warn before each strike; no invisible hits.",
+      "fr": "Chaque coup est annoncé visuellement.",
+      "es": "Cada golpe tiene aviso visual."
+    },
+    "Number of attacks:": {
+      "en": "Number of attacks:",
+      "fr": "Nombre d'attaques :",
+      "es": "Número de ataques:"
+    },
+    "Attack 2 shape:": {
+      "en": "Attack 2 shape:",
+      "fr": "Forme de l'attaque 2 :",
+      "es": "Forma del ataque 2:"
+    },
+    "Attack 3 shape:": {
+      "en": "Attack 3 shape:",
+      "fr": "Forme de l'attaque 3 :",
+      "es": "Forma del ataque 3:"
+    },
+    "Next warning duration (ms):": {
+      "en": "Next warning duration (ms):",
+      "fr": "Avertissement suivant (ms) :",
+      "es": "Siguiente aviso (ms):"
+    },
+    "Preview attack number:": {
+      "en": "Preview attack number:",
+      "fr": "Prévisualiser l'attaque :",
+      "es": "Vista previa del ataque:"
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",

@@ -77,3 +77,39 @@ The server options `AdvancedBossEnrageHealthPercent`, `AdvancedBossEnrageDamageB
 6. Run the CI `advanced-combat-phase3.yml` on Windows; test with actual packaged sound assets and low/high-latency clients before merging to production.
 
 **Later phases:** custom illustrated Admurin UI sprites, stamina consumables/buffs, combo attack sequences, boss spell telegraphs, combat tutorials and balancing passes.
+
+## Fourth iteration: boss multi-strike combos
+
+This is a **stacked PR** on top of phase 3, which itself depends on phase 2. It does not touch `main`. Merge and validate in the order **#241 → #242 → phase 4**.
+
+Boss NPCs can now opt into **2- or 3-strike** telegraphed attack sequences in `NPC Editor → Combat → Boss attack combos`, independent of their optional enraged phase. Existing bosses remain single-strike when not opted in.
+
+The editor provides:
+- Toggle: **Enable multi-hit boss attacks**, boss-only.
+- **Number of attacks**: 2 or 3; capped server-side regardless of editor data.
+- **Attack 2 shape** and **Attack 3 shape**, each chosen from target, line, cone or circle.
+- **Next warning duration**: 250–2000 ms, default 550 ms. Every hit gets its own fully visible warning before it lands.
+- **Preview attack number**: 1, 2 or 3. The main warning preview reflects the currently selected strike in the combo and uses the same geometry functions as the server.
+- Localized labels in FR/EN/ES.
+
+### Server and client contract
+
+The first strike uses the NPC's original telegraph shape and windup. After it resolves, the server re-evaluates the original target's **current** position and announces the next authored shape. The footprint is frozen for each windup and strikes all valid players still inside that same footprint when its countdown expires. Players can evade every strike separately.
+
+The server cancels the entire combo if the target dies, leaves the original instance, becomes unavailable or moves too far away, or if the attacker dies, teleports or is stunned. Each attack chain consumes one normal attack cooldown after its final hit or cancellation. An enraged boss can still receive the phase-3 windup reduction and damage bonus on each strike.
+
+`CombatTelegraphPacket` keys 7 and 8 carry optional 1-based `ComboStep` and `ComboTotal`; zero is the legacy no-combo value. The client displays a **boss combo step** message and plays the new original `advanced-combat/boss-combo.wav` sound at the start of a chain. No client packets can start or advance a combo or authorize hit damage.
+
+The five NPC descriptor fields are saved in the SQLite/MySQL `20261106090000_NpcBossCombo` migrations. Advanced combat stays globally disabled unless `Combat.EnableAdvancedCombat=true`.
+
+### Phase 4 acceptance checklist
+
+1. Verify old bosses with combos disabled still perform one telegraph and strike.
+2. Enable 2-hit combo (target → cone). Save, reload NPC editor, restart staging server; compare preview geometry to actual red warning tiles.
+3. Enable 3-hit combo (target → line → circle). Change direction and walk out of each footprint independently. Each step must have its own visible warning and **at most one hit per player**.
+4. Attempt map edge, dungeon instance boundaries, logout, boss death, stun, target death, long-range movement. The remaining combo must cancel safely; no cross-instance hits.
+5. Verify combo alert 1/3, 2/3, 3/3 and the sound resource in the packaged client. Check French, English and Spanish labels and cooldowns.
+6. Enable optional enraged boss and confirm each combo step adjusts speed/damage correctly; confirm ordinary NPCs never activate boss-only combos.
+7. Validate migrations against both SQLite and MySQL and compile/test client, server and editor, including the prior 51+ checks. Run actual gameplay and latency testing before enabling in production.
+
+**Out of scope:** boss spell/AoE projectile combos, animation-specific hitframes, player combo attacks, bespoke Admurin sprite atlases and a combat tutorial.

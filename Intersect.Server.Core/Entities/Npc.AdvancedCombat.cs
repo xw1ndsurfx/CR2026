@@ -22,15 +22,39 @@ public partial class Npc
     private long _advancedTelegraphEnd;
     private bool _advancedBossEnraged;
     private bool _advancedStrikeEnraged;
+    private Guid _advancedComboTargetId;
+    private int _advancedComboStep;
+    private int _advancedComboTotalSteps;
+
+    private void ResetAdvancedCombo()
+    {
+        _advancedComboTargetId = Guid.Empty;
+        _advancedComboStep = 0;
+        _advancedComboTotalSteps = 0;
+        _advancedTelegraphEnd = 0;
+        _advancedTelegraphTiles.Clear();
+    }
 
     private void BeginAdvancedTelegraph(Player target)
     {
         if (_advancedTelegraphEnd != 0 || target.IsDead || target.HasPendingDeath)
             return;
 
-        var shape = Enum.IsDefined(typeof(CombatTelegraphShape), Descriptor.AdvancedTelegraphShape)
-            ? (CombatTelegraphShape)Descriptor.AdvancedTelegraphShape
-            : CombatTelegraphShape.TargetTile;
+        // First attack is the ordinary descriptor pattern. Subsequent steps
+        // are chosen only for opted-in bosses and reacquire the target each time.
+        if (_advancedComboTotalSteps == 0)
+        {
+            _advancedComboStep = 0;
+            _advancedComboTargetId = target.Id;
+            _advancedComboTotalSteps = AdvancedBossComboPlan.StepCount(
+                Descriptor.IsBoss, Descriptor.AdvancedBossComboEnabled,
+                Descriptor.AdvancedBossComboCount);
+        }
+
+        var shape = AdvancedBossComboPlan.ShapeForStep(
+            _advancedComboStep, (CombatTelegraphShape)Descriptor.AdvancedTelegraphShape,
+            Descriptor.AdvancedBossComboSecondShape,
+            Descriptor.AdvancedBossComboThirdShape);
         var tiles = CombatTelegraphGeometry.GetTiles(
             shape, X, Y, target.X, target.Y, Dir, Descriptor.AdvancedTelegraphRange);
 
@@ -43,7 +67,10 @@ public partial class Npc
                 _advancedTelegraphTiles.Add(tile);
         }
         if (_advancedTelegraphTiles.Count == 0)
+        {
+            ResetAdvancedCombo();
             return;
+        }
 
         var enrage = AdvancedCombatBossPhase.IsEnraged(
             Descriptor.IsBoss, Descriptor.AdvancedBossEnrageEnabled,
@@ -53,11 +80,14 @@ public partial class Npc
         _advancedBossEnraged = enrage;
         _advancedStrikeEnraged = enrage;
 
+        var firstWindup = Descriptor.AdvancedTelegraphWindupMs > 0
+            ? Descriptor.AdvancedTelegraphWindupMs
+            : Options.Instance.Combat.BossTelegraphDurationMs;
+        var warnedMs = AdvancedBossComboPlan.WarningMilliseconds(
+            firstWindup, Descriptor.AdvancedBossComboFollowupWindupMs, _advancedComboStep);
         var windup = AdvancedCombatBossPhase.WindupMilliseconds(
-            Descriptor.AdvancedTelegraphWindupMs > 0
-                ? Descriptor.AdvancedTelegraphWindupMs
-                : Options.Instance.Combat.BossTelegraphDurationMs,
-            enrage, Options.Instance.Combat.AdvancedBossEnrageWindupReductionPercent);
+            warnedMs, enrage,
+            Options.Instance.Combat.AdvancedBossEnrageWindupReductionPercent);
         _advancedTelegraphMap = target.MapId;
         _advancedTelegraphInstance = target.MapInstanceId;
         _advancedTelegraphAimX = target.X;
@@ -72,6 +102,8 @@ public partial class Npc
                 .SelectMany(tile => new[] { tile.X, tile.Y }).ToArray(),
             Enraged = enrage,
             EnrageStarted = enteredEnrage,
+            ComboStep = _advancedComboTotalSteps > 1 ? _advancedComboStep + 1 : 0,
+            ComboTotal = _advancedComboTotalSteps > 1 ? _advancedComboTotalSteps : 0,
         };
         // Broadcast to the correct map instance so nearby players see the attack.
         PacketSender.SendDataToProximityOnMapInstance(MapId, MapInstanceId, packet);
@@ -85,16 +117,14 @@ public partial class Npc
 
         if (!Options.Instance.Combat.EnableAdvancedCombat)
         {
-            _advancedTelegraphEnd = 0;
-            _advancedTelegraphTiles.Clear();
+            ResetAdvancedCombo();
             return false;
         }
 
         // A stun during the windup interrupts the charged attack immediately.
         if (CachedStatuses.Any(status => status.Type is SpellEffect.Stun or SpellEffect.Sleep))
         {
-            _advancedTelegraphEnd = 0;
-            _advancedTelegraphTiles.Clear();
+            ResetAdvancedCombo();
             return true;
         }
 
@@ -113,7 +143,7 @@ public partial class Npc
             CachedStatuses.Any(status => status.Type is SpellEffect.Stun or SpellEffect.Sleep) ||
             !MapController.TryGetInstanceFromMap(impactMap, impactInstance, out var mapInstance))
         {
-            _advancedTelegraphTiles.Clear();
+            ResetAdvancedCombo();
             return true;
         }
 
@@ -142,6 +172,30 @@ public partial class Npc
 
         _advancedTelegraphTiles.Clear();
         _advancedStrikeEnraged = false;
+
+        // A single completed strike may lead into one or two more announced
+        // attacks. The next footprint is calculated at the START of the next
+        // warning, not silently retargeted while it is resolving.
+        if (_advancedComboStep + 1 < _advancedComboTotalSteps && !IsDead && !IsDisposed)
+        {
+            var followup = mapInstance.GetEntities().OfType<Player>().FirstOrDefault(player =>
+                player.Id == _advancedComboTargetId &&
+                player.InGame && !player.IsDead && !player.HasPendingDeath &&
+                !player.IsDisposed && player.MapId == MapId &&
+                player.MapInstanceId == MapInstanceId &&
+                InRangeOf(player, Math.Max(2, Descriptor.AdvancedTelegraphRange + 2)) &&
+                CanAttack(player, null));
+
+            if (followup != null)
+            {
+                _advancedComboStep++;
+                BeginAdvancedTelegraph(followup);
+                if (_advancedTelegraphEnd != 0)
+                    return true;
+            }
+        }
+
+        ResetAdvancedCombo();
         // A missed zone still costs one attack cooldown.
         AttackTimer = Timing.Global.Milliseconds + CalculateAttackTime();
         PacketSender.SendEntityAttack(this, CalculateAttackTime());

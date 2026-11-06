@@ -12,6 +12,14 @@ internal sealed partial class PacketHandler
         if (packet.EnrageStarted)
             Intersect.Client.Interface.Interface.EnqueueInGame(gameInterface =>
                 gameInterface.NotifyAdvancedBossEnrage());
+
+        if (packet.ComboTotal is >= 2 and <= 3 && packet.ComboStep >= 1 &&
+            packet.ComboStep <= packet.ComboTotal)
+            Intersect.Client.Interface.Interface.EnqueueInGame(gameInterface =>
+            {
+                if (Intersect.Client.General.Globals.Me?.MapId == packet.MapId)
+                    gameInterface.NotifyAdvancedBossCombo(packet.ComboStep, packet.ComboTotal);
+            });
     }
     
     public void HandlePacket(IPacketSender sender, AdvancedCombatStatePacket packet) =>

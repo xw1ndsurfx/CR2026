@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using DarkUI.Controls;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Combat;
 using Intersect.Framework.Core.QualityOfLife;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -178,9 +179,13 @@ public partial class FrmNpc
         const int tileSize = 12;
         var offsetX = (_combatTelegraphPreview.ClientSize.Width - grid * tileSize) / 2;
         const int offsetY = 7;
-        var tiles = CombatTelegraphGeometry.GetTiles(
+        var shape = AdvancedBossComboPlan.ShapeForStep(
+            _chkIsBoss.Checked && _chkBossCombo.Checked
+                ? (int)_nudBossComboPreview.Value - 1 : 0,
             (CombatTelegraphShape)Math.Max(0, _cmbCombatTelegraphShape.SelectedIndex),
-            4, 5, 4, 4, Direction.Up, (int)_nudCombatTelegraphRange.Value).ToHashSet();
+            _cmbBossComboSecond.SelectedIndex, _cmbBossComboThird.SelectedIndex);
+        var tiles = CombatTelegraphGeometry.GetTiles(
+            shape, 4, 5, 4, 4, Direction.Up, (int)_nudCombatTelegraphRange.Value).ToHashSet();
 
         using var floor = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(55, 51, 49));
         using var danger = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(187, 63, 51));

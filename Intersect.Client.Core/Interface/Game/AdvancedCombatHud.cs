@@ -77,6 +77,16 @@ internal sealed class AdvancedCombatHud : Base
         _feedbackUntil = Timing.Global.Milliseconds + 2_000;
     }
 
+    internal void NotifyBossCombo(int step, int total)
+    {
+        if (step < 1 || total is < 2 or > 3 || step > total)
+            return;
+
+        _recentFeedback = AdvancedCombatFeedback.Exhausted;
+        _feedback.Text = ClientLanguages.Format("Boss combo {0}/{1} - MOVE!", step, total);
+        _feedbackUntil = Timing.Global.Milliseconds + 1400;
+    }
+
     internal void Apply(AdvancedCombatStatePacket packet)
     {
         _maximum = Math.Max(1, packet.Maximum);
