@@ -274,6 +274,46 @@
       "en": "Royal Guide",
       "fr": "Guide royal",
       "es": "Guía real"
+    },
+    "Visual guide": {
+      "en": "Visual guide",
+      "fr": "Guide visuel",
+      "es": "Guía visual"
+    },
+    "Highlight target": {
+      "en": "Highlight target",
+      "fr": "Élément à mettre en évidence",
+      "es": "Elemento que se resalta"
+    },
+    "Highlight shape": {
+      "en": "Highlight shape",
+      "fr": "Forme de surbrillance",
+      "es": "Forma de resaltado"
+    },
+    "Target map": {
+      "en": "Target map",
+      "fr": "Carte ciblée",
+      "es": "Mapa de destino"
+    },
+    "Target NPC": {
+      "en": "Target NPC",
+      "fr": "PNJ ciblé",
+      "es": "PNJ objetivo"
+    },
+    "Target tile X and Y": {
+      "en": "Target tile X and Y",
+      "fr": "Case ciblée X et Y",
+      "es": "Casilla objetivo X e Y"
+    },
+    "Arrival radius": {
+      "en": "Arrival radius",
+      "fr": "Rayon d'arrivée",
+      "es": "Radio de llegada"
+    },
+    "Preview is illustrative. Select a real map, NPC and coordinates.": {
+      "en": "Preview is illustrative. Select a real map, NPC and coordinates.",
+      "fr": "L'aperçu est illustratif. Sélectionnez une vraie carte, un PNJ et des coordonnées.",
+      "es": "La vista previa es ilustrativa. Selecciona un mapa, un PNJ y coordenadas."
     }
   }
 }
