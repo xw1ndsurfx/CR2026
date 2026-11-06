@@ -7088,6 +7088,8 @@ public partial class Player : Entity
                             break;
                     }
                 }
+
+                RecordTutorialEventInteraction(evt.Value.Descriptor.Id, evt.Value.MapId);
             }
         }
     }
@@ -7748,6 +7750,7 @@ public partial class Player : Entity
 
                         var newStack = new CommandInstance(evt.Value.PageInstance.MyPage);
                         evt.Value.CallStack.Push(newStack);
+                        RecordTutorialEventInteraction(evt.Value.Descriptor.Id, evt.Value.MapId);
                     }
                 }
             }
@@ -7788,6 +7791,7 @@ public partial class Player : Entity
 
             var newStack = new CommandInstance(eventInstance.PageInstance.MyPage);
             eventInstance.CallStack.Push(newStack);
+            RecordTutorialEventInteraction(eventInstance.Descriptor.Id, eventInstance.MapId);
         }
     }
 
