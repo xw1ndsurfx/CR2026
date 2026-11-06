@@ -1,0 +1,42 @@
+name: Advanced combat phase 6
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/GameObjects/Combat/AdvancedPlayerCombo.cs'
+      - 'Framework/Intersect.Framework.Core/Config/CombatOptions.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/AdvancedCombatStatePacket.cs'
+      - 'Intersect.Server.Core/Entities/Player.AdvancedCombat.cs'
+      - 'Intersect.Server.Core/Entities/Entity.cs'
+      - 'Intersect.Client.Core/Interface/Game/AdvancedCombatHud.cs'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.AdvancedCombat.cs'
+      - 'Intersect.Tests/Utilities/AdvancedPlayerComboTests.cs'
+      - '.github/workflows/advanced-combat-phase6.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combos:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Player combo and previous combat rules
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter "FullyQualifiedName~AdvancedPlayerComboTests|FullyQualifiedName~AdvancedCombatStaminaTests|FullyQualifiedName~AdvancedBossComboPlanTests|FullyQualifiedName~AdvancedSpellTelegraphRuleTests|FullyQualifiedName~AdvancedCombatGeometryTests" --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build server, client, and NPC editor
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Server/Intersect.Server.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
