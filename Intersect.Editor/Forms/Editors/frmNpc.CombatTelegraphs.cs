@@ -1,0 +1,185 @@
+using System.Drawing;
+using System.Globalization;
+using System.Windows.Forms;
+using DarkUI.Controls;
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.QualityOfLife;
+using Color = System.Drawing.Color;
+
+namespace Intersect.Editor.Forms.Editors;
+
+/// <summary>
+/// Author melee telegraphs on existing NPC descriptors. Shared geometry guarantees
+/// that the editor preview depicts exactly the server's warning footprint.
+/// </summary>
+public partial class FrmNpc
+{
+    private readonly DarkGroupBox _grpCombatTelegraph = new();
+    private readonly DarkCheckBox _chkCombatTelegraph = new();
+    private readonly DarkComboBox _cmbCombatTelegraphShape = new();
+    private readonly DarkNumericUpDown _nudCombatTelegraphRange = new();
+    private readonly DarkNumericUpDown _nudCombatTelegraphWindup = new();
+    private readonly Panel _combatTelegraphPreview = new();
+    private bool _updatingCombatTelegraph;
+
+    private static string TelegraphText(string source) =>
+        QualityOfLifeText.Get(source, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    private void BuildCombatTelegraphControls()
+    {
+        _grpCombatTelegraph.Text = TelegraphText("Attack telegraphs");
+        _grpCombatTelegraph.BackColor = Color.FromArgb(45, 45, 48);
+        _grpCombatTelegraph.BorderColor = Color.FromArgb(100, 78, 55);
+        _grpCombatTelegraph.ForeColor = Color.Gainsboro;
+        _grpCombatTelegraph.Size = new Size(302, 444);
+        _grpCombatTelegraph.TabStop = false;
+
+        _chkCombatTelegraph.Text = TelegraphText("Warn before this NPC attacks");
+        _chkCombatTelegraph.SetBounds(12, 27, 277, 26);
+        _chkCombatTelegraph.CheckedChanged += (_, _) =>
+        {
+            if (!_updatingCombatTelegraph && mEditorItem != null)
+                mEditorItem.AdvancedTelegraphEnabled = _chkCombatTelegraph.Checked;
+            UpdateCombatTelegraphControlState();
+        };
+        _grpCombatTelegraph.Controls.Add(_chkCombatTelegraph);
+        _grpCombatTelegraph.Controls.Add(new Label
+        {
+            Text = TelegraphText("Bosses already warn by default."),
+            Location = new Point(12, 57), Size = new Size(275, 36),
+            ForeColor = Color.Silver,
+        });
+
+        AddCombatTelegraphLabel("Area pattern:", 95);
+        _cmbCombatTelegraphShape.SetBounds(12, 117, 275, 26);
+        _cmbCombatTelegraphShape.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbCombatTelegraphShape.Items.AddRange(new object[]
+        {
+            TelegraphText("Target tile"), TelegraphText("Straight line"),
+            TelegraphText("Forward cone"), TelegraphText("Circle around target"),
+        });
+        _cmbCombatTelegraphShape.SelectedIndexChanged += (_, _) =>
+        {
+            if (!_updatingCombatTelegraph && mEditorItem != null)
+                mEditorItem.AdvancedTelegraphShape = Math.Max(0, _cmbCombatTelegraphShape.SelectedIndex);
+            _combatTelegraphPreview.Invalidate();
+        };
+        _grpCombatTelegraph.Controls.Add(_cmbCombatTelegraphShape);
+
+        AddCombatTelegraphLabel("Reach (tiles):", 156);
+        _nudCombatTelegraphRange.SetBounds(12, 177, 275, 26);
+        _nudCombatTelegraphRange.Minimum = 1;
+        _nudCombatTelegraphRange.Maximum = CombatTelegraphGeometry.MaximumRange;
+        _nudCombatTelegraphRange.Value = 1;
+        _nudCombatTelegraphRange.ValueChanged += (_, _) =>
+        {
+            if (!_updatingCombatTelegraph && mEditorItem != null)
+                mEditorItem.AdvancedTelegraphRange = (int)_nudCombatTelegraphRange.Value;
+            _combatTelegraphPreview.Invalidate();
+        };
+        _grpCombatTelegraph.Controls.Add(_nudCombatTelegraphRange);
+
+        AddCombatTelegraphLabel("Warning duration (ms):", 215);
+        _nudCombatTelegraphWindup.SetBounds(12, 236, 275, 26);
+        _nudCombatTelegraphWindup.Minimum = 250;
+        _nudCombatTelegraphWindup.Maximum = 2000;
+        _nudCombatTelegraphWindup.Increment = 50;
+        _nudCombatTelegraphWindup.Value = 650;
+        _nudCombatTelegraphWindup.ValueChanged += (_, _) =>
+        {
+            if (!_updatingCombatTelegraph && mEditorItem != null)
+                mEditorItem.AdvancedTelegraphWindupMs = (int)_nudCombatTelegraphWindup.Value;
+        };
+        _grpCombatTelegraph.Controls.Add(_nudCombatTelegraphWindup);
+
+        AddCombatTelegraphLabel("Preview (gold: monster, blue: target)", 278);
+        _combatTelegraphPreview.SetBounds(12, 302, 275, 125);
+        _combatTelegraphPreview.BackColor = Color.FromArgb(27, 25, 29);
+        _combatTelegraphPreview.Paint += PaintCombatTelegraphPreview;
+        _grpCombatTelegraph.Controls.Add(_combatTelegraphPreview);
+
+        pnlContainer.Controls.Add(_grpCombatTelegraph);
+        _updatingCombatTelegraph = true;
+        try { _cmbCombatTelegraphShape.SelectedIndex = 0; }
+        finally { _updatingCombatTelegraph = false; }
+        UpdateCombatTelegraphControlState();
+    }
+
+    private void AddCombatTelegraphLabel(string key, int top)
+    {
+        _grpCombatTelegraph.Controls.Add(new Label
+        {
+            Text = TelegraphText(key),
+            ForeColor = Color.Gainsboro,
+            Location = new Point(12, top),
+            Size = new Size(275, 20),
+        });
+    }
+
+    private void UpdateCombatTelegraphControlState()
+    {
+        var enabled = _chkCombatTelegraph.Checked || _chkIsBoss.Checked;
+        _cmbCombatTelegraphShape.Enabled = enabled;
+        _nudCombatTelegraphRange.Enabled = enabled &&
+            _cmbCombatTelegraphShape.SelectedIndex != (int)CombatTelegraphShape.TargetTile;
+        _nudCombatTelegraphWindup.Enabled = enabled;
+        _combatTelegraphPreview.Enabled = enabled;
+        _combatTelegraphPreview.Invalidate();
+    }
+
+    private void LoadCombatTelegraphControls()
+    {
+        if (mEditorItem == null)
+            return;
+
+        _updatingCombatTelegraph = true;
+        try
+        {
+            _chkCombatTelegraph.Checked = mEditorItem.AdvancedTelegraphEnabled;
+            _cmbCombatTelegraphShape.SelectedIndex = Math.Clamp(
+                mEditorItem.AdvancedTelegraphShape, 0, _cmbCombatTelegraphShape.Items.Count - 1);
+            _nudCombatTelegraphRange.Value = Math.Clamp(
+                mEditorItem.AdvancedTelegraphRange, (int)_nudCombatTelegraphRange.Minimum,
+                (int)_nudCombatTelegraphRange.Maximum);
+            _nudCombatTelegraphWindup.Value = Math.Clamp(
+                mEditorItem.AdvancedTelegraphWindupMs, (int)_nudCombatTelegraphWindup.Minimum,
+                (int)_nudCombatTelegraphWindup.Maximum);
+        }
+        finally
+        {
+            _updatingCombatTelegraph = false;
+        }
+
+        UpdateCombatTelegraphControlState();
+    }
+
+    private void PaintCombatTelegraphPreview(object? sender, PaintEventArgs e)
+    {
+        const int grid = 9;
+        const int tileSize = 12;
+        var offsetX = (_combatTelegraphPreview.ClientSize.Width - grid * tileSize) / 2;
+        const int offsetY = 7;
+        var tiles = CombatTelegraphGeometry.GetTiles(
+            (CombatTelegraphShape)Math.Max(0, _cmbCombatTelegraphShape.SelectedIndex),
+            4, 5, 4, 4, Direction.Up, (int)_nudCombatTelegraphRange.Value).ToHashSet();
+
+        using var floor = new SolidBrush(Color.FromArgb(55, 51, 49));
+        using var danger = new SolidBrush(Color.FromArgb(187, 63, 51));
+        using var monster = new SolidBrush(Color.FromArgb(212, 170, 76));
+        using var target = new SolidBrush(Color.FromArgb(83, 177, 218));
+        using var border = new Pen(Color.FromArgb(32, 29, 28));
+
+        for (var y = 0; y < grid; y++)
+        for (var x = 0; x < grid; x++)
+        {
+            var brush = x == 4 && y == 5 ? monster :
+                tiles.Contains(new CombatTelegraphTile(x, y)) ? danger :
+                x == 4 && y == 4 ? target : floor;
+            var rect = new Rectangle(offsetX + x * tileSize, offsetY + y * tileSize,
+                tileSize - 1, tileSize - 1);
+            e.Graphics.FillRectangle(brush, rect);
+            e.Graphics.DrawRectangle(border, rect);
+        }
+    }
+}

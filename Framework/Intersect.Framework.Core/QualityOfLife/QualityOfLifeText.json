@@ -1,5 +1,60 @@
 {
   "Entries": {
+    "Attack telegraphs": {
+      "en": "Attack telegraphs",
+      "fr": "Attaques annoncées",
+      "es": "Ataques anunciados"
+    },
+    "Warn before this NPC attacks": {
+      "en": "Warn before this NPC attacks",
+      "fr": "Annoncer les attaques de ce PNJ",
+      "es": "Avisar antes de que ataque este PNJ"
+    },
+    "Bosses already warn by default.": {
+      "en": "Bosses already warn by default.",
+      "fr": "Les boss annoncent déjà leurs attaques par défaut.",
+      "es": "Los jefes ya avisan de sus ataques."
+    },
+    "Area pattern:": {
+      "en": "Area pattern :",
+      "fr": "Forme de la zone :",
+      "es": "Forma del área:"
+    },
+    "Target tile": {
+      "en": "Target tile",
+      "fr": "Case ciblée",
+      "es": "Casilla objetivo"
+    },
+    "Straight line": {
+      "en": "Straight line",
+      "fr": "Ligne droite",
+      "es": "Línea recta"
+    },
+    "Forward cone": {
+      "en": "Forward cone",
+      "fr": "Cône devant le monstre",
+      "es": "Cono frontal"
+    },
+    "Circle around target": {
+      "en": "Circle around target",
+      "fr": "Cercle autour de la cible",
+      "es": "Círculo alrededor del objetivo"
+    },
+    "Reach (tiles):": {
+      "en": "Reach (tiles):",
+      "fr": "Portée (cases) :",
+      "es": "Alcance (casillas):"
+    },
+    "Warning duration (ms):": {
+      "en": "Warning duration (ms):",
+      "fr": "Durée de l'avertissement (ms) :",
+      "es": "Duración del aviso (ms):"
+    },
+    "Preview (gold: monster, blue: target)": {
+      "en": "Preview (gold: monster, blue: target)",
+      "fr": "Aperçu (or : monstre, bleu : cible)",
+      "es": "Vista previa (dorado: monstruo, azul: objetivo)"
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",
