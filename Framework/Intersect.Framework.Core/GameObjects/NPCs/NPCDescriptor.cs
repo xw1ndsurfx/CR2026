@@ -168,6 +168,12 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     public int AdvancedTelegraphWindupMs { get; set; } // 0 inherits global boss warning time
 
+    // Opt-in warning for native hostile, single-target combat spells only.
+    // Does not affect self spells, friendly spells, projectile spells, or native AoE.
+    public bool AdvancedSpellTelegraphEnabled { get; set; }
+
+    public int AdvancedSpellTelegraphWindupMs { get; set; } = 650;
+
 
     [Column("BossAnimation")]
     public Guid BossAnimationId { get; set; }

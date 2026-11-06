@@ -24,5 +24,6 @@ public sealed class CombatTelegraphPacket : IntersectPacket
     // Zero/default remains compatible with prior single-strike warning packets.
     [Key(7)] public int ComboStep { get; set; }
     [Key(8)] public int ComboTotal { get; set; }
+    [Key(9)] public bool IsSpell { get; set; }
 
 }
