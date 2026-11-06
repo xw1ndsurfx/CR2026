@@ -122,6 +122,64 @@ public sealed class TutorialTests
     }
 
     [Test]
+    public void EventInteractionRequiresAnExactServerApprovedEventAndMap()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        var mapId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        step.Objective = TutorialObjective.InteractEvent;
+        step.HighlightTarget = TutorialHighlightTarget.WorldEvent;
+        Assert.That(guide.IsValid, Is.False, "No map or event may satisfy an interaction step.");
+
+        step.MapId = mapId;
+        Assert.That(guide.IsValid, Is.False, "The event must be identified.");
+
+        step.TargetEventId = eventId;
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(step.MatchesActivatedEvent(eventId, mapId), Is.True);
+        Assert.That(step.MatchesActivatedEvent(Guid.NewGuid(), mapId), Is.False);
+        Assert.That(step.MatchesActivatedEvent(eventId, Guid.NewGuid()), Is.False);
+        Assert.That(step.MatchesActivatedEvent(Guid.Empty, mapId), Is.False);
+
+        // Rendering an event spotlight does not by itself grant credit.
+        step.Objective = TutorialObjective.Read;
+        Assert.That(step.MatchesActivatedEvent(eventId, mapId), Is.False);
+        step.Objective = TutorialObjective.InteractEvent;
+
+        var reloaded = JsonConvert.DeserializeObject<TutorialConfiguration>(
+            JsonConvert.SerializeObject(guide))!;
+        var restored = reloaded.Steps[0];
+        Assert.That(reloaded.IsValid, Is.True);
+        Assert.That(restored.Id, Is.EqualTo(step.Id));
+        Assert.That(restored.TargetEventId, Is.EqualTo(eventId));
+        Assert.That(restored.HighlightTarget, Is.EqualTo(TutorialHighlightTarget.WorldEvent));
+        Assert.That(restored.MatchesActivatedEvent(eventId, mapId), Is.True);
+
+        restored.TargetEventId = Guid.Empty;
+        Assert.That(reloaded.IsValid, Is.False);
+        Assert.That(restored.MatchesActivatedEvent(eventId, mapId), Is.False);
+    }
+
+    [Test]
+    public void EventLessonOnlyAdvancesFromInteractionObjective()
+    {
+        var step = new TutorialStep
+        {
+            Objective = TutorialObjective.ReachTile,
+            MapId = Guid.NewGuid(),
+            TargetEventId = Guid.NewGuid(),
+            HighlightTarget = TutorialHighlightTarget.WorldEvent,
+        };
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, step.MapId), Is.False);
+        step.Objective = TutorialObjective.InteractEvent;
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, step.MapId), Is.True);
+        step.MapId = Guid.Empty;
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, Guid.Empty), Is.False);
+    }
+
+    [Test]
     public void TutorialPacketsRoundTripIncludingEditorUnion()
     {
         var options = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(NativeGuidResolver.Instance, StandardResolver.Instance));
