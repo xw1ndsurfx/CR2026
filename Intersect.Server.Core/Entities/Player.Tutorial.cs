@@ -8,7 +8,7 @@ public partial class Player
 {
     internal static readonly Guid TutorialProgressId = new("c1026029-0000-4000-8000-999999999999");
     private TutorialProgress? _tutorial;
-    private bool _tutorialSent, _tutorialMoved;
+    private bool _tutorialSent, _tutorialMoved, _tutorialCombatReady;
     private Guid _tutorialStep, _tutorialMap;
     private string _tutorialRevision = "";
     private int _tutorialX, _tutorialY;
@@ -27,9 +27,44 @@ public partial class Player
     }
     internal void ResetTutorialSession()
     {
-        _tutorialSent = false; _tutorialStep = Guid.Empty; _tutorialMoved = false;
+        _tutorialSent = false; _tutorialStep = Guid.Empty; _tutorialMoved = false; _tutorialCombatReady = false;
         _tutorialPoll = 0; _tutorialRequest = 0; _tutorialRevision = "";
     }
+    /// <summary>
+    /// Called only by validated server combat outcomes; client packets cannot
+    /// mark a combat exercise complete. Only the active step can gain credit.
+    /// </summary>
+    private void RecordAdvancedCombatTutorialAction(TutorialObjective action)
+    {
+        if (!AdvancedCombatTutorialLessons.IsCombatObjective(action) ||
+            !InGame || IsDead || HasPendingDeath ||
+            !Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat ||
+            !TutorialRuntime.Current.Enabled || Tutorial.Paused || Tutorial.Finished)
+            return;
+
+        var current = Tutorial.Current(TutorialRuntime.Current);
+        if (current == null || current.Objective != action)
+            return;
+
+        if (!AdvancedCombatTutorialLessons.IsAvailable(
+            action, Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat,
+            Intersect.Core.Options.Instance.Combat.AdvancedPlayerCombosEnabled))
+            return;
+
+        // Actions are processed by the game server's serialized player lock.
+        // Do not rely on _tutorialStep: this may be the player's first event
+        // before their next 1-second tutorial refresh.
+        if (current.Id != _tutorialStep)
+            return;
+
+        _tutorialCombatReady = true;
+        Tutorial.Completed.Add(current.Id);
+        if (Tutorial.Current(TutorialRuntime.Current) == null)
+            Tutorial.Finished = true;
+        SaveTutorial();
+        SendTutorial();
+    }
+
     private void SaveTutorial() => SetVariableValue(TutorialProgressId, JsonConvert.SerializeObject(Tutorial));
     private bool TutorialReady(TutorialStep step) => step.Objective switch
     {
@@ -37,6 +72,11 @@ public partial class Player
         TutorialObjective.Move => _tutorialMoved,
         TutorialObjective.ReachMap => MapId == step.MapId,
         TutorialObjective.Variable => GetVariable(step.VariableId)?.Value.Integer == step.VariableValue,
+        TutorialObjective.CombatDodge or TutorialObjective.CombatPerfectParry
+            or TutorialObjective.CombatCounterattack or TutorialObjective.CombatFinisher =>
+            _tutorialCombatReady || !AdvancedCombatTutorialLessons.IsAvailable(
+                step.Objective, Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat,
+                Intersect.Core.Options.Instance.Combat.AdvancedPlayerCombosEnabled),
         _ => false,
     };
     private void SendTutorial()
@@ -45,7 +85,7 @@ public partial class Player
         var step = Tutorial.Current(config);
         if (step?.Id != _tutorialStep)
         {
-            _tutorialStep = step?.Id ?? Guid.Empty; _tutorialMap = MapId; _tutorialX = X; _tutorialY = Y; _tutorialMoved = false;
+            _tutorialStep = step?.Id ?? Guid.Empty; _tutorialMap = MapId; _tutorialX = X; _tutorialY = Y; _tutorialMoved = false; _tutorialCombatReady = false;
         }
         SendPacket(new TutorialStatePacket { ConfigurationJson = TutorialRuntime.Json, Revision = TutorialRuntime.Revision,
             StepId = step?.Id ?? Guid.Empty, Finished = Tutorial.Finished || step == null,
@@ -82,7 +122,7 @@ public partial class Player
             if (packet.Action == TutorialAction.Pause) { Tutorial.Paused = true; SaveTutorial(); SendTutorial(); return; }
             if (IsDead || IsBusy() || EventLookup.Values.Any(e => e.HoldingPlayer)) return;
             if (packet.Action == TutorialAction.Resume) { Tutorial.Paused = false; SaveTutorial(); SendTutorial(); return; }
-            if (packet.Action == TutorialAction.Restart) { _tutorial = new(); _tutorialStep = Guid.Empty; SaveTutorial(); SendTutorial(); return; }
+            if (packet.Action == TutorialAction.Restart) { _tutorial = new(); _tutorialStep = Guid.Empty; _tutorialCombatReady = false; SaveTutorial(); SendTutorial(); return; }
             var step = Tutorial.Current(TutorialRuntime.Current);
             if (Tutorial.Paused || step == null || packet.StepId != step.Id || packet.Revision != TutorialRuntime.Revision) { SendTutorial(); return; }
             if (packet.Action == TutorialAction.PlayCinematic && step.CinematicEventId != Guid.Empty)
