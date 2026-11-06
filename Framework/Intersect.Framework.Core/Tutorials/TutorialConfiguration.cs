@@ -58,6 +58,14 @@ public sealed class TutorialStep
     [System.ComponentModel.Category("Royal Guide - world")]
     [System.ComponentModel.Description("NPC descriptor to highlight while the player is on this map.")]
     public Guid TargetNpcId { get; set; }
+
+    /// <summary>Location check shared by game logic and tests; only the
+    /// authoritative server player position is passed by the runtime.</summary>
+    public bool IsAtTarget(Guid playerMapId, int playerX, int playerY) =>
+        MapId != Guid.Empty && playerMapId == MapId &&
+        TargetRadius is >= 0 and <= 6 &&
+        Math.Abs(playerX - TargetX) <= TargetRadius &&
+        Math.Abs(playerY - TargetY) <= TargetRadius;
     public Guid VariableId { get; set; }
     public long VariableValue { get; set; } = 1;
     // Select a common event compiled by the existing cinematic director.
