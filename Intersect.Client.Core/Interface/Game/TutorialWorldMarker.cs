@@ -5,6 +5,7 @@ using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
+using Intersect.Configuration;
 using Intersect.Client.Maps;
 using Intersect.Enums;
 using Intersect.Framework.Core.Tutorials;
