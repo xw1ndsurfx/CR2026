@@ -96,9 +96,10 @@ internal sealed class RoyalGuidePreview : Control
         }
         g.DrawString("CORPS ROYAUX  •  GUIDE ROYAL", titleFont, textBrush, 17, 7);
         var labels = new[] { "Personnage", "Inventaire", "Quêtes", "Carte", "Sorts", "Guilde", "Menu" };
+        using var menuPen = new Pen(Color.FromArgb(94, 70, 53));
         for (var i = 0; i < labels.Length; i++)
         {
-            g.DrawRectangle(new Pen(Color.FromArgb(94, 70, 53)), 10, 54 + i * 37, 120, 32);
+            g.DrawRectangle(menuPen, 10, 54 + i * 37, 120, 32);
             g.DrawString(labels[i], labelFont, textBrush, 18, 62 + i * 37);
         }
         g.DrawString("MINI-CARTE", labelFont, textBrush, 627, 55);
