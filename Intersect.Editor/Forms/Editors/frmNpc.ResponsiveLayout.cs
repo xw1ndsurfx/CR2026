@@ -56,7 +56,7 @@ public partial class FrmNpc
 
             AddNpcEditorTab("General", grpGeneral, grpCommonEvents, _grpBoss);
             AddNpcEditorTab("Stats & Resist", grpStats, grpRegen, grpImmunities);
-            AddNpcEditorTab("Combat", grpCombat, _grpCombatAi, grpSpells);
+            AddNpcEditorTab("Combat", grpCombat, _grpCombatAi, _grpCombatTelegraph, grpSpells);
             AddNpcEditorTab("Behavior", grpBehavior, grpNpcVsNpc);
             AddNpcEditorTab("Drops", grpDrops);
             AddNpcEditorTab("Pets", _grpPet);

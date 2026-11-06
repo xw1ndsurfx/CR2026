@@ -70,6 +70,7 @@ public partial class FrmNpc : EditorForm
         InitializeComponent();
         BuildBossControls();
         BuildCombatAiControls();
+        BuildCombatTelegraphControls();
         BuildPetControls();
         BuildNpcSpellTimingControls();
         BuildNpcAutoCreator();
@@ -164,6 +165,8 @@ public partial class FrmNpc : EditorForm
         _chkIsBoss.CheckedChanged += (_, _) =>
         {
             UpdateBossControlState();
+            if (_grpCombatTelegraph.Controls.Count > 0)
+                UpdateCombatTelegraphControlState();
             if (mEditorItem != null)
             {
                 mEditorItem.IsBoss = _chkIsBoss.Checked;
@@ -886,6 +889,7 @@ public partial class FrmNpc : EditorForm
                 (int)_nudPreferredCombatRange.Maximum
             );
             UpdateCombatAiControlState();
+            LoadCombatTelegraphControls();
             _chkIsPet.Checked = mEditorItem.IsPet;
             _cmbPetItem.SelectedIndex = ItemDescriptor.ListIndex(mEditorItem.PetSummonItemId) + 1;
             _nudPetLootRadius.Value = Math.Clamp(mEditorItem.PetLootRadius, 0, 8);

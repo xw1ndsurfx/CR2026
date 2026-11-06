@@ -514,12 +514,13 @@ public partial class Npc : Entity
             return;
         }
 
-        if (Options.Instance.Combat.EnableAdvancedCombat && Descriptor.IsBoss && PetOwner == null && target is Player bossTarget)
+        if (Options.Instance.Combat.EnableAdvancedCombat && PetOwner == null &&
+            (Descriptor.IsBoss || Descriptor.AdvancedTelegraphEnabled) && !IsAttacking &&
+            target is Player warnedPlayer && target.MapId == MapId &&
+            target.MapInstanceId == MapInstanceId)
         {
-            if (!IsAdvancedTelegraphReady(bossTarget))
-            {
-                return;
-            }
+            BeginAdvancedTelegraph(warnedPlayer);
+            return;
         }
 
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
@@ -1002,6 +1003,9 @@ public partial class Npc : Entity
                     UpdatePet(timeMs);
                     return;
                 }
+                // Resolve the queued strike even if its original target moved away.
+                if (ProcessAdvancedTelegraph(timeMs))
+                    return;
 
                 if (InvasionSessionId != Guid.Empty && Target != null && !HasLiveInvasionCombatTarget(Target))
                     AssignTarget(null);
