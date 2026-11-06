@@ -55,6 +55,16 @@
       "fr": "Aperçu (or : monstre, bleu : cible)",
       "es": "Vista previa (dorado: monstruo, azul: objetivo)"
     },
+    "Enrage under 35% HP (boss only)": {
+      "en": "Enrage under 35% HP (boss only)",
+      "fr": "Rage sous 35 % de vie (boss uniquement)",
+      "es": "Furia bajo 35 % de vida (solo jefes)"
+    },
+    "Faster warnings and stronger hits in phase two.": {
+      "en": "Faster warnings and stronger hits in phase two.",
+      "fr": "Attaques plus rapides et plus puissantes en phase deux.",
+      "es": "Ataques más rápidos y fuertes en fase dos."
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",
@@ -746,1745 +756,1257 @@
       "es": "Esta arena está desactivada. Marca Activar esta arena y guarda para abrir las justas en el juego."
     },
     "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
-      "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
-      "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
-      "es": "William es la montura del jugador. Elige un rival IA, coloca ambas pistas, activa la arena y guarda. En el juego, pisa el inicio dorado: la ventana de justa se abre automáticamente. El inicio azul ofrece PvP y las entradas de las gradas ofrecen asientos."
+        "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
+        "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
+        "es": "William es la montura del jugador. Elige un rival IA, coloca ambas pistas, activa la arena y guarda. En el juego, pisa el inicio dorado: la ventana de justa se abre automáticamente. El inicio azul ofrece PvP y las entradas de las gradas ofrecen asientos."
     },
     "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.": {
-      "en": "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.",
-      "fr": "En jeu, marche sur le départ doré ({0}, {1}) : la fenêtre de joute s’ouvre automatiquement. Le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Après fermeture, quitte la case puis reviens pour rouvrir la fenêtre.",
-      "es": "En el juego, pisa el inicio dorado ({0}, {1}): la ventana de justa se abre automáticamente. El inicio azul abre los duelos y las entradas de las gradas abren los asientos. Tras cerrar una ventana, sal de la casilla y vuelve para abrirla de nuevo."
+        "en": "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.",
+        "fr": "En jeu, marche sur le départ doré ({0}, {1}) : la fenêtre de joute s’ouvre automatiquement. Le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Après fermeture, quitte la case puis reviens pour rouvrir la fenêtre.",
+        "es": "En el juego, pisa el inicio dorado ({0}, {1}): la ventana de justa se abre automáticamente. El inicio azul abre los duelos y las entradas de las gradas abren los asientos. Tras cerrar una ventana, sal de la casilla y vuelve para abrirla de nuevo."
     },
     "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.": {
-      "en": "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.",
-      "fr": "Départ doré : ({0}, {1}). Ta position : ({2}, {3}). Cette fenêtre s’ouvre automatiquement au départ doré. Choisis l’adversaire IA et la difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
-      "es": "Inicio dorado: ({0}, {1}). Tu posición: ({2}, {3}). Esta ventana se abre automáticamente en el inicio dorado. Elige el rival IA y la dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+        "en": "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.",
+        "fr": "Départ doré : ({0}, {1}). Ta position : ({2}, {3}). Cette fenêtre s’ouvre automatiquement au départ doré. Choisis l’adversaire IA et la difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "Inicio dorado: ({0}, {1}). Tu posición: ({2}, {3}). Esta ventana se abre automáticamente en el inicio dorado. Elige el rival IA y la dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
     },
     "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.": {
-      "en": "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.",
-      "fr": "Ta monture est William. Clique sur Ajouter le préréglage William si nécessaire. Choisis William ou Tale Knight Night comme adversaire IA. Place le départ doré, l’arrivée et le couloir bleu, active l’arène puis enregistre. Lance la partie dans le client du jeu, pas dans cet éditeur.",
-      "es": "Tu montura es William. Pulsa Añadir preajuste de William si hace falta. Elige William o Tale Knight Night como rival IA. Coloca el inicio dorado, la meta y el carril azul, activa la arena y guarda. Inicia la partida en el cliente del juego, no en este editor."
+        "en": "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.",
+        "fr": "Ta monture est William. Clique sur Ajouter le préréglage William si nécessaire. Choisis William ou Tale Knight Night comme adversaire IA. Place le départ doré, l’arrivée et le couloir bleu, active l’arène puis enregistre. Lance la partie dans le client du jeu, pas dans cet éditeur.",
+        "es": "Tu montura es William. Pulsa Añadir preajuste de William si hace falta. Elige William o Tale Knight Night como rival IA. Coloca el inicio dorado, la meta y el carril azul, activa la arena y guarda. Inicia la partida en el cliente del juego, no en este editor."
     },
     "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.": {
-      "en": "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.",
-      "fr": "Les récompenses sont invalides. Vérifie les limites de médailles, les quantités, les prix et les objets dans Gains.",
-      "es": "Las recompensas no son válidas. Revisa los límites de medallas, las cantidades, los precios y los objetos en Recompensas."
+        "en": "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.",
+        "fr": "Les récompenses sont invalides. Vérifie les limites de médailles, les quantités, les prix et les objets dans Gains.",
+        "es": "Las recompensas no son válidas. Revisa los límites de medallas, las cantidades, los precios y los objetos en Recompensas."
     },
     "There are more than 512 seats across all arenas. Remove some seats before saving.": {
-      "en": "There are more than 512 seats across all arenas. Remove some seats before saving.",
-      "fr": "Il y a plus de 512 places dans l’ensemble des arènes. Supprime des places avant d’enregistrer.",
-      "es": "Hay más de 512 asientos entre todas las arenas. Elimina algunos antes de guardar."
+        "en": "There are more than 512 seats across all arenas. Remove some seats before saving.",
+        "fr": "Il y a plus de 512 places dans l’ensemble des arènes. Supprime des places avant d’enregistrer.",
+        "es": "Hay más de 512 asientos entre todas las arenas. Elimina algunos antes de guardar."
     },
     "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.": {
-      "en": "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.",
-      "fr": "Une seule arène active est autorisée par carte. Désactive l’une de ces arènes : {0}.",
-      "es": "Solo se permite una arena activa por mapa. Desactiva una de estas arenas: {0}."
+        "en": "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.",
+        "fr": "Une seule arène active est autorisée par carte. Désactive l’une de ces arènes : {0}.",
+        "es": "Solo se permite una arena activa por mapa. Desactiva una de estas arenas: {0}."
     },
     "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.": {
-      "en": "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.",
-      "fr": "Impossible de démarrer maintenant. Termine le combat, le sort ou l’activité en cours, puis réessaie sur la carte du monde.",
-      "es": "No puedes empezar ahora. Termina el combate, el lanzamiento o la actividad actual y vuelve a intentarlo en el mapa del mundo."
+        "en": "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.",
+        "fr": "Impossible de démarrer maintenant. Termine le combat, le sort ou l’activité en cours, puis réessaie sur la carte du monde.",
+        "es": "No puedes empezar ahora. Termina el combate, el lanzamiento o la actividad actual y vuelve a intentarlo en el mapa del mundo."
     },
     "Default AI opponent": {
-      "en": "Default AI opponent",
-      "fr": "Adversaire IA par défaut",
-      "es": "Rival IA predeterminado"
+        "en": "Default AI opponent",
+        "fr": "Adversaire IA par défaut",
+        "es": "Rival IA predeterminado"
     },
     "William is required. Click Add William preset, then save the arena.": {
-      "en": "William is required. Click Add William preset, then save the arena.",
-      "fr": "William est requis. Clique sur Ajouter le préréglage William, puis enregistre l’arène.",
-      "es": "Se requiere William. Pulsa Añadir preajuste de William y guarda la arena."
+        "en": "William is required. Click Add William preset, then save the arena.",
+        "fr": "William est requis. Clique sur Ajouter le préréglage William, puis enregistre l’arène.",
+        "es": "Se requiere William. Pulsa Añadir preajuste de William y guarda la arena."
     },
     "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).": {
-      "en": "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).",
-      "fr": "Place {0} : l’accès ({1}, {2}) doit être à une seule case du banc ({3}, {4}).",
-      "es": "Asiento {0}: la entrada ({1}, {2}) debe estar a una sola casilla del banco ({3}, {4})."
+        "en": "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).",
+        "fr": "Place {0} : l’accès ({1}, {2}) doit être à une seule case du banc ({3}, {4}).",
+        "es": "Asiento {0}: la entrada ({1}, {2}) debe estar a una sola casilla del banco ({3}, {4})."
     },
     "Seat {0}: move the bench and entrance outside both jousting lanes.": {
-      "en": "Seat {0}: move the bench and entrance outside both jousting lanes.",
-      "fr": "Place {0} : déplace le banc et son accès hors des deux couloirs de joute.",
-      "es": "Asiento {0}: mueve el banco y su entrada fuera de ambos carriles de justa."
+        "en": "Seat {0}: move the bench and entrance outside both jousting lanes.",
+        "fr": "Place {0} : déplace le banc et son accès hors des deux couloirs de joute.",
+        "es": "Asiento {0}: mueve el banco y su entrada fuera de ambos carriles de justa."
     },
     "Seat {0}: a bench overlaps another bench or an entrance.": {
-      "en": "Seat {0}: a bench overlaps another bench or an entrance.",
-      "fr": "Place {0} : un banc chevauche un autre banc ou un accès.",
-      "es": "Asiento {0}: un banco se superpone a otro banco o a una entrada."
+        "en": "Seat {0}: a bench overlaps another bench or an entrance.",
+        "fr": "Place {0} : un banc chevauche un autre banc ou un accès.",
+        "es": "Asiento {0}: un banco se superpone a otro banco o a una entrada."
     },
     "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.": {
-      "en": "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.",
-      "fr": "En jeu : Personnage ou Lobby des aventures → Joutes Royales. Marche jusqu’au départ doré ({0}, {1}), choisis un adversaire IA et une difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
-      "es": "En el juego: Personaje o Salas de aventuras → Justas Reales. Camina hasta el inicio dorado ({0}, {1}), elige rival IA y dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+        "en": "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.",
+        "fr": "En jeu : Personnage ou Lobby des aventures → Joutes Royales. Marche jusqu’au départ doré ({0}, {1}), choisis un adversaire IA et une difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "En el juego: Personaje o Salas de aventuras → Justas Reales. Camina hasta el inicio dorado ({0}, {1}), elige rival IA y dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
     },
     "Cannot save. The exact problems are listed below, on every tab.": {
-      "en": "Cannot save. The exact problems are listed below, on every tab.",
-      "fr": "Enregistrement impossible. Les problèmes précis sont affichés ci-dessous, dans tous les onglets.",
-      "es": "No se puede guardar. Los problemas exactos aparecen abajo, en todas las pestañas."
+        "en": "Cannot save. The exact problems are listed below, on every tab.",
+        "fr": "Enregistrement impossible. Les problèmes précis sont affichés ci-dessous, dans tous les onglets.",
+        "es": "No se puede guardar. Los problemas exactos aparecen abajo, en todas las pestañas."
     },
     "The server could not save this arena.": {
-      "en": "The server could not save this arena.",
-      "fr": "Le serveur n’a pas pu enregistrer cette arène.",
-      "es": "El servidor no pudo guardar esta arena."
+        "en": "The server could not save this arena.",
+        "fr": "Le serveur n’a pas pu enregistrer cette arène.",
+        "es": "El servidor no pudo guardar esta arena."
     },
     "Put entrance beside seat": {
-      "en": "Put entrance beside seat",
-      "fr": "Mettre l’accès à côté du banc",
-      "es": "Poner la entrada junto al banco"
+        "en": "Put entrance beside seat",
+        "fr": "Mettre l’accès à côté du banc",
+        "es": "Poner la entrada junto al banco"
     },
     "No adjacent entrance is free. Move the bench or clear a neighboring tile.": {
-      "en": "No adjacent entrance is free. Move the bench or clear a neighboring tile.",
-      "fr": "Aucune case adjacente n’est libre. Déplace le banc ou libère une case voisine.",
-      "es": "No hay una casilla adyacente libre. Mueve el banco o despeja una casilla vecina."
+        "en": "No adjacent entrance is free. Move the bench or clear a neighboring tile.",
+        "fr": "Aucune case adjacente n’est libre. Déplace le banc ou libère une case voisine.",
+        "es": "No hay una casilla adyacente libre. Mueve el banco o despeja una casilla vecina."
     },
     "AI opponent (your mount: William)": {
-      "en": "AI opponent (your mount: William)",
-      "fr": "Adversaire IA (ta monture : William)",
-      "es": "Rival IA (tu montura: William)"
+        "en": "AI opponent (your mount: William)",
+        "fr": "Adversaire IA (ta monture : William)",
+        "es": "Rival IA (tu montura: William)"
     },
     "Start AI joust": {
-      "en": "Start AI joust",
-      "fr": "Démarrer la joute IA",
-      "es": "Iniciar justa IA"
+        "en": "Start AI joust",
+        "fr": "Démarrer la joute IA",
+        "es": "Iniciar justa IA"
     },
     "No active arena on this map. In Jousting Editor, enable and save an arena first.": {
-      "en": "No active arena on this map. In Jousting Editor, enable and save an arena first.",
-      "fr": "Aucune arène active sur cette carte. Active et enregistre d’abord une arène dans l’éditeur de joutes.",
-      "es": "No hay una arena activa en este mapa. Primero activa y guarda una arena en el editor de justas."
+        "en": "No active arena on this map. In Jousting Editor, enable and save an arena first.",
+        "fr": "Aucune arène active sur cette carte. Active et enregistre d’abord une arène dans l’éditeur de joutes.",
+        "es": "No hay una arena activa en este mapa. Primero activa y guarda una arena en el editor de justas."
     },
     "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.": {
-      "en": "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.",
-      "fr": "L’entraînement IA est désactivé ici. Coche Autoriser l’entraînement contre l’IA dans l’éditeur de joutes.",
-      "es": "El entrenamiento IA está desactivado aquí. Activa Permitir entrenamiento contra la IA en el editor de justas."
+        "en": "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.",
+        "fr": "L’entraînement IA est désactivé ici. Coche Autoriser l’entraînement contre l’IA dans l’éditeur de joutes.",
+        "es": "El entrenamiento IA está desactivado aquí. Activa Permitir entrenamiento contra la IA en el editor de justas."
     },
     "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.": {
-      "en": "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.",
-      "fr": "Marche jusqu’au départ doré ({0}, {1}). Ta position : ({2}, {3}). Choisis ensuite William ou Tale Knight Night, une difficulté, puis Démarrer la joute IA. Il n’est pas nécessaire de créer un lobby.",
-      "es": "Camina hasta el inicio dorado ({0}, {1}). Tu posición: ({2}, {3}). Elige William o Tale Knight Night, una dificultad y pulsa Iniciar justa IA. No es necesario crear una sala."
+        "en": "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.",
+        "fr": "Marche jusqu’au départ doré ({0}, {1}). Ta position : ({2}, {3}). Choisis ensuite William ou Tale Knight Night, une difficulté, puis Démarrer la joute IA. Il n’est pas nécessaire de créer un lobby.",
+        "es": "Camina hasta el inicio dorado ({0}, {1}). Tu posición: ({2}, {3}). Elige William o Tale Knight Night, una dificultad y pulsa Iniciar justa IA. No es necesario crear una sala."
     },
     "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.": {
-      "en": "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.",
-      "fr": "Le PNJ de foule choisi est introuvable ou n’a pas de sprite. Choisis un autre PNJ ou Aucun.",
-      "es": "El PNJ de público seleccionado no existe o no tiene sprite. Elige otro PNJ o Ninguno."
+        "en": "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.",
+        "fr": "Le PNJ de foule choisi est introuvable ou n’a pas de sprite. Choisis un autre PNJ ou Aucun.",
+        "es": "El PNJ de público seleccionado no existe o no tiene sprite. Elige otro PNJ o Ninguno."
     },
     "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.": {
-      "en": "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.",
-      "fr": "Un banc ou son accès est hors de la carte ou porte un attribut interdit. Vérifie le banc vert et l’accès blanc.",
-      "es": "Un banco o su entrada está fuera del mapa o tiene un atributo no permitido. Comprueba el banco verde y la entrada blanca."
+        "en": "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.",
+        "fr": "Un banc ou son accès est hors de la carte ou porte un attribut interdit. Vérifie le banc vert et l’accès blanc.",
+        "es": "Un banco o su entrada está fuera del mapa o tiene un atributo no permitido. Comprueba el banco verde y la entrada blanca."
     },
     "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.": {
-      "en": "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.",
-      "fr": "Une cinématique choisie est introuvable ou n’est pas sur la carte de l’arène. Choisis une scène existante ou Aucun.",
-      "es": "Una cinemática seleccionada no existe o no está en el mapa de la arena. Elige una escena existente o Ninguna."
+        "en": "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.",
+        "fr": "Une cinématique choisie est introuvable ou n’est pas sur la carte de l’arène. Choisis une scène existante ou Aucun.",
+        "es": "Una cinemática seleccionada no existe o no está en el mapa de la arena. Elige una escena existente o Ninguna."
     },
     "A reward item is missing or is not stackable. Fix the offers in Rewards.": {
-      "en": "A reward item is missing or is not stackable. Fix the offers in Rewards.",
-      "fr": "Un objet de récompense est introuvable ou n’est pas empilable. Corrige les offres dans Gains.",
-      "es": "Un objeto de recompensa no existe o no es apilable. Corrige las ofertas en Recompensas."
+        "en": "A reward item is missing or is not stackable. Fix the offers in Rewards.",
+        "fr": "Un objet de récompense est introuvable ou n’est pas empilable. Corrige les offres dans Gains.",
+        "es": "Un objeto de recompensa no existe o no es apilable. Corrige las ofertas en Recompensas."
     },
     "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.": {
-      "en": "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.",
-      "fr": "La carte de l’arène ou la monture William est introuvable, ou un couloir est hors de la carte. Vérifie l’onglet Arène.",
-      "es": "No se encuentra el mapa de la arena o la montura William, o un carril está fuera del mapa. Revisa la pestaña Arena."
+        "en": "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.",
+        "fr": "La carte de l’arène ou la monture William est introuvable, ou un couloir est hors de la carte. Vérifie l’onglet Arène.",
+        "es": "No se encuentra el mapa de la arena o la montura William, o un carril está fuera del mapa. Revisa la pestaña Arena."
     },
     "The jousting configuration is invalid. Check the arena rules and the seats listed below.": {
-      "en": "The jousting configuration is invalid. Check the arena rules and the seats listed below.",
-      "fr": "La configuration de joute est invalide. Vérifie les règles et les places indiquées ci-dessous.",
-      "es": "La configuración de justa no es válida. Revisa las reglas y los asientos indicados abajo."
+        "en": "The jousting configuration is invalid. Check the arena rules and the seats listed below.",
+        "fr": "La configuration de joute est invalide. Vérifie les règles et les places indiquées ci-dessous.",
+        "es": "La configuración de justa no es válida. Revisa las reglas y los asientos indicados abajo."
     },
     "Keep all benches and entrances inside the map.": {
-      "en": "Keep all benches and entrances inside the map.",
-      "fr": "Garde tous les bancs et leurs accès à l’intérieur de la carte.",
-      "es": "Mantén todos los bancos y sus entradas dentro del mapa."
+        "en": "Keep all benches and entrances inside the map.",
+        "fr": "Garde tous les bancs et leurs accès à l’intérieur de la carte.",
+        "es": "Mantén todos los bancos y sus entradas dentro del mapa."
     },
     "Seat entrances must have no map attributes. Benches may only have a blocking attribute.": {
-      "en": "Seat entrances must have no map attributes. Benches may only have a blocking attribute.",
-      "fr": "Les accès aux places ne doivent avoir aucun attribut de carte. Seul un attribut de blocage est permis sur les bancs.",
-      "es": "Las entradas de los asientos no deben tener atributos de mapa. Los bancos solo pueden tener un atributo de bloqueo."
+        "en": "Seat entrances must have no map attributes. Benches may only have a blocking attribute.",
+        "fr": "Les accès aux places ne doivent avoir aucun attribut de carte. Seul un attribut de blocage est permis sur les bancs.",
+        "es": "Las entradas de los asientos no deben tener atributos de mapa. Los bancos solo pueden tener un atributo de bloqueo."
     },
     "Facing": {
-      "en": "Facing",
-      "fr": "Orientation",
-      "es": "Orientación"
+        "en": "Facing",
+        "fr": "Orientation",
+        "es": "Orientación"
     },
     "AI": {
-      "en": "AI",
-      "fr": "IA",
-      "es": "IA"
+        "en": "AI",
+        "fr": "IA",
+        "es": "IA"
     },
     "Refresh": {
-      "en": "Refresh",
-      "fr": "Actualiser",
-      "es": "Actualizar"
+        "en": "Refresh",
+        "fr": "Actualiser",
+        "es": "Actualizar"
     },
     "Spectator zoom": {
-      "en": "Spectator zoom",
-      "fr": "Zoom spectateur",
-      "es": "Zoom de espectador"
+        "en": "Spectator zoom",
+        "fr": "Zoom spectateur",
+        "es": "Zoom de espectador"
     },
     "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.": {
-      "en": "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.",
-      "fr": "Chaque place doit avoir son banc et un accès adjacent hors des deux couloirs. Aucun accès ne peut occuper un banc.",
-      "es": "Cada asiento necesita su banco y una entrada adyacente fuera de ambos carriles. Las entradas no pueden ocupar un banco."
+        "en": "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.",
+        "fr": "Chaque place doit avoir son banc et un accès adjacent hors des deux couloirs. Aucun accès ne peut occuper un banc.",
+        "es": "Cada asiento necesita su banco y una entrada adyacente fuera de ambos carriles. Las entradas no pueden ocupar un banco."
     },
     "Joust grandstands": {
-      "en": "Joust grandstands",
-      "fr": "Gradins de la joute",
-      "es": "Gradas de la justa"
+        "en": "Joust grandstands",
+        "fr": "Gradins de la joute",
+        "es": "Gradas de la justa"
     },
     "Sit in this seat": {
-      "en": "Sit in this seat",
-      "fr": "S’asseoir à cette place",
-      "es": "Sentarse en este asiento"
+        "en": "Sit in this seat",
+        "fr": "S’asseoir à cette place",
+        "es": "Sentarse en este asiento"
     },
     "Stand up": {
-      "en": "Stand up",
-      "fr": "Se lever",
-      "es": "Levantarse"
+        "en": "Stand up",
+        "fr": "Se lever",
+        "es": "Levantarse"
     },
     "Arena camera": {
-      "en": "Arena camera",
-      "fr": "Vue de l’arène",
-      "es": "Vista de la arena"
+        "en": "Arena camera",
+        "fr": "Vue de l’arène",
+        "es": "Vista de la arena"
     },
     "Follow gold knight": {
-      "en": "Follow gold knight",
-      "fr": "Suivre le chevalier doré",
-      "es": "Seguir al caballero dorado"
+        "en": "Follow gold knight",
+        "fr": "Suivre le chevalier doré",
+        "es": "Seguir al caballero dorado"
     },
     "Follow blue knight": {
-      "en": "Follow blue knight",
-      "fr": "Suivre le chevalier bleu",
-      "es": "Seguir al caballero azul"
+        "en": "Follow blue knight",
+        "fr": "Suivre le chevalier bleu",
+        "es": "Seguir al caballero azul"
     },
     "No grandstand seats are configured here.": {
-      "en": "No grandstand seats are configured here.",
-      "fr": "Aucune place de gradin n’est configurée ici.",
-      "es": "No hay asientos de grada configurados aquí."
+        "en": "No grandstand seats are configured here.",
+        "fr": "Aucune place de gradin n’est configurée ici.",
+        "es": "No hay asientos de grada configurados aquí."
     },
     "Seat entrance: ({0}, {1})": {
-      "en": "Seat entrance: ({0}, {1})",
-      "fr": "Accès à la place : ({0}, {1})",
-      "es": "Entrada del asiento: ({0}, {1})"
+        "en": "Seat entrance: ({0}, {1})",
+        "fr": "Accès à la place : ({0}, {1})",
+        "es": "Entrada del asiento: ({0}, {1})"
     },
     "Seat ({0}, {1})": {
-      "en": "Seat ({0}, {1})",
-      "fr": "Place ({0}, {1})",
-      "es": "Asiento ({0}, {1})"
+        "en": "Seat ({0}, {1})",
+        "fr": "Place ({0}, {1})",
+        "es": "Asiento ({0}, {1})"
     },
     "Waiting for the next joust.": {
-      "en": "Waiting for the next joust.",
-      "fr": "En attente de la prochaine joute.",
-      "es": "Esperando la próxima justa."
+        "en": "Waiting for the next joust.",
+        "fr": "En attente de la prochaine joute.",
+        "es": "Esperando la próxima justa."
     },
     "Pass {0}/{1} · {2} {3} : {4} {5}": {
-      "en": "Pass {0}/{1} · {2} {3} : {4} {5}",
-      "fr": "Passe {0}/{1} · {2} {3} : {4} {5}",
-      "es": "Pasada {0}/{1} · {2} {3} : {4} {5}"
+        "en": "Pass {0}/{1} · {2} {3} : {4} {5}",
+        "fr": "Passe {0}/{1} · {2} {3} : {4} {5}",
+        "es": "Pasada {0}/{1} · {2} {3} : {4} {5}"
     },
     "Joust in progress": {
-      "en": "Joust in progress",
-      "fr": "Joute en cours",
-      "es": "Justa en curso"
+        "en": "Joust in progress",
+        "fr": "Joute en cours",
+        "es": "Justa en curso"
     },
     "Joust finished": {
-      "en": "Joust finished",
-      "fr": "Joute terminée",
-      "es": "Justa terminada"
+        "en": "Joust finished",
+        "fr": "Joute terminée",
+        "es": "Justa terminada"
     },
     "6. Seats": {
-      "en": "6. Seats",
-      "fr": "6. Places",
-      "es": "6. Asientos"
+        "en": "6. Seats",
+        "fr": "6. Places",
+        "es": "6. Asientos"
     },
     "Grandstand seat": {
-      "en": "Grandstand seat",
-      "fr": "Place de gradin",
-      "es": "Asiento de grada"
+        "en": "Grandstand seat",
+        "fr": "Place de gradin",
+        "es": "Asiento de grada"
     },
     "Seat name": {
-      "en": "Seat name",
-      "fr": "Nom de la place",
-      "es": "Nombre del asiento"
+        "en": "Seat name",
+        "fr": "Nom de la place",
+        "es": "Nombre del asiento"
     },
     "Add seat": {
-      "en": "Add seat",
-      "fr": "Ajouter une place",
-      "es": "Añadir asiento"
+        "en": "Add seat",
+        "fr": "Ajouter une place",
+        "es": "Añadir asiento"
     },
     "Remove seat": {
-      "en": "Remove seat",
-      "fr": "Supprimer la place",
-      "es": "Eliminar asiento"
+        "en": "Remove seat",
+        "fr": "Supprimer la place",
+        "es": "Eliminar asiento"
     },
     "Place seat": {
-      "en": "Place seat",
-      "fr": "Placer la place",
-      "es": "Colocar asiento"
+        "en": "Place seat",
+        "fr": "Placer la place",
+        "es": "Colocar asiento"
     },
     "Place seat entrance": {
-      "en": "Place seat entrance",
-      "fr": "Placer l’accès",
-      "es": "Colocar entrada"
+        "en": "Place seat entrance",
+        "fr": "Placer l’accès",
+        "es": "Colocar entrada"
     },
     "Seat entrance": {
-      "en": "Seat entrance",
-      "fr": "Accès à la place",
-      "es": "Entrada del asiento"
+        "en": "Seat entrance",
+        "fr": "Accès à la place",
+        "es": "Entrada del asiento"
     },
     "Crowd NPC (optional)": {
-      "en": "Crowd NPC (optional)",
-      "fr": "PNJ de foule (facultatif)",
-      "es": "PNJ de público (opcional)"
+        "en": "Crowd NPC (optional)",
+        "fr": "PNJ de foule (facultatif)",
+        "es": "PNJ de público (opcional)"
     },
     "Missing crowd NPC": {
-      "en": "Missing crowd NPC",
-      "fr": "PNJ de foule introuvable",
-      "es": "PNJ de público no encontrado"
+        "en": "Missing crowd NPC",
+        "fr": "PNJ de foule introuvable",
+        "es": "PNJ de público no encontrado"
     },
     "Select a seat to place it.": {
-      "en": "Select a seat to place it.",
-      "fr": "Sélectionne une place à positionner.",
-      "es": "Selecciona un asiento para colocarlo."
+        "en": "Select a seat to place it.",
+        "fr": "Sélectionne une place à positionner.",
+        "es": "Selecciona un asiento para colocarlo."
     },
     "Click the bench tile for the selected seat.": {
-      "en": "Click the bench tile for the selected seat.",
-      "fr": "Clique sur la case du banc de la place choisie.",
-      "es": "Haz clic en la casilla del banco del asiento seleccionado."
+        "en": "Click the bench tile for the selected seat.",
+        "fr": "Clique sur la case du banc de la place choisie.",
+        "es": "Haz clic en la casilla del banco del asiento seleccionado."
     },
     "Click an adjacent free entrance tile for this seat.": {
-      "en": "Click an adjacent free entrance tile for this seat.",
-      "fr": "Clique sur une case libre adjacente pour l’accès à cette place.",
-      "es": "Haz clic en una casilla libre adyacente para la entrada de este asiento."
+        "en": "Click an adjacent free entrance tile for this seat.",
+        "fr": "Clique sur une case libre adjacente pour l’accès à cette place.",
+        "es": "Haz clic en una casilla libre adyacente para la entrada de este asiento."
     },
     "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.": {
-      "en": "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.",
-      "fr": "Ajoute une place, puis positionne son banc et son accès adjacent sur la carte, hors des couloirs. Les joueurs se placent à l’accès et choisissent leur place dans Joutes Royales. Un PNJ facultatif remplit les places libres. Les émotes du chat restent disponibles une fois assis.",
-      "es": "Añade un asiento y coloca su banco y entrada adyacente en el mapa, fuera de los carriles. Los jugadores se sitúan en la entrada y eligen asiento en Justas Reales. Un PNJ opcional ocupa los asientos libres. Los gestos del chat siguen disponibles al sentarse."
+        "en": "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.",
+        "fr": "Ajoute une place, puis positionne son banc et son accès adjacent sur la carte, hors des couloirs. Les joueurs se placent à l’accès et choisissent leur place dans Joutes Royales. Un PNJ facultatif remplit les places libres. Les émotes du chat restent disponibles une fois assis.",
+        "es": "Añade un asiento y coloca su banco y entrada adyacente en el mapa, fuera de los carriles. Los jugadores se sitúan en la entrada y eligen asiento en Justas Reales. Un PNJ opcional ocupa los asientos libres. Los gestos del chat siguen disponibles al sentarse."
     },
     "This grandstand seat is not configured here.": {
-      "en": "This grandstand seat is not configured here.",
-      "fr": "Cette place de gradin n’est pas configurée ici.",
-      "es": "Este asiento de grada no está configurado aquí."
+        "en": "This grandstand seat is not configured here.",
+        "fr": "Cette place de gradin n’est pas configurée ici.",
+        "es": "Este asiento de grada no está configurado aquí."
     },
     "You cannot take a grandstand seat right now.": {
-      "en": "You cannot take a grandstand seat right now.",
-      "fr": "Tu ne peux pas t’asseoir dans les gradins pour le moment.",
-      "es": "No puedes sentarte en las gradas ahora mismo."
+        "en": "You cannot take a grandstand seat right now.",
+        "fr": "Tu ne peux pas t’asseoir dans les gradins pour le moment.",
+        "es": "No puedes sentarte en las gradas ahora mismo."
     },
     "Stand on the selected seat's entrance tile before sitting down.": {
-      "en": "Stand on the selected seat's entrance tile before sitting down.",
-      "fr": "Place-toi sur la case d’accès à la place choisie avant de t’asseoir.",
-      "es": "Sitúate en la casilla de entrada del asiento seleccionado antes de sentarte."
+        "en": "Stand on the selected seat's entrance tile before sitting down.",
+        "fr": "Place-toi sur la case d’accès à la place choisie avant de t’asseoir.",
+        "es": "Sitúate en la casilla de entrada del asiento seleccionado antes de sentarte."
     },
     "This seat is occupied or blocked.": {
-      "en": "This seat is occupied or blocked.",
-      "fr": "Cette place est occupée ou bloquée.",
-      "es": "Este asiento está ocupado o bloqueado."
+        "en": "This seat is occupied or blocked.",
+        "fr": "Cette place est occupée ou bloquée.",
+        "es": "Este asiento está ocupado o bloqueado."
     },
     "The grandstand exit is blocked. Please wait or clear the entrance.": {
-      "en": "The grandstand exit is blocked. Please wait or clear the entrance.",
-      "fr": "La sortie des gradins est bloquée. Patiente ou dégage l’accès.",
-      "es": "La salida de las gradas está bloqueada. Espera o despeja la entrada."
+        "en": "The grandstand exit is blocked. Please wait or clear the entrance.",
+        "fr": "La sortie des gradins est bloquée. Patiente ou dégage l’accès.",
+        "es": "La salida de las gradas está bloqueada. Espera o despeja la entrada."
     },
     "Challenge a knight": {
-      "en": "Challenge a knight",
-      "fr": "Défier un chevalier",
-      "es": "Desafiar a un caballero"
+        "en": "Challenge a knight",
+        "fr": "Défier un chevalier",
+        "es": "Desafiar a un caballero"
     },
     "Refresh players": {
-      "en": "Refresh players",
-      "fr": "Actualiser les joueurs",
-      "es": "Actualizar jugadores"
+        "en": "Refresh players",
+        "fr": "Actualiser les joueurs",
+        "es": "Actualizar jugadores"
     },
     "Challenge this player": {
-      "en": "Challenge this player",
-      "fr": "Défier ce joueur",
-      "es": "Desafiar a este jugador"
+        "en": "Challenge this player",
+        "fr": "Défier ce joueur",
+        "es": "Desafiar a este jugador"
     },
     "Accept joust": {
-      "en": "Accept joust",
-      "fr": "Accepter la joute",
-      "es": "Aceptar justa"
+        "en": "Accept joust",
+        "fr": "Accepter la joute",
+        "es": "Aceptar justa"
     },
     "Decline joust": {
-      "en": "Decline joust",
-      "fr": "Refuser la joute",
-      "es": "Rechazar justa"
+        "en": "Decline joust",
+        "fr": "Refuser la joute",
+        "es": "Rechazar justa"
     },
     "Accept joust ({0}s)": {
-      "en": "Accept joust ({0}s)",
-      "fr": "Accepter la joute ({0}s)",
-      "es": "Aceptar justa ({0}s)"
+        "en": "Accept joust ({0}s)",
+        "fr": "Accepter la joute ({0}s)",
+        "es": "Aceptar justa ({0}s)"
     },
     "Gold start: ({0}, {1}) · Blue start: ({2}, {3})": {
-      "en": "Gold start: ({0}, {1}) · Blue start: ({2}, {3})",
-      "fr": "Départ doré : ({0}, {1}) · Départ bleu : ({2}, {3})",
-      "es": "Inicio dorado: ({0}, {1}) · Inicio azul: ({2}, {3})"
+        "en": "Gold start: ({0}, {1}) · Blue start: ({2}, {3})",
+        "fr": "Départ doré : ({0}, {1}) · Départ bleu : ({2}, {3})",
+        "es": "Inicio dorado: ({0}, {1}) · Inicio azul: ({2}, {3})"
     },
     "Challenge from the gold start. Accept from the blue start.": {
-      "en": "Challenge from the gold start. Accept from the blue start.",
-      "fr": "Défie depuis le départ doré. Accepte depuis le départ bleu.",
-      "es": "Desafía desde el inicio dorado. Acepta desde el inicio azul."
+        "en": "Challenge from the gold start. Accept from the blue start.",
+        "fr": "Défie depuis le départ doré. Accepte depuis le départ bleu.",
+        "es": "Desafía desde el inicio dorado. Acepta desde el inicio azul."
     },
     "{0} challenges you to a joust.": {
-      "en": "{0} challenges you to a joust.",
-      "fr": "{0} te défie à la joute.",
-      "es": "{0} te desafía a una justa."
+        "en": "{0} challenges you to a joust.",
+        "fr": "{0} te défie à la joute.",
+        "es": "{0} te desafía a una justa."
     },
     "No other knight is present on this map.": {
-      "en": "No other knight is present on this map.",
-      "fr": "Aucun autre chevalier n’est présent sur cette carte.",
-      "es": "No hay otro caballero en este mapa."
+        "en": "No other knight is present on this map.",
+        "fr": "Aucun autre chevalier n’est présent sur cette carte.",
+        "es": "No hay otro caballero en este mapa."
     },
     "Player duels are not enabled on this map.": {
-      "en": "Player duels are not enabled on this map.",
-      "fr": "Les duels entre joueurs ne sont pas activés sur cette carte.",
-      "es": "Los duelos entre jugadores no están activados en este mapa."
+        "en": "Player duels are not enabled on this map.",
+        "fr": "Les duels entre joueurs ne sont pas activés sur cette carte.",
+        "es": "Los duelos entre jugadores no están activados en este mapa."
     },
     "Both knights must be ready on the same map.": {
-      "en": "Both knights must be ready on the same map.",
-      "fr": "Les deux chevaliers doivent être disponibles sur la même carte.",
-      "es": "Ambos caballeros deben estar disponibles en el mismo mapa."
+        "en": "Both knights must be ready on the same map.",
+        "fr": "Les deux chevaliers doivent être disponibles sur la même carte.",
+        "es": "Ambos caballeros deben estar disponibles en el mismo mapa."
     },
     "This player is unavailable. Try again.": {
-      "en": "This player is unavailable. Try again.",
-      "fr": "Ce joueur est indisponible. Réessaie.",
-      "es": "Este jugador no está disponible. Inténtalo de nuevo."
+        "en": "This player is unavailable. Try again.",
+        "fr": "Ce joueur est indisponible. Réessaie.",
+        "es": "Este jugador no está disponible. Inténtalo de nuevo."
     },
     "A duel requires two different accounts.": {
-      "en": "A duel requires two different accounts.",
-      "fr": "Une joute nécessite deux comptes différents.",
-      "es": "Una justa requiere dos cuentas diferentes."
+        "en": "A duel requires two different accounts.",
+        "fr": "Une joute nécessite deux comptes différents.",
+        "es": "Una justa requiere dos cuentas diferentes."
     },
     "Stand at the gold starting tile before challenging a player.": {
-      "en": "Stand at the gold starting tile before challenging a player.",
-      "fr": "Place-toi sur la case de départ dorée avant de défier un joueur.",
-      "es": "Sitúate en la casilla dorada de inicio antes de desafiar a un jugador."
+        "en": "Stand at the gold starting tile before challenging a player.",
+        "fr": "Place-toi sur la case de départ dorée avant de défier un joueur.",
+        "es": "Sitúate en la casilla dorada de inicio antes de desafiar a un jugador."
     },
     "This player already has a pending joust invitation.": {
-      "en": "This player already has a pending joust invitation.",
-      "fr": "Ce joueur a déjà une invitation de joute en attente.",
-      "es": "Este jugador ya tiene una invitación de justa pendiente."
+        "en": "This player already has a pending joust invitation.",
+        "fr": "Ce joueur a déjà une invitation de joute en attente.",
+        "es": "Este jugador ya tiene una invitación de justa pendiente."
     },
     "Joust invitation sent. Your opponent has 30 seconds to accept.": {
-      "en": "Joust invitation sent. Your opponent has 30 seconds to accept.",
-      "fr": "Invitation envoyée. Ton adversaire a 30 secondes pour accepter.",
-      "es": "Invitación enviada. Tu rival tiene 30 segundos para aceptar."
+        "en": "Joust invitation sent. Your opponent has 30 seconds to accept.",
+        "fr": "Invitation envoyée. Ton adversaire a 30 secondes pour accepter.",
+        "es": "Invitación enviada. Tu rival tiene 30 segundos para aceptar."
     },
     "This joust invitation has expired.": {
-      "en": "This joust invitation has expired.",
-      "fr": "Cette invitation de joute a expiré.",
-      "es": "Esta invitación de justa ha caducado."
+        "en": "This joust invitation has expired.",
+        "fr": "Cette invitation de joute a expiré.",
+        "es": "Esta invitación de justa ha caducado."
     },
     "Place the challenger on the gold start and the opponent on the blue start before accepting.": {
-      "en": "Place the challenger on the gold start and the opponent on the blue start before accepting.",
-      "fr": "Place le challenger au départ doré et l’adversaire au départ bleu avant d’accepter.",
-      "es": "Coloca al desafiante en el inicio dorado y al rival en el inicio azul antes de aceptar."
+        "en": "Place the challenger on the gold start and the opponent on the blue start before accepting.",
+        "fr": "Place le challenger au départ doré et l’adversaire au départ bleu avant d’accepter.",
+        "es": "Coloca al desafiante en el inicio dorado y al rival en el inicio azul antes de aceptar."
     },
     "Clear both jousting lanes before starting the duel.": {
-      "en": "Clear both jousting lanes before starting the duel.",
-      "fr": "Dégage les deux couloirs avant de lancer la joute.",
-      "es": "Despeja ambos carriles antes de iniciar la justa."
+        "en": "Clear both jousting lanes before starting the duel.",
+        "fr": "Dégage les deux couloirs avant de lancer la joute.",
+        "es": "Despeja ambos carriles antes de iniciar la justa."
     },
     "Pass {0}/{1} · You {2} : {3} {4}": {
-      "en": "Pass {0}/{1} · You {2} : {3} {4}",
-      "fr": "Passe {0}/{1} · Toi {2} : {3} {4}",
-      "es": "Pasada {0}/{1} · Tú {2} : {3} {4}"
+        "en": "Pass {0}/{1} · You {2} : {3} {4}",
+        "fr": "Passe {0}/{1} · Toi {2} : {3} {4}",
+        "es": "Pasada {0}/{1} · Tú {2} : {3} {4}"
     },
     "Joust interrupted": {
-      "en": "Joust interrupted",
-      "fr": "Joute interrompue",
-      "es": "Justa interrumpida"
+        "en": "Joust interrupted",
+        "fr": "Joute interrompue",
+        "es": "Justa interrumpida"
     },
     "Allow AI training": {
-      "en": "Allow AI training",
-      "fr": "Autoriser l’entraînement contre l’IA",
-      "es": "Permitir entrenamiento contra la IA"
+        "en": "Allow AI training",
+        "fr": "Autoriser l’entraînement contre l’IA",
+        "es": "Permitir entrenamiento contra la IA"
     },
     "Allow player duels": {
-      "en": "Allow player duels",
-      "fr": "Autoriser les duels entre joueurs",
-      "es": "Permitir duelos entre jugadores"
+        "en": "Allow player duels",
+        "fr": "Autoriser les duels entre joueurs",
+        "es": "Permitir duelos entre jugadores"
     },
     "Enable at least one match mode for this arena.": {
-      "en": "Enable at least one match mode for this arena.",
-      "fr": "Active au moins un mode de joute pour cette arène.",
-      "es": "Activa al menos un modo de justa para esta arena."
+        "en": "Enable at least one match mode for this arena.",
+        "fr": "Active au moins un mode de joute pour cette arène.",
+        "es": "Activa al menos un modo de justa para esta arena."
     },
     "Saved. Your newer changes still need saving.": {
-      "en": "Saved. Your newer changes still need saving.",
-      "fr": "Enregistré. Tes modifications plus récentes restent à enregistrer.",
-      "es": "Guardado. Los cambios más recientes aún deben guardarse."
+        "en": "Saved. Your newer changes still need saving.",
+        "fr": "Enregistré. Tes modifications plus récentes restent à enregistrer.",
+        "es": "Guardado. Los cambios más recientes aún deben guardarse."
     },
     "1. Setup": {
-      "en": "1. Setup",
-      "fr": "1. Arène",
-      "es": "1. Arena"
+        "en": "1. Setup",
+        "fr": "1. Arène",
+        "es": "1. Arena"
     },
     "2. Rules": {
-      "en": "2. Rules",
-      "fr": "2. Règles",
-      "es": "2. Reglas"
+        "en": "2. Rules",
+        "fr": "2. Règles",
+        "es": "2. Reglas"
     },
     "3. Scenes": {
-      "en": "3. Scenes",
-      "fr": "3. Scènes",
-      "es": "3. Escenas"
+        "en": "3. Scenes",
+        "fr": "3. Scènes",
+        "es": "3. Escenas"
     },
     "4. Rewards": {
-      "en": "4. Rewards",
-      "fr": "4. Gains",
-      "es": "4. Premios"
+        "en": "4. Rewards",
+        "fr": "4. Gains",
+        "es": "4. Premios"
     },
     "5. Aim": {
-      "en": "5. Aim",
-      "fr": "5. Visée",
-      "es": "5. Puntería"
+        "en": "5. Aim",
+        "fr": "5. Visée",
+        "es": "5. Puntería"
     },
     "Saved": {
-      "en": "Saved",
-      "fr": "Enregistré",
-      "es": "Guardado"
+        "en": "Saved",
+        "fr": "Enregistré",
+        "es": "Guardado"
     },
     "Quantity": {
-      "en": "Quantity",
-      "fr": "Quantité",
-      "es": "Cantidad"
+        "en": "Quantity",
+        "fr": "Quantité",
+        "es": "Cantidad"
     },
     "Target rectangles need left < right and top < bottom. Keep the precise target inside the body target.": {
-      "en": "Target rectangles need left < right and top < bottom. Keep the precise target inside the body target.",
-      "fr": "Les zones doivent avoir gauche < droite et haut < bas. Garde la zone précise à l’intérieur du plastron.",
-      "es": "Las zonas necesitan izquierda < derecha y arriba < abajo. Mantén la zona precisa dentro del peto."
+        "en": "Target rectangles need left < right and top < bottom. Keep the precise target inside the body target.",
+        "fr": "Les zones doivent avoir gauche < droite et haut < bas. Garde la zone précise à l’intérieur du plastron.",
+        "es": "Las zonas necesitan izquierda < derecha y arriba < abajo. Mantén la zona precisa dentro del peto."
     },
     "Open this arena's map to check and place its tracks.": {
-      "en": "Open this arena's map to check and place its tracks.",
-      "fr": "Ouvre la carte de cette arène pour vérifier et placer ses couloirs.",
-      "es": "Abre el mapa de esta arena para revisar y colocar sus carriles."
+        "en": "Open this arena's map to check and place its tracks.",
+        "fr": "Ouvre la carte de cette arène pour vérifier et placer ses couloirs.",
+        "es": "Abre el mapa de esta arena para revisar y colocar sus carriles."
     },
     "Keep both tracks inside the map.": {
-      "en": "Keep both tracks inside the map.",
-      "fr": "Garde les deux couloirs à l’intérieur de la carte.",
-      "es": "Mantén ambos carriles dentro del mapa."
+        "en": "Keep both tracks inside the map.",
+        "fr": "Garde les deux couloirs à l’intérieur de la carte.",
+        "es": "Mantén ambos carriles dentro del mapa."
     },
     "Clear map attributes from both tracks before playing (blocks, warps, slides and traps).": {
-      "en": "Clear map attributes from both tracks before playing (blocks, warps, slides and traps).",
-      "fr": "Enlève les attributs de carte des deux couloirs avant de jouer (blocages, téléportations, glissades et pièges).",
-      "es": "Elimina los atributos del mapa de ambos carriles antes de jugar (bloqueos, teletransportes, deslizamientos y trampas)."
+        "en": "Clear map attributes from both tracks before playing (blocks, warps, slides and traps).",
+        "fr": "Enlève les attributs de carte des deux couloirs avant de jouer (blocages, téléportations, glissades et pièges).",
+        "es": "Elimina los atributos del mapa de ambos carriles antes de jugar (bloqueos, teletransportes, deslizamientos y trampas)."
     },
     "Add William preset": {
-      "en": "Add William preset",
-      "fr": "Ajouter le préréglage William",
-      "es": "Añadir preajuste William"
+        "en": "Add William preset",
+        "fr": "Ajouter le préréglage William",
+        "es": "Añadir preajuste William"
     },
     "William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes.": {
-      "en": "William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes.",
-      "fr": "Le préréglage William utilise les sprites fournis dans resources/images/jousting/William. Sélectionne William après l’actualisation de la liste.",
-      "es": "El preajuste William usa los sprites de resources/images/jousting/William. Selecciona William cuando se actualice la lista."
+        "en": "William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes.",
+        "fr": "Le préréglage William utilise les sprites fournis dans resources/images/jousting/William. Sélectionne William après l’actualisation de la liste.",
+        "es": "El preajuste William usa los sprites de resources/images/jousting/William. Selecciona William cuando se actualice la lista."
     },
     "5. Aim target zones": {
-      "en": "5. Aim target zones",
-      "fr": "5. Zones de visée",
-      "es": "5. Zonas de puntería"
+        "en": "5. Aim target zones",
+        "fr": "5. Zones de visée",
+        "es": "5. Zonas de puntería"
     },
     "Body target": {
-      "en": "Body target",
-      "fr": "Zone du plastron",
-      "es": "Zona del peto"
+        "en": "Body target",
+        "fr": "Zone du plastron",
+        "es": "Zona del peto"
     },
     "Shield target": {
-      "en": "Shield target",
-      "fr": "Zone du bouclier",
-      "es": "Zona del escudo"
+        "en": "Shield target",
+        "fr": "Zone du bouclier",
+        "es": "Zona del escudo"
     },
     "Precise target": {
-      "en": "Precise target",
-      "fr": "Zone de touche précise",
-      "es": "Zona de golpe preciso"
+        "en": "Precise target",
+        "fr": "Zone de touche précise",
+        "es": "Zona de golpe preciso"
     },
     "Bounds as a percentage of the close-up sprite": {
-      "en": "Bounds as a percentage of the close-up sprite",
-      "fr": "Limites en pourcentage du sprite rapproché",
-      "es": "Límites como porcentaje del sprite de primer plano"
+        "en": "Bounds as a percentage of the close-up sprite",
+        "fr": "Limites en pourcentage du sprite rapproché",
+        "es": "Límites como porcentaje del sprite de primer plano"
     },
     "Top": {
-      "en": "Top",
-      "fr": "Haut",
-      "es": "Arriba"
+        "en": "Top",
+        "fr": "Haut",
+        "es": "Arriba"
     },
     "Bottom": {
-      "en": "Bottom",
-      "fr": "Bas",
-      "es": "Abajo"
+        "en": "Bottom",
+        "fr": "Bas",
+        "es": "Abajo"
     },
     "4. Rewards and economy": {
-      "en": "4. Rewards and economy",
-      "fr": "4. Récompenses et économie",
-      "es": "4. Recompensas y economía"
+        "en": "4. Rewards and economy",
+        "fr": "4. Récompenses et économie",
+        "es": "4. Recompensas y economía"
     },
     "Enable royal medal rewards": {
-      "en": "Enable royal medal rewards",
-      "fr": "Activer les récompenses en médailles royales",
-      "es": "Activar recompensas en medallas reales"
+        "en": "Enable royal medal rewards",
+        "fr": "Activer les récompenses en médailles royales",
+        "es": "Activar recompensas en medallas reales"
     },
     "Daily medal limit (UTC)": {
-      "en": "Daily medal limit (UTC)",
-      "fr": "Plafond quotidien de médailles (UTC)",
-      "es": "Límite diario de medallas (UTC)"
+        "en": "Daily medal limit (UTC)",
+        "fr": "Plafond quotidien de médailles (UTC)",
+        "es": "Límite diario de medallas (UTC)"
     },
     "Reward cooldown (seconds)": {
-      "en": "Reward cooldown (seconds)",
-      "fr": "Délai entre récompenses (secondes)",
-      "es": "Espera entre recompensas (segundos)"
+        "en": "Reward cooldown (seconds)",
+        "fr": "Délai entre récompenses (secondes)",
+        "es": "Espera entre recompensas (segundos)"
     },
     "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.": {
-      "en": "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.",
-      "fr": "Une victoire rapporte 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Au moins une touche réussie est nécessaire. Un abandon ne rapporte rien. Les médailles et objets sont enregistrés ensemble lors d’un échange.",
-      "es": "Una victoria otorga de 5 a 25 medallas según la dificultad; una derrota completada otorga 1. Se requiere al menos un golpe puntuado. Abandonar no otorga nada. Medallas y objetos se guardan juntos al intercambiar."
+        "en": "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.",
+        "fr": "Une victoire rapporte 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Au moins une touche réussie est nécessaire. Un abandon ne rapporte rien. Les médailles et objets sont enregistrés ensemble lors d’un échange.",
+        "es": "Una victoria otorga de 5 a 25 medallas según la dificultad; una derrota completada otorga 1. Se requiere al menos un golpe puntuado. Abandonar no otorga nada. Medallas y objetos se guardan juntos al intercambiar."
     },
     "Royal medals": {
-      "en": "Royal medals",
-      "fr": "Médailles royales",
-      "es": "Medallas reales"
+        "en": "Royal medals",
+        "fr": "Médailles royales",
+        "es": "Medallas reales"
     },
     "Medal shop offers": {
-      "en": "Medal shop offers",
-      "fr": "Offres de la boutique de médailles",
-      "es": "Ofertas de la tienda de medallas"
+        "en": "Medal shop offers",
+        "fr": "Offres de la boutique de médailles",
+        "es": "Ofertas de la tienda de medallas"
     },
     "Reward item": {
-      "en": "Reward item",
-      "fr": "Objet de récompense",
-      "es": "Objeto de recompensa"
+        "en": "Reward item",
+        "fr": "Objet de récompense",
+        "es": "Objeto de recompensa"
     },
     "Price in royal medals": {
-      "en": "Price in royal medals",
-      "fr": "Prix en médailles royales",
-      "es": "Precio en medallas reales"
+        "en": "Price in royal medals",
+        "fr": "Prix en médailles royales",
+        "es": "Precio en medallas reales"
     },
     "Add shop offer": {
-      "en": "Add shop offer",
-      "fr": "Ajouter une offre",
-      "es": "Añadir oferta"
+        "en": "Add shop offer",
+        "fr": "Ajouter une offre",
+        "es": "Añadir oferta"
     },
     "Remove shop offer": {
-      "en": "Remove shop offer",
-      "fr": "Supprimer l’offre",
-      "es": "Eliminar oferta"
+        "en": "Remove shop offer",
+        "fr": "Supprimer l’offre",
+        "es": "Eliminar oferta"
     },
     "Make room in your inventory before exchanging medals.": {
-      "en": "Make room in your inventory before exchanging medals.",
-      "fr": "Libère de la place dans ton inventaire avant d’échanger des médailles.",
-      "es": "Haz espacio en tu inventario antes de intercambiar medallas."
+        "en": "Make room in your inventory before exchanging medals.",
+        "fr": "Libère de la place dans ton inventaire avant d’échanger des médailles.",
+        "es": "Haz espacio en tu inventario antes de intercambiar medallas."
     },
     "{0} x{1} · {2} royal medals": {
-      "en": "{0} x{1} · {2} royal medals",
-      "fr": "{0} x{1} · {2} médailles royales",
-      "es": "{0} x{1} · {2} medallas reales"
+        "en": "{0} x{1} · {2} royal medals",
+        "fr": "{0} x{1} · {2} médailles royales",
+        "es": "{0} x{1} · {2} medallas reales"
     },
     "Royal medals: {0} · Level {1} · Wins {2}/{3}": {
-      "en": "Royal medals: {0} · Level {1} · Wins {2}/{3}",
-      "fr": "Médailles royales : {0} · Niveau {1} · Victoires {2}/{3}",
-      "es": "Medallas reales: {0} · Nivel {1} · Victorias {2}/{3}"
+        "en": "Royal medals: {0} · Level {1} · Wins {2}/{3}",
+        "fr": "Médailles royales : {0} · Niveau {1} · Victoires {2}/{3}",
+        "es": "Medallas reales: {0} · Nivel {1} · Victorias {2}/{3}"
     },
     "Delete arena": {
-      "en": "Delete arena",
-      "fr": "Supprimer l’arène",
-      "es": "Eliminar arena"
+        "en": "Delete arena",
+        "fr": "Supprimer l’arène",
+        "es": "Eliminar arena"
     },
     "Refresh resources": {
-      "en": "Refresh resources",
-      "fr": "Actualiser les ressources",
-      "es": "Actualizar recursos"
+        "en": "Refresh resources",
+        "fr": "Actualiser les ressources",
+        "es": "Actualizar recursos"
     },
     "Place player start": {
-      "en": "Place player start",
-      "fr": "Placer le départ du joueur",
-      "es": "Colocar inicio del jugador"
+        "en": "Place player start",
+        "fr": "Placer le départ du joueur",
+        "es": "Colocar inicio del jugador"
     },
     "Place finish": {
-      "en": "Place finish",
-      "fr": "Placer l’arrivée",
-      "es": "Colocar llegada"
+        "en": "Place finish",
+        "fr": "Placer l’arrivée",
+        "es": "Colocar llegada"
     },
     "Place opponent lane": {
-      "en": "Place opponent lane",
-      "fr": "Placer le couloir adverse",
-      "es": "Colocar carril rival"
+        "en": "Place opponent lane",
+        "fr": "Placer le couloir adverse",
+        "es": "Colocar carril rival"
     },
     "1. Arena setup": {
-      "en": "1. Arena setup",
-      "fr": "1. Préparer l’arène",
-      "es": "1. Preparar arena"
+        "en": "1. Arena setup",
+        "fr": "1. Préparer l’arène",
+        "es": "1. Preparar arena"
     },
     "2. Match rules": {
-      "en": "2. Match rules",
-      "fr": "2. Règles du match",
-      "es": "2. Reglas del duelo"
+        "en": "2. Match rules",
+        "fr": "2. Règles du match",
+        "es": "2. Reglas del duelo"
     },
     "3. Cinematics": {
-      "en": "3. Cinematics",
-      "fr": "3. Cinématiques",
-      "es": "3. Cinemáticas"
+        "en": "3. Cinematics",
+        "fr": "3. Cinématiques",
+        "es": "3. Cinemáticas"
     },
     "Arena name": {
-      "en": "Arena name",
-      "fr": "Nom de l’arène",
-      "es": "Nombre de arena"
+        "en": "Arena name",
+        "fr": "Nom de l’arène",
+        "es": "Nombre de arena"
     },
     "Enable this arena": {
-      "en": "Enable this arena",
-      "fr": "Activer cette arène",
-      "es": "Activar esta arena"
+        "en": "Enable this arena",
+        "fr": "Activer cette arène",
+        "es": "Activar esta arena"
     },
     "Knight mount": {
-      "en": "Knight mount",
-      "fr": "Monture du chevalier",
-      "es": "Montura del caballero"
+        "en": "Knight mount",
+        "fr": "Monture du chevalier",
+        "es": "Montura del caballero"
     },
     "Open Mount Editor": {
-      "en": "Open Mount Editor",
-      "fr": "Ouvrir l’éditeur de montures",
-      "es": "Abrir editor de monturas"
+        "en": "Open Mount Editor",
+        "fr": "Ouvrir l’éditeur de montures",
+        "es": "Abrir editor de monturas"
     },
     "Track positions": {
-      "en": "Track positions",
-      "fr": "Positions de la lice",
-      "es": "Posiciones de la pista"
+        "en": "Track positions",
+        "fr": "Positions de la lice",
+        "es": "Posiciones de la pista"
     },
     "Setup check": {
-      "en": "Setup check",
-      "fr": "Vérification de l’arène",
-      "es": "Revisión de arena"
+        "en": "Setup check",
+        "fr": "Vérification de l’arène",
+        "es": "Revisión de arena"
     },
     "How to play": {
-      "en": "How to play",
-      "fr": "Comment jouer",
-      "es": "Cómo jugar"
+        "en": "How to play",
+        "fr": "Comment jouer",
+        "es": "Cómo jugar"
     },
     "Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.": {
-      "en": "Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.",
-      "fr": "Choisis une monture avec cavalier intégré. Utilise les trois boutons de placement, puis clique sur la carte. L’arrivée reste sur la ligne du joueur. Les cinématiques sont facultatives. Enregistre l’arène, puis place-toi sur la case de départ dorée en jeu et ouvre les Joutes Royales dans le Lobby.",
-      "es": "Elige una montura con jinete integrado. Usa los tres botones y haz clic en el mapa. La llegada queda en la fila del jugador. Las cinemáticas son opcionales. Guarda la arena, sitúate en la casilla dorada en el juego y abre Justas reales en el Lobby."
+        "en": "Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.",
+        "fr": "Choisis une monture avec cavalier intégré. Utilise les trois boutons de placement, puis clique sur la carte. L’arrivée reste sur la ligne du joueur. Les cinématiques sont facultatives. Enregistre l’arène, puis place-toi sur la case de départ dorée en jeu et ouvre les Joutes Royales dans le Lobby.",
+        "es": "Elige una montura con jinete integrado. Usa los tres botones y haz clic en el mapa. La llegada queda en la fila del jugador. Las cinemáticas son opcionales. Guarda la arena, sitúate en la casilla dorada en el juego y abre Justas reales en el Lobby."
     },
     "Number of passes": {
-      "en": "Number of passes",
-      "fr": "Nombre de passes",
-      "es": "Número de pasadas"
+        "en": "Number of passes",
+        "fr": "Nombre de passes",
+        "es": "Número de pasadas"
     },
     "Preparation (seconds)": {
-      "en": "Preparation (seconds)",
-      "fr": "Préparation (secondes)",
-      "es": "Preparación (segundos)"
+        "en": "Preparation (seconds)",
+        "fr": "Préparation (secondes)",
+        "es": "Preparación (segundos)"
     },
     "Charge (seconds)": {
-      "en": "Charge (seconds)",
-      "fr": "Charge (secondes)",
-      "es": "Carga (segundos)"
+        "en": "Charge (seconds)",
+        "fr": "Charge (secondes)",
+        "es": "Carga (segundos)"
     },
     "Aiming (seconds)": {
-      "en": "Aiming (seconds)",
-      "fr": "Visée (secondes)",
-      "es": "Puntería (segundos)"
+        "en": "Aiming (seconds)",
+        "fr": "Visée (secondes)",
+        "es": "Puntería (segundos)"
     },
     "Impact (seconds)": {
-      "en": "Impact (seconds)",
-      "fr": "Impact (secondes)",
-      "es": "Impacto (segundos)"
+        "en": "Impact (seconds)",
+        "fr": "Impact (secondes)",
+        "es": "Impacto (segundos)"
     },
     "Pass results (seconds)": {
-      "en": "Pass results (seconds)",
-      "fr": "Résultats de passe (secondes)",
-      "es": "Resultados de pasada (segundos)"
+        "en": "Pass results (seconds)",
+        "fr": "Résultats de passe (secondes)",
+        "es": "Resultados de pasada (segundos)"
     },
     "Shield points": {
-      "en": "Shield points",
-      "fr": "Points du bouclier",
-      "es": "Puntos del escudo"
+        "en": "Shield points",
+        "fr": "Points du bouclier",
+        "es": "Puntos del escudo"
     },
     "Body points": {
-      "en": "Body points",
-      "fr": "Points du plastron",
-      "es": "Puntos del peto"
+        "en": "Body points",
+        "fr": "Points du plastron",
+        "es": "Puntos del peto"
     },
     "Precise hit points": {
-      "en": "Precise hit points",
-      "fr": "Points de touche précise",
-      "es": "Puntos de golpe preciso"
+        "en": "Precise hit points",
+        "fr": "Points de touche précise",
+        "es": "Puntos de golpe preciso"
     },
     "Broken lance bonus": {
-      "en": "Broken lance bonus",
-      "fr": "Bonus de lance brisée",
-      "es": "Bonificación de lanza rota"
+        "en": "Broken lance bonus",
+        "fr": "Bonus de lance brisée",
+        "es": "Bonificación de lanza rota"
     },
     "Aim speed": {
-      "en": "Aim speed",
-      "fr": "Vitesse de visée",
-      "es": "Velocidad de puntería"
+        "en": "Aim speed",
+        "fr": "Vitesse de visée",
+        "es": "Velocidad de puntería"
     },
     "Unhorsing ends the match": {
-      "en": "Unhorsing ends the match",
-      "fr": "Le désarçonnement termine le match",
-      "es": "Derribar termina el duelo"
+        "en": "Unhorsing ends the match",
+        "fr": "Le désarçonnement termine le match",
+        "es": "Derribar termina el duelo"
     },
     "Create or edit this cinematic": {
-      "en": "Create or edit this cinematic",
-      "fr": "Créer ou modifier cette cinématique",
-      "es": "Crear o editar esta cinemática"
+        "en": "Create or edit this cinematic",
+        "fr": "Créer ou modifier cette cinématique",
+        "es": "Crear o editar esta cinemática"
     },
     "No server reply. Your changes are still here; try saving again.": {
-      "en": "No server reply. Your changes are still here; try saving again.",
-      "fr": "Le serveur ne répond pas. Tes modifications sont conservées ; réessaie d’enregistrer.",
-      "es": "El servidor no responde. Los cambios se conservan; vuelve a guardar."
+        "en": "No server reply. Your changes are still here; try saving again.",
+        "fr": "Le serveur ne répond pas. Tes modifications sont conservées ; réessaie d’enregistrer.",
+        "es": "El servidor no responde. Los cambios se conservan; vuelve a guardar."
     },
     "Close without saving the arena changes?": {
-      "en": "Close without saving the arena changes?",
-      "fr": "Fermer sans enregistrer les modifications de l’arène ?",
-      "es": "¿Cerrar sin guardar los cambios de arena?"
+        "en": "Close without saving the arena changes?",
+        "fr": "Fermer sans enregistrer les modifications de l’arène ?",
+        "es": "¿Cerrar sin guardar los cambios de arena?"
     },
     "Open a map before creating an arena.": {
-      "en": "Open a map before creating an arena.",
-      "fr": "Ouvre une carte avant de créer une arène.",
-      "es": "Abre un mapa antes de crear una arena."
+        "en": "Open a map before creating an arena.",
+        "fr": "Ouvre une carte avant de créer une arène.",
+        "es": "Abre un mapa antes de crear una arena."
     },
     "Choose a knight mount": {
-      "en": "Choose a knight mount",
-      "fr": "Choisir une monture de chevalier",
-      "es": "Elegir montura de caballero"
+        "en": "Choose a knight mount",
+        "fr": "Choisir une monture de chevalier",
+        "es": "Elegir montura de caballero"
     },
     "None (optional)": {
-      "en": "None (optional)",
-      "fr": "Aucune (facultatif)",
-      "es": "Ninguna (opcional)"
+        "en": "None (optional)",
+        "fr": "Aucune (facultatif)",
+        "es": "Ninguna (opcional)"
     },
     "Missing scene: select another": {
-      "en": "Missing scene: select another",
-      "fr": "Scène introuvable : choisis-en une autre",
-      "es": "Escena no encontrada: elige otra"
+        "en": "Missing scene: select another",
+        "fr": "Scène introuvable : choisis-en une autre",
+        "es": "Escena no encontrada: elige otra"
     },
     "Open this arena's map to edit its cinematic.": {
-      "en": "Open this arena's map to edit its cinematic.",
-      "fr": "Ouvre la carte de cette arène pour modifier sa cinématique.",
-      "es": "Abre el mapa de esta arena para editar su cinemática."
+        "en": "Open this arena's map to edit its cinematic.",
+        "fr": "Ouvre la carte de cette arène pour modifier sa cinématique.",
+        "es": "Abre el mapa de esta arena para editar su cinemática."
     },
     "This selection is a common Event. Edit it in the Event Editor, or choose None to create a cinematic.": {
-      "en": "This selection is a common Event. Edit it in the Event Editor, or choose None to create a cinematic.",
-      "fr": "Cette sélection est un événement commun. Modifie-le dans l’éditeur d’événements, ou choisis Aucune pour créer une cinématique.",
-      "es": "La selección es un evento común. Edítalo en el editor de eventos o elige Ninguna para crear una cinemática."
+        "en": "This selection is a common Event. Edit it in the Event Editor, or choose None to create a cinematic.",
+        "fr": "Cette sélection est un événement commun. Modifie-le dans l’éditeur d’événements, ou choisis Aucune pour créer une cinématique.",
+        "es": "La selección es un evento común. Edítalo en el editor de eventos o elige Ninguna para crear una cinemática."
     },
     "Click the gold starting tile for the player.": {
-      "en": "Click the gold starting tile for the player.",
-      "fr": "Clique sur la case de départ dorée du joueur.",
-      "es": "Haz clic en la casilla dorada de inicio del jugador."
+        "en": "Click the gold starting tile for the player.",
+        "fr": "Clique sur la case de départ dorée du joueur.",
+        "es": "Haz clic en la casilla dorada de inicio del jugador."
     },
     "Click the finish column. Use an even distance of 4 to 64 tiles.": {
-      "en": "Click the finish column. Use an even distance of 4 to 64 tiles.",
-      "fr": "Clique sur la colonne d’arrivée. Choisis une distance paire de 4 à 64 cases.",
-      "es": "Haz clic en la columna de llegada. Elige una distancia par de 4 a 64 casillas."
+        "en": "Click the finish column. Use an even distance of 4 to 64 tiles.",
+        "fr": "Clique sur la colonne d’arrivée. Choisis une distance paire de 4 à 64 cases.",
+        "es": "Haz clic en la columna de llegada. Elige una distancia par de 4 a 64 casillas."
     },
     "Click the row for the opposing knight (blue lane).": {
-      "en": "Click the row for the opposing knight (blue lane).",
-      "fr": "Clique sur la ligne du chevalier adverse (couloir bleu).",
-      "es": "Haz clic en la fila del caballero rival (carril azul)."
+        "en": "Click the row for the opposing knight (blue lane).",
+        "fr": "Clique sur la ligne du chevalier adverse (couloir bleu).",
+        "es": "Haz clic en la fila del caballero rival (carril azul)."
     },
     "Create or select an arena.": {
-      "en": "Create or select an arena.",
-      "fr": "Crée ou sélectionne une arène.",
-      "es": "Crea o selecciona una arena."
+        "en": "Create or select an arena.",
+        "fr": "Crée ou sélectionne une arène.",
+        "es": "Crea o selecciona una arena."
     },
     "Player": {
-      "en": "Player",
-      "fr": "Joueur",
-      "es": "Jugador"
+        "en": "Player",
+        "fr": "Joueur",
+        "es": "Jugador"
     },
     "Opponent": {
-      "en": "Opponent",
-      "fr": "Adversaire",
-      "es": "Rival"
+        "en": "Opponent",
+        "fr": "Adversaire",
+        "es": "Rival"
     },
     "tiles": {
-      "en": "tiles",
-      "fr": "cases",
-      "es": "casillas"
+        "en": "tiles",
+        "fr": "cases",
+        "es": "casillas"
     },
     "Enter an arena name.": {
-      "en": "Enter an arena name.",
-      "fr": "Saisis un nom d’arène.",
-      "es": "Introduce un nombre de arena."
+        "en": "Enter an arena name.",
+        "fr": "Saisis un nom d’arène.",
+        "es": "Introduce un nombre de arena."
     },
     "Select a compatible knight mount. Open Mount Editor to import William if the list is empty.": {
-      "en": "Select a compatible knight mount. Open Mount Editor to import William if the list is empty.",
-      "fr": "Sélectionne une monture de chevalier compatible. Si la liste est vide, ouvre l’éditeur de montures pour importer William.",
-      "es": "Selecciona una montura de caballero compatible. Si la lista está vacía, abre el editor de monturas para importar William."
+        "en": "Select a compatible knight mount. Open Mount Editor to import William if the list is empty.",
+        "fr": "Sélectionne une monture de chevalier compatible. Si la liste est vide, ouvre l’éditeur de montures pour importer William.",
+        "es": "Selecciona una montura de caballero compatible. Si la lista está vacía, abre el editor de monturas para importar William."
     },
     "The track needs an even distance of 4 to 64 tiles.": {
-      "en": "The track needs an even distance of 4 to 64 tiles.",
-      "fr": "La lice doit avoir une distance paire de 4 à 64 cases.",
-      "es": "La pista necesita una distancia par de 4 a 64 casillas."
+        "en": "The track needs an even distance of 4 to 64 tiles.",
+        "fr": "La lice doit avoir une distance paire de 4 à 64 cases.",
+        "es": "La pista necesita una distancia par de 4 a 64 casillas."
     },
     "Place the opponent on a different row.": {
-      "en": "Place the opponent on a different row.",
-      "fr": "Place l’adversaire sur une autre ligne.",
-      "es": "Coloca al rival en otra fila."
+        "en": "Place the opponent on a different row.",
+        "fr": "Place l’adversaire sur une autre ligne.",
+        "es": "Coloca al rival en otra fila."
     },
     "Check the match rules: precise points must be at least body points, and body points at least shield points.": {
-      "en": "Check the match rules: precise points must be at least body points, and body points at least shield points.",
-      "fr": "Vérifie les règles : les points de touche précise doivent être au moins égaux à ceux du plastron, et ceux du plastron à ceux du bouclier.",
-      "es": "Revisa las reglas: los puntos precisos deben ser al menos los del peto, y los del peto al menos los del escudo."
+        "en": "Check the match rules: precise points must be at least body points, and body points at least shield points.",
+        "fr": "Vérifie les règles : les points de touche précise doivent être au moins égaux à ceux du plastron, et ceux du plastron à ceux du bouclier.",
+        "es": "Revisa las reglas: los puntos precisos deben ser al menos los del peto, y los del peto al menos los del escudo."
     },
     "Ready. Save, then enter the game at the gold start tile.": {
-      "en": "Ready. Save, then enter the game at the gold start tile.",
-      "fr": "Prêt. Enregistre, puis rejoins la case de départ dorée en jeu.",
-      "es": "Listo. Guarda y entra al juego en la casilla dorada de inicio."
+        "en": "Ready. Save, then enter the game at the gold start tile.",
+        "fr": "Prêt. Enregistre, puis rejoins la case de départ dorée en jeu.",
+        "es": "Listo. Guarda y entra al juego en la casilla dorada de inicio."
     },
     "Player start": {
-      "en": "Player start",
-      "fr": "Départ du joueur",
-      "es": "Inicio del jugador"
+        "en": "Player start",
+        "fr": "Départ du joueur",
+        "es": "Inicio del jugador"
     },
     "Opponent start": {
-      "en": "Opponent start",
-      "fr": "Départ adverse",
-      "es": "Inicio rival"
+        "en": "Opponent start",
+        "fr": "Départ adverse",
+        "es": "Inicio rival"
     },
     "Fix the setup checks before saving an enabled arena.": {
-      "en": "Fix the setup checks before saving an enabled arena.",
-      "fr": "Corrige les problèmes indiqués avant d’enregistrer une arène active.",
-      "es": "Corrige los problemas antes de guardar una arena activa."
+        "en": "Fix the setup checks before saving an enabled arena.",
+        "fr": "Corrige les problèmes indiqués avant d’enregistrer une arène active.",
+        "es": "Corrige los problemas antes de guardar una arena activa."
     },
     "Saving arena on the server...": {
-      "en": "Saving arena on the server...",
-      "fr": "Enregistrement de l’arène sur le serveur…",
-      "es": "Guardando arena en el servidor…"
+        "en": "Saving arena on the server...",
+        "fr": "Enregistrement de l’arène sur le serveur…",
+        "es": "Guardando arena en el servidor…"
     },
     "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.": {
-      "en": "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.",
-      "fr": "Le serveur a refusé l’arène. Vérifie les limites de la carte, la monture et les scènes ; tes modifications sont conservées.",
-      "es": "El servidor rechazó la arena. Revisa los límites del mapa, la montura y las escenas; los cambios se conservan."
+        "en": "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.",
+        "fr": "Le serveur a refusé l’arène. Vérifie les limites de la carte, la monture et les scènes ; tes modifications sont conservées.",
+        "es": "El servidor rechazó la arena. Revisa los límites del mapa, la montura y las escenas; los cambios se conservan."
     },
     "A joust is in progress. Please wait.": {
-      "en": "A joust is in progress. Please wait.",
-      "fr": "Une joute est en cours. Veuillez patienter.",
-      "es": "Hay una justa en curso. Espera, por favor."
+        "en": "A joust is in progress. Please wait.",
+        "fr": "Une joute est en cours. Veuillez patienter.",
+        "es": "Hay una justa en curso. Espera, por favor."
     },
     "Sprite already includes rider": {
-      "en": "Sprite already includes rider",
-      "fr": "Le sprite comprend déjà le cavalier",
-      "es": "El sprite ya incluye al jinete"
+        "en": "Sprite already includes rider",
+        "fr": "Le sprite comprend déjà le cavalier",
+        "es": "El sprite ya incluye al jinete"
     },
     "Jousting": {
-      "en": "Jousting",
-      "fr": "Joutes royales",
-      "es": "Justas reales"
+        "en": "Jousting",
+        "fr": "Joutes royales",
+        "es": "Justas reales"
     },
     "Jousting progression": {
-      "en": "Progression earned in jousting matches.",
-      "fr": "Progression gagnée pendant les matchs de joute.",
-      "es": "Progreso obtenido en los encuentros de justas."
+        "en": "Progression earned in jousting matches.",
+        "fr": "Progression gagnée pendant les matchs de joute.",
+        "es": "Progreso obtenido en los encuentros de justas."
     },
-    "Weapon mastery level": {
-      "en": "Weapon mastery level",
-      "fr": "Niveau de maîtrise d’arme",
-      "es": "Nivel de dominio de arma"
-    },
-    "Missing mastery: {0}": {
-      "en": "Missing mastery: {0}",
-      "fr": "Maîtrise introuvable : {0}",
-      "es": "Dominio no encontrado: {0}"
-    },
-    "Weapon mastery {0} level {1} {2}": {
-      "en": "Weapon mastery {0} level {1} {2}",
-      "fr": "Maîtrise {0} de niveau {1} {2}",
-      "es": "Dominio {0} de nivel {1} {2}"
-    },
-    "{0}  •  Level {1}/{2}{3}": {
-      "en": "{0}  •  Level {1}/{2}{3}",
-      "fr": "{0}  •  Niveau {1}/{2}{3}",
-      "es": "{0}  •  Nivel {1}/{2}{3}"
-    },
-    "LEVEL UP!": {
-      "en": "LEVEL UP!",
-      "fr": "NIVEAU SUPÉRIEUR !",
-      "es": "¡SUBIDA DE NIVEL!"
-    },
-    "+{0:N0} XP  •  Maximum level reached": {
-      "en": "+{0:N0} XP  •  Maximum level reached",
-      "fr": "+{0:N0} XP  •  Niveau maximal atteint",
-      "es": "+{0:N0} XP  •  Nivel máximo alcanzado"
-    },
-    "Maximum level reached": {
-      "en": "Maximum level reached",
-      "fr": "Niveau maximal atteint",
-      "es": "Nivel máximo alcanzado"
-    },
-    "+{0:N0} XP  •  {1:N0} XP remaining": {
-      "en": "+{0:N0} XP  •  {1:N0} XP remaining",
-      "fr": "+{0:N0} XP  •  {1:N0} XP restants",
-      "es": "+{0:N0} XP  •  {1:N0} XP restantes"
-    },
+    "Weapon mastery level": { "en": "Weapon mastery level", "fr": "Niveau de maîtrise d’arme", "es": "Nivel de dominio de arma" },
+    "Missing mastery: {0}": { "en": "Missing mastery: {0}", "fr": "Maîtrise introuvable : {0}", "es": "Dominio no encontrado: {0}" },
+    "Weapon mastery {0} level {1} {2}": { "en": "Weapon mastery {0} level {1} {2}", "fr": "Maîtrise {0} de niveau {1} {2}", "es": "Dominio {0} de nivel {1} {2}" },
+    "{0}  •  Level {1}/{2}{3}": { "en": "{0}  •  Level {1}/{2}{3}", "fr": "{0}  •  Niveau {1}/{2}{3}", "es": "{0}  •  Nivel {1}/{2}{3}" },
+    "LEVEL UP!": { "en": "LEVEL UP!", "fr": "NIVEAU SUPÉRIEUR !", "es": "¡SUBIDA DE NIVEL!" },
+    "+{0:N0} XP  •  Maximum level reached": { "en": "+{0:N0} XP  •  Maximum level reached", "fr": "+{0:N0} XP  •  Niveau maximal atteint", "es": "+{0:N0} XP  •  Nivel máximo alcanzado" },
+    "Maximum level reached": { "en": "Maximum level reached", "fr": "Niveau maximal atteint", "es": "Nivel máximo alcanzado" },
+    "+{0:N0} XP  •  {1:N0} XP remaining": { "en": "+{0:N0} XP  •  {1:N0} XP remaining", "fr": "+{0:N0} XP  •  {1:N0} XP restants", "es": "+{0:N0} XP  •  {1:N0} XP restantes" },
     "No valid campfire recipes exist yet. Configure one in the recipe editor.": {
-      "en": "No valid campfire recipes exist yet. Configure one in the recipe editor.",
-      "fr": "Aucune recette de feu de camp valide n’existe encore. Configurez-en une dans l’éditeur de recettes.",
-      "es": "Aún no hay recetas válidas de fogatas. Configure una en el editor de recetas."
+        "en": "No valid campfire recipes exist yet. Configure one in the recipe editor.",
+        "fr": "Aucune recette de feu de camp valide n’existe encore. Configurez-en une dans l’éditeur de recettes.",
+        "es": "Aún no hay recetas válidas de fogatas. Configure una en el editor de recetas."
     },
     "Left click: start. Right click: end. Shift-click: opponent lane.": {
-      "en": "Left click: start. Right click: end. Shift-click: opponent lane.",
-      "fr": "Clic gauche : départ. Clic droit : arrivée. Maj-clic : couloir adverse.",
-      "es": "Clic izquierdo: inicio. Clic derecho: final. Mayús-clic: carril rival."
+        "en": "Left click: start. Right click: end. Shift-click: opponent lane.",
+        "fr": "Clic gauche : départ. Clic droit : arrivée. Maj-clic : couloir adverse.",
+        "es": "Clic izquierdo: inicio. Clic derecho: final. Mayús-clic: carril rival."
     },
     "Edit joust cinematic": {
-      "en": "Edit joust cinematic",
-      "fr": "Modifier la cinématique de joute",
-      "es": "Editar cinemática de justa"
+        "en": "Edit joust cinematic",
+        "fr": "Modifier la cinématique de joute",
+        "es": "Editar cinemática de justa"
     },
     "Joust introduction": {
-      "en": "Joust introduction",
-      "fr": "Présentation de la joute",
-      "es": "Presentación de la justa"
+        "en": "Joust introduction",
+        "fr": "Présentation de la joute",
+        "es": "Presentación de la justa"
     },
     "Joust unhorsing": {
-      "en": "Joust unhorsing",
-      "fr": "Désarçonnement de la joute",
-      "es": "Derribo de la justa"
+        "en": "Joust unhorsing",
+        "fr": "Désarçonnement de la joute",
+        "es": "Derribo de la justa"
     },
     "Joust victory ceremony": {
-      "en": "Joust victory ceremony",
-      "fr": "Cérémonie de victoire de la joute",
-      "es": "Ceremonia de victoria de la justa"
+        "en": "Joust victory ceremony",
+        "fr": "Cérémonie de victoire de la joute",
+        "es": "Ceremonia de victoria de la justa"
     },
     "Royal Jousting": {
-      "en": "Royal Jousting",
-      "fr": "Les Joutes Royales",
-      "es": "Justas Reales"
+        "en": "Royal Jousting",
+        "fr": "Les Joutes Royales",
+        "es": "Justas Reales"
     },
     "Train against AI": {
-      "en": "Train against AI",
-      "fr": "S’entraîner contre l’IA",
-      "es": "Entrenar contra la IA"
+        "en": "Train against AI",
+        "fr": "S’entraîner contre l’IA",
+        "es": "Entrenar contra la IA"
     },
     "Toggle defense": {
-      "en": "Toggle defense",
-      "fr": "Activer la défense",
-      "es": "Activar defensa"
+        "en": "Toggle defense",
+        "fr": "Activer la défense",
+        "es": "Activar defensa"
     },
     "Leave joust": {
-      "en": "Leave joust",
-      "fr": "Quitter la joute",
-      "es": "Salir de la justa"
+        "en": "Leave joust",
+        "fr": "Quitter la joute",
+        "es": "Salir de la justa"
     },
     "Stand at the arena start to train.": {
-      "en": "Stand at the arena start to train.",
-      "fr": "Placez-vous au départ de la lice pour vous entraîner.",
-      "es": "Colócate al inicio de la liza para entrenar."
+        "en": "Stand at the arena start to train.",
+        "fr": "Placez-vous au départ de la lice pour vous entraîner.",
+        "es": "Colócate al inicio de la liza para entrenar."
     },
     "This jousting lane is occupied.": {
-      "en": "This jousting lane is occupied.",
-      "fr": "Cette lice est déjà occupée.",
-      "es": "Esta liza ya está ocupada."
+        "en": "This jousting lane is occupied.",
+        "fr": "Cette lice est déjà occupée.",
+        "es": "Esta liza ya está ocupada."
     },
     "No jousting arena is configured here.": {
-      "en": "No jousting arena is configured here.",
-      "fr": "Aucune arène de joute n’est configurée ici.",
-      "es": "No hay ninguna arena de justas configurada aquí."
+        "en": "No jousting arena is configured here.",
+        "fr": "Aucune arène de joute n’est configurée ici.",
+        "es": "No hay ninguna arena de justas configurada aquí."
     },
     "Pass {0}/{1} · You {2} : {3} AI": {
-      "en": "Pass {0}/{1} · You {2} : {3} AI",
-      "fr": "Passe {0}/{1} · Vous {2} : {3} IA",
-      "es": "Pasada {0}/{1} · Tú {2} : {3} IA"
+        "en": "Pass {0}/{1} · You {2} : {3} AI",
+        "fr": "Passe {0}/{1} · Vous {2} : {3} IA",
+        "es": "Pasada {0}/{1} · Tú {2} : {3} IA"
     },
     "Joust won": {
-      "en": "Joust won",
-      "fr": "Joute remportée",
-      "es": "Justa ganada"
+        "en": "Joust won",
+        "fr": "Joute remportée",
+        "es": "Justa ganada"
     },
     "Joust lost": {
-      "en": "Joust lost",
-      "fr": "Joute perdue",
-      "es": "Justa perdida"
+        "en": "Joust lost",
+        "fr": "Joute perdue",
+        "es": "Justa perdida"
     },
     "Joust drawn": {
-      "en": "Joust drawn",
-      "fr": "Joute à égalité",
-      "es": "Justa empatada"
+        "en": "Joust drawn",
+        "fr": "Joute à égalité",
+        "es": "Justa empatada"
     },
     "Joust preparation": {
-      "en": "Joust preparation",
-      "fr": "Préparation de la joute",
-      "es": "Preparación de la justa"
+        "en": "Joust preparation",
+        "fr": "Préparation de la joute",
+        "es": "Preparación de la justa"
     },
     "Joust charge": {
-      "en": "Joust charge",
-      "fr": "Charge de la joute",
-      "es": "Carga de la justa"
+        "en": "Joust charge",
+        "fr": "Charge de la joute",
+        "es": "Carga de la justa"
     },
     "Aim at the shield or chest": {
-      "en": "Aim at the shield or chest",
-      "fr": "Visez le bouclier ou le plastron",
-      "es": "Apunta al escudo o al peto"
+        "en": "Aim at the shield or chest",
+        "fr": "Visez le bouclier ou le plastron",
+        "es": "Apunta al escudo o al peto"
     },
     "Joust impact": {
-      "en": "Joust impact",
-      "fr": "Impact de la joute",
-      "es": "Impacto de la justa"
+        "en": "Joust impact",
+        "fr": "Impact de la joute",
+        "es": "Impacto de la justa"
     },
     "Pass results": {
-      "en": "Pass results",
-      "fr": "Résultats de la passe",
-      "es": "Resultados de la pasada"
+        "en": "Pass results",
+        "fr": "Résultats de la passe",
+        "es": "Resultados de la pasada"
     },
     "Shield hit": {
-      "en": "Shield hit",
-      "fr": "Bouclier touché",
-      "es": "Impacto en el escudo"
+        "en": "Shield hit",
+        "fr": "Bouclier touché",
+        "es": "Impacto en el escudo"
     },
     "Body hit": {
-      "en": "Body hit",
-      "fr": "Plastron touché",
-      "es": "Impacto en el peto"
+        "en": "Body hit",
+        "fr": "Plastron touché",
+        "es": "Impacto en el peto"
     },
     "Precise hit": {
-      "en": "Precise hit",
-      "fr": "Coup précis",
-      "es": "Golpe preciso"
+        "en": "Precise hit",
+        "fr": "Coup précis",
+        "es": "Golpe preciso"
     },
     "Unhorsed": {
-      "en": "Unhorsed",
-      "fr": "Désarçonnement",
-      "es": "Derribo"
+        "en": "Unhorsed",
+        "fr": "Désarçonnement",
+        "es": "Derribo"
     },
     "Miss": {
-      "en": "Miss",
-      "fr": "Coup manqué",
-      "es": "Fallo"
+        "en": "Miss",
+        "fr": "Coup manqué",
+        "es": "Fallo"
     },
     "Novice": {
-      "en": "Novice",
-      "fr": "Novice",
-      "es": "Principiante"
+        "en": "Novice",
+        "fr": "Novice",
+        "es": "Principiante"
     },
     "Squire": {
-      "en": "Squire",
-      "fr": "Écuyer",
-      "es": "Escudero"
+        "en": "Squire",
+        "fr": "Écuyer",
+        "es": "Escudero"
     },
     "Knight": {
-      "en": "Knight",
-      "fr": "Chevalier",
-      "es": "Caballero"
+        "en": "Knight",
+        "fr": "Chevalier",
+        "es": "Caballero"
     },
     "Champion": {
-      "en": "Champion",
-      "fr": "Champion",
-      "es": "Campeón"
+        "en": "Champion",
+        "fr": "Champion",
+        "es": "Campeón"
     },
     "Royal Champion": {
-      "en": "Royal Champion",
-      "fr": "Champion royal",
-      "es": "Campeón real"
+        "en": "Royal Champion",
+        "fr": "Champion royal",
+        "es": "Campeón real"
     },
     "Jousting Editor": {
-      "en": "Jousting Editor",
-      "fr": "Éditeur de joutes",
-      "es": "Editor de justas"
+        "en": "Jousting Editor",
+        "fr": "Éditeur de joutes",
+        "es": "Editor de justas"
     },
     "New arena on current map": {
-      "en": "New arena on current map",
-      "fr": "Nouvelle arène sur cette carte",
-      "es": "Nueva arena en este mapa"
+        "en": "New arena on current map",
+        "fr": "Nouvelle arène sur cette carte",
+        "es": "Nueva arena en este mapa"
     },
     "Arena rules": {
-      "en": "Arena rules",
-      "fr": "Règles de l’arène",
-      "es": "Reglas de la arena"
+        "en": "Arena rules",
+        "fr": "Règles de l’arène",
+        "es": "Reglas de la arena"
     },
     "Arena settings": {
-      "en": "Arena settings",
-      "fr": "Paramètres de l’arène",
-      "es": "Ajustes de la arena"
+        "en": "Arena settings",
+        "fr": "Paramètres de l’arène",
+        "es": "Ajustes de la arena"
     },
     "Cinematic Director": {
-      "en": "Cinematic Director",
-      "fr": "Éditeur cinématique",
-      "es": "Director de cinemáticas"
+        "en": "Cinematic Director",
+        "fr": "Éditeur cinématique",
+        "es": "Director de cinemáticas"
     },
     "Left click: start. Right click: end. Both points share one lane.": {
-      "en": "Left click: start. Right click: end. Both points share one lane.",
-      "fr": "Clic gauche : départ. Clic droit : arrivée. Les deux points partagent un couloir.",
-      "es": "Clic izquierdo: inicio. Clic derecho: final. Ambos puntos comparten un carril."
+        "en": "Left click: start. Right click: end. Both points share one lane.",
+        "fr": "Clic gauche : départ. Clic droit : arrivée. Les deux points partagent un couloir.",
+        "es": "Clic izquierdo: inicio. Clic derecho: final. Ambos puntos comparten un carril."
     },
     "The jousting configuration is invalid.": {
-      "en": "The jousting configuration is invalid.",
-      "fr": "La configuration des joutes est invalide.",
-      "es": "La configuración de justas no es válida."
-    },
-    "Skip presentation": {
-      "en": "Skip presentation",
-      "fr": "Passer la présentation",
-      "es": "Omitir la presentación"
-    },
-    "Required choices, actions and quest objectives still apply.": {
-      "en": "Required choices, actions and quest objectives still apply.",
-      "fr": "Les choix, actions et objectifs de quête obligatoires restent nécessaires.",
-      "es": "Las decisiones, acciones y objetivos de misión obligatorios siguen siendo necesarios."
-    },
-    "The cinematic could not start. Check the scene's map, starting positions and active actions.": {
-      "en": "The cinematic could not start. Check the scene's map, starting positions and active actions.",
-      "fr": "La cinématique n’a pas pu démarrer. Vérifiez sa carte, les positions de départ et les actions en cours.",
-      "es": "La cinemática no pudo comenzar. Compruebe el mapa, las posiciones iniciales y las acciones en curso."
-    },
-    "Use this table as the camp fire creator": {
-      "en": "Use this table as the camp fire creator",
-      "fr": "Utiliser cette table pour créer les feux de camp",
-      "es": "Usar esta mesa para crear fogatas"
-    },
-    "Adds existing campfire recipes to this table. Other recipes are kept.": {
-      "en": "Adds existing campfire recipes to this table. Other recipes are kept.",
-      "fr": "Ajoute les recettes de feu de camp existantes à cette table. Les autres recettes sont conservées.",
-      "es": "Añade las recetas de fogata existentes a esta mesa. Se conservan las otras recetas."
-    },
-    "This entry has no visual resource configured.": {
-      "en": "This entry has no visual resource configured.",
-      "fr": "Aucune ressource visuelle n’est configurée pour cet élément.",
-      "es": "Esta entrada no tiene un recurso visual configurado."
-    },
-    "Duplicate": {
-      "en": "Duplicate",
-      "fr": "Dupliquer",
-      "es": "Duplicar"
-    },
-    "Delete": {
-      "en": "Delete",
-      "fr": "Supprimer",
-      "es": "Eliminar"
-    },
-    "Speed": {
-      "en": "Speed",
-      "fr": "Vitesse",
-      "es": "Velocidad"
-    },
-    "Save not confirmed. Check the connection before retrying.": {
-      "en": "Save not confirmed. Check the connection before retrying.",
-      "fr": "Sauvegarde non confirmée. Vérifie la connexion avant de réessayer.",
-      "es": "Guardado sin confirmar. Comprueba la conexión antes de reintentar."
-    },
-    "Import settings JSON": {
-      "en": "Import settings JSON",
-      "fr": "Importer les réglages JSON",
-      "es": "Importar ajustes JSON"
-    },
-    "Choose a favorite mount first.": {
-      "en": "Choose a favorite mount first.",
-      "fr": "Choisis d’abord une monture favorite.",
-      "es": "Elige primero una montura favorita."
-    },
-    "Mounts are disabled.": {
-      "en": "Mounts are disabled.",
-      "fr": "Les montures sont désactivées.",
-      "es": "Las monturas están desactivadas."
-    },
-    "No mounts match your search.": {
-      "en": "No mounts match your search.",
-      "fr": "Aucune monture ne correspond à ta recherche.",
-      "es": "Ninguna montura coincide con tu búsqueda."
-    },
-    "Unlock item (reusable)": {
-      "en": "Unlock item (reusable)",
-      "fr": "Objet de déblocage (réutilisable)",
-      "es": "Objeto de desbloqueo (reutilizable)"
-    },
-    "Mount unlocked.": {
-      "en": "Mount unlocked.",
-      "fr": "Monture débloquée.",
-      "es": "Montura desbloqueada."
-    },
-    "Mounts": {
-      "en": "Mounts",
-      "fr": "Montures",
-      "es": "Monturas"
-    },
-    "Stable": {
-      "en": "Stable",
-      "fr": "Écurie",
-      "es": "Establo"
-    },
-    "Farm horse": {
-      "en": "Farm horse",
-      "fr": "Cheval de ferme",
-      "es": "Caballo de granja"
-    },
-    "New mount": {
-      "en": "New mount",
-      "fr": "Nouvelle monture",
-      "es": "Nueva montura"
-    },
-    "Mount Editor": {
-      "en": "Mount Editor",
-      "fr": "Éditeur de montures",
-      "es": "Editor de monturas"
-    },
-    "Enable mounts": {
-      "en": "Enable mounts",
-      "fr": "Activer les montures",
-      "es": "Activar las monturas"
-    },
-    "Mount name": {
-      "en": "Mount name",
-      "fr": "Nom de la monture",
-      "es": "Nombre de la montura"
-    },
-    "Unlocked for everyone": {
-      "en": "Unlocked for everyone",
-      "fr": "Débloquée pour tous",
-      "es": "Desbloqueada para todos"
-    },
-    "Allow indoors": {
-      "en": "Allow indoors",
-      "fr": "Autoriser en intérieur",
-      "es": "Permitir en interiores"
-    },
-    "Speed multiplier": {
-      "en": "Speed multiplier",
-      "fr": "Multiplicateur de vitesse",
-      "es": "Multiplicador de velocidad"
-    },
-    "Movement loop": {
-      "en": "Movement loop",
-      "fr": "Déplacement en boucle",
-      "es": "Movimiento en bucle"
-    },
-    "Idle": {
-      "en": "Idle",
-      "fr": "Repos",
-      "es": "Reposo"
-    },
-    "Start": {
-      "en": "Start",
-      "fr": "Départ",
-      "es": "Inicio"
-    },
-    "Loop": {
-      "en": "Loop",
-      "fr": "Boucle",
-      "es": "Bucle"
-    },
-    "End": {
-      "en": "End",
-      "fr": "Fin",
-      "es": "Fin"
-    },
-    "Frames: Idle": {
-      "en": "Frames: Idle",
-      "fr": "Frames : repos",
-      "es": "Fotogramas: reposo"
-    },
-    "Frames: Start": {
-      "en": "Frames: Start",
-      "fr": "Frames : départ",
-      "es": "Fotogramas: inicio"
-    },
-    "Frames: Loop": {
-      "en": "Frames: Loop",
-      "fr": "Frames : boucle",
-      "es": "Fotogramas: bucle"
-    },
-    "Frames: End": {
-      "en": "Frames: End",
-      "fr": "Frames : arrêt",
-      "es": "Fotogramas: parada"
-    },
-    "Frame width": {
-      "en": "Frame width",
-      "fr": "Largeur d’une frame",
-      "es": "Ancho de fotograma"
-    },
-    "Frame height": {
-      "en": "Frame height",
-      "fr": "Hauteur d’une frame",
-      "es": "Altura de fotograma"
-    },
-    "Milliseconds per frame": {
-      "en": "Milliseconds per frame",
-      "fr": "Millisecondes par frame",
-      "es": "Milisegundos por fotograma"
-    },
-    "Import animal sheets": {
-      "en": "Import animal sheets",
-      "fr": "Importer les spritesheets",
-      "es": "Importar hojas del animal"
-    },
-    "Rider placement": {
-      "en": "Rider placement",
-      "fr": "Placement du cavalier",
-      "es": "Posición del jinete"
-    },
-    "Direction": {
-      "en": "Direction",
-      "fr": "Direction",
-      "es": "Dirección"
-    },
-    "Animation": {
-      "en": "Animation",
-      "fr": "Animation",
-      "es": "Animación"
-    },
-    "Frame correction": {
-      "en": "Frame correction",
-      "fr": "Frame à corriger",
-      "es": "Fotograma que ajustar"
-    },
-    "Down": {
-      "en": "Down",
-      "fr": "Bas",
-      "es": "Abajo"
-    },
-    "Left": {
-      "en": "Left",
-      "fr": "Gauche",
-      "es": "Izquierda"
-    },
-    "Right": {
-      "en": "Right",
-      "fr": "Droite",
-      "es": "Derecha"
-    },
-    "Up": {
-      "en": "Up",
-      "fr": "Haut",
-      "es": "Arriba"
-    },
-    "Seat X": {
-      "en": "Seat X",
-      "fr": "Selle X",
-      "es": "Montura X"
-    },
-    "Seat Y": {
-      "en": "Seat Y",
-      "fr": "Selle Y",
-      "es": "Montura Y"
-    },
-    "Foreground starts at Y": {
-      "en": "Foreground starts at Y",
-      "fr": "Avant-plan à partir de Y",
-      "es": "Primer plano desde Y"
-    },
-    "Hide rider below Y": {
-      "en": "Hide rider below Y",
-      "fr": "Masquer le cavalier sous Y",
-      "es": "Ocultar al jinete debajo de Y"
-    },
-    "Frame offset X": {
-      "en": "Frame offset X",
-      "fr": "Décalage X de la frame",
-      "es": "Desplazamiento X del fotograma"
-    },
-    "Frame offset Y": {
-      "en": "Frame offset Y",
-      "fr": "Décalage Y de la frame",
-      "es": "Desplazamiento Y del fotograma"
-    },
-    "Animal scale": {
-      "en": "Animal scale",
-      "fr": "Échelle de l’animal",
-      "es": "Escala del animal"
-    },
-    "Rider scale": {
-      "en": "Rider scale",
-      "fr": "Échelle du cavalier",
-      "es": "Escala del jinete"
-    },
-    "Hip position ratio": {
-      "en": "Hip position ratio",
-      "fr": "Position relative des hanches",
-      "es": "Posición relativa de la cadera"
-    },
-    "Rider bob": {
-      "en": "Rider bob",
-      "fr": "Oscillation du cavalier",
-      "es": "Oscilación del jinete"
-    },
-    "Mask lower legs": {
-      "en": "Mask lower legs",
-      "fr": "Masquer le bas des jambes",
-      "es": "Ocultar la parte inferior de las piernas"
-    },
-    "Ground anchor X": {
-      "en": "Ground anchor X",
-      "fr": "Point au sol X",
-      "es": "Anclaje al suelo X"
-    },
-    "Ground anchor Y": {
-      "en": "Ground anchor Y",
-      "fr": "Point au sol Y",
-      "es": "Anclaje al suelo Y"
-    },
-    "Moving preview": {
-      "en": "Moving preview",
-      "fr": "Aperçu en mouvement",
-      "es": "Vista en movimiento"
-    },
-    "Load rider sprite": {
-      "en": "Load rider sprite",
-      "fr": "Charger le sprite du joueur",
-      "es": "Cargar sprite del jugador"
-    },
-    "Add paperdoll": {
-      "en": "Add paperdoll",
-      "fr": "Ajouter un paperdoll",
-      "es": "Añadir un paperdoll"
-    },
-    "Clear rider": {
-      "en": "Clear rider",
-      "fr": "Retirer le cavalier",
-      "es": "Quitar al jinete"
-    },
-    "Layers are drawn in selection order. In game, the character keeps its actual equipment order.": {
-      "en": "Layers are drawn in selection order. In game, the character keeps its actual equipment order.",
-      "fr": "Les couches suivent l’ordre de sélection. En jeu, le personnage conserve l’ordre réel de son équipement.",
-      "es": "Las capas siguen el orden de selección. En el juego se conserva el orden real del equipo."
-    },
-    "Check mount names, sheets, frames and placement values.": {
-      "en": "Check mount names, sheets, frames and placement values.",
-      "fr": "Vérifie les noms, spritesheets, frames et réglages de placement.",
-      "es": "Revisa los nombres, hojas, fotogramas y valores de posición."
-    },
-    "Expected a PNG sheet with four direction rows.": {
-      "en": "Expected a PNG sheet with four direction rows.",
-      "fr": "Une spritesheet PNG à quatre lignes de directions est attendue.",
-      "es": "Se espera una hoja PNG con cuatro filas de direcciones."
-    },
-    "Sheet dimensions do not match the frame settings.": {
-      "en": "Sheet dimensions do not match the frame settings.",
-      "fr": "Les dimensions de l’image ne correspondent pas aux frames configurées.",
-      "es": "Las dimensiones de la imagen no coinciden con los fotogramas configurados."
-    },
-    "Load your player sprite, then add its paperdolls to preview the rider.": {
-      "en": "Load your player sprite, then add its paperdolls to preview the rider.",
-      "fr": "Charge ton sprite de joueur, puis ses paperdolls pour prévisualiser le cavalier.",
-      "es": "Carga el sprite del jugador y después sus paperdolls para previsualizar al jinete."
-    },
-    "Rider preview": {
-      "en": "Rider preview",
-      "fr": "Aperçu du cavalier",
-      "es": "Vista del jinete"
-    },
-    "Mount configuration could not be saved.": {
-      "en": "Mount configuration could not be saved.",
-      "fr": "La configuration des montures n’a pas pu être sauvegardée.",
-      "es": "No se pudo guardar la configuración de monturas."
-    },
-    "This mount is not unlocked.": {
-      "en": "This mount is not unlocked.",
-      "fr": "Cette monture n’est pas débloquée.",
-      "es": "Esta montura no está desbloqueada."
-    },
-    "You cannot ride here or during combat.": {
-      "en": "You cannot ride here or during combat.",
-      "fr": "Tu ne peux pas monter ici ou pendant un combat.",
-      "es": "No puedes montar aquí ni durante un combate."
-    },
-    "Mount summoned.": {
-      "en": "Mount summoned.",
-      "fr": "Monture appelée.",
-      "es": "Montura invocada."
-    },
-    "Unlocked only": {
-      "en": "Unlocked only",
-      "fr": "Débloquées uniquement",
-      "es": "Solo desbloqueadas"
-    },
-    "Ride favorite / Dismount": {
-      "en": "Ride favorite / Dismount",
-      "fr": "Monter la favorite / Descendre",
-      "es": "Montar la favorita / Desmontar"
-    },
-    "Ride": {
-      "en": "Ride",
-      "fr": "Monter",
-      "es": "Montar"
-    },
-    "Dismount": {
-      "en": "Dismount",
-      "fr": "Descendre",
-      "es": "Desmontar"
-    },
-    "Favorite mount": {
-      "en": "Favorite mount",
-      "fr": "Monture favorite",
-      "es": "Montura favorita"
-    },
-    "Set favorite": {
-      "en": "Set favorite",
-      "fr": "Définir comme favorite",
-      "es": "Marcar como favorita"
-    },
-    "Mounts are unavailable during combat, in instances and aboard ships.": {
-      "en": "Mounts are unavailable during combat, in instances and aboard ships.",
-      "fr": "Montures indisponibles en combat, dans les instances et à bord des navires.",
-      "es": "Monturas no disponibles en combate, en instancias ni a bordo de barcos."
-    },
-    "Animations": {
-      "en": "Animations",
-      "fr": "Animations",
-      "es": "Animaciones"
-    },
-    "Saving...": {
-      "en": "Saving...",
-      "fr": "Sauvegarde…",
-      "es": "Guardando…"
-    },
-    "Unlocked icon (resources/achievements)": {
-      "en": "Unlocked icon (resources/achievements)",
-      "fr": "Icône débloquée (resources/achievements)",
-      "es": "Icono desbloqueado (resources/achievements)"
-    },
-    "Locked icon (optional)": {
-      "en": "Locked icon (optional)",
-      "fr": "Icône verrouillée (facultative)",
-      "es": "Icono bloqueado (opcional)"
-    },
-    "Icon previews": {
-      "en": "Icon previews",
-      "fr": "Aperçu des icônes",
-      "es": "Vista previa de los iconos"
-    },
-    "Locked": {
-      "en": "Locked",
-      "fr": "Verrouillé",
-      "es": "Bloqueado"
-    },
-    "Unlocked": {
-      "en": "Unlocked",
-      "fr": "Débloqué",
-      "es": "Desbloqueado"
-    },
-    "Without a locked image, the normal icon is dimmed and marked with a lock.": {
-      "en": "Without a locked image, the normal icon is dimmed and marked with a lock.",
-      "fr": "Sans image verrouillée, l’icône normale est atténuée et marquée d’un cadenas.",
-      "es": "Sin imagen bloqueada, el icono normal se atenúa y se marca con un candado."
-    },
-    "Missing sound: {0}": {
-      "en": "Missing sound: {0}",
-      "fr": "Son manquant : {0}",
-      "es": "Sonido no encontrado: {0}"
-    },
-    "Choose an entry": {
-      "en": "Choose an entry",
-      "fr": "Choisir un élément",
-      "es": "Elegir un elemento"
-    },
-    "Search by name or several words...": {
-      "en": "Search by name or several words...",
-      "fr": "Rechercher un nom ou plusieurs mots...",
-      "es": "Buscar por nombre o varias palabras..."
-    },
-    "All file types": {
-      "en": "All file types",
-      "fr": "Tous les formats",
-      "es": "Todos los formatos"
-    },
-    "Original order": {
-      "en": "Original order",
-      "fr": "Ordre d'origine",
-      "es": "Orden original"
-    },
-    "Name: A to Z": {
-      "en": "Name: A to Z",
-      "fr": "Nom : de A à Z",
-      "es": "Nombre: de A a Z"
-    },
-    "Name: Z to A": {
-      "en": "Name: Z to A",
-      "fr": "Nom : de Z à A",
-      "es": "Nombre: de Z a A"
-    },
-    "Recent choices": {
-      "en": "Recent choices",
-      "fr": "Choix récents",
-      "es": "Elecciones recientes"
-    },
-    "Listen": {
-      "en": "Listen",
-      "fr": "Écouter",
-      "es": "Escuchar"
-    },
-    "Stop": {
-      "en": "Stop",
-      "fr": "Arrêter",
-      "es": "Detener"
-    },
-    "Select": {
-      "en": "Select",
-      "fr": "Sélectionner",
-      "es": "Seleccionar"
-    },
-    "No matching entries.": {
-      "en": "No matching entries.",
-      "fr": "Aucun résultat.",
-      "es": "No hay resultados."
-    },
-    "{0} of {1} entries": {
-      "en": "{0} of {1} entries",
-      "fr": "{0} éléments sur {1}",
-      "es": "{0} elementos de {1}"
-    },
-    "Select an entry to preview it.": {
-      "en": "Select an entry to preview it.",
-      "fr": "Sélectionnez un élément pour voir son aperçu.",
-      "es": "Selecciona un elemento para ver su vista previa."
-    },
-    "Preview unavailable. You can still select this entry.": {
-      "en": "Preview unavailable. You can still select this entry.",
-      "fr": "Aperçu indisponible. Cet élément peut quand même être sélectionné.",
-      "es": "Vista previa no disponible. Aún puedes seleccionar este elemento."
-    },
-    "Listen before selecting this sound.": {
-      "en": "Listen before selecting this sound.",
-      "fr": "Écoutez ce son avant de le sélectionner.",
-      "es": "Escucha este sonido antes de seleccionarlo."
-    },
-    "The selected resource is unavailable.": {
-      "en": "The selected resource is unavailable.",
-      "fr": "La ressource sélectionnée est indisponible.",
-      "es": "El recurso seleccionado no está disponible."
-    },
-    "OK": {
-      "en": "OK",
-      "fr": "OK",
-      "es": "Aceptar"
-    },
-    "Yes": {
-      "en": "Yes",
-      "fr": "Oui",
-      "es": "Sí"
-    },
-    "No": {
-      "en": "No",
-      "fr": "Non",
-      "es": "No"
-    },
-    "Abort": {
-      "en": "Abort",
-      "fr": "Abandonner",
-      "es": "Anular"
-    },
-    "Retry": {
-      "en": "Retry",
-      "fr": "Réessayer",
-      "es": "Reintentar"
-    },
-    "Ignore": {
-      "en": "Ignore",
-      "fr": "Ignorer",
-      "es": "Omitir"
-    },
-    "Try again": {
-      "en": "Try again",
-      "fr": "Réessayer",
-      "es": "Intentar de nuevo"
-    },
-    "Continue": {
-      "en": "Continue",
-      "fr": "Continuer",
-      "es": "Continuar"
-    },
+        "en": "The jousting configuration is invalid.",
+        "fr": "La configuration des joutes est invalide.",
+        "es": "La configuración de justas no es válida."
+    },
+    "Skip presentation": {"en": "Skip presentation", "fr": "Passer la présentation", "es": "Omitir la presentación"},
+    "Required choices, actions and quest objectives still apply.": {"en": "Required choices, actions and quest objectives still apply.", "fr": "Les choix, actions et objectifs de quête obligatoires restent nécessaires.", "es": "Las decisiones, acciones y objetivos de misión obligatorios siguen siendo necesarios."},
+    "The cinematic could not start. Check the scene's map, starting positions and active actions.": {"en":"The cinematic could not start. Check the scene's map, starting positions and active actions.", "fr":"La cinématique n’a pas pu démarrer. Vérifiez sa carte, les positions de départ et les actions en cours.", "es":"La cinemática no pudo comenzar. Compruebe el mapa, las posiciones iniciales y las acciones en curso."},
+    "Use this table as the camp fire creator": { "en": "Use this table as the camp fire creator", "fr": "Utiliser cette table pour créer les feux de camp", "es": "Usar esta mesa para crear fogatas" },
+    "Adds existing campfire recipes to this table. Other recipes are kept.": { "en": "Adds existing campfire recipes to this table. Other recipes are kept.", "fr": "Ajoute les recettes de feu de camp existantes à cette table. Les autres recettes sont conservées.", "es": "Añade las recetas de fogata existentes a esta mesa. Se conservan las otras recetas." },
+    "This entry has no visual resource configured.": { "en": "This entry has no visual resource configured.", "fr": "Aucune ressource visuelle n’est configurée pour cet élément.", "es": "Esta entrada no tiene un recurso visual configurado." },
+    "Duplicate": {"en":"Duplicate","fr":"Dupliquer","es":"Duplicar"},
+    "Delete": {"en":"Delete","fr":"Supprimer","es":"Eliminar"},
+    "Speed": {"en":"Speed","fr":"Vitesse","es":"Velocidad"},
+    "Save not confirmed. Check the connection before retrying.": { "en": "Save not confirmed. Check the connection before retrying.", "fr": "Sauvegarde non confirmée. Vérifie la connexion avant de réessayer.", "es": "Guardado sin confirmar. Comprueba la conexión antes de reintentar." },
+    "Import settings JSON": { "en": "Import settings JSON", "fr": "Importer les réglages JSON", "es": "Importar ajustes JSON" },
+    "Choose a favorite mount first.": {"en":"Choose a favorite mount first.","fr":"Choisis d’abord une monture favorite.","es":"Elige primero una montura favorita."},
+    "Mounts are disabled.": {"en":"Mounts are disabled.","fr":"Les montures sont désactivées.","es":"Las monturas están desactivadas."},
+    "No mounts match your search.": {"en":"No mounts match your search.","fr":"Aucune monture ne correspond à ta recherche.","es":"Ninguna montura coincide con tu búsqueda."},
+    "Unlock item (reusable)": {"en":"Unlock item (reusable)","fr":"Objet de déblocage (réutilisable)","es":"Objeto de desbloqueo (reutilizable)"},
+    "Mount unlocked.": {"en":"Mount unlocked.","fr":"Monture débloquée.","es":"Montura desbloqueada."},
+    "Mounts": {"en":"Mounts","fr":"Montures","es":"Monturas"},
+    "Stable": {"en":"Stable","fr":"Écurie","es":"Establo"},
+    "Farm horse": {"en":"Farm horse","fr":"Cheval de ferme","es":"Caballo de granja"},
+    "New mount": {"en":"New mount","fr":"Nouvelle monture","es":"Nueva montura"},
+    "Mount Editor": {"en":"Mount Editor","fr":"Éditeur de montures","es":"Editor de monturas"},
+    "Enable mounts": {"en":"Enable mounts","fr":"Activer les montures","es":"Activar las monturas"},
+    "Mount name": {"en":"Mount name","fr":"Nom de la monture","es":"Nombre de la montura"},
+    "Unlocked for everyone": {"en":"Unlocked for everyone","fr":"Débloquée pour tous","es":"Desbloqueada para todos"},
+    "Allow indoors": {"en":"Allow indoors","fr":"Autoriser en intérieur","es":"Permitir en interiores"},
+    "Speed multiplier": {"en":"Speed multiplier","fr":"Multiplicateur de vitesse","es":"Multiplicador de velocidad"},
+    "Movement loop": {"en":"Movement loop","fr":"Déplacement en boucle","es":"Movimiento en bucle"},
+    "Idle": {"en":"Idle","fr":"Repos","es":"Reposo"},
+    "Start": {"en":"Start","fr":"Départ","es":"Inicio"},
+    "Loop": {"en":"Loop","fr":"Boucle","es":"Bucle"},
+    "End": {"en":"End","fr":"Fin","es":"Fin"},
+    "Frames: Idle": {"en":"Frames: Idle","fr":"Frames : repos","es":"Fotogramas: reposo"},
+    "Frames: Start": {"en":"Frames: Start","fr":"Frames : départ","es":"Fotogramas: inicio"},
+    "Frames: Loop": {"en":"Frames: Loop","fr":"Frames : boucle","es":"Fotogramas: bucle"},
+    "Frames: End": {"en":"Frames: End","fr":"Frames : arrêt","es":"Fotogramas: parada"},
+    "Frame width": {"en":"Frame width","fr":"Largeur d’une frame","es":"Ancho de fotograma"},
+    "Frame height": {"en":"Frame height","fr":"Hauteur d’une frame","es":"Altura de fotograma"},
+    "Milliseconds per frame": {"en":"Milliseconds per frame","fr":"Millisecondes par frame","es":"Milisegundos por fotograma"},
+    "Import animal sheets": {"en":"Import animal sheets","fr":"Importer les spritesheets","es":"Importar hojas del animal"},
+    "Rider placement": {"en":"Rider placement","fr":"Placement du cavalier","es":"Posición del jinete"},
+    "Direction": {"en":"Direction","fr":"Direction","es":"Dirección"},
+    "Animation": {"en":"Animation","fr":"Animation","es":"Animación"},
+    "Frame correction": {"en":"Frame correction","fr":"Frame à corriger","es":"Fotograma que ajustar"},
+    "Down": {"en":"Down","fr":"Bas","es":"Abajo"},
+    "Left": {"en":"Left","fr":"Gauche","es":"Izquierda"},
+    "Right": {"en":"Right","fr":"Droite","es":"Derecha"},
+    "Up": {"en":"Up","fr":"Haut","es":"Arriba"},
+    "Seat X": {"en":"Seat X","fr":"Selle X","es":"Montura X"},
+    "Seat Y": {"en":"Seat Y","fr":"Selle Y","es":"Montura Y"},
+    "Foreground starts at Y": {"en":"Foreground starts at Y","fr":"Avant-plan à partir de Y","es":"Primer plano desde Y"},
+    "Hide rider below Y": {"en":"Hide rider below Y","fr":"Masquer le cavalier sous Y","es":"Ocultar al jinete debajo de Y"},
+    "Frame offset X": {"en":"Frame offset X","fr":"Décalage X de la frame","es":"Desplazamiento X del fotograma"},
+    "Frame offset Y": {"en":"Frame offset Y","fr":"Décalage Y de la frame","es":"Desplazamiento Y del fotograma"},
+    "Animal scale": {"en":"Animal scale","fr":"Échelle de l’animal","es":"Escala del animal"},
+    "Rider scale": {"en":"Rider scale","fr":"Échelle du cavalier","es":"Escala del jinete"},
+    "Hip position ratio": {"en":"Hip position ratio","fr":"Position relative des hanches","es":"Posición relativa de la cadera"},
+    "Rider bob": {"en":"Rider bob","fr":"Oscillation du cavalier","es":"Oscilación del jinete"},
+    "Mask lower legs": {"en":"Mask lower legs","fr":"Masquer le bas des jambes","es":"Ocultar la parte inferior de las piernas"},
+    "Ground anchor X": {"en":"Ground anchor X","fr":"Point au sol X","es":"Anclaje al suelo X"},
+    "Ground anchor Y": {"en":"Ground anchor Y","fr":"Point au sol Y","es":"Anclaje al suelo Y"},
+    "Moving preview": {"en":"Moving preview","fr":"Aperçu en mouvement","es":"Vista en movimiento"},
+    "Load rider sprite": {"en":"Load rider sprite","fr":"Charger le sprite du joueur","es":"Cargar sprite del jugador"},
+    "Add paperdoll": {"en":"Add paperdoll","fr":"Ajouter un paperdoll","es":"Añadir un paperdoll"},
+    "Clear rider": {"en":"Clear rider","fr":"Retirer le cavalier","es":"Quitar al jinete"},
+    "Layers are drawn in selection order. In game, the character keeps its actual equipment order.": {"en":"Layers are drawn in selection order. In game, the character keeps its actual equipment order.","fr":"Les couches suivent l’ordre de sélection. En jeu, le personnage conserve l’ordre réel de son équipement.","es":"Las capas siguen el orden de selección. En el juego se conserva el orden real del equipo."},
+    "Check mount names, sheets, frames and placement values.": {"en":"Check mount names, sheets, frames and placement values.","fr":"Vérifie les noms, spritesheets, frames et réglages de placement.","es":"Revisa los nombres, hojas, fotogramas y valores de posición."},
+    "Expected a PNG sheet with four direction rows.": {"en":"Expected a PNG sheet with four direction rows.","fr":"Une spritesheet PNG à quatre lignes de directions est attendue.","es":"Se espera una hoja PNG con cuatro filas de direcciones."},
+    "Sheet dimensions do not match the frame settings.": {"en":"Sheet dimensions do not match the frame settings.","fr":"Les dimensions de l’image ne correspondent pas aux frames configurées.","es":"Las dimensiones de la imagen no coinciden con los fotogramas configurados."},
+    "Load your player sprite, then add its paperdolls to preview the rider.": {"en":"Load your player sprite, then add its paperdolls to preview the rider.","fr":"Charge ton sprite de joueur, puis ses paperdolls pour prévisualiser le cavalier.","es":"Carga el sprite del jugador y después sus paperdolls para previsualizar al jinete."},
+    "Rider preview": {"en":"Rider preview","fr":"Aperçu du cavalier","es":"Vista del jinete"},
+    "Mount configuration could not be saved.": {"en":"Mount configuration could not be saved.","fr":"La configuration des montures n’a pas pu être sauvegardée.","es":"No se pudo guardar la configuración de monturas."},
+    "This mount is not unlocked.": {"en":"This mount is not unlocked.","fr":"Cette monture n’est pas débloquée.","es":"Esta montura no está desbloqueada."},
+    "You cannot ride here or during combat.": {"en":"You cannot ride here or during combat.","fr":"Tu ne peux pas monter ici ou pendant un combat.","es":"No puedes montar aquí ni durante un combate."},
+    "Mount summoned.": {"en":"Mount summoned.","fr":"Monture appelée.","es":"Montura invocada."},
+    "Unlocked only": {"en":"Unlocked only","fr":"Débloquées uniquement","es":"Solo desbloqueadas"},
+    "Ride favorite / Dismount": {"en":"Ride favorite / Dismount","fr":"Monter la favorite / Descendre","es":"Montar la favorita / Desmontar"},
+    "Ride": {"en":"Ride","fr":"Monter","es":"Montar"},
+    "Dismount": {"en":"Dismount","fr":"Descendre","es":"Desmontar"},
+    "Favorite mount": {"en":"Favorite mount","fr":"Monture favorite","es":"Montura favorita"},
+    "Set favorite": {"en":"Set favorite","fr":"Définir comme favorite","es":"Marcar como favorita"},
+    "Mounts are unavailable during combat, in instances and aboard ships.": {"en":"Mounts are unavailable during combat, in instances and aboard ships.","fr":"Montures indisponibles en combat, dans les instances et à bord des navires.","es":"Monturas no disponibles en combate, en instancias ni a bordo de barcos."},
+    "Animations": {"en":"Animations","fr":"Animations","es":"Animaciones"},
+    "Saving...": {"en":"Saving...","fr":"Sauvegarde…","es":"Guardando…"},
+    "Unlocked icon (resources/achievements)": { "en": "Unlocked icon (resources/achievements)", "fr": "Icône débloquée (resources/achievements)", "es": "Icono desbloqueado (resources/achievements)" },
+    "Locked icon (optional)": { "en": "Locked icon (optional)", "fr": "Icône verrouillée (facultative)", "es": "Icono bloqueado (opcional)" },
+    "Icon previews": { "en": "Icon previews", "fr": "Aperçu des icônes", "es": "Vista previa de los iconos" },
+    "Locked": { "en": "Locked", "fr": "Verrouillé", "es": "Bloqueado" },
+    "Unlocked": { "en": "Unlocked", "fr": "Débloqué", "es": "Desbloqueado" },
+    "Without a locked image, the normal icon is dimmed and marked with a lock.": { "en": "Without a locked image, the normal icon is dimmed and marked with a lock.", "fr": "Sans image verrouillée, l’icône normale est atténuée et marquée d’un cadenas.", "es": "Sin imagen bloqueada, el icono normal se atenúa y se marca con un candado." },
+    "Missing sound: {0}": { "en": "Missing sound: {0}", "fr": "Son manquant : {0}", "es": "Sonido no encontrado: {0}" },
+    "Choose an entry": { "en": "Choose an entry", "fr": "Choisir un élément", "es": "Elegir un elemento" },
+    "Search by name or several words...": { "en": "Search by name or several words...", "fr": "Rechercher un nom ou plusieurs mots...", "es": "Buscar por nombre o varias palabras..." },
+    "All file types": { "en": "All file types", "fr": "Tous les formats", "es": "Todos los formatos" },
+    "Original order": { "en": "Original order", "fr": "Ordre d'origine", "es": "Orden original" },
+    "Name: A to Z": { "en": "Name: A to Z", "fr": "Nom : de A à Z", "es": "Nombre: de A a Z" },
+    "Name: Z to A": { "en": "Name: Z to A", "fr": "Nom : de Z à A", "es": "Nombre: de Z a A" },
+    "Recent choices": { "en": "Recent choices", "fr": "Choix récents", "es": "Elecciones recientes" },
+    "Listen": { "en": "Listen", "fr": "Écouter", "es": "Escuchar" },
+    "Stop": { "en": "Stop", "fr": "Arrêter", "es": "Detener" },
+    "Select": { "en": "Select", "fr": "Sélectionner", "es": "Seleccionar" },
+    "No matching entries.": { "en": "No matching entries.", "fr": "Aucun résultat.", "es": "No hay resultados." },
+    "{0} of {1} entries": { "en": "{0} of {1} entries", "fr": "{0} éléments sur {1}", "es": "{0} elementos de {1}" },
+    "Select an entry to preview it.": { "en": "Select an entry to preview it.", "fr": "Sélectionnez un élément pour voir son aperçu.", "es": "Selecciona un elemento para ver su vista previa." },
+    "Preview unavailable. You can still select this entry.": { "en": "Preview unavailable. You can still select this entry.", "fr": "Aperçu indisponible. Cet élément peut quand même être sélectionné.", "es": "Vista previa no disponible. Aún puedes seleccionar este elemento." },
+    "Listen before selecting this sound.": { "en": "Listen before selecting this sound.", "fr": "Écoutez ce son avant de le sélectionner.", "es": "Escucha este sonido antes de seleccionarlo." },
+    "The selected resource is unavailable.": { "en": "The selected resource is unavailable.", "fr": "La ressource sélectionnée est indisponible.", "es": "El recurso seleccionado no está disponible." },
+    "OK": { "en": "OK", "fr": "OK", "es": "Aceptar" },
+    "Yes": { "en": "Yes", "fr": "Oui", "es": "Sí" },
+    "No": { "en": "No", "fr": "Non", "es": "No" },
+    "Abort": { "en": "Abort", "fr": "Abandonner", "es": "Anular" },
+    "Retry": { "en": "Retry", "fr": "Réessayer", "es": "Reintentar" },
+    "Ignore": { "en": "Ignore", "fr": "Ignorer", "es": "Omitir" },
+    "Try again": { "en": "Try again", "fr": "Réessayer", "es": "Intentar de nuevo" },
+    "Continue": { "en": "Continue", "fr": "Continuer", "es": "Continuar" },
     "Abandon dungeon": {
       "en": "Abandon dungeon",
       "fr": "Abandonner le donjon",
@@ -3965,101 +3487,26 @@
       "fr": "Communauté Ascension Game Dev",
       "es": "Comunidad de Ascension Game Dev"
     },
-    "Full screen (F11)": {
-      "en": "Full screen (F11)",
-      "fr": "Plein écran (F11)",
-      "es": "Pantalla completa (F11)"
-    },
-    "Progression": {
-      "en": "Progression",
-      "fr": "Progression",
-      "es": "Progresión"
-    },
-    "Starting items and spells": {
-      "en": "Starting items and spells",
-      "fr": "Objets et sorts de départ",
-      "es": "Objetos y hechizos iniciales"
-    },
-    "Special offer": {
-      "en": "Special offer",
-      "fr": "Offre spéciale",
-      "es": "Oferta especial"
-    },
-    "Special offer...": {
-      "en": "Special offer...",
-      "fr": "Offre spéciale...",
-      "es": "Oferta especial..."
-    },
-    "Enable promotion": {
-      "en": "Enable promotion",
-      "fr": "Activer la promotion",
-      "es": "Activar la promoción"
-    },
-    "Reduction (%)": {
-      "en": "Reduction (%)",
-      "fr": "Réduction (%)",
-      "es": "Descuento (%)"
-    },
-    "Starts at": {
-      "en": "Starts at",
-      "fr": "Date de début",
-      "es": "Fecha de inicio"
-    },
-    "Ends at": {
-      "en": "Ends at",
-      "fr": "Date de fin",
-      "es": "Fecha de fin"
-    },
-    "Dates use your computer's local time ({0}).": {
-      "en": "Dates use your computer's local time ({0}).",
-      "fr": "Les dates utilisent l’heure locale de votre ordinateur ({0}).",
-      "es": "Las fechas usan la hora local de tu equipo ({0})."
-    },
-    "Remove promotion": {
-      "en": "Remove promotion",
-      "fr": "Retirer la promotion",
-      "es": "Quitar la promoción"
-    },
-    "The end date must be after the start date. Check daylight-saving time too.": {
-      "en": "The end date must be after the start date. Check daylight-saving time too.",
-      "fr": "La fin doit être après le début. Vérifiez également le changement d’heure.",
-      "es": "El fin debe ser posterior al inicio. Comprueba también el cambio de hora."
-    },
-    "Promotion price: {0} → {1}": {
-      "en": "Promotion price: {0} → {1}",
-      "fr": "Prix promotionnel : {0} → {1}",
-      "es": "Precio promocional: {0} → {1}"
-    },
-    "Disabled": {
-      "en": "Disabled",
-      "fr": "Désactivée",
-      "es": "Desactivada"
-    },
-    "Scheduled": {
-      "en": "Scheduled",
-      "fr": "Programmée",
-      "es": "Programada"
-    },
-    "Expired": {
-      "en": "Expired",
-      "fr": "Expirée",
-      "es": "Caducada"
-    },
-    "Invalid dates": {
-      "en": "Invalid dates",
-      "fr": "Dates invalides",
-      "es": "Fechas no válidas"
-    },
-    "Original price: {0}": {
-      "en": "Original price: {0}",
-      "fr": "Prix d’origine : {0}",
-      "es": "Precio original: {0}"
-    },
-    "Shop prices changed. Please check the updated price and try again.": {
-      "en": "Shop prices changed. Please check the updated price and try again.",
-      "fr": "Les prix ont changé. Vérifiez le nouveau prix puis réessayez.",
-      "es": "Los precios han cambiado. Comprueba el nuevo precio e inténtalo de nuevo."
-    },
+    "Full screen (F11)": { "en": "Full screen (F11)", "fr": "Plein écran (F11)", "es": "Pantalla completa (F11)" },
+    "Progression": { "en": "Progression", "fr": "Progression", "es": "Progresión" },
+    "Starting items and spells": { "en": "Starting items and spells", "fr": "Objets et sorts de départ", "es": "Objetos y hechizos iniciales" },
+    "Special offer": { "en": "Special offer", "fr": "Offre spéciale", "es": "Oferta especial" },
+    "Special offer...": { "en": "Special offer...", "fr": "Offre spéciale...", "es": "Oferta especial..." },
+    "Enable promotion": { "en": "Enable promotion", "fr": "Activer la promotion", "es": "Activar la promoción" },
+    "Reduction (%)": { "en": "Reduction (%)", "fr": "Réduction (%)", "es": "Descuento (%)" },
+    "Starts at": { "en": "Starts at", "fr": "Date de début", "es": "Fecha de inicio" },
+    "Ends at": { "en": "Ends at", "fr": "Date de fin", "es": "Fecha de fin" },
+    "Dates use your computer's local time ({0}).": { "en": "Dates use your computer's local time ({0}).", "fr": "Les dates utilisent l’heure locale de votre ordinateur ({0}).", "es": "Las fechas usan la hora local de tu equipo ({0})." },
+    "Remove promotion": { "en": "Remove promotion", "fr": "Retirer la promotion", "es": "Quitar la promoción" },
+    "The end date must be after the start date. Check daylight-saving time too.": { "en": "The end date must be after the start date. Check daylight-saving time too.", "fr": "La fin doit être après le début. Vérifiez également le changement d’heure.", "es": "El fin debe ser posterior al inicio. Comprueba también el cambio de hora." },
+    "Promotion price: {0} → {1}": { "en": "Promotion price: {0} → {1}", "fr": "Prix promotionnel : {0} → {1}", "es": "Precio promocional: {0} → {1}" },
+    "Disabled": { "en": "Disabled", "fr": "Désactivée", "es": "Desactivada" },
+    "Active": { "en": "Active", "fr": "Active", "es": "Activa" },
+    "Scheduled": { "en": "Scheduled", "fr": "Programmée", "es": "Programada" },
+    "Expired": { "en": "Expired", "fr": "Expirée", "es": "Caducada" },
+    "Invalid dates": { "en": "Invalid dates", "fr": "Dates invalides", "es": "Fechas no válidas" },
+    "Original price: {0}": { "en": "Original price: {0}", "fr": "Prix d’origine : {0}", "es": "Precio original: {0}" },
+    "Shop prices changed. Please check the updated price and try again.": { "en": "Shop prices changed. Please check the updated price and try again.", "fr": "Les prix ont changé. Vérifiez le nouveau prix puis réessayez.", "es": "Los precios han cambiado. Comprueba el nuevo precio e inténtalo de nuevo." },
     "GNU General Public License v3": {
       "en": "GNU General Public License v3",
       "fr": "Licence publique générale GNU v3",
@@ -4199,6 +3646,11 @@
       "en": "Cannon ammunition",
       "fr": "Munitions de canon",
       "es": "Munición de cañón"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
     },
     "Equip a ranged weapon to select compatible ammunition.": {
       "en": "Equip a ranged weapon to select compatible ammunition.",
@@ -4681,339 +4133,339 @@
       "es": "Elige una moneda para activar los restablecimientos."
     },
     "Whips": {
-      "en": "Whips",
-      "fr": "Fouets",
-      "es": "Látigos"
+        "en": "Whips",
+        "fr": "Fouets",
+        "es": "Látigos"
     },
     "Weapon mastery requirement": {
-      "en": "Weapon mastery requirement",
-      "fr": "Prérequis de maîtrise d’arme",
-      "es": "Requisito de maestría de arma"
+        "en": "Weapon mastery requirement",
+        "fr": "Prérequis de maîtrise d’arme",
+        "es": "Requisito de maestría de arma"
     },
     "Required mastery level": {
-      "en": "Required mastery level",
-      "fr": "Niveau de maîtrise requis",
-      "es": "Nivel de maestría requerido"
+        "en": "Required mastery level",
+        "fr": "Niveau de maîtrise requis",
+        "es": "Nivel de maestría requerido"
     },
     "No mastery requirement": {
-      "en": "No mastery requirement",
-      "fr": "Aucun prérequis de maîtrise",
-      "es": "Sin requisito de maestría"
+        "en": "No mastery requirement",
+        "fr": "Aucun prérequis de maîtrise",
+        "es": "Sin requisito de maestría"
     },
     "Mastery configuration is loading. Reopen the creator if no categories appear.": {
-      "en": "Mastery configuration is loading. Reopen the creator if no categories appear.",
-      "fr": "Chargement des maîtrises. Rouvrez le créateur si aucune catégorie ne s’affiche.",
-      "es": "Cargando maestrías. Vuelve a abrir el creador si no aparecen categorías."
+        "en": "Mastery configuration is loading. Reopen the creator if no categories appear.",
+        "fr": "Chargement des maîtrises. Rouvrez le créateur si aucune catégorie ne s’affiche.",
+        "es": "Cargando maestrías. Vuelve a abrir el creador si no aparecen categorías."
     },
     "Requires {0} level {1}.": {
-      "en": "Requires {0} level {1}.",
-      "fr": "Maîtrise {0} de niveau {1} requise.",
-      "es": "Requiere {0} de nivel {1}."
+        "en": "Requires {0} level {1}.",
+        "fr": "Maîtrise {0} de niveau {1} requise.",
+        "es": "Requiere {0} de nivel {1}."
     },
     "Character level": {
-      "en": "Character level",
-      "fr": "Niveau du personnage",
-      "es": "Nivel del personaje"
+        "en": "Character level",
+        "fr": "Niveau du personnage",
+        "es": "Nivel del personaje"
     },
     "Weapon mastery": {
-      "en": "Weapon mastery",
-      "fr": "Maîtrise d’arme",
-      "es": "Maestría de arma"
+        "en": "Weapon mastery",
+        "fr": "Maîtrise d’arme",
+        "es": "Maestría de arma"
     },
     "Requirements (all)": {
-      "en": "Requirements (all)",
-      "fr": "Prérequis (tous)",
-      "es": "Requisitos (todos)"
+        "en": "Requirements (all)",
+        "fr": "Prérequis (tous)",
+        "es": "Requisitos (todos)"
     },
     "Requirements (alternative {0})": {
-      "en": "Requirements (alternative {0})",
-      "fr": "Prérequis (possibilité {0})",
-      "es": "Requisitos (alternativa {0})"
+        "en": "Requirements (alternative {0})",
+        "fr": "Prérequis (possibilité {0})",
+        "es": "Requisitos (alternativa {0})"
     },
     "Other conditions apply": {
-      "en": "Other conditions apply",
-      "fr": "D’autres conditions s’appliquent",
-      "es": "Se aplican otras condiciones"
+        "en": "Other conditions apply",
+        "fr": "D’autres conditions s’appliquent",
+        "es": "Se aplican otras condiciones"
     },
     "NOT {0}": {
-      "en": "NOT {0}",
-      "fr": "NON {0}",
-      "es": "NO {0}"
+        "en": "NOT {0}",
+        "fr": "NON {0}",
+        "es": "NO {0}"
     },
     "Level {0}/{1}": {
-      "en": "Level {0}/{1}",
-      "fr": "Niveau {0}/{1}",
-      "es": "Nivel {0}/{1}"
+        "en": "Level {0}/{1}",
+        "fr": "Niveau {0}/{1}",
+        "es": "Nivel {0}/{1}"
     },
     "Mastery damage bonus": {
-      "en": "Mastery damage bonus",
-      "fr": "Bonus de dégâts de maîtrise",
-      "es": "Bonificación de daño de maestría"
+        "en": "Mastery damage bonus",
+        "fr": "Bonus de dégâts de maîtrise",
+        "es": "Bonificación de daño de maestría"
     },
     "Mastery attack speed bonus": {
-      "en": "Mastery attack speed bonus",
-      "fr": "Bonus de vitesse de maîtrise",
-      "es": "Bonificación de velocidad de maestría"
+        "en": "Mastery attack speed bonus",
+        "fr": "Bonus de vitesse de maîtrise",
+        "es": "Bonificación de velocidad de maestría"
     },
     "Mastery critical chance bonus": {
-      "en": "Mastery critical chance bonus",
-      "fr": "Bonus de critique de maîtrise",
-      "es": "Bonificación crítica de maestría"
+        "en": "Mastery critical chance bonus",
+        "fr": "Bonus de critique de maîtrise",
+        "es": "Bonificación crítica de maestría"
     },
     "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%": {
-      "en": "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
-      "fr": "Dégâts +{0:0.##}% | Vitesse +{1:0.##}% | Critique +{2}%",
-      "es": "Daño +{0:0.##}% | Velocidad +{1:0.##}% | Crítico +{2}%"
+        "en": "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
+        "fr": "Dégâts +{0:0.##}% | Vitesse +{1:0.##}% | Critique +{2}%",
+        "es": "Daño +{0:0.##}% | Velocidad +{1:0.##}% | Crítico +{2}%"
     },
     "Unavailable": {
-      "en": "Unavailable",
-      "fr": "Indisponible",
-      "es": "No disponible"
+        "en": "Unavailable",
+        "fr": "Indisponible",
+        "es": "No disponible"
     },
     "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.": {
-      "en": "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.",
-      "fr": "Associez cette arme à sa catégorie dans Weapon Mastery Editor pour gagner de l’XP de maîtrise.",
-      "es": "Asigna esta arma a su categoría en Weapon Mastery Editor para ganar XP de maestría."
+        "en": "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.",
+        "fr": "Associez cette arme à sa catégorie dans Weapon Mastery Editor pour gagner de l’XP de maîtrise.",
+        "es": "Asigna esta arma a su categoría en Weapon Mastery Editor para ganar XP de maestría."
     },
     "Mastery requirements will be installed together with the character level.": {
-      "en": "Mastery requirements will be installed together with the character level.",
-      "fr": "Les prérequis de maîtrise seront installés avec le niveau du personnage.",
-      "es": "Los requisitos de maestría se instalarán con el nivel del personaje."
+        "en": "Mastery requirements will be installed together with the character level.",
+        "fr": "Les prérequis de maîtrise seront installés avec le niveau du personnage.",
+        "es": "Los requisitos de maestría se instalarán con el nivel del personaje."
     },
     "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?": {
-      "en": "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?",
-      "fr": "Les conditions existantes seront conservées ; les nouveaux prérequis de niveau et de maîtrise ne seront pas installés. Continuer ?",
-      "es": "Se conservarán las condiciones existentes; no se instalarán los nuevos requisitos de nivel y maestría. ¿Continuar?"
+        "en": "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?",
+        "fr": "Les conditions existantes seront conservées ; les nouveaux prérequis de niveau et de maîtrise ne seront pas installés. Continuer ?",
+        "es": "Se conservarán las condiciones existentes; no se instalarán los nuevos requisitos de nivel y maestría. ¿Continuar?"
     },
     "Requirements unchanged (existing custom conditions).": {
-      "en": "Requirements unchanged (existing custom conditions).",
-      "fr": "Prérequis inchangés (conditions personnalisées existantes).",
-      "es": "Requisitos sin cambios (condiciones personalizadas existentes)."
+        "en": "Requirements unchanged (existing custom conditions).",
+        "fr": "Prérequis inchangés (conditions personnalisées existantes).",
+        "es": "Requisitos sin cambios (condiciones personalizadas existentes)."
     },
     "NPC sprite": {
-      "en": "NPC sprite",
-      "fr": "Sprite du PNJ",
-      "es": "Sprite del PNJ"
+        "en": "NPC sprite",
+        "fr": "Sprite du PNJ",
+        "es": "Sprite del PNJ"
     },
     "Item icon": {
-      "en": "Item icon",
-      "fr": "Icône de l’objet",
-      "es": "Icono del objeto"
+        "en": "Item icon",
+        "fr": "Icône de l’objet",
+        "es": "Icono del objeto"
     },
     "Spell icon": {
-      "en": "Spell icon",
-      "fr": "Icône du sort",
-      "es": "Icono del hechizo"
+        "en": "Spell icon",
+        "fr": "Icône du sort",
+        "es": "Icono del hechizo"
     },
     "Preview unavailable": {
-      "en": "Preview unavailable",
-      "fr": "Aperçu indisponible",
-      "es": "Vista previa no disponible"
+        "en": "Preview unavailable",
+        "fr": "Aperçu indisponible",
+        "es": "Vista previa no disponible"
     },
     "Animations, paperdolls and event links are preserved.": {
-      "en": "Animations, paperdolls and event links are preserved.",
-      "fr": "Les animations, les apparences équipées et les liens d’événements sont conservés.",
-      "es": "Se conservan las animaciones, las apariencias equipadas y los enlaces de eventos."
+        "en": "Animations, paperdolls and event links are preserved.",
+        "fr": "Les animations, les apparences équipées et les liens d’événements sont conservés.",
+        "es": "Se conservan las animaciones, las apariencias equipadas y los enlaces de eventos."
     },
     "Keep existing cast and hit animations": {
-      "en": "Keep existing cast and hit animations",
-      "fr": "Conserver les animations de lancement et d’impact",
-      "es": "Conservar las animaciones de lanzamiento e impacto"
+        "en": "Keep existing cast and hit animations",
+        "fr": "Conserver les animations de lancement et d’impact",
+        "es": "Conservar las animaciones de lanzamiento e impacto"
     },
     "Auto Projectile Creator": {
-      "en": "Auto Projectile Creator",
-      "fr": "Créateur automatique de projectiles",
-      "es": "Creador automático de proyectiles"
+        "en": "Auto Projectile Creator",
+        "fr": "Créateur automatique de projectiles",
+        "es": "Creador automático de proyectiles"
     },
     "Straight shot": {
-      "en": "Straight shot",
-      "fr": "Tir droit",
-      "es": "Disparo recto"
+        "en": "Straight shot",
+        "fr": "Tir droit",
+        "es": "Disparo recto"
     },
     "Three-way shot": {
-      "en": "Three-way shot",
-      "fr": "Tir à trois directions",
-      "es": "Disparo en tres direcciones"
+        "en": "Three-way shot",
+        "fr": "Tir à trois directions",
+        "es": "Disparo en tres direcciones"
     },
     "Five-way shot": {
-      "en": "Five-way shot",
-      "fr": "Tir à cinq directions",
-      "es": "Disparo en cinco direcciones"
+        "en": "Five-way shot",
+        "fr": "Tir à cinq directions",
+        "es": "Disparo en cinco direcciones"
     },
     "Radial burst": {
-      "en": "Radial burst",
-      "fr": "Salve circulaire",
-      "es": "Ráfaga radial"
+        "en": "Radial burst",
+        "fr": "Salve circulaire",
+        "es": "Ráfaga radial"
     },
     "Directional": {
-      "en": "Directional",
-      "fr": "Direction du lanceur",
-      "es": "Dirección del lanzador"
+        "en": "Directional",
+        "fr": "Direction du lanceur",
+        "es": "Dirección del lanzador"
     },
     "Direct shot": {
-      "en": "Direct shot",
-      "fr": "Tir direct",
-      "es": "Disparo directo"
+        "en": "Direct shot",
+        "fr": "Tir direct",
+        "es": "Disparo directo"
     },
     "Homing": {
-      "en": "Homing",
-      "fr": "Tête chercheuse",
-      "es": "Teledirigido"
+        "en": "Homing",
+        "fr": "Tête chercheuse",
+        "es": "Teledirigido"
     },
     "Projectile name": {
-      "en": "Projectile name",
-      "fr": "Nom du projectile",
-      "es": "Nombre del proyectil"
+        "en": "Projectile name",
+        "fr": "Nom du projectile",
+        "es": "Nombre del proyectil"
     },
     "Shot pattern": {
-      "en": "Shot pattern",
-      "fr": "Forme du tir",
-      "es": "Patrón de disparo"
+        "en": "Shot pattern",
+        "fr": "Forme du tir",
+        "es": "Patrón de disparo"
     },
     "Targeting behavior": {
-      "en": "Targeting behavior",
-      "fr": "Mode de ciblage",
-      "es": "Modo de apuntado"
+        "en": "Targeting behavior",
+        "fr": "Mode de ciblage",
+        "es": "Modo de apuntado"
     },
     "Projectile animation": {
-      "en": "Projectile animation",
-      "fr": "Animation du projectile",
-      "es": "Animación del proyectil"
+        "en": "Projectile animation",
+        "fr": "Animation du projectile",
+        "es": "Animación del proyectil"
     },
     "Range (tiles)": {
-      "en": "Range (tiles)",
-      "fr": "Portée (cases)",
-      "es": "Alcance (casillas)"
+        "en": "Range (tiles)",
+        "fr": "Portée (cases)",
+        "es": "Alcance (casillas)"
     },
     "Travel time (ms)": {
-      "en": "Travel time (ms)",
-      "fr": "Durée du trajet (ms)",
-      "es": "Duración del trayecto (ms)"
+        "en": "Travel time (ms)",
+        "fr": "Durée du trajet (ms)",
+        "es": "Duración del trayecto (ms)"
     },
     "Burst count": {
-      "en": "Burst count",
-      "fr": "Nombre de salves",
-      "es": "Número de ráfagas"
+        "en": "Burst count",
+        "fr": "Nombre de salves",
+        "es": "Número de ráfagas"
     },
     "Time between bursts (ms)": {
-      "en": "Time between bursts (ms)",
-      "fr": "Délai entre les salves (ms)",
-      "es": "Intervalo entre ráfagas (ms)"
+        "en": "Time between bursts (ms)",
+        "fr": "Délai entre les salves (ms)",
+        "es": "Intervalo entre ráfagas (ms)"
     },
     "Knockback (tiles)": {
-      "en": "Knockback (tiles)",
-      "fr": "Recul (cases)",
-      "es": "Empuje (casillas)"
+        "en": "Knockback (tiles)",
+        "fr": "Recul (cases)",
+        "es": "Empuje (casillas)"
     },
     "Rotate animation with direction": {
-      "en": "Rotate animation with direction",
-      "fr": "Orienter l’animation selon la direction",
-      "es": "Orientar la animación según la dirección"
+        "en": "Rotate animation with direction",
+        "fr": "Orienter l’animation selon la direction",
+        "es": "Orientar la animación según la dirección"
     },
     "Pierce targets": {
-      "en": "Pierce targets",
-      "fr": "Traverser les cibles",
-      "es": "Atravesar objetivos"
+        "en": "Pierce targets",
+        "fr": "Traverser les cibles",
+        "es": "Atravesar objetivos"
     },
     "Pass through map blocks": {
-      "en": "Pass through map blocks",
-      "fr": "Traverser les obstacles de la carte",
-      "es": "Atravesar los obstáculos del mapa"
+        "en": "Pass through map blocks",
+        "fr": "Traverser les obstacles de la carte",
+        "es": "Atravesar los obstáculos del mapa"
     },
     "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.": {
-      "en": "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.",
-      "fr": "Les dégâts viennent de l’arme ou du sort qui utilise ce projectile. Les munitions, sorts de collision et réglages de grappin sont conservés.",
-      "es": "El daño proviene del arma o hechizo que utiliza este proyectil. Se conservan la munición, los hechizos de colisión y los ajustes de gancho."
+        "en": "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.",
+        "fr": "Les dégâts viennent de l’arme ou du sort qui utilise ce projectile. Les munitions, sorts de collision et réglages de grappin sont conservés.",
+        "es": "El daño proviene del arma o hechizo que utiliza este proyectil. Se conservan la munición, los hechizos de colisión y los ajustes de gancho."
     },
     "Apply to projectile": {
-      "en": "Apply to projectile",
-      "fr": "Appliquer au projectile",
-      "es": "Aplicar al proyectil"
+        "en": "Apply to projectile",
+        "fr": "Appliquer au projectile",
+        "es": "Aplicar al proyectil"
     },
     "Enter a projectile name.": {
-      "en": "Enter a projectile name.",
-      "fr": "Saisissez un nom de projectile.",
-      "es": "Introduce un nombre de proyectil."
+        "en": "Enter a projectile name.",
+        "fr": "Saisissez un nom de projectile.",
+        "es": "Introduce un nombre de proyectil."
     },
     "Select or create a projectile first.": {
-      "en": "Select or create a projectile first.",
-      "fr": "Sélectionnez ou créez d’abord un projectile.",
-      "es": "Selecciona o crea un proyectil primero."
+        "en": "Select or create a projectile first.",
+        "fr": "Sélectionnez ou créez d’abord un projectile.",
+        "es": "Selecciona o crea un proyectil primero."
     },
     "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.": {
-      "en": "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.",
-      "fr": "{0} projectile(s) par salve × {1} salve(s) = {2} au total\nPortée : {3} cases | Trajet : {4} ms\nDélai : {5} ms | Séquence totale : {6} ms\nVérifiez l’aperçu, puis appliquez et sauvegardez dans l’éditeur.",
-      "es": "{0} proyectil(es) por ráfaga × {1} ráfaga(s) = {2} en total\nAlcance: {3} casillas | Trayecto: {4} ms\nIntervalo: {5} ms | Secuencia total: {6} ms\nRevisa la vista previa, aplica y guarda en el editor."
+        "en": "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.",
+        "fr": "{0} projectile(s) par salve × {1} salve(s) = {2} au total\nPortée : {3} cases | Trajet : {4} ms\nDélai : {5} ms | Séquence totale : {6} ms\nVérifiez l’aperçu, puis appliquez et sauvegardez dans l’éditeur.",
+        "es": "{0} proyectil(es) por ráfaga × {1} ráfaga(s) = {2} en total\nAlcance: {3} casillas | Trayecto: {4} ms\nIntervalo: {5} ms | Secuencia total: {6} ms\nRevisa la vista previa, aplica y guarda en el editor."
     },
     "Sell all copies": {
-      "en": "Sell all copies",
-      "fr": "Vendre tous les exemplaires",
-      "es": "Vender todos los ejemplares"
+        "en": "Sell all copies",
+        "fr": "Vendre tous les exemplaires",
+        "es": "Vender todos los ejemplares"
     },
     "Sell all copies ({0})": {
-      "en": "Sell all copies ({0})",
-      "fr": "Vendre tous les exemplaires ({0})",
-      "es": "Vender todos los ejemplares ({0})"
+        "en": "Sell all copies ({0})",
+        "fr": "Vendre tous les exemplaires ({0})",
+        "es": "Vender todos los ejemplares ({0})"
     },
     "Sell all {0} copies of {1} from your inventory?": {
-      "en": "Sell all {0} copies of {1} from your inventory?",
-      "fr": "Vendre les {0} exemplaires de {1} de votre inventaire ?",
-      "es": "¿Vender los {0} ejemplares de {1} de tu inventario?"
+        "en": "Sell all {0} copies of {1} from your inventory?",
+        "fr": "Vendre les {0} exemplaires de {1} de votre inventaire ?",
+        "es": "¿Vender los {0} ejemplares de {1} de tu inventario?"
     },
     "Non-empty bags are kept.": {
-      "en": "Non-empty bags are kept.",
-      "fr": "Les sacs non vides sont conservés.",
-      "es": "Se conservan las bolsas que no están vacías."
+        "en": "Non-empty bags are kept.",
+        "fr": "Les sacs non vides sont conservés.",
+        "es": "Se conservan las bolsas que no están vacías."
     },
     "Boss and death effects": {
-      "en": "Boss and death effects",
-      "fr": "Boss et effets de mort",
-      "es": "Jefes y efectos de muerte"
+        "en": "Boss and death effects",
+        "fr": "Boss et effets de mort",
+        "es": "Jefes y efectos de muerte"
     },
     "NPC death animation": {
-      "en": "NPC death animation",
-      "fr": "Animation de mort du PNJ",
-      "es": "Animación de muerte del PNJ"
+        "en": "NPC death animation",
+        "fr": "Animation de mort du PNJ",
+        "es": "Animación de muerte del PNJ"
     },
     "Duration in seconds (0 = natural)": {
-      "en": "Duration in seconds (0 = natural)",
-      "fr": "Durée en secondes (0 = naturelle)",
-      "es": "Duración en segundos (0 = natural)"
+        "en": "Duration in seconds (0 = natural)",
+        "fr": "Durée en secondes (0 = naturelle)",
+        "es": "Duración en segundos (0 = natural)"
     },
     "Ground animation": {
-      "en": "Ground animation",
-      "fr": "Animation au sol",
-      "es": "Animación en el suelo"
+        "en": "Ground animation",
+        "fr": "Animation au sol",
+        "es": "Animación en el suelo"
     },
     "Ground duration (s)": {
-      "en": "Ground duration (s)",
-      "fr": "Durée au sol (s)",
-      "es": "Duración en el suelo (s)"
+        "en": "Ground duration (s)",
+        "fr": "Durée au sol (s)",
+        "es": "Duración en el suelo (s)"
     },
     "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.": {
-      "en": "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.",
-      "fr": "Événement commun → masquer le joueur → animation de mort → réapparition. L’animation au sol reste à l’endroit de la mort pendant la durée configurée.",
-      "es": "Evento común → ocultar al jugador → animación de muerte → reaparición. La animación en el suelo permanece en el lugar de la muerte durante el tiempo configurado."
+        "en": "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.",
+        "fr": "Événement commun → masquer le joueur → animation de mort → réapparition. L’animation au sol reste à l’endroit de la mort pendant la durée configurée.",
+        "es": "Evento común → ocultar al jugador → animación de muerte → reaparición. La animación en el suelo permanece en el lugar de la muerte durante el tiempo configurado."
     },
     "Zoom in": {
-      "en": "Zoom in",
-      "fr": "Zoom avant",
-      "es": "Acercar"
+        "en": "Zoom in",
+        "fr": "Zoom avant",
+        "es": "Acercar"
     },
     "Zoom out": {
-      "en": "Zoom out",
-      "fr": "Zoom arrière",
-      "es": "Alejar"
+        "en": "Zoom out",
+        "fr": "Zoom arrière",
+        "es": "Alejar"
     },
     "Fit preview": {
-      "en": "Fit preview",
-      "fr": "Ajuster l’aperçu",
-      "es": "Ajustar vista previa"
+        "en": "Fit preview",
+        "fr": "Ajuster l’aperçu",
+        "es": "Ajustar vista previa"
     },
     "Mouse wheel: zoom. Drag: move the preview.": {
-      "en": "Mouse wheel: zoom. Drag: move the preview.",
-      "fr": "Molette : zoom. Glisser : déplacer l’aperçu.",
-      "es": "Rueda: zoom. Arrastrar: mover la vista previa."
+        "en": "Mouse wheel: zoom. Drag: move the preview.",
+        "fr": "Molette : zoom. Glisser : déplacer l’aperçu.",
+        "es": "Rueda: zoom. Arrastrar: mover la vista previa."
     },
     "Guild emblem": {
       "en": "Guild emblem",
@@ -5185,21 +4637,9 @@
       "fr": "Équipage naval",
       "es": "Tripulación naval"
     },
-    "Open": {
-      "en": "Open",
-      "fr": "Ouvrir",
-      "es": "Abrir"
-    },
-    "Close": {
-      "en": "Close",
-      "fr": "Fermer",
-      "es": "Cerrar"
-    },
-    "Guild emblem could not be saved. Try again.": {
-      "en": "Guild emblem could not be saved. Try again.",
-      "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.",
-      "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo."
-    },
+    "Open": { "en": "Open", "fr": "Ouvrir", "es": "Abrir" },
+    "Close": { "en": "Close", "fr": "Fermer", "es": "Cerrar" },
+    "Guild emblem could not be saved. Try again.": { "en": "Guild emblem could not be saved. Try again.", "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.", "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo." },
     "Image": {
       "en": "Image",
       "fr": "Image",
@@ -5270,160 +4710,34 @@
       "fr": "Impossible d’enregistrer. Réessaie.",
       "es": "No se pudo guardar. Inténtalo de nuevo."
     },
-    "Buy": {
-      "en": "Buy",
-      "fr": "Acheter",
-      "es": "Comprar"
-    },
-    "{0}'s house": {
-      "en": "{0}'s house",
-      "fr": "Maison de {0}",
-      "es": "Casa de {0}"
-    },
-    "Farm & hired workers...": {
-      "en": "Farm & hired workers...",
-      "fr": "Ferme et ouvriers...",
-      "es": "Granja y trabajadores..."
-    },
-    "Farm configuration": {
-      "en": "Farm configuration",
-      "fr": "Configuration de la ferme",
-      "es": "Configuración de la granja"
-    },
-    "Settings": {
-      "en": "Settings",
-      "fr": "Paramètres",
-      "es": "Ajustes"
-    },
-    "Crops": {
-      "en": "Crops",
-      "fr": "Cultures",
-      "es": "Cultivos"
-    },
-    "Exterior map": {
-      "en": "Exterior map",
-      "fr": "Carte extérieure",
-      "es": "Mapa exterior"
-    },
-    "Salary currency": {
-      "en": "Salary currency",
-      "fr": "Monnaie des salaires",
-      "es": "Moneda de los salarios"
-    },
-    "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.": {
-      "en": "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.",
-      "fr": "Choisissez une carte extérieure isolée et le fichier du sprite des ouvriers. Chaque ouvrier utilise deux cases praticables à (FieldX + index * 2, FieldY) et sur la case en dessous. Les cultures utilisent des objets existants et empilables pour les graines et les récoltes. Le tileset facultatif contient trois images de croissance adjacentes. Fermez cette fenêtre, puis enregistrez la configuration des maisons.",
-      "es": "Selecciona un mapa exterior aislado y el archivo del sprite de los trabajadores. Cada trabajador usa dos casillas transitables en (FieldX + index * 2, FieldY) y la casilla inferior. Los cultivos requieren objetos existentes y apilables para semillas y cosechas. El tileset opcional contiene tres imágenes de crecimiento contiguas. Cierra esta ventana y guarda la configuración de las casas."
-    },
-    "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)": {
-      "en": "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)",
-      "fr": "Ajouter blé, carottes et pommes de terre (choisir les objets avant activation)",
-      "es": "Añadir trigo, zanahorias y patatas (asigna los objetos antes de activar)"
-    },
-    "SeedItemId": {
-      "en": "SeedItemId",
-      "fr": "Objet graine",
-      "es": "Objeto de semilla"
-    },
-    "HarvestItemId": {
-      "en": "HarvestItemId",
-      "fr": "Objet récolté",
-      "es": "Objeto cosechado"
-    },
-    "Seconds": {
-      "en": "Seconds",
-      "fr": "Secondes",
-      "es": "Segundos"
-    },
-    "Yield": {
-      "en": "Yield",
-      "fr": "Rendement",
-      "es": "Producción"
-    },
-    "Experience": {
-      "en": "Experience",
-      "fr": "Expérience",
-      "es": "Experiencia"
-    },
-    "RequiredLevel": {
-      "en": "RequiredLevel",
-      "fr": "Niveau requis",
-      "es": "Nivel requerido"
-    },
-    "Tileset": {
-      "en": "Tileset",
-      "fr": "Tileset",
-      "es": "Tileset"
-    },
-    "SourceX": {
-      "en": "SourceX",
-      "fr": "Source X",
-      "es": "Origen X"
-    },
-    "SourceY": {
-      "en": "SourceY",
-      "fr": "Source Y",
-      "es": "Origen Y"
-    },
-    "Enable farming": {
-      "en": "Enable farming",
-      "fr": "Activer la ferme",
-      "es": "Activar la granja"
-    },
-    "Entry X": {
-      "en": "Entry X",
-      "fr": "Entrée X",
-      "es": "Entrada X"
-    },
-    "Entry Y": {
-      "en": "Entry Y",
-      "fr": "Entrée Y",
-      "es": "Entrada Y"
-    },
-    "Field X": {
-      "en": "Field X",
-      "fr": "Champ X",
-      "es": "Campo X"
-    },
-    "Field Y": {
-      "en": "Field Y",
-      "fr": "Champ Y",
-      "es": "Campo Y"
-    },
-    "Maximum workers": {
-      "en": "Maximum workers",
-      "fr": "Nombre maximal d’ouvriers",
-      "es": "Máximo de trabajadores"
-    },
-    "Granary capacity": {
-      "en": "Granary capacity",
-      "fr": "Capacité du grenier",
-      "es": "Capacidad del granero"
-    },
-    "Hiring price": {
-      "en": "Hiring price",
-      "fr": "Coût de recrutement",
-      "es": "Coste de contratación"
-    },
-    "Wage per cycle": {
-      "en": "Wage per cycle",
-      "fr": "Salaire par cycle",
-      "es": "Salario por ciclo"
-    },
-    "Worker sprite": {
-      "en": "Worker sprite",
-      "fr": "Sprite des ouvriers",
-      "es": "Sprite de los trabajadores"
-    },
-    "Enrage under 35% HP (boss only)": {
-      "en": "Enrage under 35% HP (boss only)",
-      "fr": "Rage sous 35 % de vie (boss uniquement)",
-      "es": "Furia bajo 35 % de vida (solo jefes)"
-    },
-    "Faster warnings and stronger hits in phase two.": {
-      "en": "Faster warnings and stronger hits in phase two.",
-      "fr": "Attaques plus rapides et plus puissantes en phase deux.",
-      "es": "Ataques más rápidos y fuertes en fase dos."
-    }
+    "Buy": {"en": "Buy", "fr": "Acheter", "es": "Comprar"},
+    "{0}'s house": {"en": "{0}'s house", "fr": "Maison de {0}", "es": "Casa de {0}"},
+    "Farm & hired workers...": {"en": "Farm & hired workers...", "fr": "Ferme et ouvriers...", "es": "Granja y trabajadores..."},
+    "Farm configuration": {"en": "Farm configuration", "fr": "Configuration de la ferme", "es": "Configuración de la granja"},
+    "Settings": {"en": "Settings", "fr": "Paramètres", "es": "Ajustes"},
+    "Crops": {"en": "Crops", "fr": "Cultures", "es": "Cultivos"},
+    "Exterior map": {"en": "Exterior map", "fr": "Carte extérieure", "es": "Mapa exterior"},
+    "Salary currency": {"en": "Salary currency", "fr": "Monnaie des salaires", "es": "Moneda de los salarios"},
+    "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.": {"en": "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration.", "fr": "Choisissez une carte extérieure isolée et le fichier du sprite des ouvriers. Chaque ouvrier utilise deux cases praticables à (FieldX + index * 2, FieldY) et sur la case en dessous. Les cultures utilisent des objets existants et empilables pour les graines et les récoltes. Le tileset facultatif contient trois images de croissance adjacentes. Fermez cette fenêtre, puis enregistrez la configuration des maisons.", "es": "Selecciona un mapa exterior aislado y el archivo del sprite de los trabajadores. Cada trabajador usa dos casillas transitables en (FieldX + index * 2, FieldY) y la casilla inferior. Los cultivos requieren objetos existentes y apilables para semillas y cosechas. El tileset opcional contiene tres imágenes de crecimiento contiguas. Cierra esta ventana y guarda la configuración de las casas."},
+    "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)": {"en": "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)", "fr": "Ajouter blé, carottes et pommes de terre (choisir les objets avant activation)", "es": "Añadir trigo, zanahorias y patatas (asigna los objetos antes de activar)"},
+    "SeedItemId": {"en": "SeedItemId", "fr": "Objet graine", "es": "Objeto de semilla"},
+    "HarvestItemId": {"en": "HarvestItemId", "fr": "Objet récolté", "es": "Objeto cosechado"},
+    "Seconds": {"en": "Seconds", "fr": "Secondes", "es": "Segundos"},
+    "Yield": {"en": "Yield", "fr": "Rendement", "es": "Producción"},
+    "Experience": {"en": "Experience", "fr": "Expérience", "es": "Experiencia"},
+    "RequiredLevel": {"en": "RequiredLevel", "fr": "Niveau requis", "es": "Nivel requerido"},
+    "Tileset": {"en": "Tileset", "fr": "Tileset", "es": "Tileset"},
+    "SourceX": {"en": "SourceX", "fr": "Source X", "es": "Origen X"},
+    "SourceY": {"en": "SourceY", "fr": "Source Y", "es": "Origen Y"},
+    "Enable farming": {"en": "Enable farming", "fr": "Activer la ferme", "es": "Activar la granja"},
+    "Entry X": {"en": "Entry X", "fr": "Entrée X", "es": "Entrada X"},
+    "Entry Y": {"en": "Entry Y", "fr": "Entrée Y", "es": "Entrada Y"},
+    "Field X": {"en": "Field X", "fr": "Champ X", "es": "Campo X"},
+    "Field Y": {"en": "Field Y", "fr": "Champ Y", "es": "Campo Y"},
+    "Maximum workers": {"en": "Maximum workers", "fr": "Nombre maximal d’ouvriers", "es": "Máximo de trabajadores"},
+    "Granary capacity": {"en": "Granary capacity", "fr": "Capacité du grenier", "es": "Capacidad del granero"},
+    "Hiring price": {"en": "Hiring price", "fr": "Coût de recrutement", "es": "Coste de contratación"},
+    "Wage per cycle": {"en": "Wage per cycle", "fr": "Salaire par cycle", "es": "Salario por ciclo"},
+    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"}
   }
 }
