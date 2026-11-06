@@ -314,6 +314,11 @@
       "en": "Preview is illustrative. Select a real map, NPC and coordinates.",
       "fr": "L'aperçu est illustratif. Sélectionnez une vraie carte, un PNJ et des coordonnées.",
       "es": "La vista previa es ilustrativa. Selecciona un mapa, un PNJ y coordenadas."
+    },
+    "Use open map": {
+      "en": "Use open map",
+      "fr": "Utiliser la carte ouverte",
+      "es": "Usar mapa abierto"
     }
   }
 }
