@@ -63,7 +63,7 @@ public partial class FrmNpc
         {
             if (!_updatingCombatTelegraph && mEditorItem != null)
                 mEditorItem.AdvancedTelegraphShape = Math.Max(0, _cmbCombatTelegraphShape.SelectedIndex);
-            _combatTelegraphPreview.Invalidate();
+            UpdateCombatTelegraphControlState();
         };
         _grpCombatTelegraph.Controls.Add(_cmbCombatTelegraphShape);
 
