@@ -1,44 +1,125 @@
 using Intersect.Core;
+using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.Maps;
+using Intersect.Server.Networking;
+using Intersect.Utilities;
+using Stat = Intersect.Enums.Stat;
 
 namespace Intersect.Server.Entities;
 
 public partial class Npc
 {
-    private Guid _advancedTelegraphTarget;
+    private readonly HashSet<CombatTelegraphTile> _advancedTelegraphTiles = [];
     private Guid _advancedTelegraphMap;
     private Guid _advancedTelegraphInstance;
-    private int _advancedTelegraphX;
-    private int _advancedTelegraphY;
+    private int _advancedTelegraphAimX;
+    private int _advancedTelegraphAimY;
+    private Direction _advancedTelegraphFacing;
     private long _advancedTelegraphEnd;
 
-    private bool IsAdvancedTelegraphReady(Player target)
+    private void BeginAdvancedTelegraph(Player target)
     {
-        var now = Timing.Global.Milliseconds;
-        if (_advancedTelegraphEnd > now)
-            return false;
+        if (_advancedTelegraphEnd != 0 || target.IsDead || target.HasPendingDeath)
+            return;
 
-        // Expired telegraphs resolve only against their original tile and map instance.
-        if (_advancedTelegraphEnd != 0)
+        var shape = Enum.IsDefined(typeof(CombatTelegraphShape), Descriptor.AdvancedTelegraphShape)
+            ? (CombatTelegraphShape)Descriptor.AdvancedTelegraphShape
+            : CombatTelegraphShape.TargetTile;
+        var tiles = CombatTelegraphGeometry.GetTiles(
+            shape, X, Y, target.X, target.Y, Dir, Descriptor.AdvancedTelegraphRange);
+
+        // Clip both the advertised zone and the actual damage to this map.
+        _advancedTelegraphTiles.Clear();
+        foreach (var tile in tiles)
         {
-            var hit = _advancedTelegraphTarget == target.Id &&
-                _advancedTelegraphMap == target.MapId &&
-                _advancedTelegraphInstance == target.MapInstanceId &&
-                _advancedTelegraphX == target.X && _advancedTelegraphY == target.Y;
-            _advancedTelegraphEnd = 0;
-            return hit;
+            if (tile.X >= 0 && tile.Y >= 0 &&
+                tile.X < Options.Instance.Map.MapWidth && tile.Y < Options.Instance.Map.MapHeight)
+                _advancedTelegraphTiles.Add(tile);
         }
+        if (_advancedTelegraphTiles.Count == 0)
+            return;
 
-        var windup = Math.Clamp(Options.Instance.Combat.BossTelegraphDurationMs, 250, 2000);
-        _advancedTelegraphTarget = target.Id;
+        var windup = Math.Clamp(
+            Descriptor.AdvancedTelegraphWindupMs > 0
+                ? Descriptor.AdvancedTelegraphWindupMs
+                : Options.Instance.Combat.BossTelegraphDurationMs,
+            250, 2000);
         _advancedTelegraphMap = target.MapId;
         _advancedTelegraphInstance = target.MapInstanceId;
-        _advancedTelegraphX = target.X;
-        _advancedTelegraphY = target.Y;
-        _advancedTelegraphEnd = now + windup;
-        // A tile marker is sent only to the actual target; no PvP or cross-instance leaks.
-        target.SendPacket(new CombatTelegraphPacket(target.MapId, target.X, target.Y, windup));
-        return false;
+        _advancedTelegraphAimX = target.X;
+        _advancedTelegraphAimY = target.Y;
+        _advancedTelegraphFacing = Dir;
+        _advancedTelegraphEnd = Timing.Global.Milliseconds + windup;
+
+        var packet = new CombatTelegraphPacket(
+            _advancedTelegraphMap, _advancedTelegraphAimX, _advancedTelegraphAimY, windup)
+        {
+            Tiles = _advancedTelegraphTiles.OrderBy(tile => tile.Y).ThenBy(tile => tile.X)
+                .SelectMany(tile => new[] { tile.X, tile.Y }).ToArray(),
+        };
+        // Broadcast to the correct map instance so nearby players see the attack.
+        PacketSender.SendDataToProximityOnMapInstance(MapId, MapInstanceId, packet);
+    }
+
+    /// <returns>True if a pending windup consumed this AI update.</returns>
+    private bool ProcessAdvancedTelegraph(long timeMs)
+    {
+        if (_advancedTelegraphEnd == 0)
+            return false;
+
+        if (!Options.Instance.Combat.EnableAdvancedCombat)
+        {
+            _advancedTelegraphEnd = 0;
+            _advancedTelegraphTiles.Clear();
+            return false;
+        }
+
+        if (timeMs < _advancedTelegraphEnd)
+            return true;
+
+        var impactMap = _advancedTelegraphMap;
+        var impactInstance = _advancedTelegraphInstance;
+        var impactX = _advancedTelegraphAimX;
+        var impactY = _advancedTelegraphAimY;
+        var impactFacing = _advancedTelegraphFacing;
+        _advancedTelegraphEnd = 0;
+
+        // Invalidate on death, teleport, stun or instance change.
+        if (IsDead || IsDisposed || MapId != impactMap || MapInstanceId != impactInstance ||
+            CachedStatuses.Any(status => status.Type is SpellEffect.Stun or SpellEffect.Sleep) ||
+            !MapController.TryGetInstanceFromMap(impactMap, impactInstance, out var mapInstance))
+        {
+            _advancedTelegraphTiles.Clear();
+            return true;
+        }
+
+        if (Descriptor.AttackAnimation != null)
+            PacketSender.SendAnimationToProximity(
+                Descriptor.AttackAnimationId, -1, Guid.Empty,
+                impactMap, impactX, impactY, impactFacing, impactInstance);
+
+        // The footprint was fixed when the warning began: no tracking or double hits.
+        foreach (var entity in mapInstance.GetEntities().ToArray())
+        {
+            if (entity is not Player player || !player.InGame || player.IsDead ||
+                player.HasPendingDeath || player.IsDisposed || player.IsJoustProtected ||
+                player.MapId != impactMap || player.MapInstanceId != impactInstance ||
+                !_advancedTelegraphTiles.Contains(new CombatTelegraphTile(player.X, player.Y)) ||
+                !CanAttack(player, null))
+                continue;
+
+            Attack(player, Descriptor.Damage, 0, (DamageType)Descriptor.DamageType,
+                (Stat)Descriptor.ScalingStat, Descriptor.Scaling, Descriptor.CritChance,
+                Descriptor.CritMultiplier, isAutoAttack: true);
+        }
+
+        _advancedTelegraphTiles.Clear();
+        // A missed zone still costs one attack cooldown.
+        AttackTimer = Timing.Global.Milliseconds + CalculateAttackTime();
+        PacketSender.SendEntityAttack(this, CalculateAttackTime());
+        return true;
     }
 }
