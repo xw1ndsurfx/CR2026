@@ -462,6 +462,7 @@ public partial class GameInterface : MutableInterface
         UpdateContractJournal();
         GuildEmblems.Update();
         UpdateIntoxicationOverlay();
+        UpdateAdvancedCombatHud();
         _archeryWindow?.CheckClosed();
         UpdateWeaponSkills();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)

@@ -7274,6 +7274,41 @@
       "en": "Counterattack:",
       "fr": "Contre-attaque :",
       "es": "Contraataque:"
+    },
+    "Endurance": {
+      "en": "Endurance",
+      "fr": "Endurance",
+      "es": "Resistencia"
+    },
+    "DODGE!": {
+      "en": "DODGE!",
+      "fr": "ESQUIVE !",
+      "es": "¡ESQUIVA!"
+    },
+    "PERFECT PARRY!": {
+      "en": "PERFECT PARRY!",
+      "fr": "PARADE PARFAITE !",
+      "es": "¡PARADA PERFECTA!"
+    },
+    "COUNTERATTACK!": {
+      "en": "COUNTERATTACK!",
+      "fr": "CONTRE-ATTAQUE !",
+      "es": "¡CONTRAATAQUE!"
+    },
+    "NOT ENOUGH ENDURANCE": {
+      "en": "NOT ENOUGH ENDURANCE",
+      "fr": "ENDURANCE INSUFFISANTE",
+      "es": "RESISTENCIA INSUFICIENTE"
+    },
+    "Dodge in {0:0.0}s": {
+      "en": "Dodge in {0:0.0}s",
+      "fr": "Esquive dans {0:0.0} s",
+      "es": "Esquivar en {0:0.0} s"
+    },
+    "Dodge ready": {
+      "en": "Dodge ready",
+      "fr": "Esquive disponible",
+      "es": "Esquiva disponible"
     }
   }
 }
