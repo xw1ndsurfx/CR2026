@@ -1,6 +1,7 @@
 using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
+using ClientEvent = Intersect.Client.Entities.Events.Event;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -39,7 +40,8 @@ internal sealed class TutorialWorldMarker : Base
     internal void SetStep(TutorialStep? step)
     {
         _step = step is { HighlightTarget: TutorialHighlightTarget.Player or
-            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc } ? step : null;
+            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or
+            TutorialHighlightTarget.WorldEvent } ? step : null;
         RefreshVisibility();
     }
 
@@ -87,6 +89,29 @@ internal sealed class TutorialWorldMarker : Base
                 map.X + (_step.TargetX + 0.5f) * Options.Instance.Map.TileWidth,
                 map.Y + (_step.TargetY + 0.5f) * Options.Instance.Map.TileHeight
             );
+            return true;
+        }
+
+        if (_step.HighlightTarget == TutorialHighlightTarget.WorldEvent)
+        {
+            // Map events can look exactly like NPCs, but their persistent
+            // descriptor ID is the trusted identity of an interaction lesson.
+            ClientEvent? selectedEvent = null;
+            var closest = float.MaxValue;
+            foreach (var local in map.LocalEntities.Values)
+            {
+                if (local is not ClientEvent candidate || candidate.IsDisposed ||
+                    candidate.Id != _step.TargetEventId || candidate.MapId != _step.MapId)
+                    continue;
+                var squareDistance = Vector2.DistanceSquared(candidate.Center, player.Center);
+                if (squareDistance >= closest)
+                    continue;
+                selectedEvent = candidate;
+                closest = squareDistance;
+            }
+            if (selectedEvent == null)
+                return false;
+            anchor = selectedEvent.Center;
             return true;
         }
 
