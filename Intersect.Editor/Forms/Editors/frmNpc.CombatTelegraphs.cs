@@ -5,7 +5,6 @@ using DarkUI.Controls;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.QualityOfLife;
-using Color = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -29,10 +28,10 @@ public partial class FrmNpc
     private void BuildCombatTelegraphControls()
     {
         _grpCombatTelegraph.Text = TelegraphText("Attack telegraphs");
-        _grpCombatTelegraph.BackColor = Color.FromArgb(45, 45, 48);
-        _grpCombatTelegraph.BorderColor = Color.FromArgb(100, 78, 55);
-        _grpCombatTelegraph.ForeColor = Color.Gainsboro;
-        _grpCombatTelegraph.Size = new Size(302, 444);
+        _grpCombatTelegraph.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpCombatTelegraph.BorderColor = System.Drawing.Color.FromArgb(100, 78, 55);
+        _grpCombatTelegraph.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpCombatTelegraph.Size = new System.Drawing.Size(302, 444);
         _grpCombatTelegraph.TabStop = false;
 
         _chkCombatTelegraph.Text = TelegraphText("Warn before this NPC attacks");
@@ -47,8 +46,8 @@ public partial class FrmNpc
         _grpCombatTelegraph.Controls.Add(new Label
         {
             Text = TelegraphText("Bosses already warn by default."),
-            Location = new Point(12, 57), Size = new Size(275, 36),
-            ForeColor = Color.Silver,
+            Location = new System.Drawing.Point(12, 57), Size = new System.Drawing.Size(275, 36),
+            ForeColor = System.Drawing.Color.Silver,
         });
 
         AddCombatTelegraphLabel("Area pattern:", 95);
@@ -95,7 +94,7 @@ public partial class FrmNpc
 
         AddCombatTelegraphLabel("Preview (gold: monster, blue: target)", 278);
         _combatTelegraphPreview.SetBounds(12, 302, 275, 125);
-        _combatTelegraphPreview.BackColor = Color.FromArgb(27, 25, 29);
+        _combatTelegraphPreview.BackColor = System.Drawing.Color.FromArgb(27, 25, 29);
         _combatTelegraphPreview.Paint += PaintCombatTelegraphPreview;
         _grpCombatTelegraph.Controls.Add(_combatTelegraphPreview);
 
@@ -111,9 +110,9 @@ public partial class FrmNpc
         _grpCombatTelegraph.Controls.Add(new Label
         {
             Text = TelegraphText(key),
-            ForeColor = Color.Gainsboro,
-            Location = new Point(12, top),
-            Size = new Size(275, 20),
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(12, top),
+            Size = new System.Drawing.Size(275, 20),
         });
     }
 
@@ -164,18 +163,18 @@ public partial class FrmNpc
             (CombatTelegraphShape)Math.Max(0, _cmbCombatTelegraphShape.SelectedIndex),
             4, 5, 4, 4, Direction.Up, (int)_nudCombatTelegraphRange.Value).ToHashSet();
 
-        using var floor = new SolidBrush(Color.FromArgb(55, 51, 49));
-        using var danger = new SolidBrush(Color.FromArgb(187, 63, 51));
-        using var monster = new SolidBrush(Color.FromArgb(212, 170, 76));
-        using var target = new SolidBrush(Color.FromArgb(83, 177, 218));
-        using var border = new Pen(Color.FromArgb(32, 29, 28));
+        using var floor = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(55, 51, 49));
+        using var danger = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(187, 63, 51));
+        using var monster = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(212, 170, 76));
+        using var target = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(83, 177, 218));
+        using var border = new System.Drawing.Pen(System.Drawing.Color.FromArgb(32, 29, 28));
 
         for (var y = 0; y < grid; y++)
         for (var x = 0; x < grid; x++)
         {
             var brush = x == 4 && y == 5 ? monster :
                 tiles.Contains(new CombatTelegraphTile(x, y)) ? danger : floor;
-            var rect = new Rectangle(offsetX + x * tileSize, offsetY + y * tileSize,
+            var rect = new System.Drawing.Rectangle(offsetX + x * tileSize, offsetY + y * tileSize,
                 tileSize - 1, tileSize - 1);
             e.Graphics.FillRectangle(brush, rect);
             e.Graphics.DrawRectangle(border, rect);
