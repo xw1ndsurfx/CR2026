@@ -12,6 +12,7 @@ public enum TutorialObjective
     CombatPerfectParry = 5,
     CombatCounterattack = 6,
     CombatFinisher = 7,
+    ReachTile = 8,
 }
 /// <summary>HUD target for a nonblocking tutorial spotlight.</summary>
 public enum TutorialHighlightTarget
@@ -24,6 +25,9 @@ public enum TutorialHighlightTarget
     Character = 5,
     WorldMap = 6,
     Hotbar = 7,
+    Player = 8,
+    WorldTile = 9,
+    WorldNpc = 10,
 }
 
 public enum TutorialHighlightStyle
@@ -40,7 +44,28 @@ public sealed class TutorialStep
     public TutorialObjective Objective { get; set; }
     public TutorialHighlightTarget HighlightTarget { get; set; }
     public TutorialHighlightStyle HighlightStyle { get; set; } = TutorialHighlightStyle.Outline;
+    /// <summary>Map used by ReachMap, ReachTile, WorldTile and WorldNpc.</summary>
     public Guid MapId { get; set; }
+    [System.ComponentModel.Category("Royal Guide - world")]
+    [System.ComponentModel.Description("Target tile within the selected map (0-255).")]
+    public int TargetX { get; set; }
+    [System.ComponentModel.Category("Royal Guide - world")]
+    [System.ComponentModel.Description("Target tile within the selected map (0-255).")]
+    public int TargetY { get; set; }
+    [System.ComponentModel.Category("Royal Guide - world")]
+    [System.ComponentModel.Description("Distance in tiles that completes ReachTile (0-6).")]
+    public int TargetRadius { get; set; } = 1;
+    [System.ComponentModel.Category("Royal Guide - world")]
+    [System.ComponentModel.Description("NPC descriptor to highlight while the player is on this map.")]
+    public Guid TargetNpcId { get; set; }
+
+    /// <summary>Location check shared by game logic and tests; only the
+    /// authoritative server player position is passed by the runtime.</summary>
+    public bool IsAtTarget(Guid playerMapId, int playerX, int playerY) =>
+        MapId != Guid.Empty && playerMapId == MapId &&
+        TargetRadius is >= 0 and <= 6 &&
+        Math.Abs(playerX - TargetX) <= TargetRadius &&
+        Math.Abs(playerY - TargetY) <= TargetRadius;
     public Guid VariableId { get; set; }
     public long VariableValue { get; set; } = 1;
     // Select a common event compiled by the existing cinematic director.
@@ -55,7 +80,13 @@ public sealed class TutorialConfiguration
     public bool IsValid => Steps is { Count: > 0 and <= 100 } && Translations?.Entries != null &&
         Steps.All(s => s != null && s.Id != Guid.Empty && !string.IsNullOrWhiteSpace(s.Title) &&
             !string.IsNullOrWhiteSpace(s.Text) && s.Title.Length <= 200 && s.Text.Length <= 6000 &&
-            Enum.IsDefined(s.Objective) && Enum.IsDefined(s.HighlightTarget) && Enum.IsDefined(s.HighlightStyle) && (s.Objective != TutorialObjective.ReachMap || s.MapId != Guid.Empty) &&
+            Enum.IsDefined(s.Objective) && Enum.IsDefined(s.HighlightTarget) && Enum.IsDefined(s.HighlightStyle) &&
+            (s.Objective != TutorialObjective.ReachMap || s.MapId != Guid.Empty) &&
+            (s.Objective != TutorialObjective.ReachTile || s.MapId != Guid.Empty) &&
+            (s.HighlightTarget is not (TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc) || s.MapId != Guid.Empty) &&
+            (s.HighlightTarget != TutorialHighlightTarget.WorldNpc || s.TargetNpcId != Guid.Empty) &&
+            s.TargetX is >= 0 and <= 255 && s.TargetY is >= 0 and <= 255 &&
+            s.TargetRadius is >= 0 and <= 6 &&
             (s.Objective != TutorialObjective.Variable || s.VariableId != Guid.Empty) &&
             new[] { s.Title, s.Text }.All(source => GameTextCatalog.Languages.All(lang =>
                 Translations.Entries.TryGetValue(GameTextCatalog.NormalizeText(source), out var versions) && versions != null &&
@@ -77,6 +108,7 @@ public sealed class TutorialConfiguration
         for (var i = 0; i < titles.Length; i++) result.Steps.Add(new() { Id = Guid.Parse($"c1026029-0000-4000-8000-{i+1:000000000000}"), Title = titles[i], Text = texts[i], Objective = i == 1 ? TutorialObjective.Move : TutorialObjective.Read,
             HighlightTarget = i switch
             {
+                1 => TutorialHighlightTarget.Player,
                 2 => TutorialHighlightTarget.Menu,
                 3 => TutorialHighlightTarget.Inventory,
                 4 => TutorialHighlightTarget.Quests,

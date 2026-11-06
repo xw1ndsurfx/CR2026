@@ -55,6 +55,73 @@ public sealed class TutorialTests
         Assert.That(loaded.IsValid, Is.True);
     }
     [Test]
+    public void RoyalGuideWorldTargetsValidateAndRoundTrip()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(guide.Steps.Single(x => x.Objective == TutorialObjective.Move).HighlightTarget,
+            Is.EqualTo(TutorialHighlightTarget.Player));
+
+        step.HighlightTarget = TutorialHighlightTarget.WorldTile;
+        Assert.That(guide.IsValid, Is.False, "World tile needs an explicit map.");
+        step.MapId = Guid.NewGuid();
+        step.TargetX = 12;
+        step.TargetY = 19;
+        Assert.That(guide.IsValid, Is.True);
+
+        step.Objective = TutorialObjective.ReachTile;
+        step.TargetRadius = 7;
+        Assert.That(guide.IsValid, Is.False, "Arrival radius must be bounded.");
+        step.TargetRadius = 2;
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 12, 19), Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 14, 21), Is.True, "Arrival radius includes 2 tiles.");
+        Assert.That(step.IsAtTarget(step.MapId, 15, 19), Is.False);
+        Assert.That(step.IsAtTarget(Guid.NewGuid(), 12, 19), Is.False);
+        step.TargetRadius = 0;
+        Assert.That(step.IsAtTarget(step.MapId, 13, 19), Is.False);
+        step.TargetRadius = 2;
+
+        step.HighlightTarget = TutorialHighlightTarget.WorldNpc;
+        Assert.That(guide.IsValid, Is.False, "World NPC needs a descriptor.");
+        step.TargetNpcId = Guid.NewGuid();
+        Assert.That(guide.IsValid, Is.True);
+        var reloaded = JsonConvert.DeserializeObject<TutorialConfiguration>(
+            JsonConvert.SerializeObject(guide))!;
+        var saved = reloaded.Steps[0];
+        Assert.That(saved.HighlightTarget, Is.EqualTo(TutorialHighlightTarget.WorldNpc));
+        Assert.That(saved.TargetNpcId, Is.EqualTo(step.TargetNpcId));
+        Assert.That(saved.MapId, Is.EqualTo(step.MapId));
+        Assert.That(saved.TargetRadius, Is.EqualTo(2));
+        Assert.That(reloaded.IsValid, Is.True);
+
+        saved.HighlightTarget = (TutorialHighlightTarget)900;
+        Assert.That(reloaded.IsValid, Is.False);
+    }
+
+    [Test]
+    public void LegacyGuidesWithoutWorldFieldsStayCompatible()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        var json = JsonConvert.SerializeObject(guide);
+        var legacyJson = Newtonsoft.Json.Linq.JObject.Parse(json);
+        foreach (var record in (Newtonsoft.Json.Linq.JArray)legacyJson["Steps"]!)
+        {
+            var entry = (Newtonsoft.Json.Linq.JObject)record;
+            entry.Remove("TargetX");
+            entry.Remove("TargetY");
+            entry.Remove("TargetRadius");
+            entry.Remove("TargetNpcId");
+        }
+        var loaded = legacyJson.ToObject<TutorialConfiguration>()!;
+        Assert.That(loaded.IsValid, Is.True);
+        Assert.That(loaded.Steps[0].Id, Is.EqualTo(step.Id));
+        Assert.That(loaded.Steps[0].TargetRadius, Is.EqualTo(1));
+    }
+
+    [Test]
     public void TutorialPacketsRoundTripIncludingEditorUnion()
     {
         var options = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(NativeGuidResolver.Instance, StandardResolver.Instance));

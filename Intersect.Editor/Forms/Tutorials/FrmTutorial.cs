@@ -2,7 +2,10 @@ using System.Globalization;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Network.Packets.Tutorials;
+using Intersect.Editor.General;
 using Newtonsoft.Json;
 namespace Intersect.Editor.Forms.Tutorials;
 internal sealed class FrmTutorial : Form
@@ -14,6 +17,18 @@ internal sealed class FrmTutorial : Form
     private readonly TextBox[] _titles = new TextBox[3], _texts = new TextBox[3];
     private readonly ComboBox _scene = new() { Width = 350, DropDownStyle = ComboBoxStyle.DropDownList, DisplayMember = "Name" };
     private readonly Button _save;
+    private readonly RoyalGuidePreview _preview = new();
+    private readonly ComboBox _highlightTarget = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly ComboBox _highlightStyle = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly ComboBox _worldMap = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly ComboBox _worldNpc = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly NumericUpDown _worldX = new() { Minimum = 0, Maximum = 255, Width = 90 };
+    private readonly NumericUpDown _worldY = new() { Minimum = 0, Maximum = 255, Width = 90 };
+    private readonly NumericUpDown _worldRadius = new() { Minimum = 0, Maximum = 6, Width = 90 };
+    private sealed record TargetChoice(Guid Id, string Name)
+    {
+        public override string ToString() => Name;
+    }
     private TutorialStep? _selected;
     private bool _loading, _dirty;
     private readonly System.Windows.Forms.Timer _saveTimeout = new() { Interval = 15000 };
@@ -47,26 +62,156 @@ internal sealed class FrmTutorial : Form
         auto.CheckedChanged += (_, _) => { _config.AutoStart = auto.Checked; _dirty = true; }; toolbar.Controls.Add(auto);
         var tabs = new TabControl { Dock = DockStyle.Fill };
         var settings = new TabPage(T("Objective")); settings.Controls.Add(_properties); tabs.TabPages.Add(settings);
+        tabs.TabPages.Add(BuildVisualGuideTab());
+
         var languages = new[] { "en", "fr", "es" };
         for (var i = 0; i < 3; i++)
         {
             var tab = new TabPage(languages[i].ToUpperInvariant()); var title = _titles[i] = new TextBox { Dock = DockStyle.Top };
             var text = _texts[i] = new TextBox { Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Vertical };
             tab.Controls.Add(text); tab.Controls.Add(title); tabs.TabPages.Add(tab);
-            title.TextChanged += (_, _) => { if (!_loading) _dirty = true; }; text.TextChanged += (_, _) => { if (!_loading) _dirty = true; };
+            var isEnglishTitle = i == 0;
+            title.TextChanged += (_, _) =>
+            {
+                if (_loading) return;
+                _dirty = true;
+                if (isEnglishTitle) _preview.ShowStep(_selected, title.Text);
+            };
+            text.TextChanged += (_, _) => { if (!_loading) _dirty = true; };
         }
         var scenes = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 60 };
         scenes.Controls.Add(new Label { Text = T("Cinematic common event"), AutoSize = true }); scenes.Controls.Add(_scene);
         Controls.Add(tabs); Controls.Add(_steps); Controls.Add(scenes); Controls.Add(toolbar);
         _steps.DisplayMember = "Title";
         _steps.SelectedIndexChanged += (_, _) => { if (_loading) return; Flush(); LoadStep(_steps.SelectedItem as TutorialStep); };
-        _properties.PropertyValueChanged += (_, _) => _dirty = true;
+        _properties.PropertyValueChanged += (_, _) => { _dirty = true; RefreshWorldControls(); };
         _scene.SelectedIndexChanged += (_, _) => { if (!_loading && _selected != null) { _selected.CinematicEventId = (_scene.SelectedItem as SceneChoice)?.Id ?? Guid.Empty; _dirty = true; } };
         FormClosing += (_, e) => { if (!_save.Enabled) { e.Cancel = true; return; } if (_dirty && MessageBox.Show(this, T("Discard unsaved changes?"), Text, MessageBoxButtons.YesNo) != DialogResult.Yes) e.Cancel = true; };
         _saveTimeout.Tick += (_, _) => { _saveTimeout.Stop(); SetPending(false); MessageBox.Show(this, T("Save timed out. Reopen the editor before retrying.")); };
         FormClosed += (_, _) => _saveTimeout.Dispose();
         Select(_config.Steps[0]);
     }
+    private TabPage BuildVisualGuideTab()
+    {
+        var tab = new TabPage(T("Visual guide"));
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 292));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        var controls = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true,
+            Padding = new Padding(12),
+        };
+
+        Label Caption(string title) => new()
+        {
+            Text = T(title), Width = 258, Height = 28,
+            Padding = new Padding(0, 7, 0, 0),
+        };
+        controls.Controls.Add(Caption("Highlight target"));
+        foreach (var value in Enum.GetValues<TutorialHighlightTarget>())
+            _highlightTarget.Items.Add(value);
+        controls.Controls.Add(_highlightTarget);
+
+        controls.Controls.Add(Caption("Highlight shape"));
+        foreach (var value in Enum.GetValues<TutorialHighlightStyle>())
+            _highlightStyle.Items.Add(value);
+        controls.Controls.Add(_highlightStyle);
+
+        controls.Controls.Add(Caption("Target map"));
+        _worldMap.Items.Add(new TargetChoice(Guid.Empty, T("None")));
+        foreach (var map in MapList.OrderedMaps.Where(map => map.MapId != Guid.Empty).DistinctBy(map => map.MapId))
+            _worldMap.Items.Add(new TargetChoice(map.MapId, map.Name));
+        controls.Controls.Add(_worldMap);
+        var openMap = new Button { Text = T("Use open map"), Width = 258, Height = 30 };
+        openMap.Click += (_, _) =>
+        {
+            if (Globals.CurrentMap == null) return;
+            SelectChoice(_worldMap, Globals.CurrentMap.Id);
+        };
+        controls.Controls.Add(openMap);
+
+        controls.Controls.Add(Caption("Target NPC"));
+        _worldNpc.Items.Add(new TargetChoice(Guid.Empty, T("None")));
+        foreach (var npc in NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().OrderBy(npc => npc.Name))
+            _worldNpc.Items.Add(new TargetChoice(npc.Id, npc.Name));
+        controls.Controls.Add(_worldNpc);
+
+        controls.Controls.Add(Caption("Target tile X and Y"));
+        var coords = new FlowLayoutPanel { Width = 258, Height = 30 };
+        coords.Controls.AddRange([new Label { Text = "X", Width = 18, TextAlign = System.Drawing.ContentAlignment.MiddleCenter }, _worldX,
+            new Label { Text = "Y", Width = 18, TextAlign = ContentAlignment.MiddleCenter }, _worldY]);
+        controls.Controls.Add(coords);
+        controls.Controls.Add(Caption("Arrival radius"));
+        controls.Controls.Add(_worldRadius);
+
+        controls.Controls.Add(new Label
+        {
+            Text = T("Preview is illustrative. Select a real map, NPC and coordinates."),
+            Width = 258, Height = 72, AutoSize = false,
+            ForeColor = System.Drawing.Color.DimGray,
+        });
+
+        _highlightTarget.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.HighlightTarget = (TutorialHighlightTarget)_highlightTarget.SelectedItem!);
+        _highlightStyle.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.HighlightStyle = (TutorialHighlightStyle)_highlightStyle.SelectedItem!);
+        _worldMap.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.MapId = (_worldMap.SelectedItem as TargetChoice)?.Id ?? Guid.Empty);
+        _worldNpc.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.TargetNpcId = (_worldNpc.SelectedItem as TargetChoice)?.Id ?? Guid.Empty);
+        _worldX.ValueChanged += (_, _) => ChangeWorld(step => step.TargetX = (int)_worldX.Value);
+        _worldY.ValueChanged += (_, _) => ChangeWorld(step => step.TargetY = (int)_worldY.Value);
+        _worldRadius.ValueChanged += (_, _) => ChangeWorld(step => step.TargetRadius = (int)_worldRadius.Value);
+
+        layout.Controls.Add(controls, 0, 0);
+        layout.Controls.Add(_preview, 1, 0);
+        tab.Controls.Add(layout);
+        return tab;
+    }
+
+    private void ChangeWorld(Action<TutorialStep> change)
+    {
+        if (_loading || _selected == null) return;
+        change(_selected);
+        _dirty = true;
+        _properties.Refresh();
+        _preview.ShowStep(_selected, _titles[0].Text);
+    }
+
+    private void RefreshWorldControls()
+    {
+        var oldLoading = _loading;
+        _loading = true;
+        try
+        {
+            var step = _selected;
+            _highlightTarget.SelectedItem = step?.HighlightTarget ?? TutorialHighlightTarget.None;
+            _highlightStyle.SelectedItem = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
+            SelectChoice(_worldMap, step?.MapId ?? Guid.Empty);
+            SelectChoice(_worldNpc, step?.TargetNpcId ?? Guid.Empty);
+            _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, 255);
+            _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, 255);
+            _worldRadius.Value = Math.Clamp(step?.TargetRadius ?? 1, 0, 6);
+            _preview.ShowStep(step, _titles[0].Text);
+        }
+        finally { _loading = oldLoading; }
+    }
+
+    private static void SelectChoice(ComboBox combo, Guid id)
+    {
+        var choice = combo.Items.Cast<TargetChoice>().FirstOrDefault(item => item.Id == id);
+        if (choice == null)
+        {
+            choice = new TargetChoice(id, id.ToString());
+            combo.Items.Add(choice); // Preserve stale values until manually fixed.
+        }
+        combo.SelectedItem = choice;
+    }
+
     private sealed record SceneChoice(Guid Id, string Name);
     private void Move(int delta)
     { if (_selected == null) return; Flush(); var index = _config.Steps.IndexOf(_selected); var target = index + delta; if (target < 0 || target >= _config.Steps.Count) return; _config.Steps.RemoveAt(index); _config.Steps.Insert(target, _selected); Select(_selected); _dirty = true; }
@@ -78,7 +223,9 @@ internal sealed class FrmTutorial : Form
         if (step != null) for (var i = 0; i < 3; i++) { var lang = new[] { "en", "fr", "es" }[i]; _titles[i].Text = _config.Translations.Get(step.Title, lang); _texts[i].Text = _config.Translations.Get(step.Text, lang); }
         var choices = new List<SceneChoice> { new(Guid.Empty, T("None")) };
         choices.AddRange(EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new SceneChoice(e.Id, e.Name)));
-        _scene.DataSource = choices; _scene.SelectedItem = choices.FirstOrDefault(c => c.Id == step?.CinematicEventId) ?? choices[0]; _loading = false;
+        _scene.DataSource = choices; _scene.SelectedItem = choices.FirstOrDefault(c => c.Id == step?.CinematicEventId) ?? choices[0];
+        RefreshWorldControls();
+        _loading = false;
     }
     private void Flush()
     {
