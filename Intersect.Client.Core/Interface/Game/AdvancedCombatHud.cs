@@ -69,6 +69,13 @@ internal sealed class AdvancedCombatHud : Base
         Hide();
     }
 
+    internal void NotifyBossEnrage()
+    {
+        _recentFeedback = AdvancedCombatFeedback.Exhausted;
+        _feedback.Text = ClientLanguages.Text("BOSS ENRAGED!");
+        _feedbackUntil = Timing.Global.Milliseconds + 2_000;
+    }
+
     internal void Apply(AdvancedCombatStatePacket packet)
     {
         _maximum = Math.Max(1, packet.Maximum);

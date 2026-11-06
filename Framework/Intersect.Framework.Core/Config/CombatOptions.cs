@@ -26,6 +26,9 @@ public partial class CombatOptions
     public int AdvancedCounterStaminaCost { get; set; } = 10;
 
     public int BossTelegraphDurationMs { get; set; } = 650;
+    public int AdvancedBossEnrageHealthPercent { get; set; } = 35;
+    public int AdvancedBossEnrageDamageBonusPercent { get; set; } = 25;
+    public int AdvancedBossEnrageWindupReductionPercent { get; set; } = 20;
 
     public int MinAttackRate { get; set; } = 500; //2 attacks per second
 

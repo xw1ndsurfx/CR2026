@@ -1,6 +1,7 @@
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Combat;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Maps;
@@ -19,6 +20,8 @@ public partial class Npc
     private int _advancedTelegraphAimY;
     private Direction _advancedTelegraphFacing;
     private long _advancedTelegraphEnd;
+    private bool _advancedBossEnraged;
+    private bool _advancedStrikeEnraged;
 
     private void BeginAdvancedTelegraph(Player target)
     {
@@ -42,11 +45,19 @@ public partial class Npc
         if (_advancedTelegraphTiles.Count == 0)
             return;
 
-        var windup = Math.Clamp(
+        var enrage = AdvancedCombatBossPhase.IsEnraged(
+            Descriptor.IsBoss, Descriptor.AdvancedBossEnrageEnabled,
+            GetVital(Vital.Health), GetMaxVital(Vital.Health),
+            Options.Instance.Combat.AdvancedBossEnrageHealthPercent);
+        var enteredEnrage = enrage && !_advancedBossEnraged;
+        _advancedBossEnraged = enrage;
+        _advancedStrikeEnraged = enrage;
+
+        var windup = AdvancedCombatBossPhase.WindupMilliseconds(
             Descriptor.AdvancedTelegraphWindupMs > 0
                 ? Descriptor.AdvancedTelegraphWindupMs
                 : Options.Instance.Combat.BossTelegraphDurationMs,
-            250, 2000);
+            enrage, Options.Instance.Combat.AdvancedBossEnrageWindupReductionPercent);
         _advancedTelegraphMap = target.MapId;
         _advancedTelegraphInstance = target.MapInstanceId;
         _advancedTelegraphAimX = target.X;
@@ -59,6 +70,8 @@ public partial class Npc
         {
             Tiles = _advancedTelegraphTiles.OrderBy(tile => tile.Y).ThenBy(tile => tile.X)
                 .SelectMany(tile => new[] { tile.X, tile.Y }).ToArray(),
+            Enraged = enrage,
+            EnrageStarted = enteredEnrage,
         };
         // Broadcast to the correct map instance so nearby players see the attack.
         PacketSender.SendDataToProximityOnMapInstance(MapId, MapInstanceId, packet);
@@ -119,12 +132,16 @@ public partial class Npc
                 !CanAttack(player, null))
                 continue;
 
-            Attack(player, Descriptor.Damage, 0, (DamageType)Descriptor.DamageType,
+            Attack(player, AdvancedCombatBossPhase.Damage(
+                    Descriptor.Damage, _advancedStrikeEnraged,
+                    Options.Instance.Combat.AdvancedBossEnrageDamageBonusPercent),
+                0, (DamageType)Descriptor.DamageType,
                 (Stat)Descriptor.ScalingStat, Descriptor.Scaling, Descriptor.CritChance,
                 Descriptor.CritMultiplier, isAutoAttack: true);
         }
 
         _advancedTelegraphTiles.Clear();
+        _advancedStrikeEnraged = false;
         // A missed zone still costs one attack cooldown.
         AttackTimer = Timing.Global.Milliseconds + CalculateAttackTime();
         PacketSender.SendEntityAttack(this, CalculateAttackTime());

@@ -150,6 +150,9 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     //Boss configuration
     public bool IsBoss { get; set; }
+
+    // Optional second combat phase for boss NPCs only; existing bosses stay unchanged.
+    public bool AdvancedBossEnrageEnabled { get; set; }
     // Optional monster telegraphs; bosses retain their warning by default.
     public bool AdvancedTelegraphEnabled { get; set; }
 

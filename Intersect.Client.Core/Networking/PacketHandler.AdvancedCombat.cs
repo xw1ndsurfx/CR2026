@@ -7,7 +7,12 @@ namespace Intersect.Client.Networking;
 internal sealed partial class PacketHandler
 {
     public void HandlePacket(IPacketSender sender, CombatTelegraphPacket packet) =>
+    {
         Graphics.ReceiveAdvancedCombatTelegraph(packet);
+        if (packet.EnrageStarted)
+            Intersect.Client.Interface.Interface.EnqueueInGame(gameInterface =>
+                gameInterface.NotifyAdvancedBossEnrage());
+    }
     
     public void HandlePacket(IPacketSender sender, AdvancedCombatStatePacket packet) =>
         Intersect.Client.Interface.Interface.EnqueueInGame(gameInterface =>

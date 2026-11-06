@@ -20,6 +20,7 @@ public partial class FrmNpc
     private readonly DarkNumericUpDown _nudCombatTelegraphRange = new();
     private readonly DarkNumericUpDown _nudCombatTelegraphWindup = new();
     private readonly Panel _combatTelegraphPreview = new();
+    private readonly DarkCheckBox _chkBossEnrage = new();
     private bool _updatingCombatTelegraph;
 
     private static string TelegraphText(string source) =>
@@ -31,7 +32,7 @@ public partial class FrmNpc
         _grpCombatTelegraph.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
         _grpCombatTelegraph.BorderColor = System.Drawing.Color.FromArgb(100, 78, 55);
         _grpCombatTelegraph.ForeColor = System.Drawing.Color.Gainsboro;
-        _grpCombatTelegraph.Size = new System.Drawing.Size(302, 444);
+        _grpCombatTelegraph.Size = new System.Drawing.Size(302, 525);
         _grpCombatTelegraph.TabStop = false;
 
         _chkCombatTelegraph.Text = TelegraphText("Warn before this NPC attacks");
@@ -98,6 +99,22 @@ public partial class FrmNpc
         _combatTelegraphPreview.Paint += PaintCombatTelegraphPreview;
         _grpCombatTelegraph.Controls.Add(_combatTelegraphPreview);
 
+        _chkBossEnrage.Text = TelegraphText("Enrage under 35% HP (boss only)");
+        _chkBossEnrage.SetBounds(12, 438, 275, 25);
+        _chkBossEnrage.CheckedChanged += (_, _) =>
+        {
+            if (!_updatingCombatTelegraph && mEditorItem != null)
+                mEditorItem.AdvancedBossEnrageEnabled = _chkBossEnrage.Checked;
+        };
+        _grpCombatTelegraph.Controls.Add(_chkBossEnrage);
+        _grpCombatTelegraph.Controls.Add(new Label
+        {
+            Text = TelegraphText("Faster warnings and stronger hits in phase two."),
+            Location = new System.Drawing.Point(12, 471),
+            Size = new System.Drawing.Size(275, 35),
+            ForeColor = System.Drawing.Color.Silver,
+        });
+
         pnlContainer.Controls.Add(_grpCombatTelegraph);
         _updatingCombatTelegraph = true;
         try { _cmbCombatTelegraphShape.SelectedIndex = 0; }
@@ -124,6 +141,7 @@ public partial class FrmNpc
             _cmbCombatTelegraphShape.SelectedIndex != (int)CombatTelegraphShape.TargetTile;
         _nudCombatTelegraphWindup.Enabled = enabled;
         _combatTelegraphPreview.Enabled = enabled;
+        _chkBossEnrage.Enabled = _chkIsBoss.Checked;
         _combatTelegraphPreview.Invalidate();
     }
 
@@ -136,6 +154,7 @@ public partial class FrmNpc
         try
         {
             _chkCombatTelegraph.Checked = mEditorItem.AdvancedTelegraphEnabled;
+            _chkBossEnrage.Checked = mEditorItem.AdvancedBossEnrageEnabled;
             _cmbCombatTelegraphShape.SelectedIndex = Math.Clamp(
                 mEditorItem.AdvancedTelegraphShape, 0, _cmbCombatTelegraphShape.Items.Count - 1);
             _nudCombatTelegraphRange.Value = Math.Clamp(

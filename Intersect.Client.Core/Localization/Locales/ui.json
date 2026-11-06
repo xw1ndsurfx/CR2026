@@ -7309,6 +7309,11 @@
       "en": "Dodge ready",
       "fr": "Esquive disponible",
       "es": "Esquiva disponible"
+    },
+    "BOSS ENRAGED!": {
+      "en": "BOSS ENRAGED!",
+      "fr": "BOSS ENRAGÉ !",
+      "es": "¡JEFE ENFURECIDO!"
     }
   }
 }
