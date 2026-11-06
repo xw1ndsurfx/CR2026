@@ -38,8 +38,8 @@ internal static class TutorialRuntime
         foreach (var step in config.Steps)
         {
             if (step.CinematicEventId != Guid.Empty && EventDescriptor.Get(step.CinematicEventId) is not { CommonEvent: true }) throw new InvalidDataException("Select an existing common event for the cinematic.");
-            if ((step.Objective is TutorialObjective.ReachMap or TutorialObjective.ReachTile ||
-                    step.HighlightTarget is TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc) &&
+            if ((step.Objective is TutorialObjective.ReachMap or TutorialObjective.ReachTile or TutorialObjective.InteractEvent ||
+                    step.HighlightTarget is TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent) &&
                 Intersect.Server.Maps.MapController.Get(step.MapId) == null)
                 throw new InvalidDataException("Royal Guide: select an existing map.");
             if ((step.Objective == TutorialObjective.ReachTile || step.HighlightTarget == TutorialHighlightTarget.WorldTile) &&
@@ -48,6 +48,15 @@ internal static class TutorialRuntime
             if (step.HighlightTarget == TutorialHighlightTarget.WorldNpc &&
                 NPCDescriptor.Get(step.TargetNpcId) == null)
                 throw new InvalidDataException("Royal Guide: select an existing NPC.");
+            // Event interactions must resolve to a real non-common map event
+            // on the same map as the authored tutorial destination.
+            if (step.Objective == TutorialObjective.InteractEvent ||
+                step.HighlightTarget == TutorialHighlightTarget.WorldEvent)
+            {
+                var target = EventDescriptor.Get(step.TargetEventId);
+                if (target == null || target.CommonEvent || target.MapId != step.MapId || target.Pages.Count == 0)
+                    throw new InvalidDataException("Royal Guide: select an event on the chosen map.");
+            }
             if (step.Objective == TutorialObjective.Variable && PlayerVariableDescriptor.Get(step.VariableId) == null) throw new InvalidDataException("Select an existing player variable.");
         }
         lock (Gate)
