@@ -788,6 +788,7 @@ public partial class Player : Entity
                 UpdateTutorial();
                 UpdateMount();
                 UpdateIntoxication();
+                UpdateAdvancedCombatStamina(timeMs);
                 UpdateConsumableStatEffects();
                 UpdateJoust();
                 UpdateArchery();

@@ -55,6 +55,16 @@
       "fr": "Aperçu (or : monstre, bleu : cible)",
       "es": "Vista previa (dorado: monstruo, azul: objetivo)"
     },
+    "Enrage under 35% HP (boss only)": {
+      "en": "Enrage under 35% HP (boss only)",
+      "fr": "Rage sous 35 % de vie (boss uniquement)",
+      "es": "Furia bajo 35 % de vida (solo jefes)"
+    },
+    "Faster warnings and stronger hits in phase two.": {
+      "en": "Faster warnings and stronger hits in phase two.",
+      "fr": "Attaques plus rapides et plus puissantes en phase deux.",
+      "es": "Ataques más rápidos y fuertes en fase dos."
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",

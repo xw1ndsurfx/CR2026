@@ -17,7 +17,18 @@ public partial class CombatOptions
     public int AdvancedParryWindowMs { get; set; } = 200;
     public int AdvancedCounterWindowMs { get; set; } = 1500;
     public int AdvancedCounterBonusPercent { get; set; } = 25;
+    // Server-authoritative endurance: no resource persists on player records.
+    public int AdvancedStaminaMaximum { get; set; } = 100;
+    public int AdvancedStaminaRegenPerSecond { get; set; } = 18;
+    public int AdvancedStaminaRegenDelayMs { get; set; } = 1400;
+    public int AdvancedDodgeStaminaCost { get; set; } = 25;
+    public int AdvancedPerfectParryStaminaCost { get; set; } = 15;
+    public int AdvancedCounterStaminaCost { get; set; } = 10;
+
     public int BossTelegraphDurationMs { get; set; } = 650;
+    public int AdvancedBossEnrageHealthPercent { get; set; } = 35;
+    public int AdvancedBossEnrageDamageBonusPercent { get; set; } = 25;
+    public int AdvancedBossEnrageWindupReductionPercent { get; set; } = 20;
 
     public int MinAttackRate { get; set; } = 500; //2 attacks per second
 
