@@ -269,6 +269,11 @@
       "en": "Land three consecutive melee hits on the same monster (E by default). The final hit uses endurance.",
       "fr": "Réussis trois coups de mêlée consécutifs sur le même monstre (E par défaut). Le coup final consomme de l'endurance.",
       "es": "Conecta tres golpes cuerpo a cuerpo seguidos al mismo monstruo (E por defecto). El remate consume resistencia."
+    },
+    "Royal Guide": {
+      "en": "Royal Guide",
+      "fr": "Guide royal",
+      "es": "Guía real"
     }
   }
 }

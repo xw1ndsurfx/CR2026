@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.Tutorials;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Input;
@@ -23,6 +24,25 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _inventoryButtonContainer;
     private readonly Button _inventoryButton;
     private readonly InventoryWindow _inventoryWindow;
+    // Expose the actual compact-menu rows to the Royal Guide; targets follow
+    // the menu when it is resized or repositioned, never hard-coded pixels.
+    internal Base? TutorialMenuTarget(TutorialHighlightTarget target)
+    {
+        if (IsHidden)
+            return _menuToggleButtonContainer;
+        Base? icon = target switch
+        {
+            TutorialHighlightTarget.Inventory => _inventoryButton,
+            TutorialHighlightTarget.Quests => _questsButton,
+            TutorialHighlightTarget.Character => _characterButton,
+            _ => null,
+        };
+        return icon?.Parent ?? this;
+    }
+
+    internal bool TutorialInventoryOpen => _inventoryWindow is { IsVisibleInTree: true };
+    internal bool TutorialQuestsOpen => _questsWindow is { IsVisibleInTree: true };
+
 
     private readonly ImagePanel _spellsButtonContainer;
     private readonly Button _spellsButton;
@@ -637,6 +657,8 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+        if (_questsWindow.IsVisibleInTree)
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Quests);
     }
 
     private void DungeonsButton_Clicked(Base sender, MouseButtonState arguments)
@@ -662,6 +684,8 @@ public partial class MenuContainer : Panel
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleInventoryWindow();
+        if (_inventoryWindow.IsVisibleInTree)
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Inventory);
     }
 
     private void SpellsButton_Clicked(Base sender, MouseButtonState arguments)
