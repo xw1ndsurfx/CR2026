@@ -3,6 +3,7 @@ using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
+using Intersect.Framework.Core;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
