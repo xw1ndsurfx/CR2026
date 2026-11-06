@@ -174,12 +174,14 @@ public partial class FrmNpc
         for (var x = 0; x < grid; x++)
         {
             var brush = x == 4 && y == 5 ? monster :
-                tiles.Contains(new CombatTelegraphTile(x, y)) ? danger :
-                x == 4 && y == 4 ? target : floor;
+                tiles.Contains(new CombatTelegraphTile(x, y)) ? danger : floor;
             var rect = new Rectangle(offsetX + x * tileSize, offsetY + y * tileSize,
                 tileSize - 1, tileSize - 1);
             e.Graphics.FillRectangle(brush, rect);
             e.Graphics.DrawRectangle(border, rect);
+            // The blue target must remain visible even inside the dangerous red zone.
+            if (x == 4 && y == 4)
+                e.Graphics.FillRectangle(target, rect.X + 3, rect.Y + 3, 5, 5);
         }
     }
 }
