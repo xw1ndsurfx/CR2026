@@ -181,7 +181,11 @@ internal sealed class ExportationWindow : Base
         // opens an in-game modal with accurate Exportation rules.
         _helpButton = Button("Help", "?", 1439, 75, 54, 53, 28, ToggleHelp);
         _helpButton.TooltipText = T("Exportation help");
-        _helpOverlay = new ExportationHelpOverlay(this) { IsHidden = true };
+        _helpOverlay = new ExportationHelpOverlay(this)
+        {
+            IsHidden = true, MouseInputEnabled = true, KeyboardInputEnabled = true,
+            ShouldDrawBackground = false,
+        };
         _helpHeading = HelpLabel("HelpHeading", "How Exportation works",
             520, 274, 635, 56, 31);
         HelpLabel("HelpOne", "Help 1: Own an unsunk ship and talk to the merchant.",
