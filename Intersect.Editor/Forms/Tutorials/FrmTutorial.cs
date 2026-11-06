@@ -134,7 +134,7 @@ internal sealed class FrmTutorial : Form
 
         controls.Controls.Add(Caption("Target tile X and Y"));
         var coords = new FlowLayoutPanel { Width = 258, Height = 30 };
-        coords.Controls.AddRange([new Label { Text = "X", Width = 18, TextAlign = ContentAlignment.MiddleCenter }, _worldX,
+        coords.Controls.AddRange([new Label { Text = "X", Width = 18, TextAlign = System.Drawing.ContentAlignment.MiddleCenter }, _worldX,
             new Label { Text = "Y", Width = 18, TextAlign = ContentAlignment.MiddleCenter }, _worldY]);
         controls.Controls.Add(coords);
         controls.Controls.Add(Caption("Arrival radius"));
