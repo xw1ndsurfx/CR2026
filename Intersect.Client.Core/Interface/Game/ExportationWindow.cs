@@ -243,6 +243,7 @@ internal sealed class ExportationWindow : Base
     private sealed class ExportationHelpOverlay(Base parent) : Base(parent, "ExportationHelpOverlay")
     {
         internal Rect Frame { get; set; } = new(0, 0, 1, 1);
+        internal Rect CloseFrame { get; set; } = new(0, 0, 1, 1);
 
         protected override void Render(SkinBase skin)
         {
@@ -253,6 +254,12 @@ internal sealed class ExportationWindow : Base
             skin.Renderer.DrawColor = new Color(255, 42, 29, 21);
             skin.Renderer.DrawFilledRect(new Rect(Frame.X + 5, Frame.Y + 5,
                 Math.Max(1, Frame.Width - 10), Math.Max(1, Frame.Height - 10)));
+            // The close action is a real GWEN button with a drawn surface.
+            skin.Renderer.DrawColor = RoyalGold;
+            skin.Renderer.DrawFilledRect(CloseFrame);
+            skin.Renderer.DrawColor = SealGreen;
+            skin.Renderer.DrawFilledRect(new Rect(CloseFrame.X + 4, CloseFrame.Y + 4,
+                Math.Max(1, CloseFrame.Width - 8), Math.Max(1, CloseFrame.Height - 8)));
             base.Render(skin);
         }
     }
@@ -562,6 +569,8 @@ internal sealed class ExportationWindow : Base
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
             DrawTexture(skin, SpriteDirectory + "destinataire.png", 1128, 427, 62, 63);
             DrawTexture(skin, SpriteDirectory + "bateau.png", 1182, 476, 58, 50);
+            if (s.Stage == DeliveryStage.InTransit && s.BoardedByShip && !s.ArrivedByShip)
+                DrawTexture(skin, SpriteDirectory + "bateau.png", 1267, 306, 55, 50);
             DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1128, 685, 61, 57);
             DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 304, 719, 51, 58);
             // Real configured cargo only: never draw mock items or invented
@@ -798,6 +807,7 @@ internal sealed class ExportationWindow : Base
 
         _helpOverlay.SetBounds(0, 0, _canvas.Width, _canvas.Height);
         _helpOverlay.Frame = SceneRect(480, 250, 721, 522);
+        _helpOverlay.CloseFrame = SceneRect(694, 694, 291, 48);
         foreach (var (control, x, y, w, h, font) in _placements)
         {
             var rect = SceneRect(x, y, w, h);
