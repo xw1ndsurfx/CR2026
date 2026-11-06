@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.Tutorials;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
@@ -20,6 +21,8 @@ internal sealed class AdvancedCombatHud : Base
     private readonly Label _amount;
     private readonly Label _controls;
     private readonly Label _feedback;
+    private readonly Label _training;
+    private TutorialObjective? _trainingObjective;
     private readonly Label _comboLabel;
     private bool _comboEnabled;
     private int _comboHits;
@@ -33,7 +36,7 @@ internal sealed class AdvancedCombatHud : Base
 
     internal AdvancedCombatHud(Canvas parent) : base(parent, nameof(AdvancedCombatHud))
     {
-        SetSize(276, 113);
+        SetSize(276, 137);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
         ShouldDrawBackground = false;
@@ -78,7 +81,27 @@ internal sealed class AdvancedCombatHud : Base
             TextAlign = Pos.Center,
         };
         _comboLabel.SetBounds(12, 88, 252, 20);
+        _training = new Label(this, "AdvancedCombatTrainingHint")
+        {
+            AutoSizeToContents = false, Font = regular, FontSize = 10,
+            TextColorOverride = new Color(a: 255, r: 135, g: 193, b: 212),
+            TextAlign = Pos.Center,
+        };
+        _training.SetBounds(12, 110, 252, 20);
         Hide();
+    }
+
+    internal void SetTrainingHint(TutorialObjective? objective)
+    {
+        _trainingObjective = objective;
+        _training.Text = objective switch
+        {
+            TutorialObjective.CombatDodge => ClientLanguages.Text("Training: dodge (Shift)"),
+            TutorialObjective.CombatPerfectParry => ClientLanguages.Text("Training: parry (Q)"),
+            TutorialObjective.CombatCounterattack => ClientLanguages.Text("Training: counter (R)"),
+            TutorialObjective.CombatFinisher => ClientLanguages.Text("Training: combo (E)"),
+            _ => string.Empty,
+        };
     }
 
     internal void NotifyBossEnrage()

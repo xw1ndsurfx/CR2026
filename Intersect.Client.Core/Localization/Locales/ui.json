@@ -7339,6 +7339,26 @@
       "en": "Combo {0}/3 - {1:0.0}s",
       "fr": "Combo {0}/3 - {1:0.0} s",
       "es": "Combo {0}/3 - {1:0.0} s"
+    },
+    "Training: dodge (Shift)": {
+      "en": "Training: dodge (Shift)",
+      "fr": "Entraînement : esquive (Maj)",
+      "es": "Práctica: esquivar (Mayús)"
+    },
+    "Training: parry (Q)": {
+      "en": "Training: parry (Q)",
+      "fr": "Entraînement : parade (Q)",
+      "es": "Práctica: parada (Q)"
+    },
+    "Training: counter (R)": {
+      "en": "Training: counter (R)",
+      "fr": "Entraînement : riposte (R)",
+      "es": "Práctica: contraataque (R)"
+    },
+    "Training: combo (E)": {
+      "en": "Training: combo (E)",
+      "fr": "Entraînement : combo (E)",
+      "es": "Práctica: combo (E)"
     }
   }
 }

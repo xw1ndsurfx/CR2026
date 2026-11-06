@@ -1,4 +1,6 @@
 using Intersect.Network.Packets.Tutorials;
+using Intersect.Framework.Core.Tutorials;
+using Newtonsoft.Json;
 namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
@@ -10,7 +12,15 @@ public partial class GameInterface
     {
         _tutorialWindow ??= new TutorialWindow(GameCanvas);
         _tutorialWindow.Apply(state);
-        _tutorialEnabled = Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.Framework.Core.Tutorials.TutorialConfiguration>(state.ConfigurationJson)?.Enabled == true;
+        var config = JsonConvert.DeserializeObject<TutorialConfiguration>(state.ConfigurationJson);
+        _tutorialEnabled = config?.Enabled == true;
+        var step = config?.Steps.FirstOrDefault(item => item.Id == state.StepId);
+        // The optional hint lives in the existing endurance HUD. It does
+        // not consume keyboard focus or create a competing tutorial window.
+        _advancedCombatHud?.SetTrainingHint(
+            state.Open && _tutorialEnabled && step != null &&
+            AdvancedCombatTutorialLessons.IsCombatObjective(step.Objective)
+                ? step.Objective : null);
     }
     private void UpdateTutorialGuide() => _tutorialWindow?.RefreshVisibility();
 }
