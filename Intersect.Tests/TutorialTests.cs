@@ -75,6 +75,13 @@ public sealed class TutorialTests
         Assert.That(guide.IsValid, Is.False, "Arrival radius must be bounded.");
         step.TargetRadius = 2;
         Assert.That(guide.IsValid, Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 12, 19), Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 14, 21), Is.True, "Arrival radius includes 2 tiles.");
+        Assert.That(step.IsAtTarget(step.MapId, 15, 19), Is.False);
+        Assert.That(step.IsAtTarget(Guid.NewGuid(), 12, 19), Is.False);
+        step.TargetRadius = 0;
+        Assert.That(step.IsAtTarget(step.MapId, 13, 19), Is.False);
+        step.TargetRadius = 2;
 
         step.HighlightTarget = TutorialHighlightTarget.WorldNpc;
         Assert.That(guide.IsValid, Is.False, "World NPC needs a descriptor.");
