@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Combat;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -2165,12 +2166,30 @@ public abstract partial class Entity : IEntity
             );
         }
 
-        if (Options.Instance.Combat.EnableAdvancedCombat && baseDamage > 0 && isAutoAttack &&
-            this is Player counterAttacker && enemy is Npc counterTarget &&
-            counterAttacker.ConsumeAdvancedCounter(counterTarget.Id))
+        // Retaliatory hits retain the existing counter bonus but must not also
+        // build a normal three-hit combo.
+        var wasAdvancedCounter = Options.Instance.Combat.EnableAdvancedCombat &&
+            baseDamage > 0 && isAutoAttack && this is Player counterCandidate &&
+            enemy is Npc counterTarget && counterCandidate.ConsumeAdvancedCounter(counterTarget.Id);
+        if (wasAdvancedCounter)
         {
             baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(
                 baseDamage * (1.0 + Math.Clamp(Options.Instance.Combat.AdvancedCounterBonusPercent, 0, 100) / 100.0)));
+        }
+
+        // Only ordinary direct PvE weapon/unarmed attacks qualify for the
+        // player combo. Compute bonus after armor/mastery and before hit.
+        var comboBonus = 0;
+        var comboFinisherBonus = false;
+        if (!wasAdvancedCounter && isAutoAttack && baseDamage > 0 &&
+            this is Player comboPlayer && enemy is Npc comboNpc &&
+            Options.Instance.Combat.EnableAdvancedCombat &&
+            Options.Instance.Combat.AdvancedPlayerCombosEnabled)
+        {
+            comboBonus = comboPlayer.GetAdvancedPlayerComboBonus(comboNpc);
+            if (comboBonus > 0)
+                baseDamage = AdvancedPlayerCombo.ApplyBonusLong(baseDamage, comboBonus);
+            comboFinisherBonus = comboBonus > 0;
         }
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2248,6 +2267,15 @@ public abstract partial class Entity : IEntity
                 if (appliedHealthDamage > 0 && (isAutoAttack || masteryWeapon != null) && this is Player masteryAttacker && enemy is Npc masteryTarget)
                     masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
+                if (!wasAdvancedCounter && isAutoAttack && appliedHealthDamage > 0 &&
+                    this is Player comboAttacker && enemy is Npc comboVictim &&
+                    Options.Instance.Combat.EnableAdvancedCombat &&
+                    Options.Instance.Combat.AdvancedPlayerCombosEnabled)
+                {
+                    comboAttacker.RegisterAdvancedPlayerComboHit(
+                        comboVictim, comboFinisherBonus &&
+                        comboAttacker.GetAdvancedPlayerComboNextStepForFeedback(comboVictim) == 3);
+                }
                 switch (damageType)
                 {
                     case DamageType.Physical:

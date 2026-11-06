@@ -9,6 +9,8 @@ public enum AdvancedCombatFeedback : byte
     PerfectParry = 2,
     CounterAttack = 3,
     Exhausted = 4,
+    ComboHit = 5,
+    ComboFinisher = 6,
 }
 
 [MessagePackObject]
@@ -34,4 +36,8 @@ public sealed class AdvancedCombatStatePacket : IntersectPacket
     [Key(3)] public int Maximum { get; set; }
     [Key(4)] public int DodgeCooldownMs { get; set; }
     [Key(5)] public AdvancedCombatFeedback Feedback { get; set; }
+    // Extra fields are optional, preserving existing MessagePack indexes.
+    [Key(6)] public bool ComboEnabled { get; set; }
+    [Key(7)] public int ComboHits { get; set; }
+    [Key(8)] public int ComboRemainingMs { get; set; }
 }

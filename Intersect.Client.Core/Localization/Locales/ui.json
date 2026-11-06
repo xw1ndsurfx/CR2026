@@ -7324,6 +7324,21 @@
       "en": "INCOMING SPELL - MOVE!",
       "fr": "SORT EN APPROCHE - BOUGE !",
       "es": "¡HECHIZO EN CAMINO - MUÉVETE!"
+    },
+    "COMBO!": {
+      "en": "COMBO!",
+      "fr": "ENCHAÎNEMENT !",
+      "es": "¡COMBO!"
+    },
+    "FINISHER 3/3!": {
+      "en": "FINISHER 3/3!",
+      "fr": "COUP FINAL 3/3 !",
+      "es": "¡REMATE 3/3!"
+    },
+    "Combo {0}/3 - {1:0.0}s": {
+      "en": "Combo {0}/3 - {1:0.0}s",
+      "fr": "Combo {0}/3 - {1:0.0} s",
+      "es": "Combo {0}/3 - {1:0.0} s"
     }
   }
 }

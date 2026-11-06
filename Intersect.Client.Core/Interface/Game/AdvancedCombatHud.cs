@@ -20,6 +20,10 @@ internal sealed class AdvancedCombatHud : Base
     private readonly Label _amount;
     private readonly Label _controls;
     private readonly Label _feedback;
+    private readonly Label _comboLabel;
+    private bool _comboEnabled;
+    private int _comboHits;
+    private long _comboDeadline;
 
     private int _current = 100;
     private int _maximum = 100;
@@ -29,7 +33,7 @@ internal sealed class AdvancedCombatHud : Base
 
     internal AdvancedCombatHud(Canvas parent) : base(parent, nameof(AdvancedCombatHud))
     {
-        SetSize(276, 91);
+        SetSize(276, 113);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
         ShouldDrawBackground = false;
@@ -66,7 +70,14 @@ internal sealed class AdvancedCombatHud : Base
             TextColorOverride = new Color(a: 255, r: 246, g: 209, b: 123),
             TextAlign = Pos.Center,
         };
-        _feedback.SetBounds(12, 71, 252, 17);
+        _feedback.SetBounds(12, 70, 252, 17);
+        _comboLabel = new Label(this, "AdvancedCombatPlayerComboProgress")
+        {
+            AutoSizeToContents = false, Font = regular, FontSize = 10,
+            TextColorOverride = new Color(a: 255, r: 221, g: 182, b: 98),
+            TextAlign = Pos.Center,
+        };
+        _comboLabel.SetBounds(12, 88, 252, 20);
         Hide();
     }
 
@@ -99,6 +110,9 @@ internal sealed class AdvancedCombatHud : Base
         _maximum = Math.Max(1, packet.Maximum);
         _current = Math.Clamp(packet.Current, 0, _maximum);
         _dodgeReadyAt = Timing.Global.Milliseconds + Math.Clamp(packet.DodgeCooldownMs, 0, 20_000);
+        _comboEnabled = packet.ComboEnabled;
+        _comboHits = Math.Clamp(packet.ComboHits, 0, 2);
+        _comboDeadline = Timing.Global.Milliseconds + Math.Clamp(packet.ComboRemainingMs, 0, 6000);
         _amount.Text = $"{_current}/{_maximum}";
         if (packet.Feedback != AdvancedCombatFeedback.None)
         {
@@ -110,6 +124,8 @@ internal sealed class AdvancedCombatHud : Base
                 AdvancedCombatFeedback.PerfectParry => ClientLanguages.Text("PERFECT PARRY!"),
                 AdvancedCombatFeedback.CounterAttack => ClientLanguages.Text("COUNTERATTACK!"),
                 AdvancedCombatFeedback.Exhausted => ClientLanguages.Text("NOT ENOUGH ENDURANCE"),
+                AdvancedCombatFeedback.ComboHit => ClientLanguages.Text("COMBO!"),
+                AdvancedCombatFeedback.ComboFinisher => ClientLanguages.Text("FINISHER 3/3!"),
                 _ => string.Empty,
             };
         }
@@ -129,6 +145,12 @@ internal sealed class AdvancedCombatHud : Base
             : ClientLanguages.Text("Dodge ready");
         if (Timing.Global.Milliseconds >= _feedbackUntil)
             _feedback.Text = string.Empty;
+
+        var comboRemaining = Math.Max(0L, _comboDeadline - Timing.Global.Milliseconds);
+        _comboLabel.Text = _comboEnabled && _comboHits > 0 && comboRemaining > 0
+            ? ClientLanguages.Format("Combo {0}/3 - {1:0.0}s",
+                _comboHits, comboRemaining / 1000d)
+            : string.Empty;
     }
 
     protected override void Render(SkinBase skin)

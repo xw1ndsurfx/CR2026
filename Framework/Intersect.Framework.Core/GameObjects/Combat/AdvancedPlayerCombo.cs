@@ -14,6 +14,9 @@ public sealed class AdvancedPlayerCombo
 
     public int CompletedHits { get; private set; }
 
+    public bool IsOnMap(Guid mapId, Guid instanceId) =>
+        CompletedHits == 0 || _mapId == mapId && _instanceId == instanceId;
+
     public static int ClampWindow(int windowMs) => Math.Clamp(windowMs, 600, 6000);
 
     public bool IsActive(long nowMs, int windowMs) =>
