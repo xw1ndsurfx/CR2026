@@ -2,7 +2,17 @@ using Intersect.Localization;
 using Newtonsoft.Json;
 namespace Intersect.Framework.Core.Tutorials;
 
-public enum TutorialObjective { Read, Move, ReachMap, Variable }
+public enum TutorialObjective
+{
+    Read = 0,
+    Move = 1,
+    ReachMap = 2,
+    Variable = 3,
+    CombatDodge = 4,
+    CombatPerfectParry = 5,
+    CombatCounterattack = 6,
+    CombatFinisher = 7,
+}
 public sealed class TutorialStep
 {
     [System.ComponentModel.Browsable(false)] public Guid Id { get; set; } = Guid.NewGuid();

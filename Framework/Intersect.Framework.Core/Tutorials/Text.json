@@ -214,6 +214,61 @@
       "en": "Save timed out. Reopen the editor before retrying.",
       "fr": "Délai d’enregistrement dépassé. Rouvre l’éditeur avant de réessayer.",
       "es": "Se agotó el tiempo de guardado. Vuelve a abrir el editor antes de intentarlo de nuevo."
+    },
+    "Add combat lessons": {
+      "en": "Add combat lessons",
+      "fr": "Ajouter les leçons de combat",
+      "es": "Añadir lecciones de combate"
+    },
+    "Combat lessons already added.": {
+      "en": "Combat lessons already added.",
+      "fr": "Les leçons de combat sont déjà ajoutées.",
+      "es": "Las lecciones de combate ya están añadidas."
+    },
+    "Combat lessons require advanced combat to be enabled.": {
+      "en": "Combat lessons require advanced combat to be enabled.",
+      "fr": "Les leçons nécessitent le combat avancé activé.",
+      "es": "Las lecciones requieren el combate avanzado activado."
+    },
+    "Combat drill: dodge": {
+      "en": "Combat drill: dodge",
+      "fr": "Entraînement : esquive",
+      "es": "Práctica: esquivar"
+    },
+    "Dodge a monster's attack by pressing Left Shift while moving (default key). Watch your endurance and find a safe tile.": {
+      "en": "Dodge a monster's attack by pressing Left Shift while moving (default key). Watch your endurance and find a safe tile.",
+      "fr": "Esquive l'attaque d'un monstre avec Maj gauche en te déplaçant (touche par défaut). Surveille ton endurance et trouve une case sûre.",
+      "es": "Esquiva el ataque de un monstruo pulsando Mayús izquierda mientras te mueves (tecla predeterminada). Vigila tu resistencia y busca una casilla segura."
+    },
+    "Combat drill: perfect parry": {
+      "en": "Combat drill: perfect parry",
+      "fr": "Entraînement : parade parfaite",
+      "es": "Práctica: parada perfecta"
+    },
+    "Equip a shield and block just as a monster strikes (Q by default) to land a perfect parry.": {
+      "en": "Equip a shield and block just as a monster strikes (Q by default) to land a perfect parry.",
+      "fr": "Équipe un bouclier et bloque juste au moment où le monstre frappe (Q par défaut) pour réussir une parade parfaite.",
+      "es": "Equipa un escudo y bloquea justo cuando ataque el monstruo (Q por defecto) para lograr una parada perfecta."
+    },
+    "Combat drill: counterattack": {
+      "en": "Combat drill: counterattack",
+      "fr": "Entraînement : riposte",
+      "es": "Práctica: contraataque"
+    },
+    "After a perfect parry, press R (default key) to counterattack before your opening expires.": {
+      "en": "After a perfect parry, press R (default key) to counterattack before your opening expires.",
+      "fr": "Après une parade parfaite, appuie sur R (touche par défaut) pour riposter avant la fin de la fenêtre.",
+      "es": "Después de una parada perfecta, pulsa R (tecla predeterminada) para contraatacar antes de que termine la oportunidad."
+    },
+    "Combat drill: finisher": {
+      "en": "Combat drill: finisher",
+      "fr": "Entraînement : coup final",
+      "es": "Práctica: remate"
+    },
+    "Land three consecutive melee hits on the same monster (E by default). The final hit uses endurance.": {
+      "en": "Land three consecutive melee hits on the same monster (E by default). The final hit uses endurance.",
+      "fr": "Réussis trois coups de mêlée consécutifs sur le même monstre (E par défaut). Le coup final consomme de l'endurance.",
+      "es": "Conecta tres golpes cuerpo a cuerpo seguidos al mismo monstruo (E por defecto). El remate consume resistencia."
     }
   }
 }
