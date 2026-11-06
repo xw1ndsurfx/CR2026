@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Intersect.Framework.Core.Tutorials;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using GdiGraphics = System.Drawing.Graphics;
 
 namespace Intersect.Editor.Forms.Tutorials;
@@ -86,7 +87,11 @@ internal sealed class RoyalGuidePreview : Control
         DrawActor(g, 390, 280, Color.FromArgb(215, 224, 231));
         DrawActor(g, 573, 170, Color.FromArgb(221, 182, 112));
         g.DrawString("Joueur", tinyFont, textBrush, 371, 303);
-        g.DrawString("PNJ", tinyFont, textBrush, 562, 195);
+        var npcName = _step is { TargetNpcId: var npcId } && npcId != Guid.Empty
+            ? NPCDescriptor.Get(npcId)?.Name ?? "PNJ"
+            : "PNJ";
+        if (npcName.Length > 17) npcName = npcName[..14] + "...";
+        g.DrawString(npcName, tinyFont, textBrush, 554, 195);
 
         using (var panel = new SolidBrush(Color.FromArgb(228, 42, 29, 26)))
         {
@@ -118,7 +123,10 @@ internal sealed class RoyalGuidePreview : Control
             TutorialHighlightTarget.Hotbar => new(282, 424, 238, 28),
             TutorialHighlightTarget.Player => new(365, 254, 50, 55),
             TutorialHighlightTarget.WorldNpc => new(547, 142, 54, 60),
-            TutorialHighlightTarget.WorldTile => new(450, 230, 62, 47),
+            TutorialHighlightTarget.WorldTile => new(
+                179 + Math.Clamp((_step?.TargetX ?? 0) / 31f, 0f, 1f) * 345f,
+                94 + Math.Clamp((_step?.TargetY ?? 0) / 31f, 0f, 1f) * 226f,
+                62, 47),
             _ => new(0, 0, 0, 0),
         };
         if (rect.Width > 0)
@@ -156,7 +164,7 @@ internal sealed class RoyalGuidePreview : Control
         if (title.Length > 49) title = title[..46] + "...";
         g.DrawString(title, labelFont, textBrush, 181, 369);
         g.DrawString(_step?.Objective == TutorialObjective.ReachTile
-            ? "Approchez-vous de la case ciblée."
+            ? $"Approchez de X:{_step?.TargetX} Y:{_step?.TargetY} (rayon {_step?.TargetRadius})."
             : highlight == TutorialHighlightTarget.WorldNpc
                 ? "Parlez au personnage indiqué."
                 : highlight == TutorialHighlightTarget.Player
