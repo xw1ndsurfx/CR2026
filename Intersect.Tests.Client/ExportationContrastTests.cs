@@ -1,6 +1,7 @@
 using System.Reflection;
 using Intersect.Client.Interface.Game;
 using Intersect.Client.Framework.Graphics;
+using Intersect.Framework.Core.Exportation;
 using NUnit.Framework;
 
 namespace Intersect.Tests.Client;
@@ -79,6 +80,80 @@ public sealed class ExportationContrastTests
         var scale = ExportationWindow.ScaleForMeasuredFont(desiredHeight, measuredHeight);
         Assert.That(scale, Is.EqualTo(expectedScale).Within(.001f),
             "Bitmap glyphs must be measured after global UI font size overrides.");
+    }
+
+    [Test]
+    public void CrateCountsMatchActualPackedItemsByGroup()
+    {
+        var wood = Guid.NewGuid();
+        var potion = Guid.NewGuid();
+        var provisions = Guid.NewGuid();
+        var route = new ExportationRoute
+        {
+            Lines =
+            [
+                new() { ItemId = wood, Group = CargoGroup.Materials, Quantity = 5 },
+                new() { ItemId = potion, Group = CargoGroup.Fragile, Quantity = 2 },
+                new() { ItemId = provisions, Group = CargoGroup.Provisions, Quantity = 7 },
+            ],
+        };
+        var run = new ExportationRun
+        {
+            Packed = new Dictionary<Guid, int>
+            {
+                [wood] = 4,
+                [potion] = 2,
+                [provisions] = 3,
+            },
+        };
+        var counts = ExportationWindow.CountCrates(route, run);
+        Assert.Multiple(() =>
+        {
+            Assert.That(counts.MaterialsPacked, Is.EqualTo(4));
+            Assert.That(counts.MaterialsTotal, Is.EqualTo(5));
+            Assert.That(counts.OtherPacked, Is.EqualTo(5));
+            Assert.That(counts.OtherTotal, Is.EqualTo(9));
+        });
+    }
+
+    [Test]
+    public void VoyageInstructionsNeverPretendThePlayerDockedEarly()
+    {
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Preparing,
+            false, false)[1], Is.EqualTo("2. Seal the cargo"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            false, false)[1], Is.EqualTo("2. Board your ship"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            true, false)[1], Is.EqualTo("2. Sailing to destination"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            true, true)[1], Is.EqualTo("2. Sea arrival confirmed"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Delivered,
+            true, true)[2], Is.EqualTo("3. Rewards received"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Lost,
+            false, false)[0], Is.EqualTo("1. Cargo lost"));
+    }
+
+    [Test]
+    public void HelpIsAnActualInteractiveControlRatherThanArtwork()
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var window = typeof(ExportationWindow);
+        foreach (var field in new[]
+        {
+            "_helpOverlay", "_helpButton", "_helpClose", "_materialCrate",
+            "_otherCrate", "_step2", "_step3", "_shelfSummary",
+        })
+            Assert.That(window.GetField(field, flags), Is.Not.Null,
+                $"Missing real Exportation UI control {field}");
+    }
+
+    [Test]
+    public void ExportationHelpIsLocalized()
+    {
+        Assert.That(ExportationText.Get("How Exportation works", "fr"),
+            Is.EqualTo("Comment fonctionne l’Exportation"));
+        Assert.That(ExportationText.Get("Close help", "es"),
+            Is.EqualTo("Cerrar ayuda"));
     }
 
     private sealed class TestBitmapFont(params int[] sizes) : IFont

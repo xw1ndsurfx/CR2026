@@ -889,6 +889,166 @@
       "en": "Your Exportation profession level is too low for this route.",
       "fr": "Ton niveau dans le métier Exportation est insuffisant pour cette route.",
       "es": "Tu nivel de profesión Exportación es insuficiente para esta ruta."
+    },
+    "No item reward": {
+      "en": "No item reward",
+      "fr": "Aucun objet en récompense",
+      "es": "Sin recompensa de objeto"
+    },
+    "Empty crate": {
+      "en": "Empty crate",
+      "fr": "Caisse vide",
+      "es": "Caja vacía"
+    },
+    "Materials: {0}/{1}": {
+      "en": "Materials: {0}/{1}",
+      "fr": "Matériaux : {0}/{1}",
+      "es": "Materiales: {0}/{1}"
+    },
+    "Other cargo: {0}/{1}": {
+      "en": "Other cargo: {0}/{1}",
+      "fr": "Autres marchandises : {0}/{1}",
+      "es": "Otras mercancías: {0}/{1}"
+    },
+    "Select the goods below": {
+      "en": "Select the goods below",
+      "fr": "Choisissez les marchandises ci-dessous",
+      "es": "Selecciona las mercancías abajo"
+    },
+    "Cargo manifest": {
+      "en": "Cargo manifest",
+      "fr": "Manifeste de cargaison",
+      "es": "Manifiesto de carga"
+    },
+    "Pack {0}: {1}/{2}": {
+      "en": "Pack {0}: {1}/{2}",
+      "fr": "Préparer {0} : {1}/{2}",
+      "es": "Preparar {0}: {1}/{2}"
+    },
+    "1. Prepare the merchant order": {
+      "en": "1. Prepare the merchant order",
+      "fr": "1. Préparez la commande",
+      "es": "1. Prepara el pedido"
+    },
+    "2. Seal the cargo": {
+      "en": "2. Seal the cargo",
+      "fr": "2. Scellez la cargaison",
+      "es": "2. Sella la carga"
+    },
+    "3. Sail and deliver the order": {
+      "en": "3. Sail and deliver the order",
+      "fr": "3. Naviguez puis livrez",
+      "es": "3. Navega y entrega"
+    },
+    "1. Cargo sealed": {
+      "en": "1. Cargo sealed",
+      "fr": "1. Cargaison scellée",
+      "es": "1. Carga sellada"
+    },
+    "2. Sea arrival confirmed": {
+      "en": "2. Sea arrival confirmed",
+      "fr": "2. Accostage confirmé",
+      "es": "2. Llegada confirmada"
+    },
+    "2. Sailing to destination": {
+      "en": "2. Sailing to destination",
+      "fr": "2. Navigation en cours",
+      "es": "2. Navegando al destino"
+    },
+    "2. Board your ship": {
+      "en": "2. Board your ship",
+      "fr": "2. Embarquez sur votre bateau",
+      "es": "2. Sube a tu barco"
+    },
+    "3. Speak to the recipient": {
+      "en": "3. Speak to the recipient",
+      "fr": "3. Parlez au destinataire",
+      "es": "3. Habla con el destinatario"
+    },
+    "1. Cargo lost": {
+      "en": "1. Cargo lost",
+      "fr": "1. Cargaison perdue",
+      "es": "1. Carga perdida"
+    },
+    "2. Return to the merchant": {
+      "en": "2. Return to the merchant",
+      "fr": "2. Retournez voir le marchand",
+      "es": "2. Regresa al comerciante"
+    },
+    "3. Prepare the order again": {
+      "en": "3. Prepare the order again",
+      "fr": "3. Recommencez la commande",
+      "es": "3. Prepara el pedido de nuevo"
+    },
+    "1. Sea voyage completed": {
+      "en": "1. Sea voyage completed",
+      "fr": "1. Traversée terminée",
+      "es": "1. Viaje marítimo terminado"
+    },
+    "2. Cargo delivered": {
+      "en": "2. Cargo delivered",
+      "fr": "2. Cargaison livrée",
+      "es": "2. Carga entregada"
+    },
+    "3. Rewards received": {
+      "en": "3. Rewards received",
+      "fr": "3. Récompenses reçues",
+      "es": "3. Recompensas recibidas"
+    },
+    "1. Order closed": {
+      "en": "1. Order closed",
+      "fr": "1. Commande fermée",
+      "es": "1. Pedido cerrado"
+    },
+    "2. No active shipment": {
+      "en": "2. No active shipment",
+      "fr": "2. Aucune livraison active",
+      "es": "2. Sin envío activo"
+    },
+    "3. Speak to the merchant": {
+      "en": "3. Speak to the merchant",
+      "fr": "3. Parlez au marchand",
+      "es": "3. Habla con el comerciante"
+    },
+    "Exportation help": {
+      "en": "Exportation help",
+      "fr": "Aide Exportation",
+      "es": "Ayuda de Exportación"
+    },
+    "How Exportation works": {
+      "en": "How Exportation works",
+      "fr": "Comment fonctionne l’Exportation",
+      "es": "Cómo funciona Exportación"
+    },
+    "Help 1: Own an unsunk ship and talk to the merchant.": {
+      "en": "Help 1: Own an unsunk ship and talk to the merchant.",
+      "fr": "1. Possédez un bateau non coulé et parlez au marchand.",
+      "es": "1. Ten un barco no hundido y habla con el comerciante."
+    },
+    "Help 2: Select goods to fill the merchant's crates.": {
+      "en": "Help 2: Select goods to fill the merchant's crates.",
+      "fr": "2. Sélectionnez les objets pour remplir les caisses.",
+      "es": "2. Selecciona objetos para llenar las cajas."
+    },
+    "Help 3: Seal the order and board your ship.": {
+      "en": "Help 3: Seal the order and board your ship.",
+      "fr": "3. Scellez la commande puis embarquez sur votre bateau.",
+      "es": "3. Sella el pedido y embarca en tu barco."
+    },
+    "Help 4: Sail, dock, and speak to the recipient for rewards.": {
+      "en": "Help 4: Sail, dock, and speak to the recipient for rewards.",
+      "fr": "4. Naviguez, accostez et livrez au destinataire.",
+      "es": "4. Navega, atraca y entrega al destinatario."
+    },
+    "Death or shipwreck loses the cargo.": {
+      "en": "Death or shipwreck loses the cargo.",
+      "fr": "La mort ou le naufrage fait perdre la cargaison.",
+      "es": "La muerte o el naufragio hace perder la carga."
+    },
+    "Close help": {
+      "en": "Close help",
+      "fr": "Fermer l’aide",
+      "es": "Cerrar ayuda"
     }
   }
 }

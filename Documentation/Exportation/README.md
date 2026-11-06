@@ -92,3 +92,44 @@ Validation manuelle à faire après build : tester 1600×900 et 1280×720
 avec de vrais GFX (jour et nuit); navire possédé et amarré ailleurs;
 aucun bateau; bateau coulé; puis préparation, scellement, embarquement,
 accostage, livraison et mort/naufrage.
+
+
+
+## Interface Exportation — intégration de la maquette V2
+
+La maquette est maintenant un **véritable écran C# jouable** dans
+`Intersect.Client.Core/Interface/Game/ExportationWindow.cs`. Aucun nouvel
+écran figé ni fausse monnaie/EXP n'est utilisé : le GFX médiéval approuvé est
+conservé et enrichi par des contrôles dynamiques.
+
+- Bon de commande : bandeau rouge, détails du marchand, noms de cartes,
+  icônes des marchandises, quantités empaquetées et mini-barres réelles.
+- Caisses : matériaux à gauche, autres groupes à droite. Jusqu'à quatre
+  icônes par caisse représentent les objets réellement empaquetés, avec
+  les compteurs exacts et « OK » uniquement si le groupe est complet.
+- Rangée d'objets : sélection visible, icônes, état restant et info-bulles
+  sur les boutons cliquables. Les boutons de retrait restent accessibles.
+- Livraison : récompense (icône réelle de l'objet), EXP du métier
+  serveur, statut bateau possédé et trois étapes dépendant de l'état réel
+  de la cargaison (préparation, scellement, embarquement, accostage, remise).
+- Navigation : bouton principal vert lorsqu'une action est disponible,
+  avertissement de perte, bouton « ? » fonctionnel ouvrant une aide
+  superposée et fermable.
+- Multilingue : textes français / anglais / espagnol.
+
+### QA visuelle / fonctionnelle
+
+1. Installer le pack approuvé `assets.json` et lancer le client compilé.
+2. Ouvrir Exportation à 1672×941, 1600×900 et 1280×720, de jour et de nuit.
+3. Vérifier langues FR/EN/ES et textes longs : ni débordement ni recouvrement.
+4. Vérifier un ordre à un objet puis à plusieurs objets avec pagination.
+5. Cliquer sur les objets, retirer un objet et contrôler les compteurs,
+   barres, caisses et info-bulles.
+6. Tester « ? » puis « Fermer l'aide » et l'impossibilité de cliquer sur
+   une caisse derrière l'aide.
+7. Sceller, embarquer, accoster et livrer. L'EXP et les récompenses
+   doivent provenir des données serveur, jamais du dessin d'exemple.
+8. Tester la perte par mort ou naufrage et les étapes de réessai.
+
+Les tests NUnit des compteurs et des étapes sont des garde-fous ; les
+véritables GFX, absents du dépôt, nécessitent une inspection dans le jeu.

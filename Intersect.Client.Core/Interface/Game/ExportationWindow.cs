@@ -39,6 +39,10 @@ internal sealed class ExportationWindow : Base
     private static readonly Color DarkInk = new(255, 69, 41, 23);
     private static readonly Color Gold = new(255, 255, 222, 134);
     private static readonly Color Green = new(255, 142, 236, 107);
+    private static readonly Color RoyalGold = new(255, 225, 174, 82);
+    private static readonly Color SealGreen = new(255, 40, 112, 47);
+    private static readonly Color RibbonRed = new(255, 101, 24, 30);
+    private static readonly Color WarningRed = new(255, 145, 33, 39);
 
     private readonly Canvas _canvas;
     private readonly Action<Guid, CargoGroup, int> _packRequested;
@@ -55,7 +59,13 @@ internal sealed class ExportationWindow : Base
     private readonly Button[] _removeButtons = new Button[OrderSize];
     private readonly Label _merchant, _recipient, _routeName, _boat, _reward, _experience;
     private readonly Label _level, _professionXp, _progress, _warning, _sourceMap, _destinationMap, _status, _shelfPageLabel, _orderPageLabel;
-    private readonly Button _seal, _nextGoods, _previousGoods, _nextOrder, _previousOrder;
+    private readonly Button _seal, _nextGoods, _previousGoods, _nextOrder, _previousOrder, _helpButton;
+    private readonly Label _materialCrate, _otherCrate, _step2, _step3;
+    private readonly Label _merchantInstruction, _shelfSummary, _leftCrateDone, _rightCrateDone;
+    private readonly ExportationHelpOverlay _helpOverlay;
+    private readonly Label _helpHeading;
+    private readonly Button _helpClose;
+    private Guid _selectedGoodItem;
     private readonly List<(Base Control, string Source)> _translated = [];
     private ExportationRoute? _route;
     private ExportationRun? _run;
@@ -93,21 +103,21 @@ internal sealed class ExportationWindow : Base
         _level = Title("Profession", "Level {0}", 1245, 78, 210, 33, 22);
         _professionXp = Title("ProfessionXp", "", 1245, 112, 252, 31, 16);
 
-        Title("OrderTitle", "ORDER SLIP", 143, 199, 322, 45, 28, dark: true, center: true);
-        Title("CrateTitle", "PACK THE CRATES", 510, 200, 532, 43, 28, center: true);
+        Title("OrderTitle", "ORDER SLIP", 143, 205, 322, 53, 28, center: true);
+        Title("CrateTitle", "PACK THE CRATES", 510, 200, 532, 43, 29, center: true);
         Title("DeliveryTitle", "DELIVERY", 1099, 200, 395, 44, 27, center: true);
         Title("Instruction", "Click goods to pack a matching crate",
-            526, 246, 526, 32, 17, center: true);
-        Title("Provided", "Goods provided by the merchant",
-            150, 686, 310, 35, 17, dark: true, center: true);
-        Title("AtDelivery", "At delivery", 1155, 543, 300, 34, 20, center: true);
+            526, 244, 526, 38, 20, center: true);
+        _merchantInstruction = Title("Provided", "Goods provided by the merchant",
+            145, 684, 315, 50, 18, dark: true, center: true, wrap: true);
+        Title("AtDelivery", "At delivery", 1155, 539, 300, 39, 23, center: true);
 
         // Preserve the portrait, parchment and route art, while adding the
         // missing headings from the original concept in their own empty areas.
         Title("MerchantCaption", "MERCHANT", 252, 280, 204, 23, 14, dark: true);
         _merchant = Title("Merchant", "", 252, 308, 215, 40, 22, dark: true, wrap: true);
         Title("DestinationCaption", "DESTINATION", 252, 350, 204, 22, 14, dark: true);
-        _routeName = Title("Route", "", 252, 371, 215, 29, 17, dark: true, wrap: true);
+        _routeName = Title("Route", "", 247, 370, 211, 38, 20, dark: true, wrap: true);
         Title("GoodsCaption", "REQUESTED GOODS",
             144, 400, 319, 23, 17, dark: true, center: true);
 
@@ -116,14 +126,21 @@ internal sealed class ExportationWindow : Base
             1334, 349, 178, 52, 17, center: true, wrap: true);
         _recipient = Title("Recipient", "", 1211, 423, 284, 54, 19, wrap: true);
         _boat = Title("Boat", "", 1183, 485, 283, 35, 19, center: true);
-        _reward = Title("Reward", "", 1196, 578, 302, 36, 21, center: true, wrap: true);
+        _reward = Title("Reward", "", 1208, 576, 266, 44, 22, center: true, wrap: true);
         _experience = Title("Experience", "",
-            1200, 613, 298, 36, 19, center: true);
-        Title("AfterSeal", "After sealing", 1194, 683, 268, 32, 18, dark: true);
-        _status = Title("Status", "", 1170, 715, 326, 47, 17, dark: true, wrap: true);
-        _progress = Title("Progress", "", 590, 573, 386, 39, 22, center: true);
+            1204, 614, 269, 37, 20, center: true);
+        Title("AfterSeal", "After sealing", 1206, 678, 264, 34, 21, dark: true);
+        _status = Title("Status", "", 1163, 702, 330, 26, 17, dark: true);
+        _step2 = Title("DeliveryStepTwo", "", 1163, 729, 330, 25, 17, dark: true);
+        _step3 = Title("DeliveryStepThree", "", 1163, 755, 330, 25, 17, dark: true);
+        _progress = Title("Progress", "", 575, 574, 426, 37, 23, center: true);
+        _materialCrate = Title("MaterialCrateCount", "", 531, 514, 223, 47, 19, center: true);
+        _otherCrate = Title("OtherCrateCount", "", 808, 514, 223, 47, 19, center: true);
+        _leftCrateDone = Title("LeftCrateDone", "", 704, 300, 48, 37, 20, center: true);
+        _rightCrateDone = Title("RightCrateDone", "", 974, 300, 48, 37, 20, center: true);
+        _shelfSummary = Title("ShelfSummary", "", 614, 635, 332, 25, 16, center: true);
         _warning = Title("Warning", "Death or sinking destroys the cargo",
-            407, 819, 633, 44, 20, center: true);
+            379, 819, 689, 44, 20, center: true);
         _shelfPageLabel = Title("ShelfPage", "", 794, 760, 173, 32, 17, center: true);
         _orderPageLabel = Title("OrderPage", "", 196, 644, 182, 31, 16,
             dark: true, center: true);
@@ -145,8 +162,8 @@ internal sealed class ExportationWindow : Base
             var index = i;
             _shelfButtons[i] = Button("Good" + i, "", 497 + i * 111,
                 656, 105, 87, 18, () => RequestPack(index));
-            _shelfLabels[i] = Title("GoodLabel" + i, "", 500 + i * 111,
-                740, 104, 39, 15, center: true, wrap: true);
+            _shelfLabels[i] = Title("GoodLabel" + i, "", 495 + i * 111,
+                726, 113, 56, 16, center: true, wrap: true);
         }
 
         _seal = Button("Seal", "SEAL THE CARGO", 1106, 806, 391, 61, 23, RequestSeal);
@@ -159,10 +176,92 @@ internal sealed class ExportationWindow : Base
             20, () => ChangeOrderPage(-1));
         _nextOrder = Button("NextOrders", "›", 407, 644, 38, 30,
             20, () => ChangeOrderPage(1));
+
+        // Functional help: the final ? plaque in the original artwork now
+        // opens an in-game modal with accurate Exportation rules.
+        _helpButton = Button("Help", "?", 1439, 75, 54, 53, 28, ToggleHelp);
+        _helpButton.TooltipText = T("Exportation help");
+        _helpOverlay = new ExportationHelpOverlay(this)
+        {
+            IsHidden = true, MouseInputEnabled = true, KeyboardInputEnabled = true,
+            ShouldDrawBackground = false,
+        };
+        _helpHeading = HelpLabel("HelpHeading", "How Exportation works",
+            520, 274, 635, 56, 31);
+        HelpLabel("HelpOne", "Help 1: Own an unsunk ship and talk to the merchant.",
+            514, 345, 656, 54, 21);
+        HelpLabel("HelpTwo", "Help 2: Select goods to fill the merchant's crates.",
+            514, 413, 656, 54, 21);
+        HelpLabel("HelpThree", "Help 3: Seal the order and board your ship.",
+            514, 481, 656, 54, 21);
+        HelpLabel("HelpFour", "Help 4: Sail, dock, and speak to the recipient for rewards.",
+            514, 549, 656, 54, 21);
+        HelpLabel("HelpWarning", "Death or shipwreck loses the cargo.",
+            514, 616, 656, 47, 20);
+        _helpClose = new Button(_helpOverlay, "ExportationHelpClose")
+        {
+            Text = T("Close help"), Font = Skin.DefaultFont, FontSize = 22,
+            TextColorOverride = Gold, ShouldDrawBackground = false,
+        };
+        foreach (var state in Enum.GetValues<ButtonSoundState>())
+            _helpClose.SetSound(state, null);
+        _helpClose.Clicked += (_, _) => ToggleHelp();
+        Place(_helpClose, 694, 694, 291, 48, 22);
+        _translated.Add((_helpClose, "Close help"));
         UpdateLayout();
         _audio.Play("ui_open");
         BringToFront();
         Focus();
+    }
+
+    private void ToggleHelp()
+    {
+        _helpOverlay.IsHidden = !_helpOverlay.IsHidden;
+        if (!_helpOverlay.IsHidden)
+        {
+            _helpOverlay.BringToFront();
+            _helpOverlay.Focus();
+        }
+        else Focus();
+    }
+
+    private Label HelpLabel(string name, string key, int x, int y, int w, int h, int font)
+    {
+        var label = new Label(_helpOverlay, "Exportation" + name)
+        {
+            Text = T(key), Font = Skin.DefaultFont, FontSize = font,
+            AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped,
+            TextColorOverride = name == "HelpWarning" ? new Color(255, 255, 183, 113) : Cream,
+            TextAlign = name == "HelpHeading" ? Pos.Center : Pos.Left | Pos.CenterV,
+            MouseInputEnabled = false, KeyboardInputEnabled = false,
+        };
+        Place(label, x, y, w, h, font);
+        _translated.Add((label, key));
+        return label;
+    }
+
+    private sealed class ExportationHelpOverlay(Base parent) : Base(parent, "ExportationHelpOverlay")
+    {
+        internal Rect Frame { get; set; } = new(0, 0, 1, 1);
+        internal Rect CloseFrame { get; set; } = new(0, 0, 1, 1);
+
+        protected override void Render(SkinBase skin)
+        {
+            skin.Renderer.DrawColor = new Color(212, 11, 13, 14);
+            skin.Renderer.DrawFilledRect(new Rect(0, 0, Width, Height));
+            skin.Renderer.DrawColor = RoyalGold;
+            skin.Renderer.DrawFilledRect(Frame);
+            skin.Renderer.DrawColor = new Color(255, 42, 29, 21);
+            skin.Renderer.DrawFilledRect(new Rect(Frame.X + 5, Frame.Y + 5,
+                Math.Max(1, Frame.Width - 10), Math.Max(1, Frame.Height - 10)));
+            // The close action is a real GWEN button with a drawn surface.
+            skin.Renderer.DrawColor = RoyalGold;
+            skin.Renderer.DrawFilledRect(CloseFrame);
+            skin.Renderer.DrawColor = SealGreen;
+            skin.Renderer.DrawFilledRect(new Rect(CloseFrame.X + 4, CloseFrame.Y + 4,
+                Math.Max(1, CloseFrame.Width - 8), Math.Max(1, CloseFrame.Height - 8)));
+            base.Render(skin);
+        }
     }
 
     internal void Apply(ExportationRoute route, ExportationRun run,
@@ -234,19 +333,26 @@ internal sealed class ExportationWindow : Base
         _boat.Text = T(_boatReady ? "Boat owned" : "Boat required");
         _boat.TextColorOverride = _boatReady ? Green : new Color(255, 255, 155, 138);
         _reward.Text = route.RewardQuantity > 0 ?
-            $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : "";
+            $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : T("No item reward");
         _experience.Text = F("+{0:N0} Exportation XP", route.ExperienceReward);
         var total = route.Lines.Sum(line => line.Quantity);
         var packed = route.Lines.Sum(line => ExportationRules.Packed(run, line.ItemId));
         _progress.Text = F("{0} / {1} items packed", packed, total);
-        _status.Text = T(run.Stage switch
-        {
-            DeliveryStage.Preparing => "Complete the order",
-            DeliveryStage.InTransit => "Delivery quest started",
-            DeliveryStage.Lost => "Cargo lost — return to the merchant",
-            DeliveryStage.Delivered => "Delivery successful",
-            _ => "Cargo preparation",
-        });
+        var crates = CountCrates(route, run);
+        _materialCrate.Text = crates.MaterialsTotal == 0
+            ? T("Empty crate") : F("Materials: {0}/{1}", crates.MaterialsPacked, crates.MaterialsTotal);
+        _otherCrate.Text = crates.OtherTotal == 0
+            ? T("Empty crate") : F("Other cargo: {0}/{1}", crates.OtherPacked, crates.OtherTotal);
+        _leftCrateDone.Text = crates.MaterialsTotal > 0 &&
+            crates.MaterialsPacked == crates.MaterialsTotal ? "OK" : "";
+        _rightCrateDone.Text = crates.OtherTotal > 0 &&
+            crates.OtherPacked == crates.OtherTotal ? "OK" : "";
+        _shelfSummary.Text = run.Stage == DeliveryStage.Preparing
+            ? T("Select the goods below") : T("Cargo manifest");
+        var steps = DeliveryStepKeys(run.Stage, run.BoardedByShip, run.ArrivedByShip);
+        _status.Text = T(steps[0]);
+        _step2.Text = T(steps[1]);
+        _step3.Text = T(steps[2]);
         _warning.Text = T("Death or sinking destroys the cargo");
         var onRecipientIsland = Globals.Me?.MapId == route.RecipientMapId;
         var onSourceIsland = Globals.Me?.MapId == route.SourceMapId;
@@ -284,10 +390,14 @@ internal sealed class ExportationWindow : Base
         for (var i = 0; i < ShelfSize; ++i)
         {
             var line = route.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
-            _shelfLabels[i].Text = line is null ? "" : ItemName(line.ItemId);
+            var amount = line is null ? 0 : ExportationRules.Packed(run, line.ItemId);
+            _shelfLabels[i].Text = line is null ? "" :
+                $"{ItemName(line.ItemId)}\n{amount} / {line.Quantity}";
+            _shelfButtons[i].IsHidden = line is null;
+            _shelfButtons[i].TooltipText = line is null ? "" :
+                F("Pack {0}: {1}/{2}", ItemName(line.ItemId), amount, line.Quantity);
             _shelfButtons[i].IsDisabled = line is null ||
-                run.Stage != DeliveryStage.Preparing ||
-                ExportationRules.Packed(run, line.ItemId) >= line.Quantity;
+                run.Stage != DeliveryStage.Preparing || amount >= line.Quantity;
         }
     }
 
@@ -296,6 +406,7 @@ internal sealed class ExportationWindow : Base
         if (_route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
         var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
         if (line is null || ExportationRules.Packed(s, line.ItemId) >= line.Quantity) return;
+        _selectedGoodItem = line.ItemId;
         _packRequested(line.ItemId, line.Group, 1);
     }
 
@@ -326,6 +437,70 @@ internal sealed class ExportationWindow : Base
     private void ChangeGoodsPage(int direction) { _goodsPage = Math.Max(0, _goodsPage + direction); }
     private void ChangeOrderPage(int direction) { _orderPage = Math.Max(0, _orderPage + direction); }
 
+    internal static (int MaterialsPacked, int MaterialsTotal, int OtherPacked, int OtherTotal)
+        CountCrates(ExportationRoute route, ExportationRun run)
+    {
+        var materialsPacked = 0;
+        var materialsTotal = 0;
+        var otherPacked = 0;
+        var otherTotal = 0;
+        foreach (var line in route.Lines)
+        {
+            var count = ExportationRules.Packed(run, line.ItemId);
+            if (line.Group == CargoGroup.Materials)
+            {
+                materialsPacked += count;
+                materialsTotal += line.Quantity;
+            }
+            else
+            {
+                otherPacked += count;
+                otherTotal += line.Quantity;
+            }
+        }
+        return (materialsPacked, materialsTotal, otherPacked, otherTotal);
+    }
+
+    /// <summary>
+    /// Only observed run stage and server-authoritative voyage flags determine
+    /// the on-screen instructions. No quest progress is invented on the client.
+    /// </summary>
+    internal static string[] DeliveryStepKeys(DeliveryStage stage, bool boarded, bool arrived) =>
+        stage switch
+        {
+            DeliveryStage.Preparing =>
+            [
+                "1. Prepare the merchant order",
+                "2. Seal the cargo",
+                "3. Sail and deliver the order",
+            ],
+            DeliveryStage.InTransit =>
+            [
+                "1. Cargo sealed",
+                arrived ? "2. Sea arrival confirmed" :
+                    boarded ? "2. Sailing to destination" : "2. Board your ship",
+                "3. Speak to the recipient",
+            ],
+            DeliveryStage.Lost =>
+            [
+                "1. Cargo lost",
+                "2. Return to the merchant",
+                "3. Prepare the order again",
+            ],
+            DeliveryStage.Delivered =>
+            [
+                "1. Sea voyage completed",
+                "2. Cargo delivered",
+                "3. Rewards received",
+            ],
+            _ =>
+            [
+                "1. Order closed",
+                "2. No active shipment",
+                "3. Speak to the merchant",
+            ],
+        };
+
     private static string ItemName(Guid id) =>
         ItemDescriptor.TryGet(id, out var item) ? ClientLanguages.ContentText(item.Name) : id.ToString("N")[..8];
 
@@ -342,18 +517,32 @@ internal sealed class ExportationWindow : Base
         FillScene(skin, DeliveryBacking, 1087, 201, 428, 594);
         DrawTexture(skin, Background, 0, 0, DesignWidth, DesignHeight);
 
-        // This light wash lifts the dark pixels of the semi-transparent mockup
-        // without replacing its medieval wood/parchment detail or textures.
-        FillScene(skin, WarmParchmentWash, 131, 211, 329, 561);
+        // The approved art is the structural frame; the overlays below add
+        // only dynamic interactive elements, not another full mockup image.
+        FillScene(skin, RoyalGold, 141, 217, 302, 42);
+        FillScene(skin, RibbonRed, 145, 220, 294, 35);
+        FillScene(skin, new Color(255, 179, 81, 66), 153, 222, 278, 2);
         FillScene(skin, WarmWoodWash, 489, 212, 570, 568);
         FillScene(skin, WarmWoodWash, 1098, 213, 405, 568);
 
-        // Explicit button surfaces remain visible over the detailed sprite
-        // sheet. The GWEN buttons stay fully clickable over these rectangles.
-        PaintAction(skin, 143, 808, 160, 62, new Color(45, 83, 56, 29));
+        // Main call-to-action is intentionally green, never purple; it is
+        // subdued while sealed cargo is awaiting an actual sea arrival.
+        PaintAction(skin, 143, 808, 160, 62, new Color(115, 76, 51, 29));
         if (!_seal.IsHidden)
-            PaintAction(skin, 1103, 802, 396, 68,
-                _seal.IsDisabled ? new Color(45, 88, 63, 38) : new Color(50, 190, 132, 44));
+        {
+            var sealFill = _seal.IsDisabled
+                ? new Color(255, 85, 68, 42) : SealGreen;
+            FillScene(skin, RoyalGold, 1101, 801, 399, 70);
+            FillScene(skin, sealFill, 1106, 806, 389, 60);
+            FillScene(skin, new Color(255, 160, 209, 105), 1113, 812, 375, 3);
+        }
+
+        // Fixed top-right help button; it opens a real overlay with rules.
+        FillScene(skin, RoyalGold, 1440, 78, 50, 49);
+        FillScene(skin, RibbonRed, 1444, 82, 42, 41);
+
+        // Keep the warning legible on the existing ruby-coloured banner.
+        FillScene(skin, new Color(105, 105, 24, 27), 351, 828, 654, 38);
         // Profession experience is the server-authoritative custom profession
         // progression, not mini-game-only points.
         skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
@@ -371,27 +560,60 @@ internal sealed class ExportationWindow : Base
         }
         if (_route is { } r && _run is { } s)
         {
+            // Completed crates use a simple green badge, based entirely on
+            // packed quantities, and never claim completion prematurely.
+            if (!string.IsNullOrEmpty(_leftCrateDone.Text))
+                FillScene(skin, SealGreen, 697, 300, 55, 37);
+            if (!string.IsNullOrEmpty(_rightCrateDone.Text))
+                FillScene(skin, SealGreen, 967, 300, 55, 37);
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
             DrawTexture(skin, SpriteDirectory + "destinataire.png", 1128, 427, 62, 63);
             DrawTexture(skin, SpriteDirectory + "bateau.png", 1182, 476, 58, 50);
+            if (s.Stage == DeliveryStage.InTransit && s.BoardedByShip && !s.ArrivedByShip)
+                DrawTexture(skin, SpriteDirectory + "bateau.png", 1267, 306, 55, 50);
             DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1128, 685, 61, 57);
             DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 304, 719, 51, 58);
+            // Real configured cargo only: never draw mock items or invented
+            // quantities. The two illustrated crates represent Materials and
+            // Fragile/Provisions, with up to four clear stacks per crate.
+            DrawCrateContents(skin, r, s, CargoGroup.Materials, 530, 312);
+            DrawCrateContents(skin, r, s, null, 823, 312);
             for (var i = 0; i < OrderSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
-                if (line is not null) DrawGood(skin, line, 147, 421 + i * 78, 74, 65);
+                if (line is null) continue;
+                var y = 421 + i * 78;
+                DrawGood(skin, line, 147, y, 64, 63);
+                var amount = ExportationRules.Packed(s, line.ItemId);
+                FillScene(skin, new Color(150, 97, 66, 44), 224, y + 58, 192, 6);
+                if (amount > 0)
+                    FillScene(skin, Green, 224, y + 58,
+                        (int)Math.Round(192d * amount / line.Quantity), 6);
             }
             for (var i = 0; i < ShelfSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
-                if (line is not null) DrawGood(skin, line, 510 + i * 111, 653, 79, 74);
+                if (line is null) continue;
+                var x = 495 + i * 111;
+                var active = line.ItemId == _selectedGoodItem;
+                if (active)
+                {
+                    FillScene(skin, RoyalGold, x - 2, 655, 107, 94);
+                    FillScene(skin, new Color(255, 77, 53, 32),
+                        x + 2, 659, 99, 85);
+                }
+                DrawGood(skin, line, x + 12, 661, 77, 64);
             }
-            var materials = r.Lines.Where(line => line.Group == CargoGroup.Materials && ExportationRules.Packed(s, line.ItemId) > 0).Take(3).ToArray();
-            var fragile = r.Lines.Where(line => line.Group != CargoGroup.Materials && ExportationRules.Packed(s, line.ItemId) > 0).Take(4).ToArray();
-            for (var i = 0; i < materials.Length; ++i)
-                DrawGood(skin, materials[i], 543 + i % 2 * 95, 315 + i / 2 * 105, 105, 85);
-            for (var i = 0; i < fragile.Length; ++i)
-                DrawGood(skin, fragile[i], 842 + i % 2 * 96, 306 + i / 2 * 100, 85, 89);
+            // The server's actual item definition determines the payout icon.
+            if (r.RewardQuantity > 0 && ItemDescriptor.TryGet(r.RewardItemId, out var rewardItem))
+            {
+                var rewardIcon = GameContentManager.Current.GetTexture(
+                    TextureType.Item, rewardItem.Icon);
+                if (rewardIcon is not null)
+                    skin.Renderer.DrawTexturedRect(rewardIcon,
+                        SceneRect(1127, 578, 48, 46), Color.White);
+            }
+            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 1135, 619, 40, 39);
             var total = r.Lines.Sum(l => l.Quantity);
             var completed = r.Lines.Sum(l => ExportationRules.Packed(s, l.ItemId));
             skin.Renderer.DrawColor = Green;
@@ -402,13 +624,41 @@ internal sealed class ExportationWindow : Base
         base.Render(skin);
     }
 
+    private void DrawCrateContents(SkinBase skin, ExportationRoute route,
+        ExportationRun run, CargoGroup? group, int x, int y)
+    {
+        var slot = 0;
+        foreach (var line in route.Lines)
+        {
+            if (group == CargoGroup.Materials && line.Group != CargoGroup.Materials)
+                continue;
+            if (group is null && line.Group == CargoGroup.Materials)
+                continue;
+
+            // Show at most four bundles inside the illustrated crate; the
+            // numerical label above the plaque reports the full true quantity.
+            var packed = ExportationRules.Packed(run, line.ItemId);
+            for (var count = 0; count < packed && slot < 4; count++, slot++)
+            {
+                DrawGood(skin, line, x + slot % 2 * 108,
+                    y + slot / 2 * 96, 84, 76);
+            }
+            if (slot >= 4) break;
+        }
+        if (slot == 0)
+        {
+            // A quiet hint instead of a fabricated default item.
+            FillScene(skin, new Color(75, 40, 31, 24), x + 12, y + 62, 191, 51);
+        }
+    }
+
     private void DrawGood(SkinBase skin, CargoLine line, int x, int y, int w, int h)
     {
         // Keep the wood/straw panels from the original GFX visible.
         // Previous opaque square covers made packed crates look like UI errors.
         // Give transparent item sprites a subtle backing on the shelf only.
         if (y >= 640)
-            FillScene(skin, new Color(74, 103, 76, 50), x, y, w, h);
+            FillScene(skin, new Color(42, 103, 76, 50), x, y, w, h);
         if (!string.IsNullOrEmpty(line.Sprite) && ExportationArt.IsGoodsSprite(line.Sprite))
         {
             DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h);
@@ -555,6 +805,9 @@ internal sealed class ExportationWindow : Base
             }
         }
 
+        _helpOverlay.SetBounds(0, 0, _canvas.Width, _canvas.Height);
+        _helpOverlay.Frame = SceneRect(480, 250, 721, 522);
+        _helpOverlay.CloseFrame = SceneRect(694, 694, 291, 48);
         foreach (var (control, x, y, w, h, font) in _placements)
         {
             var rect = SceneRect(x, y, w, h);
