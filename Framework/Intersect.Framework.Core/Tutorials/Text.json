@@ -319,6 +319,31 @@
       "en": "Use open map",
       "fr": "Utiliser la carte ouverte",
       "es": "Usar mapa abierto"
+    },
+    "Completion objective": {
+      "en": "Completion objective",
+      "fr": "Objectif de validation",
+      "es": "Objetivo de finalización"
+    },
+    "Target map event": {
+      "en": "Target map event",
+      "fr": "Événement de carte ciblé",
+      "es": "Evento del mapa objetivo"
+    },
+    "Create interaction step": {
+      "en": "Create interaction step",
+      "fr": "Créer une étape d'interaction",
+      "es": "Crear paso de interacción"
+    },
+    "Select a map event first.": {
+      "en": "Select a map event first.",
+      "fr": "Choisissez d'abord un événement de carte.",
+      "es": "Selecciona primero un evento del mapa."
+    },
+    "Interact with the highlighted target.": {
+      "en": "Interact with the highlighted target.",
+      "fr": "Interagis avec la cible indiquée.",
+      "es": "Interactúa con el objetivo señalado."
     }
   }
 }
