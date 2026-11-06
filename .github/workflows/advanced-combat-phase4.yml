@@ -1,0 +1,43 @@
+name: Advanced combat phase 4
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/GameObjects/Combat/AdvancedBossComboPlan.cs'
+      - 'Framework/Intersect.Framework.Core/GameObjects/NPCs/NPCDescriptor.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/CombatTelegraphPacket.cs'
+      - 'Intersect.Server.Core/Entities/Npc.AdvancedCombat.cs'
+      - 'Intersect.Editor/Forms/Editors/frmNpc.BossCombos.cs'
+      - 'Intersect.Editor/Forms/Editors/frmNpc.CombatTelegraphs.cs'
+      - 'Intersect.Client.Core/Interface/Game/AdvancedCombatHud.cs'
+      - 'Intersect.Client.Core/Networking/PacketHandler.AdvancedCombat.cs'
+      - 'Intersect.Tests/Utilities/AdvancedBossComboPlanTests.cs'
+      - '.github/workflows/advanced-combat-phase4.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combos:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Boss combo, enrage and warning geometry unit tests
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter "FullyQualifiedName~AdvancedBossComboPlanTests|FullyQualifiedName~AdvancedCombatGeometryTests|FullyQualifiedName~AdvancedCombatBossPhaseTests" --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build native server, client and NPC editor
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Server/Intersect.Server.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
