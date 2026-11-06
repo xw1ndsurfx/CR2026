@@ -71,6 +71,7 @@ public partial class FrmNpc : EditorForm
         BuildBossControls();
         BuildCombatAiControls();
         BuildCombatTelegraphControls();
+        BuildSpellTelegraphControls();
         BuildBossComboControls();
         BuildPetControls();
         BuildNpcSpellTimingControls();
@@ -893,6 +894,7 @@ public partial class FrmNpc : EditorForm
             );
             UpdateCombatAiControlState();
             LoadCombatTelegraphControls();
+            LoadSpellTelegraphControls();
             LoadBossComboControls();
             _chkIsPet.Checked = mEditorItem.IsPet;
             _cmbPetItem.SelectedIndex = ItemDescriptor.ListIndex(mEditorItem.PetSummonItemId) + 1;

@@ -33,7 +33,7 @@ public partial class FrmNpc
         _grpCombatTelegraph.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
         _grpCombatTelegraph.BorderColor = System.Drawing.Color.FromArgb(100, 78, 55);
         _grpCombatTelegraph.ForeColor = System.Drawing.Color.Gainsboro;
-        _grpCombatTelegraph.Size = new System.Drawing.Size(302, 525);
+        _grpCombatTelegraph.Size = new System.Drawing.Size(302, 656);
         _grpCombatTelegraph.TabStop = false;
 
         _chkCombatTelegraph.Text = TelegraphText("Warn before this NPC attacks");
