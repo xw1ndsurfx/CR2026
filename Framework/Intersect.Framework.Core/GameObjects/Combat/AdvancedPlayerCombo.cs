@@ -31,7 +31,7 @@ public sealed class AdvancedPlayerCombo
     public int NextHitStep(
         long nowMs, Guid targetId, Guid mapId, Guid instanceId, int windowMs)
     {
-        if (targetId == Guid.Empty || mapId == Guid.Empty || instanceId == Guid.Empty)
+        if (targetId == Guid.Empty || mapId == Guid.Empty)
             return 1;
         return IsActive(nowMs, windowMs) &&
                _targetId == targetId && _mapId == mapId && _instanceId == instanceId
@@ -46,7 +46,7 @@ public sealed class AdvancedPlayerCombo
     public int RegisterSuccessfulHit(
         long nowMs, Guid targetId, Guid mapId, Guid instanceId, int windowMs)
     {
-        if (targetId == Guid.Empty || mapId == Guid.Empty || instanceId == Guid.Empty)
+        if (targetId == Guid.Empty || mapId == Guid.Empty)
         {
             Reset();
             return 0;

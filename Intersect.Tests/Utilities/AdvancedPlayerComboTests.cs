@@ -47,6 +47,17 @@ public class AdvancedPlayerComboTests
     }
 
     [Test]
+    public void DefaultOverworldInstanceAllowsNormalCombos()
+    {
+        // OverworldInstanceId == Guid.Empty in the actual map engine.
+        var c = new AdvancedPlayerCombo();
+        Assert.That(c.RegisterSuccessfulHit(1000, _npc, _map, Guid.Empty, 2500), Is.EqualTo(1));
+        Assert.That(c.NextHitStep(1450, _npc, _map, Guid.Empty, 2500), Is.EqualTo(2));
+        Assert.That(c.RegisterSuccessfulHit(1450, _npc, _map, Guid.Empty, 2500), Is.EqualTo(2));
+        Assert.That(c.NextHitStep(1800, _npc, _map, Guid.NewGuid(), 2500), Is.EqualTo(1));
+    }
+
+    [Test]
     public void BonusIsClampedAndProtectsLongOverflow()
     {
         Assert.That(AdvancedPlayerCombo.ApplyBonusLong(100, 10), Is.EqualTo(110));
