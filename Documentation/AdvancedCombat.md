@@ -36,3 +36,44 @@ NPC settings are stored on each `NPCDescriptor` with new SQLite and MySQL migrat
 **Not included yet:** stamina meter, bespoke Admurin telegraph sprites, SFX, spell telegraphs or individual skill attack sequences. These are separate follow-up changes.
 
 Server combat options: `EnableAdvancedCombat`, `AdvancedDodgeCooldownMs`, `AdvancedDodgeInvulnerabilityMs`, `AdvancedParryWindowMs`, `AdvancedCounterWindowMs`, `AdvancedCounterBonusPercent`, `BossTelegraphDurationMs` (fallback for NPC windup values ≤ 0).
+
+## Third iteration: endurance, confirmed combat feedback and enraged bosses
+
+**Depends on the phase 2 PR:** this work is a stacked PR against `feature/advanced-combat-pattern-editor-20261106`. Merge that PR first; then retarget phase 3 to `main`. Do not deploy phase 3 to a client or server running only the first combat version.
+
+### Endurance
+
+The server owns all endurance values, spent on **successful** actions:
+
+| Action | Cost | Feedback |
+| --- | ---: | --- |
+| Dodge (Left Shift) | 25 | blue status flash, swish |
+| Perfect parry with shield (Q) | 15 | gold flash, metallic clang |
+| Counterattack (R) | 10 | bronze flash, impact sound |
+| Not enough endurance | none | warning and muted tone |
+
+A default bar holds 100 points, regenerates 18 per second after a 1.4-second delay from the latest spend. Failed moves and blocked directions do **not** spend resources. The server sends a validated state packet (`AdvancedCombatStatePacket`) after actions and during regeneration; the client never predicts or alters endurance. The bar appears under normal gameplay, hides in modal gameplay views, and uses the game's existing draggable HUD system.
+
+All options are server-side: `AdvancedStaminaMaximum`, `AdvancedStaminaRegenPerSecond`, `AdvancedStaminaRegenDelayMs`, `AdvancedDodgeStaminaCost`, `AdvancedPerfectParryStaminaCost`, `AdvancedCounterStaminaCost`. The system is still disabled by default through `Combat.EnableAdvancedCombat`.
+
+Audio includes five *original* synthetic WAV samples in `resources/sounds/advanced-combat/`. They must be included in the deployed client sound resources: `dodge.wav`, `perfect-parry.wav`, `counterattack.wav`, `exhausted.wav`, `boss-enrage.wav`. Missing audio never changes combat authority.
+
+### Boss enrage
+
+A boss can optionally enable `Enrage under 35% HP (boss only)` in **NPC Editor > Combat > Attack telegraphs**. It is **off by default** for legacy bosses. Once it drops to 35% HP or below, its already announced melee strikes:
+- shorten telegraph windup by 20%, with a safe minimum of 250 ms;
+- gain a 25% base damage bonus;
+- render warning tiles with an orange/red tint, and show the combat alert and audio the first time it enrages.
+
+The server options `AdvancedBossEnrageHealthPercent`, `AdvancedBossEnrageDamageBonusPercent` and `AdvancedBossEnrageWindupReductionPercent` tune this. The enrage boolean is stored with the NPC descriptor using the new `20261106073000_NpcBossEnrage` SQLite/MySQL migrations. No PvP, pet, spell or existing non-opted-in boss behavior changes.
+
+### Phase 3 verification
+
+1. Enable advanced combat on staging; test full bar and gradual regeneration, including after relog, late packets and switching characters.
+2. Repeated Dodge should not cross blocked tiles or spend stamina when it fails; when low, attempts receive an exhaustion warning.
+3. Parry should only cost endurance when it is truly perfect, and the resulting counter should cost endurance once (not twice).
+4. Observe phase-two combat: line, cone and circle warnings should remain consistent with server hit zones.
+5. In NPC Editor, enable boss enrage; save/reopen, restart SQLite and MySQL servers. Lower health under configured threshold; verify faster telegraphs, bonus damage, first-enrage cue, and no change to bosses that are not opted in.
+6. Run the CI `advanced-combat-phase3.yml` on Windows; test with actual packaged sound assets and low/high-latency clients before merging to production.
+
+**Later phases:** custom illustrated Admurin UI sprites, stamina consumables/buffs, combo attack sequences, boss spell telegraphs, combat tutorials and balancing passes.
