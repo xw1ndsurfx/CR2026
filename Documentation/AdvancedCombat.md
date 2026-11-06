@@ -113,3 +113,36 @@ The five NPC descriptor fields are saved in the SQLite/MySQL `20261106090000_Npc
 7. Validate migrations against both SQLite and MySQL and compile/test client, server and editor, including the prior 51+ checks. Run actual gameplay and latency testing before enabling in production.
 
 **Out of scope:** boss spell/AoE projectile combos, animation-specific hitframes, player combo attacks, bespoke Admurin sprite atlases and a combat tutorial.
+
+## Fifth iteration: native hostile targeted spell telegraphs
+
+**This change is a stacked PR based on phase 4**; merge in order #241, #242, #243, then phase 5. It does not modify main directly.
+
+### What players experience
+
+For selected NPCs, **hostile native single-target combat spells without splash** now telegraph the target's tile in **blue** throughout the casting windup. A targeted player receives the localized `INCOMING SPELL - MOVE!` HUD prompt and an original `spell-warning.wav` cue. Moving away before the cast finishes avoids the targeted native spell. Remaining on the warned tile permits **the existing native spell implementation** to execute: mana, effects, stats and its normal cooldown are untouched. Moving off the tile cancels the spell at resolution and **still starts the spell's normal cooldown**. The client does not authorize movement, damage or spell impact.
+
+An eligible spell must:
+- be a hostile `CombatSpell` with target type `Single`, `HitRadius=0`, no pet owner;
+- use a natural cast duration no greater than five seconds;
+- be cast at a living, valid player on the same map instance;
+- have `Combat.EnableAdvancedCombat` and the NPC's opt-in `AdvancedSpellTelegraphEnabled` enabled.
+
+**Native AoE (including single-target spells with splash), projectiles, friendly/self spells, traps, warps and spells with longer casts are intentionally unchanged.** These need a separate geometry/hit resolution model before they can be made dodgeable; do not enable new warnings for them by treating the target cell as their entire hit area.
+
+### Authoring
+
+Open **NPC Editor → Combat → Attack telegraphs**, check `Warn before targeted hostile spells`, and set warning duration (250–2000 ms; 650 ms default). The actual warning lasts at least as long as the original spell's cast duration; it never shortens an existing cast. These two NPC descriptor fields are stored via `20261106100000_NpcAdvancedSpellTelegraph` on both SQLite and MySQL.
+
+Blue means native spell warning; red/orange remains a server-resolved melee/AoE-pattern warning. The existing phase 3 stamina and phase 4 combos remain unaffected. Global advanced combat stays disabled by default.
+
+### Verification
+
+1. Use a boss with a **hostile single-target combat spell**, `HitRadius=0`, cast duration 0–5000 ms; enable telegraphs in NPC Editor and save/reload. Verify blue tile and cue on the target.
+2. Move off the blue tile during cast. There must be **no spell hit**, and the spell must observe its cooldown. Wait in the tile: the native spell resolves normally, including effects and resource costs.
+3. Change instances, die, log out or stun/silence the caster mid-cast. The spell must never land outside the original target/map instance.
+4. Test with pets, heals, self-buffs, projectile spells, AoE/splash spells, warps, long casts and NPCs with feature disabled; all must behave exactly as before.
+5. Test the blue marker in dungeons and on map edges. Confirm other players see the tile without receiving a target-only sound.
+6. Validate the two new migrations, run CI builds/tests for Windows client/server/editor and verify resource packaging includes `resources/sounds/advanced-combat/spell-warning.wav`.
+
+This phase does **not** introduce ground-locked AoE native spell execution or projectile prediction.

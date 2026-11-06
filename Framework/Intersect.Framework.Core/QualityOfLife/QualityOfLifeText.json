@@ -105,6 +105,21 @@
       "fr": "Prévisualiser l'attaque :",
       "es": "Vista previa del ataque:"
     },
+    "Warn before targeted hostile spells": {
+      "en": "Warn before targeted hostile spells",
+      "fr": "Annoncer les sorts hostiles ciblés",
+      "es": "Avisar sobre hechizos hostiles dirigidos"
+    },
+    "Spell warning duration (ms):": {
+      "en": "Spell warning duration (ms):",
+      "fr": "Durée d'avertissement du sort (ms) :",
+      "es": "Duración del aviso del hechizo (ms):"
+    },
+    "Only single-target spells without splash; native AoE and projectiles are unchanged.": {
+      "en": "Only single-target spells without splash; native AoE and projectiles are unchanged.",
+      "fr": "Seulement les sorts sur une cible, sans zone. Les zones et projectiles restent inchangés.",
+      "es": "Solo hechizos dirigidos sin área; los efectos de área y proyectiles no cambian."
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",

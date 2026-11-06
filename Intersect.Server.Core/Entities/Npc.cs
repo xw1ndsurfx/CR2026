@@ -905,6 +905,11 @@ public partial class Npc : Entity
             CastTarget = target;
         }
 
+        // Phase 5: only eligible hostile, non-splash single-target combat spells
+        // gain a server-authoritative dodgeable warning. Native AoE and
+        // projectiles intentionally continue through their existing paths.
+        CastTime = BeginAdvancedSpellTelegraph(spellBase, CastTarget, CastTime);
+
         if (independentSpells)
         {
             var intervalMs = Descriptor.GetSpellCastIntervalMs(spellIndex);

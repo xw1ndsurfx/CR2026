@@ -47,6 +47,13 @@ public partial class GameInterface
             Audio.AddGameSound("advanced-combat/boss-combo.wav", false);
     }
 
+    public void NotifyAdvancedSpellTelegraph()
+    {
+        _advancedCombatHud ??= new AdvancedCombatHud(GameCanvas);
+        _advancedCombatHud.NotifySpellTelegraph();
+        Audio.AddGameSound("advanced-combat/spell-warning.wav", false);
+    }
+
     private void UpdateAdvancedCombatHud()
     {
         if (_advancedCombatHud is null)
