@@ -11,7 +11,7 @@ namespace Intersect.Client.Core;
 public static partial class Graphics
 {
     private readonly record struct AdvancedTelegraphMarker(
-        Guid MapId, (int X, int Y)[] Tiles, long Started, long Until, bool Enraged);
+        Guid MapId, (int X, int Y)[] Tiles, long Started, long Until, bool Enraged, bool IsSpell);
 
     private static readonly List<AdvancedTelegraphMarker> AdvancedTelegraphs = [];
 
@@ -37,7 +37,7 @@ public static partial class Graphics
         lock (AdvancedTelegraphs)
         {
             AdvancedTelegraphs.Add(new AdvancedTelegraphMarker(
-                packet.MapId, tiles, now, now + packet.DurationMs, packet.Enraged));
+                packet.MapId, tiles, now, now + packet.DurationMs, packet.Enraged, packet.IsSpell));
             if (AdvancedTelegraphs.Count > 64)
                 AdvancedTelegraphs.RemoveRange(0, AdvancedTelegraphs.Count - 64);
         }
@@ -73,9 +73,11 @@ public static partial class Graphics
                     DrawGameTexture(texture,
                         new FloatRect(0, 0, texture.Width, texture.Height),
                         new FloatRect(map.X + x * width, map.Y + y * height, width, height),
-                        marker.Enraged
-                            ? new Color(opacity, 255, 115, 29)
-                            : new Color(opacity, 255, 55, 55));
+                        marker.IsSpell
+                            ? new Color(opacity, 55, 180, 255)
+                            : marker.Enraged
+                                ? new Color(opacity, 255, 115, 29)
+                                : new Color(opacity, 255, 55, 55));
                 }
             }
         }

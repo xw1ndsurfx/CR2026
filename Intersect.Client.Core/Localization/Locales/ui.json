@@ -7319,6 +7319,11 @@
       "en": "Boss combo {0}/{1} - MOVE!",
       "fr": "Boss : coup {0}/{1} - BOUGE !",
       "es": "Jefe: golpe {0}/{1} - ¡MUÉVETE!"
+    },
+    "INCOMING SPELL - MOVE!": {
+      "en": "INCOMING SPELL - MOVE!",
+      "fr": "SORT EN APPROCHE - BOUGE !",
+      "es": "¡HECHIZO EN CAMINO - MUÉVETE!"
     }
   }
 }

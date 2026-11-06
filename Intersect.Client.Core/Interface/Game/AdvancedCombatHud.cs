@@ -87,6 +87,13 @@ internal sealed class AdvancedCombatHud : Base
         _feedbackUntil = Timing.Global.Milliseconds + 1400;
     }
 
+    internal void NotifySpellTelegraph()
+    {
+        _recentFeedback = AdvancedCombatFeedback.Dodge;
+        _feedback.Text = ClientLanguages.Text("INCOMING SPELL - MOVE!");
+        _feedbackUntil = Timing.Global.Milliseconds + 1_500;
+    }
+
     internal void Apply(AdvancedCombatStatePacket packet)
     {
         _maximum = Math.Max(1, packet.Maximum);
