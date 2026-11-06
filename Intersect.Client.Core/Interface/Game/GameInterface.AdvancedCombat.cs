@@ -39,6 +39,14 @@ public partial class GameInterface
         Audio.AddGameSound("advanced-combat/boss-enrage.wav", false);
     }
 
+    public void NotifyAdvancedBossCombo(int step, int total)
+    {
+        _advancedCombatHud ??= new AdvancedCombatHud(GameCanvas);
+        _advancedCombatHud.NotifyBossCombo(step, total);
+        if (step == 1)
+            Audio.AddGameSound("advanced-combat/boss-combo.wav", false);
+    }
+
     private void UpdateAdvancedCombatHud()
     {
         if (_advancedCombatHud is null)
