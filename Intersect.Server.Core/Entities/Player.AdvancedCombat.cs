@@ -13,6 +13,9 @@ public partial class Player
 {
     private readonly AdvancedCombatStamina _advancedStamina = new();
     private readonly AdvancedPlayerCombo _advancedPlayerCombo = new();
+    // True only during the validated, synchronous native melee weapon/unarmed path.
+    private bool _advancedDirectMeleeInProgress;
+    public bool IsAdvancedDirectMeleeAttack => _advancedDirectMeleeInProgress;
     private int _advancedLastSentComboHits = -1;
     private long _advancedNextDodgeAt;
     private long _advancedDodgeProtectionUntil;

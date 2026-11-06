@@ -2182,7 +2182,8 @@ public abstract partial class Entity : IEntity
         var comboBonus = 0;
         var comboFinisherBonus = false;
         if (!wasAdvancedCounter && isAutoAttack && baseDamage > 0 &&
-            this is Player comboPlayer && enemy is Npc comboNpc &&
+            this is Player { IsAdvancedDirectMeleeAttack: true } comboPlayer &&
+            enemy is Npc comboNpc &&
             Options.Instance.Combat.EnableAdvancedCombat &&
             Options.Instance.Combat.AdvancedPlayerCombosEnabled)
         {
@@ -2268,7 +2269,8 @@ public abstract partial class Entity : IEntity
                     masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
                 if (!wasAdvancedCounter && isAutoAttack && appliedHealthDamage > 0 &&
-                    this is Player comboAttacker && enemy is Npc comboVictim &&
+                    this is Player { IsAdvancedDirectMeleeAttack: true } comboAttacker &&
+                    enemy is Npc comboVictim &&
                     Options.Instance.Combat.EnableAdvancedCombat &&
                     Options.Instance.Combat.AdvancedPlayerCombosEnabled)
                 {
