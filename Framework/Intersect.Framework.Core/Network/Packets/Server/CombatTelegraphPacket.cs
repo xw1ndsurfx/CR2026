@@ -17,4 +17,7 @@ public sealed class CombatTelegraphPacket : IntersectPacket
     [Key(1)] public int X { get; set; }
     [Key(2)] public int Y { get; set; }
     [Key(3)] public int DurationMs { get; set; }
+    // Flattened x/y pairs. Older servers omit this, so the client falls back to X/Y.
+    [Key(4)] public int[] Tiles { get; set; } = [];
+
 }

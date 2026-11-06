@@ -150,6 +150,15 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     //Boss configuration
     public bool IsBoss { get; set; }
+    // Optional monster telegraphs; bosses retain their warning by default.
+    public bool AdvancedTelegraphEnabled { get; set; }
+
+    public int AdvancedTelegraphShape { get; set; } = (int)CombatTelegraphShape.TargetTile;
+
+    public int AdvancedTelegraphRange { get; set; } = 1;
+
+    public int AdvancedTelegraphWindupMs { get; set; } = 650;
+
 
     [Column("BossAnimation")]
     public Guid BossAnimationId { get; set; }
