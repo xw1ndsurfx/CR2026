@@ -6,6 +6,7 @@ public partial class GameInterface
 {
     private TutorialWindow? _tutorialWindow;
     private bool _tutorialEnabled;
+    private TutorialObjective? _combatTrainingHint;
     internal bool CanOpenTutorial => _tutorialEnabled && _tutorialWindow != null;
     internal void OpenTutorialGuide() { if (CanOpenTutorial) _tutorialWindow!.OpenGuide(); }
     internal void ApplyTutorial(TutorialStatePacket state)
@@ -17,10 +18,10 @@ public partial class GameInterface
         var step = config?.Steps.FirstOrDefault(item => item.Id == state.StepId);
         // The optional hint lives in the existing endurance HUD. It does
         // not consume keyboard focus or create a competing tutorial window.
-        _advancedCombatHud?.SetTrainingHint(
-            state.Open && _tutorialEnabled && step != null &&
+        _combatTrainingHint = state.Open && _tutorialEnabled && step != null &&
             AdvancedCombatTutorialLessons.IsCombatObjective(step.Objective)
-                ? step.Objective : null);
+                ? step.Objective : null;
+        _advancedCombatHud?.SetTrainingHint(_combatTrainingHint);
     }
     private void UpdateTutorialGuide() => _tutorialWindow?.RefreshVisibility();
 }
