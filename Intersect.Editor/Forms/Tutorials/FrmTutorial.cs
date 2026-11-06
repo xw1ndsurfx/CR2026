@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Network.Packets.Tutorials;
+using Intersect.Editor.General;
 using Newtonsoft.Json;
 namespace Intersect.Editor.Forms.Tutorials;
 internal sealed class FrmTutorial : Form
@@ -125,6 +126,13 @@ internal sealed class FrmTutorial : Form
         foreach (var map in MapList.OrderedMaps.Where(map => map.MapId != Guid.Empty).DistinctBy(map => map.MapId))
             _worldMap.Items.Add(new TargetChoice(map.MapId, map.Name));
         controls.Controls.Add(_worldMap);
+        var openMap = new Button { Text = T("Use open map"), Width = 258, Height = 30 };
+        openMap.Click += (_, _) =>
+        {
+            if (Globals.CurrentMap == null) return;
+            SelectChoice(_worldMap, Globals.CurrentMap.Id);
+        };
+        controls.Controls.Add(openMap);
 
         controls.Controls.Add(Caption("Target NPC"));
         _worldNpc.Items.Add(new TargetChoice(Guid.Empty, T("None")));
