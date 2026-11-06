@@ -889,6 +889,81 @@
       "en": "Your Exportation profession level is too low for this route.",
       "fr": "Ton niveau dans le métier Exportation est insuffisant pour cette route.",
       "es": "Tu nivel de profesión Exportación es insuficiente para esta ruta."
+    },
+    "Click the goods below to fill the crates": {
+      "en": "Click the goods below to fill the crates",
+      "fr": "Sélectionnez les marchandises ci-dessous pour remplir les caisses.",
+      "es": "Selecciona las mercancías para llenar las cajas."
+    },
+    "Prepare the order, seal it, then sail to the recipient.": {
+      "en": "Prepare the order, seal it, then sail to the recipient.",
+      "fr": "Préparez la commande, scellez-la et naviguez jusqu'au destinataire.",
+      "es": "Prepara el pedido, séllalo y navega hasta el destinatario."
+    },
+    "Other goods": {
+      "en": "Other goods",
+      "fr": "Autres marchandises",
+      "es": "Otras mercancías"
+    },
+    "{0}: {1}/{2}": {
+      "en": "{0}: {1}/{2}",
+      "fr": "{0} : {1}/{2}",
+      "es": "{0}: {1}/{2}"
+    },
+    "1. Prepare and seal the cargo": {
+      "en": "1. Prepare and seal the cargo",
+      "fr": "1. Préparer et sceller la cargaison",
+      "es": "1. Preparar y sellar la carga"
+    },
+    "2. Sail to the destination": {
+      "en": "2. Sail to the destination",
+      "fr": "2. Naviguer vers la destination",
+      "es": "2. Navegar al destino"
+    },
+    "3. Deliver to the recipient": {
+      "en": "3. Deliver to the recipient",
+      "fr": "3. Livrer au destinataire",
+      "es": "3. Entregar al destinatario"
+    },
+    "1. Return to the merchant and repack": {
+      "en": "1. Return to the merchant and repack",
+      "fr": "1. Retourner au marchand et refaire la cargaison",
+      "es": "1. Volver al comerciante y preparar la carga"
+    },
+    "Click to pack {0} ({1}/{2})": {
+      "en": "Click to pack {0} ({1}/{2})",
+      "fr": "Cliquer pour ranger {0} ({1}/{2})",
+      "es": "Haz clic para guardar {0} ({1}/{2})"
+    },
+    "EXPORTATION GUIDE": {
+      "en": "EXPORTATION GUIDE",
+      "fr": "GUIDE D'EXPORTATION",
+      "es": "GUÍA DE EXPORTACIÓN"
+    },
+    "1. Own a ship that has not sunk; it can be docked elsewhere.": {
+      "en": "1. Own a ship that has not sunk; it can be docked elsewhere.",
+      "fr": "1. Possédez un bateau non coulé, même s'il est amarré ailleurs.",
+      "es": "1. Ten un barco no hundido, aunque esté atracado en otro puerto."
+    },
+    "2. Pack every requested item. Use X to remove one.": {
+      "en": "2. Pack every requested item. Use X to remove one.",
+      "fr": "2. Préparez tous les objets demandés. X retire une unité.",
+      "es": "2. Guarda cada objeto solicitado. X retira una unidad."
+    },
+    "3. Seal the order, board your ship, and sail to the other island.": {
+      "en": "3. Seal the order, board your ship, and sail to the other island.",
+      "fr": "3. Scellez la commande, embarquez et rejoignez l'autre île.",
+      "es": "3. Sella el pedido, embarca y navega a la otra isla."
+    },
+    "4. Dock and speak to the recipient to earn the item and profession XP.": {
+      "en": "4. Dock and speak to the recipient to earn the item and profession XP.",
+      "fr": "4. Accostez et parlez au destinataire pour recevoir objets et EXP.",
+      "es": "4. Atraca y habla con el destinatario para ganar objetos y EXP."
+    },
+    "Death or shipwreck loses the cargo. Press ? to close this guide.": {
+      "en": "Death or shipwreck loses the cargo. Press ? to close this guide.",
+      "fr": "Mort ou naufrage : cargaison perdue. Appuyez sur ? pour fermer.",
+      "es": "Muerte o naufragio: carga perdida. Pulsa ? para cerrar."
     }
   }
 }

@@ -457,6 +457,8 @@ internal sealed class ExportationWindow : Base
         {
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
             DrawTexture(skin, SpriteDirectory + "destinataire.png", 1128, 427, 62, 63);
+            FillScene(skin, _boatReady ? new Color(59, 24, 112, 45) : new Color(72, 138, 44, 33),
+                1168, 493, 283, 39);
             DrawTexture(skin, SpriteDirectory + "bateau.png", 1182, 476, 58, 50);
             DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1100, 684, 52, 52);
             DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 307, 737, 45, 47);
@@ -523,8 +525,7 @@ internal sealed class ExportationWindow : Base
                 if (texture is not null)
                     skin.Renderer.DrawTexturedRect(texture, SceneRect(1112, 570, 49, 49), Color.White);
             }
-            FillScene(skin, _boatReady ? new Color(59, 24, 112, 45) : new Color(72, 138, 44, 33),
-                1168, 493, 283, 39);
+
         }
         if (_helpOpen)
         {
