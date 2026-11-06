@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Configuration;
+using Intersect.GameObjects;
 using Newtonsoft.Json;
 namespace Intersect.Server.Tutorials;
 internal static class TutorialRuntime
