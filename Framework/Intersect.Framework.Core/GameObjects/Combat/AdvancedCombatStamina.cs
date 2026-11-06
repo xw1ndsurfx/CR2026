@@ -51,13 +51,13 @@ public sealed class AdvancedCombatStamina
 
     public bool CanSpend(int cost)
     {
-        cost = Math.Clamp(cost, 0, Maximum);
+        cost = Math.Max(0, cost);
         return Current >= cost;
     }
 
     public bool TrySpend(int cost, long nowMs)
     {
-        cost = Math.Clamp(cost, 0, Maximum);
+        cost = Math.Max(0, cost);
         if (Current < cost)
             return false;
 

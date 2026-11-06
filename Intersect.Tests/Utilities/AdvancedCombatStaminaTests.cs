@@ -51,6 +51,16 @@ public class AdvancedCombatStaminaTests
     }
 
     [Test]
+    public void CostHigherThanCapacityCannotBeSilentlyDiscounted()
+    {
+        var stamina = new AdvancedCombatStamina();
+        stamina.Advance(1000, 50, 18, 0);
+        Assert.That(stamina.CanSpend(150), Is.False);
+        Assert.That(stamina.TrySpend(150, 1000), Is.False);
+        Assert.That(stamina.Current, Is.EqualTo(50));
+    }
+
+    [Test]
     public void ClampsInvalidOptionsAndHandlesBackwardsTicks()
     {
         var stamina = new AdvancedCombatStamina();
