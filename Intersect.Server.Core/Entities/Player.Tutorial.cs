@@ -73,9 +73,7 @@ public partial class Player
         TutorialObjective.ReachMap => MapId == step.MapId,
         // Authoritative check: arrival is measured by the server's player position,
         // never by a client-reported tutorial or marker packet.
-        TutorialObjective.ReachTile => MapId == step.MapId &&
-            Math.Abs((int)X - step.TargetX) <= step.TargetRadius &&
-            Math.Abs((int)Y - step.TargetY) <= step.TargetRadius,
+        TutorialObjective.ReachTile => step.IsAtTarget(MapId, X, Y),
         TutorialObjective.Variable => GetVariable(step.VariableId)?.Value.Integer == step.VariableValue,
         TutorialObjective.CombatDodge or TutorialObjective.CombatPerfectParry
             or TutorialObjective.CombatCounterattack or TutorialObjective.CombatFinisher =>
