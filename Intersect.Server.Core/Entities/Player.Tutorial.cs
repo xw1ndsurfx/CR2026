@@ -38,7 +38,7 @@ public partial class Player
     {
         if (!AdvancedCombatTutorialLessons.IsCombatObjective(action) ||
             !InGame || IsDead || HasPendingDeath ||
-            !Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat ||
+            !Options.Instance.Combat.EnableAdvancedCombat ||
             !TutorialRuntime.Current.Enabled || Tutorial.Paused || Tutorial.Finished)
             return;
 
@@ -47,8 +47,8 @@ public partial class Player
             return;
 
         if (!AdvancedCombatTutorialLessons.IsAvailable(
-            action, Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat,
-            Intersect.Core.Options.Instance.Combat.AdvancedPlayerCombosEnabled))
+            action, Options.Instance.Combat.EnableAdvancedCombat,
+            Options.Instance.Combat.AdvancedPlayerCombosEnabled))
             return;
 
         // Actions are processed by the game server's serialized player lock.
@@ -75,8 +75,8 @@ public partial class Player
         TutorialObjective.CombatDodge or TutorialObjective.CombatPerfectParry
             or TutorialObjective.CombatCounterattack or TutorialObjective.CombatFinisher =>
             _tutorialCombatReady || !AdvancedCombatTutorialLessons.IsAvailable(
-                step.Objective, Intersect.Core.Options.Instance.Combat.EnableAdvancedCombat,
-                Intersect.Core.Options.Instance.Combat.AdvancedPlayerCombosEnabled),
+                step.Objective, Options.Instance.Combat.EnableAdvancedCombat,
+                Options.Instance.Combat.AdvancedPlayerCombosEnabled),
         _ => false,
     };
     private void SendTutorial()
