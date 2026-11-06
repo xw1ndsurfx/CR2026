@@ -26,6 +26,7 @@ public partial class GameInterface
             AdvancedCombatFeedback.PerfectParry => "advanced-combat/perfect-parry.wav",
             AdvancedCombatFeedback.CounterAttack => "advanced-combat/counterattack.wav",
             AdvancedCombatFeedback.Exhausted => "advanced-combat/exhausted.wav",
+            AdvancedCombatFeedback.ComboFinisher => "advanced-combat/player-finisher.wav",
             _ => null,
         };
         if (file != null)

@@ -24,6 +24,13 @@ public partial class CombatOptions
     public int AdvancedDodgeStaminaCost { get; set; } = 25;
     public int AdvancedPerfectParryStaminaCost { get; set; } = 15;
     public int AdvancedCounterStaminaCost { get; set; } = 10;
+    // Phase 6: opt-in basic melee combos vs NPCs, no changes to PvP or spells.
+    public bool AdvancedPlayerCombosEnabled { get; set; } = false;
+    public int AdvancedPlayerComboWindowMs { get; set; } = 2500;
+    public int AdvancedPlayerComboSecondHitBonusPercent { get; set; } = 10;
+    public int AdvancedPlayerComboFinisherBonusPercent { get; set; } = 20;
+    public int AdvancedPlayerComboFinisherStaminaCost { get; set; } = 20;
+
 
     public int BossTelegraphDurationMs { get; set; } = 650;
     public int AdvancedBossEnrageHealthPercent { get; set; } = 35;

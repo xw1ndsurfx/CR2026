@@ -2124,27 +2124,38 @@ public partial class Player : Entity
 
         LastAttackingWeapon = weapon;
 
-        if (weapon != null)
+        // Only this validated direct weapon/unarmed melee path is eligible for
+        // player combos. Spell and projectile damage use separate entry points.
+        var previousDirectMelee = _advancedDirectMeleeInProgress;
+        _advancedDirectMeleeInProgress = true;
+        try
         {
-            base.TryAttack(
-                target, weapon.Damage, (DamageType)weapon.DamageType, (Stat)weapon.ScalingStat, weapon.Scaling,
-                weapon.CritChance, weapon.CritMultiplier, null, null, weapon
-            );
-        }
-        else
-        {
-            var classBase = ClassDescriptor.Get(ClassId);
-            if (classBase != null)
+            if (weapon != null)
             {
                 base.TryAttack(
-                    target, classBase.Damage, (DamageType)classBase.DamageType, (Stat)classBase.ScalingStat,
-                    classBase.Scaling, classBase.CritChance, classBase.CritMultiplier
+                    target, weapon.Damage, (DamageType)weapon.DamageType, (Stat)weapon.ScalingStat, weapon.Scaling,
+                    weapon.CritChance, weapon.CritMultiplier, null, null, weapon
                 );
             }
             else
             {
-                base.TryAttack(target, 1, DamageType.Physical, Enums.Stat.Attack, 100, 10, 1.5);
+                var classBase = ClassDescriptor.Get(ClassId);
+                if (classBase != null)
+                {
+                    base.TryAttack(
+                        target, classBase.Damage, (DamageType)classBase.DamageType, (Stat)classBase.ScalingStat,
+                        classBase.Scaling, classBase.CritChance, classBase.CritMultiplier
+                    );
+                }
+                else
+                {
+                    base.TryAttack(target, 1, DamageType.Physical, Enums.Stat.Attack, 100, 10, 1.5);
+                }
             }
+        }
+        finally
+        {
+            _advancedDirectMeleeInProgress = previousDirectMelee;
         }
     }
 

@@ -146,3 +146,41 @@ Blue means native spell warning; red/orange remains a server-resolved melee/AoE-
 6. Validate the two new migrations, run CI builds/tests for Windows client/server/editor and verify resource packaging includes `resources/sounds/advanced-combat/spell-warning.wav`.
 
 This phase does **not** introduce ground-locked AoE native spell execution or projectile prediction.
+
+## Sixth iteration: server-confirmed player combos (PvE melee)
+
+**Stacked PR:** this iteration is based on phase 5 and requires the previous phases in order (#241 → #242 → #243 → #244 → phase 6). No direct changes to `main` or unrelated gameplay are included.
+
+### Activation and rules
+
+The feature remains disabled unless both `Combat.EnableAdvancedCombat = true` and `Combat.AdvancedPlayerCombosEnabled = true` are configured on the server. It uses the existing **E attack** and ordinary server-authorized weapon/unarmed melee attacks; no new player action button or client-supplied damage value is introduced.
+
+- **First successful hit:** starts a chain against that exact NPC and map instance; no damage bonus.
+- **Second successful hit** within 2.5 seconds against the same NPC: +10% damage after normal damage calculation.
+- **Third successful hit** within 2.5 seconds: +20% damage if at least 20 stamina is available, then spends 20 stamina *after the confirmed hit*. The chain resets after the third hit, even if it has insufficient endurance to grant the bonus.
+- Hits must reduce a living NPC's actual health. Swings into empty space, blocked hits, casts, projectiles, pets, resources, other players and attacks without applied damage cannot advance the combo.
+- A successful counterattack from phase 1 is excluded from player combo progression and does not stack its existing bonus with the new combo bonus.
+- Timeouts, a new NPC target, death, disabling the feature or changing maps/instances invalidate/reset a chain.
+
+The server owns `AdvancedPlayerCombo` state; the client only displays the optional additional fields in `AdvancedCombatStatePacket` (MessagePack keys 6–8). The combat HUD shows **Combo 1/3** or **Combo 2/3** with remaining time. The third hit displays **FINISHER 3/3!** and plays the original `resources/sounds/advanced-combat/player-finisher.wav` cue.
+
+### Balance settings
+
+| Server option | Default |
+| --- | ---: |
+| `AdvancedPlayerCombosEnabled` | false |
+| `AdvancedPlayerComboWindowMs` | 2500 ms |
+| `AdvancedPlayerComboSecondHitBonusPercent` | 10% |
+| `AdvancedPlayerComboFinisherBonusPercent` | 20% |
+| `AdvancedPlayerComboFinisherStaminaCost` | 20 |
+
+The window is clamped to 600–6000 ms; bonus percentages to 0–100%. The finisher never circumvents the existing stamina limit, normal attack timers, PvP checks or combat protection.
+
+### QA checklist
+
+1. Build client/server/editor and run `AdvancedPlayerComboTests` plus all earlier phase tests.
+2. Enable both server options on staging. Strike the same NPC three times with melee/unarmed hits, check 1/3 → 2/3 → finisher, and confirm the health damage bonus applies once per successful hit.
+3. Miss, attack air, hit a resource, cast a spell, attack a pet/PvP player, switch to another NPC or another map/instance, wait out the window, or die; these must not improperly advance or retain a combo.
+4. Repeat with less than 20 stamina. The third hit should not receive its bonus or spend stamina; the combo should reset normally. Confirm stamina is spent only after an eligible third hit inflicts real damage.
+5. Perfect-parry then retaliate on the same NPC, and confirm the counterattack is excluded from the three-hit chain.
+6. Test group combat, boss dungeon instances, low/high latency and all localization strings. Confirm the audio is packaged with the deployed client and `main` is untouched until review.

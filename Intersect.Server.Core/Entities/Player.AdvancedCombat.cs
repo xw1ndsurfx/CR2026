@@ -12,6 +12,11 @@ namespace Intersect.Server.Entities;
 public partial class Player
 {
     private readonly AdvancedCombatStamina _advancedStamina = new();
+    private readonly AdvancedPlayerCombo _advancedPlayerCombo = new();
+    // True only during the validated, synchronous native melee weapon/unarmed path.
+    private bool _advancedDirectMeleeInProgress;
+    public bool IsAdvancedDirectMeleeAttack => _advancedDirectMeleeInProgress;
+    private int _advancedLastSentComboHits = -1;
     private long _advancedNextDodgeAt;
     private long _advancedDodgeProtectionUntil;
     private long _advancedParryUntil;
@@ -54,11 +59,22 @@ public partial class Player
         var enabled = Options.Instance.Combat.EnableAdvancedCombat;
         var now = Timing.Global.Milliseconds;
         var cooldown = enabled ? (int)Math.Clamp(_advancedNextDodgeAt - now, 0L, 20_000L) : 0;
+        var comboEnabled = enabled && Options.Instance.Combat.AdvancedPlayerCombosEnabled;
+        var comboHits = comboEnabled ? _advancedPlayerCombo.CompletedHits : 0;
         SendPacket(new AdvancedCombatStatePacket(
-            Id, enabled, _advancedStamina.Current, _advancedStamina.Maximum, cooldown, feedback));
+            Id, enabled, _advancedStamina.Current, _advancedStamina.Maximum, cooldown, feedback)
+        {
+            ComboEnabled = comboEnabled,
+            ComboHits = comboHits,
+            ComboRemainingMs = comboEnabled
+                ? _advancedPlayerCombo.RemainingMilliseconds(
+                    now, Options.Instance.Combat.AdvancedPlayerComboWindowMs)
+                : 0,
+        });
         _advancedStateSent = true;
         _advancedWasEnabled = enabled;
         _advancedLastSentStamina = _advancedStamina.Current;
+        _advancedLastSentComboHits = comboHits;
         _advancedLastStateAt = now;
     }
 
@@ -67,17 +83,82 @@ public partial class Player
         var enabled = Options.Instance.Combat.EnableAdvancedCombat;
         if (!enabled)
         {
+            _advancedPlayerCombo.Reset();
             if (_advancedWasEnabled)
                 SendAdvancedCombatState();
             return;
         }
 
+        if (!Options.Instance.Combat.AdvancedPlayerCombosEnabled || IsDead ||
+            HasPendingDeath || !_advancedPlayerCombo.IsOnMap(MapId, MapInstanceId))
+            _advancedPlayerCombo.Reset();
+        else
+            _advancedPlayerCombo.Expire(now, Options.Instance.Combat.AdvancedPlayerComboWindowMs);
+
         AdvanceAdvancedStamina(now);
         var current = _advancedStamina.Current;
         if (!_advancedStateSent || !_advancedWasEnabled ||
+            _advancedPlayerCombo.CompletedHits != _advancedLastSentComboHits ||
             (current != _advancedLastSentStamina && now - _advancedLastStateAt >= 180) ||
             (_advancedNextDodgeAt > now && now - _advancedLastStateAt >= 450))
             SendAdvancedCombatState();
+    }
+
+
+    /// <summary>Return the next hit's bonus without advancing progression or spending energy.</summary>
+    public int GetAdvancedPlayerComboBonus(Npc target)
+    {
+        var options = Options.Instance.Combat;
+        if (!options.EnableAdvancedCombat || !options.AdvancedPlayerCombosEnabled ||
+            !InGame || IsDead || HasPendingDeath || target == null || target.IsDead ||
+            target.IsDisposed || target.MapId != MapId || target.MapInstanceId != MapInstanceId)
+            return 0;
+
+        var now = Timing.Global.Milliseconds;
+        var step = _advancedPlayerCombo.NextHitStep(
+            now, target.Id, MapId, MapInstanceId, options.AdvancedPlayerComboWindowMs);
+        if (step == 2)
+            return Math.Clamp(options.AdvancedPlayerComboSecondHitBonusPercent, 0, 100);
+        if (step == 3)
+        {
+            AdvanceAdvancedStamina(now);
+            return _advancedStamina.CanSpend(options.AdvancedPlayerComboFinisherStaminaCost)
+                ? Math.Clamp(options.AdvancedPlayerComboFinisherBonusPercent, 0, 100)
+                : 0;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Only called after a native, damaging PvE melee strike actually reduced NPC health.
+    /// No block, miss, projectile, spell, resource or PvP hit can grow this chain.
+    /// </summary>
+    public int GetAdvancedPlayerComboNextStepForFeedback(Npc target)
+    {
+        var options = Options.Instance.Combat;
+        return _advancedPlayerCombo.NextHitStep(
+            Timing.Global.Milliseconds, target.Id, MapId, MapInstanceId,
+            options.AdvancedPlayerComboWindowMs);
+    }
+
+    public void RegisterAdvancedPlayerComboHit(Npc target, bool finisherBonusApplied)
+    {
+        var options = Options.Instance.Combat;
+        if (!options.EnableAdvancedCombat || !options.AdvancedPlayerCombosEnabled ||
+            !InGame || IsDead || HasPendingDeath || target == null)
+            return;
+
+        var now = Timing.Global.Milliseconds;
+        var step = _advancedPlayerCombo.RegisterSuccessfulHit(
+            now, target.Id, MapId, MapInstanceId, options.AdvancedPlayerComboWindowMs);
+        if (step == 3 && finisherBonusApplied)
+        {
+            // The validated hit already occurred, so this cost is never paid on a miss.
+            TrySpendAdvancedStamina(options.AdvancedPlayerComboFinisherStaminaCost, now);
+        }
+        SendAdvancedCombatState(step == 3 && finisherBonusApplied
+            ? AdvancedCombatFeedback.ComboFinisher
+            : AdvancedCombatFeedback.ComboHit);
     }
 
     public void RegisterAdvancedParry()
