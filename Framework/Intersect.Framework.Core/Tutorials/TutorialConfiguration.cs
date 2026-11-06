@@ -13,6 +13,7 @@ public enum TutorialObjective
     CombatCounterattack = 6,
     CombatFinisher = 7,
     ReachTile = 8,
+    InteractEvent = 9,
 }
 /// <summary>HUD target for a nonblocking tutorial spotlight.</summary>
 public enum TutorialHighlightTarget
@@ -28,6 +29,7 @@ public enum TutorialHighlightTarget
     Player = 8,
     WorldTile = 9,
     WorldNpc = 10,
+    WorldEvent = 11,
 }
 
 public enum TutorialHighlightStyle
@@ -58,6 +60,18 @@ public sealed class TutorialStep
     [System.ComponentModel.Category("Royal Guide - world")]
     [System.ComponentModel.Description("NPC descriptor to highlight while the player is on this map.")]
     public Guid TargetNpcId { get; set; }
+    [System.ComponentModel.Category("Royal Guide - world")]
+    [System.ComponentModel.Description("Map event descriptor to spotlight and activate through the real event interaction.")]
+    public Guid TargetEventId { get; set; }
+
+    /// <summary>
+    /// Compare with an event activation already approved by the authoritative
+    /// server. A client-reported click or requested event is never sufficient.
+    /// </summary>
+    public bool MatchesActivatedEvent(Guid eventId, Guid eventMapId) =>
+        Objective == TutorialObjective.InteractEvent &&
+        MapId != Guid.Empty && MapId == eventMapId &&
+        TargetEventId != Guid.Empty && TargetEventId == eventId;
 
     /// <summary>Location check shared by game logic and tests; only the
     /// authoritative server player position is passed by the runtime.</summary>
@@ -83,7 +97,9 @@ public sealed class TutorialConfiguration
             Enum.IsDefined(s.Objective) && Enum.IsDefined(s.HighlightTarget) && Enum.IsDefined(s.HighlightStyle) &&
             (s.Objective != TutorialObjective.ReachMap || s.MapId != Guid.Empty) &&
             (s.Objective != TutorialObjective.ReachTile || s.MapId != Guid.Empty) &&
-            (s.HighlightTarget is not (TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc) || s.MapId != Guid.Empty) &&
+            (s.Objective != TutorialObjective.InteractEvent || (s.MapId != Guid.Empty && s.TargetEventId != Guid.Empty)) &&
+            (s.HighlightTarget is not (TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent) || s.MapId != Guid.Empty) &&
+            (s.HighlightTarget != TutorialHighlightTarget.WorldEvent || s.TargetEventId != Guid.Empty) &&
             (s.HighlightTarget != TutorialHighlightTarget.WorldNpc || s.TargetNpcId != Guid.Empty) &&
             s.TargetX is >= 0 and <= 255 && s.TargetY is >= 0 and <= 255 &&
             s.TargetRadius is >= 0 and <= 6 &&
