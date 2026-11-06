@@ -3,6 +3,7 @@ using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Network.Packets.Tutorials;
 using Intersect.Editor.General;
@@ -19,9 +20,11 @@ internal sealed class FrmTutorial : Form
     private readonly Button _save;
     private readonly RoyalGuidePreview _preview = new();
     private readonly ComboBox _highlightTarget = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly ComboBox _completionObjective = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
     private readonly ComboBox _highlightStyle = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
     private readonly ComboBox _worldMap = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
     private readonly ComboBox _worldNpc = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
+    private readonly ComboBox _worldEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 258 };
     private readonly NumericUpDown _worldX = new() { Minimum = 0, Maximum = 255, Width = 90 };
     private readonly NumericUpDown _worldY = new() { Minimum = 0, Maximum = 255, Width = 90 };
     private readonly NumericUpDown _worldRadius = new() { Minimum = 0, Maximum = 6, Width = 90 };
@@ -111,6 +114,11 @@ internal sealed class FrmTutorial : Form
             Text = T(title), Width = 258, Height = 28,
             Padding = new Padding(0, 7, 0, 0),
         };
+        controls.Controls.Add(Caption("Completion objective"));
+        foreach (var value in Enum.GetValues<TutorialObjective>())
+            _completionObjective.Items.Add(value);
+        controls.Controls.Add(_completionObjective);
+
         controls.Controls.Add(Caption("Highlight target"));
         foreach (var value in Enum.GetValues<TutorialHighlightTarget>())
             _highlightTarget.Items.Add(value);
@@ -139,6 +147,26 @@ internal sealed class FrmTutorial : Form
         foreach (var npc in NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().OrderBy(npc => npc.Name))
             _worldNpc.Items.Add(new TargetChoice(npc.Id, npc.Name));
         controls.Controls.Add(_worldNpc);
+        controls.Controls.Add(Caption("Target map event"));
+        controls.Controls.Add(_worldEvent);
+        var interaction = new Button { Text = T("Create interaction step"), Width = 258, Height = 32 };
+        interaction.Click += (_, _) =>
+        {
+            var id = (_worldEvent.SelectedItem as TargetChoice)?.Id ?? Guid.Empty;
+            if (id == Guid.Empty)
+            {
+                MessageBox.Show(this, T("Select a map event first."));
+                return;
+            }
+            ChangeWorld(step =>
+            {
+                step.TargetEventId = id;
+                step.HighlightTarget = TutorialHighlightTarget.WorldEvent;
+                step.Objective = TutorialObjective.InteractEvent;
+            });
+            RefreshWorldControls();
+        };
+        controls.Controls.Add(interaction);
 
         controls.Controls.Add(Caption("Target tile X and Y"));
         var coords = new FlowLayoutPanel { Width = 258, Height = 30 };
@@ -155,18 +183,34 @@ internal sealed class FrmTutorial : Form
             ForeColor = System.Drawing.Color.DimGray,
         });
 
+        _completionObjective.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.Objective = (TutorialObjective)_completionObjective.SelectedItem!);
         _highlightTarget.SelectedIndexChanged += (_, _) =>
             ChangeWorld(step => step.HighlightTarget = (TutorialHighlightTarget)_highlightTarget.SelectedItem!);
         _highlightStyle.SelectedIndexChanged += (_, _) =>
             ChangeWorld(step => step.HighlightStyle = (TutorialHighlightStyle)_highlightStyle.SelectedItem!);
         _worldMap.SelectedIndexChanged += (_, _) =>
-            ChangeWorld(step => step.MapId = (_worldMap.SelectedItem as TargetChoice)?.Id ?? Guid.Empty);
+        {
+            if (_loading) return;
+            var newMap = (_worldMap.SelectedItem as TargetChoice)?.Id ?? Guid.Empty;
+            ChangeWorld(step =>
+            {
+                if (step.MapId == newMap) return;
+                step.MapId = newMap;
+                // An event from another map must never be retained silently.
+                step.TargetEventId = Guid.Empty;
+            });
+            RefreshWorldControls();
+        };
         _worldNpc.SelectedIndexChanged += (_, _) =>
             ChangeWorld(step => step.TargetNpcId = (_worldNpc.SelectedItem as TargetChoice)?.Id ?? Guid.Empty);
+        _worldEvent.SelectedIndexChanged += (_, _) =>
+            ChangeWorld(step => step.TargetEventId = (_worldEvent.SelectedItem as TargetChoice)?.Id ?? Guid.Empty);
         _worldX.ValueChanged += (_, _) => ChangeWorld(step => step.TargetX = (int)_worldX.Value);
         _worldY.ValueChanged += (_, _) => ChangeWorld(step => step.TargetY = (int)_worldY.Value);
         _worldRadius.ValueChanged += (_, _) => ChangeWorld(step => step.TargetRadius = (int)_worldRadius.Value);
 
+        _preview.TargetPicked += target => _highlightTarget.SelectedItem = target;
         layout.Controls.Add(controls, 0, 0);
         layout.Controls.Add(_preview, 1, 0);
         tab.Controls.Add(layout);
@@ -189,16 +233,37 @@ internal sealed class FrmTutorial : Form
         try
         {
             var step = _selected;
+            _completionObjective.SelectedItem = step?.Objective ?? TutorialObjective.Read;
             _highlightTarget.SelectedItem = step?.HighlightTarget ?? TutorialHighlightTarget.None;
             _highlightStyle.SelectedItem = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
             SelectChoice(_worldMap, step?.MapId ?? Guid.Empty);
             SelectChoice(_worldNpc, step?.TargetNpcId ?? Guid.Empty);
+            RefreshEventChoices(step?.MapId ?? Guid.Empty, step?.TargetEventId ?? Guid.Empty);
             _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, 255);
             _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, 255);
             _worldRadius.Value = Math.Clamp(step?.TargetRadius ?? 1, 0, 6);
             _preview.ShowStep(step, _titles[0].Text);
         }
         finally { _loading = oldLoading; }
+    }
+
+    private void RefreshEventChoices(Guid mapId, Guid selectedEventId)
+    {
+        _worldEvent.BeginUpdate();
+        try
+        {
+            _worldEvent.Items.Clear();
+            _worldEvent.Items.Add(new TargetChoice(Guid.Empty, T("None")));
+            if (MapDescriptor.Get(mapId) is { } map)
+            {
+                foreach (var descriptor in map.LocalEvents.Values
+                    .Where(e => e != null && !e.CommonEvent)
+                    .OrderBy(e => e.Name))
+                    _worldEvent.Items.Add(new TargetChoice(descriptor.Id, descriptor.Name));
+            }
+            SelectChoice(_worldEvent, selectedEventId);
+        }
+        finally { _worldEvent.EndUpdate(); }
     }
 
     private static void SelectChoice(ComboBox combo, Guid id)
