@@ -1,11 +1,25 @@
 # Corps Royaux — Roadmap 2026–2027
 
-> **Statut : planification interne — mis à jour le 2 novembre 2026.**
+> **Statut : planification interne — revue technique le 7 novembre 2026 (calendrier établi le 2 novembre).**
 > Les dates de playtest et de bêta sont des **objectifs**, et non des ouvertures déjà configurées dans Steamworks. Leur maintien dépend des validations techniques. Les volumes indiquent des **joueurs ciblés / invités**, pas un nombre de connexions simultanées garanti.
 
 Cette feuille de route accompagne le développement de **Corps Royaux**, MMORPG 2D de Studio Logiklik, et son moteur personnalisé **Logiklik 2D Engine**, basé sur Intersect. Elle sépare les tests fermés (Steam Playtest), la démo destinée au Steam Next Fest et la bêta ouverte du jeu principal.
 
-[Retour au README](README.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
+[Retour au README](README.md) · [État technique et reprise du projet](PROJECT_STATUS.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
+
+## État technique au 7 novembre 2026
+
+La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Cet état est un instantané : recontrôler `main`, la CI et les PR avant une fusion ou un playtest.
+
+| Statut GitHub | Travail récent | Suite nécessaire |
+| --- | --- | --- |
+| **Fusionné dans `main`, mais désactivé par défaut** | Combat PvE avancé, phases 1 à 7 ([#238](https://github.com/xw1ndsurfx/CR2026/pull/238), [#241–246](https://github.com/xw1ndsurfx/CR2026/pull/246)) : esquive, parade, riposte, télégraphes, endurance, combos et exercices. | Tests en jeu sur staging, migrations et activation contrôlée de `Combat.EnableAdvancedCombat`. |
+| **Fusionné dans `main`, validation à compléter** | Pêche, profession/éditeur et mode auto rééquilibré ([#218](https://github.com/xw1ndsurfx/CR2026/pull/218), [#227](https://github.com/xw1ndsurfx/CR2026/pull/227)). | Régression sessions réelles, prises, EXP et équipement. |
+| **Fusionné en partie ; PR ouverte** | Exportation, éditeur unifié, métier et ajustements UI ([#228](https://github.com/xw1ndsurfx/CR2026/pull/228), [#239](https://github.com/xw1ndsurfx/CR2026/pull/239)); nouvelle interface [#240](https://github.com/xw1ndsurfx/CR2026/pull/240) **non fusionnée**. | Tester livraison/naufrage et rendu visuel ; examiner #240. |
+| **Fusionné dans `main`, validation à compléter** | Commandes d'artisanat, panneau via Event, GFX/SFX et habillage ([#230](https://github.com/xw1ndsurfx/CR2026/pull/230), [#237](https://github.com/xw1ndsurfx/CR2026/pull/237)). | Recette à deux joueurs et résilience des sauvegardes. |
+| **PR en brouillon, non fusionnées** | Royal Guide visuel : [#247](https://github.com/xw1ndsurfx/CR2026/pull/247) → [#248](https://github.com/xw1ndsurfx/CR2026/pull/248) → [#249](https://github.com/xw1ndsurfx/CR2026/pull/249). | Compilation, essais UI/serveur, intégration ordonnée après revue. |
+
+**Règle de suivi :** `PR fusionnée` ≠ `jeu testé` ≠ `jeu déployé`. Les cases de recette ci-dessous restent ouvertes tant qu'aucune preuve d'acceptation correspondante n'a été consignée.
 
 ## Calendrier de diffusion et de tests
 
