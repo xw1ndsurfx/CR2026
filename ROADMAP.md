@@ -100,6 +100,42 @@ Documents techniques existants :
 - [Brouillard d'exploration](docs/world-map-exploration.md)
 - [Outil de diagnostic des crashes](docs/server-crash-diagnostics.md)
 
+## Smart Map Builder — état et reste à faire (revue du 7 novembre 2026)
+
+> **Classification : développement intégré ≠ recette en jeu terminée.** Ce suivi complète le chantier P1 « Interface, navigation et outils de l’éditeur ». Il évite de recréer les outils déjà fusionnés. Les vérifications ci-dessous reposent sur `main`, les PR #193, #196, #198 et [la documentation technique](docs/SmartMapBuilder.txt). Les captures/tests automatisés mentionnés dans ces PR ne remplacent pas une session de validation sur un client connecté.
+
+### Existant dans le dépôt — ne pas recréer
+
+- [x] **Smart Map Builder** ancrable, accessible via Tools et le Logiklik Editor Hub; modes de peinture libre, ligne, rectangle, ellipse, remplissage, remplacement et gomme, prévisualisation et une annulation par trait (PR [#193](https://github.com/xw1ndsurfx/CR2026/pull/193)).
+- [x] **Autotiles et tuiles animées natifs** VX/XP : modes Normal, VX, Fake VX, Animated VX, Cliff VX, Waterfall VX, XP et Animated XP, en conservant la sérialisation et les frames natives.
+- [x] **Décors et modèles** : variantes de décoration avec densité, bâtiments multicouches/stamps, presets avec recherche, favoris, duplication, import/export, protection du contenu existant et règles de transition par surcouche.
+- [x] **Îles sur Ground** et éditeur de terrain/couleur/pixels; berges composites à partir de l’eau; support des connexions via variantes générées (PR [#196](https://github.com/xw1ndsurfx/CR2026/pull/196)).
+- [x] **Raccordement ciblé de variantes d’eau animée** sur Ground, en préservant les frames, les autres couches et le retour arrière (PR [#198](https://github.com/xw1ndsurfx/CR2026/pull/198)).
+- [x] **Tests automatisés documentés** couvrant les formes, formats natifs, undo, presets, ressources réelles et une série de cartes historiques. Cocher ceci ne signifie pas que la recette en jeu est achevée.
+
+### À valider / corriger — priorités avant d’élargir l’outil
+
+- [ ] **P0 — Session connectée réelle :** tester sur serveur de développement avec le vrai client et l’éditeur issus de révisions compatibles; sauvegarder, recharger, traverser les maps voisines et vérifier le rendu visuel, la persistance et l’absence de régression. Aucun test automatisé ne remplace cette recette.
+- [ ] **P0 — Animations et ressources déployées :** vérifier les frames et raccordements d’eau en jeu, ainsi que la distribution des PNG générés et la conservation exacte de leurs noms. Valider aussi la compatibilité entre versions d’éditeur, client et framework partagé avant utilisation de variantes Ground.
+- [ ] **P1 — Formats et art réellement disponibles :** effectuer une recette visuelle sur de vrais tilesets XP, Animated XP, Cliff VX et Waterfall VX adaptés. Les PR documentent surtout la validation graphique réelle de VX / Animated VX; ne pas déclarer les autres formats validés avec les seules fixtures synthétiques.
+- [ ] **P1 — Grande map / performance :** mesurer temps de réponse, mémoire et taille des prévisualisations sur des maps volumineuses; optimiser seulement les goulots démontrés.
+- [ ] **P1 — Robustesse des transitions :** tester les berges, angles internes/externes, îles irrégulières, trous, juxtaposition de plusieurs rangées d’eau, frontières des maps et interaction Ground / Mask / Fringe. Répertorier les cas où les tilesets ne possèdent pas les raccords graphiques nécessaires.
+- [ ] **P1 — Régression éditeur :** vérifier les pinceaux classiques, drag, sélection, copier/coller, attributs, collisions, spawns, events, undo/redo, protections et récupérations après crash; conserver une documentation de test reproductible.
+- [ ] **P1 — Utilisabilité :** tester en FR/EN/ES à 1280×720 et plus; raccourcir les manipulations nécessaires pour capturer une source, créer un preset et utiliser « Raccorder l’eau sélectionnée »; ajouter des indications contextuelles si des étapes restent ambiguës.
+
+### Améliorations futures — à concevoir, non déclarées livrées
+
+- [ ] **P2 — Routes intelligentes à intersections :** presets spécialisés avec virages, jonctions en T, croisements et embouts automatiques, en réutilisant les tilesets existants.
+- [ ] **P2 — Rivières dirigées :** tracé de cours d’eau, variations de largeur, connexions, berges et cascades animées; garder le comportement natif des frames.
+- [ ] **P2 — Falaises multi-niveaux :** assistant de construction et de prévisualisation des faces/hauteurs, avec contraintes de placement explicites si le tileset ne contient pas l’art requis.
+- [ ] **P2 — Décoration et bâtiments avancés :** variantes pondérées de groupes multicellules, règles de distribution plus riches, rotation uniquement lorsqu’un rendu/art compatible existe.
+- [ ] **P2 — Presets prêts à l’emploi et aide intégrée :** exemples utilisant les ressources réelles et tutoriel contextualisé; éviter de distribuer des assets non autorisés ou non inclus.
+- [ ] **P2 — Revue ergonomique ciblée :** évaluer, selon usage observé, les fonctionnalités d’édition des règles en interface (actuellement certaines définitions détaillées exigent l’import/export JSON), sans créer un second moteur de transitions.
+
+**Définition de terminé :** la compatibilité, les animations et les raccordements doivent être vérifiés dans une session en jeu connectée; les tests visuels et d’intégration sont reproductibles; aucun écrasement inattendu de map/attribut/event; les PNG générés sont correctement distribués. **Les tâches P2 ne sont pas des prérequis automatiques des playtests annoncés.**
+
+---
+
 ## Calendrier marketing — novembre 2026 à mars 2027
 
 > **Plan révisé le 2 novembre 2026.** La préparation initialement prévue les 22–31 octobre est réorganisée à partir du 2 novembre; les anciennes dates ne sont pas considérées comme des actions accomplies. Le **7 décembre est le lancement du Playtest communautaire #2, pas l'Open BETA**. Les campagnes suivantes restent conditionnelles à la validation technique et aux autorisations Steamworks.
