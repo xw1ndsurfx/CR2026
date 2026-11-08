@@ -7,7 +7,7 @@
 [![Steam](https://img.shields.io/badge/Steam-Corps%20Royaux-1b2838)](https://store.steampowered.com/app/4317960/)
 [![Roadmap](https://img.shields.io/badge/Roadmap-2026%E2%80%932027-blue)](ROADMAP.md)
 
-> **État au 2 novembre 2026 : développement actif, playtests en préparation.** La présence d'une fonctionnalité dans le code ne garantit pas sa validation complète en jeu ou en production.
+> **État au 7 novembre 2026 : développement actif, playtests en préparation.** La présence d'une fonctionnalité dans le code ne garantit pas sa validation complète en jeu ou en production. Voir l'[état de développement vérifié sur GitHub](PROJECT_STATUS.md), qui distingue le travail fusionné des PR ouvertes et des tests manuels restants.
 
 ## Corps Royaux : univers et objectifs
 
