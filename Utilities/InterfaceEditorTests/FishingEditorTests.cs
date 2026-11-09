@@ -185,7 +185,11 @@ internal static class FishingEditorTests
                 draft.Zones[1].Catches[0].Weight = 3;
                 Check(draft.Zones[0].Catches[0].Weight == 1, "Duplicated catches do not share mutable state.");
                 fish.Stackable = false;
-                Check(!(bool)Call(form, "ValidateDraft")! && Field<Label>(form, "_status").Text.Contains(fish.Name), "A non-stackable reward is rejected before network save.");
+                Check((bool)Call(form, "ValidateDraft")!, "Ordinary non-stackable fish and loot items remain valid rewards.");
+                var rewardItem=draft.Zones[0].Catches[0].ItemId;
+                draft.Zones[0].Catches[0].ItemId=Guid.NewGuid();
+                Check(!(bool)Call(form, "ValidateDraft")! && Field<Label>(form, "_status").Text==FishingEditorText.Get("Choose an existing item with valid stack limits."), "A missing reward item is rejected before network save.");
+                draft.Zones[0].Catches[0].ItemId=rewardItem;
                 fish.Stackable = true;
                 Tab(form, 0);
                 Call(form, "Save"); var pending = Field<string>(form, "_pendingSaveJson");

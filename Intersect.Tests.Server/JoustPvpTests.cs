@@ -53,15 +53,23 @@ public sealed class JoustPvpTests
         internal JoustPvpSession? Session => (JoustPvpSession?)Field(A, "_joustPvp");
         internal JoustPvpRuntime.Invitation Invite()
         {
+            // The success fixture represents two available players, not a race
+            // with background map updates taking the target's entity lock.
+            lock(A.EntityLock)lock(B.EntityLock)
+            {
             A.HandleJoustRequest(new() { Action = JoustAction.InviteDuel, TargetId = B.Id });
             var list = (Dictionary<Guid, JoustPvpRuntime.Invitation>)typeof(JoustPvpRuntime).GetField("Invitations", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
             return list[B.Id];
+            }
         }
         internal JoustPvpSession Start()
         {
+            lock(A.EntityLock)lock(B.EntityLock)
+            {
             var invite = Invite();
             B.HandleJoustRequest(new() { Action = JoustAction.AcceptDuel, InvitationId = invite.Id });
             Assert.That(Session, Is.Not.Null, "Native invitation and acceptance must start one shared session."); return Session!;
+            }
         }
         public void Dispose()
         {
