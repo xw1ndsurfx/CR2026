@@ -299,11 +299,7 @@ public sealed partial class FrmFishing : Form
         Check(table, "Legendary", entry.Legendary, b => entry.Legendary = b);
         Number(table, "Challenge steps", entry.ChallengeSteps, 1, 8, v => entry.ChallengeSteps = (int)v);
         Number(table, "Challenge response window (ms)", entry.ChallengeWindowMs, 800, 10000, v => entry.ChallengeWindowMs = (int)v);
-        FileField(table, "Sprite sheet", entry.Sprite, "items", s => entry.Sprite = s, true);
-        Number(table, "Sprite X (pixels)", entry.SpriteX, 0, 16384, v => entry.SpriteX = (int)v);
-        Number(table, "Sprite Y (pixels)", entry.SpriteY, 0, 16384, v => entry.SpriteY = (int)v);
-        Number(table, "Sprite width", entry.SpriteWidth, 1, 2048, v => entry.SpriteWidth = (int)v);
-        Number(table, "Sprite height", entry.SpriteHeight, 1, 2048, v => entry.SpriteHeight = (int)v);
+        Note(table, "The fish uses the selected item icon, enlarged and animated in the mini-game.");
         Note(table, "Only eligible catches participate in the weighted draw. Reward items must support inventory stacks.");
         if (legendaryOnly) Note(table, "Automatic fishing pauses for a legendary encounter. A player must accept and complete the challenge.");
     }

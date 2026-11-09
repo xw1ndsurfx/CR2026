@@ -15,10 +15,58 @@ using Intersect.Server.Maps;
 
 internal static class ServerRewardChecks
 {
+    private static void CheckBankLoot(Action<bool, string> check)
+    {
+        var shop = Intersect.Server.LogiCoins.LogiCoinShopRuntime.Current;
+        var previous = shop.PremiumUntilUserVariableId;
+        var premiumId = Guid.NewGuid();
+        shop.PremiumUntilUserVariableId = premiumId;
+        var fish = new ItemDescriptor(Guid.NewGuid())
+        { ItemType = ItemType.Currency, MaxInventoryStack = 100, MaxBankStack = 5, CanBank = true };
+        ItemDescriptor.Lookup.Set(fish.Id, fish);
+        var player = new Player(); GC.SuppressFinalize(player);
+        var user = new User();
+        typeof(Player).GetProperty(nameof(Player.User))!.SetValue(player, user);
+        user.Variables.Add(new UserVariable(premiumId));
+        user.GetVariableValue(premiumId).Integer = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeMilliseconds();
+        player.BankAccount = new BankAccountProfile { Opened = true, BaseSlots = 2 };
+        FishingProgressAward Award() => new() { VariableId = FishingRules.FallbackExperienceId,
+            Before = 0, After = 25, PreviousLevel = 1, NewLevel = 1 };
+        var receipt = Guid.NewGuid();
+        try
+        {
+            var result = FishingRewards.Commit(player, receipt, fish.Id, 7, Award(), Guid.Empty, 0,
+                () => UserSaveResult.Completed, bank: true);
+            check(result == FishingRewardResult.Success && player.Bank.Where(i => i.ItemId == fish.Id).Sum(i => i.Quantity) == 7 &&
+                player.Items.All(i => i.ItemId != fish.Id), "Premium loot goes directly to bank with no inventory copy");
+            check(player.Bank.Where(i => i.ItemId == fish.Id).All(i => i.Quantity <= 5), "Bank loot obeys bank stack limits");
+            check(FishingRewards.Commit(player, receipt, fish.Id, 7, Award(), Guid.Empty, 0,
+                () => throw new Exception("Replay"), bank: true) == FishingRewardResult.AlreadyCommitted,
+                "Bank loot shares the persisted duplicate-reward protection");
+            var failedReceipt = Guid.NewGuid();
+            check(FishingRewards.Commit(player, failedReceipt, fish.Id, 2, Award(), Guid.Empty, 0,
+                () => UserSaveResult.DatabaseFailure, bank: true) == FishingRewardResult.SaveFailed &&
+                player.Bank.Where(i => i.ItemId == fish.Id).Sum(i => i.Quantity) == 7 &&
+                player.GetVariable(FishingRules.LastRewardId).Value.String == receipt.ToString("N"),
+                "A bank save failure rolls back fish, XP and receipt together");
+            fish.CanBank = false;
+            check(FishingRewards.Commit(player, Guid.NewGuid(), fish.Id, 1, Award(), Guid.Empty, 0,
+                () => throw new Exception("Forbidden item saved"), bank: true) == FishingRewardResult.InventoryFull,
+                "Fishing cannot bypass an item's bank restriction");
+            fish.CanBank = true;
+            user.GetVariableValue(premiumId).Integer = 0;
+            check(FishingRewards.Commit(player, Guid.NewGuid(), fish.Id, 1, Award(), Guid.Empty, 0,
+                () => throw new Exception("Expired premium saved"), bank: true) == FishingRewardResult.SaveFailed,
+                "Premium expiry is enforced at the reward checkpoint");
+        }
+        finally { shop.PremiumUntilUserVariableId = previous; ItemDescriptor.Lookup.DeleteAt(fish.Id); }
+    }
+
     internal static void Run(Action<bool, string> check)
     {
         Options.EnsureCreated();
         CheckZonePersistence(check);
+        CheckBankLoot(check);
         var fish = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 10 };
         var bait = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 100 };
         ItemDescriptor.Lookup.Set(fish.Id, fish); ItemDescriptor.Lookup.Set(bait.Id, bait);

@@ -38,6 +38,7 @@ internal sealed class FishingWindow : Base
     private readonly Button[] _skills = new Button[4];
     private readonly Button[] _challenge = new Button[4];
     private readonly Button _cast, _accept, _activeTab, _autoTab, _automatic, _previousPage, _nextPage;
+    private readonly Button _takeLoot, _discardLoot, _lootDestination;
     private FishingConfiguration _configuration = new();
     private FishingState? _state;
     private FishingZoneDefinition? _zone;
@@ -114,6 +115,12 @@ internal sealed class FishingWindow : Base
             _challenge[i] = AddButton("Challenge" + i, Directions[i], 322 + i * 150, 470, 140, 70, 20,
                 () => Send(FishingAction.ChallengeInput, input: input));
         }
+        _takeLoot = AddButton("TakeLoot", "TAKE ALL", 340, 464, 285, 60, 22, () => Send(FishingAction.TakeLoot));
+        _discardLoot = AddButton("DiscardLoot", "DISCARD ALL", 645, 464, 285, 60, 22, () => Send(FishingAction.DiscardLoot));
+        _discardLoot.SetToolTipText(T("Discard the fish and all loot"));
+        _lootDestination = AddButton("LootDestination", "", 340, 540, 590, 48, 19,
+            () => Send(FishingAction.SetLootDestination, input: _state?.BankLoot == true ? 0 : 1));
+        _takeLoot.Hide(); _discardLoot.Hide(); _lootDestination.Hide();
         _session = AddLabel("Session", "", 760, 701, 420, 31, 15, false);
         _cast.IsHidden = _accept.IsHidden = true;
         foreach (var button in _challenge) button.Hide();
@@ -192,6 +199,10 @@ internal sealed class FishingWindow : Base
             state.Phase == FishingPhase.LegendaryPrompt ? "Legendary catch: waiting for you" : "Fishing continues while connected" : "Chain catches while connected");
         _instruction.Text = T(challenge ? "Follow the highlighted direction before time runs out" :
             state.Phase == FishingPhase.Fighting ? "Hold: reel in  ·  Release: let the line run" : "Choose active fishing or automatic fishing");
+        var loot = state.Phase == FishingPhase.Loot;
+        _takeLoot.IsHidden = _discardLoot.IsHidden = !loot;
+        _lootDestination.IsHidden = !state.CanBankLoot || !(loot || ready);
+        _lootDestination.Text = T(state.BankLoot ? "LOOT TO BANK · PREMIUM" : "LOOT TO INVENTORY");
         _cast.IsHidden = !ready || state.Automatic;
         _accept.IsHidden = state.Phase != FishingPhase.LegendaryPrompt;
         _cast.Text = T(state.Phase == FishingPhase.Caught ? "CAST AGAIN" : "CAST THE LINE");
@@ -205,12 +216,14 @@ internal sealed class FishingWindow : Base
             FishingPhase.LegendaryPrompt => F("A legendary creature!\nAccept within {0}s", (remaining + 999) / 1000),
             FishingPhase.LegendaryChallenge => F("Legendary challenge · {0}/{1}\n{2} · {3:0.0}s", state.ChallengeStep + 1, state.ChallengeSteps,
                 T(Directions[Math.Clamp(state.ChallengeExpectedInput, 0, 3)]), remaining / 1000d),
+            FishingPhase.Retrieving => T("Bringing the catch to the surface…"),
+            FishingPhase.Loot => F("{0} ×{1}\nTake all loot or discard it", ItemName(state.CatchItemId), state.CatchQuantity),
             FishingPhase.Caught => F("{0} ×{1}\n+{2} XP", ItemName(state.CatchItemId), state.CatchQuantity, state.ExperienceGained),
             FishingPhase.Failed => state.Message.Length > 0 ? FishingText.Get(state.Message, ClientLanguages.Current) : T("The catch escaped"),
             _ => "",
         };
         _status.TextColorOverride = state.Legendary ? Gold : state.Resisting ? new Color(255, 255, 205, 160) : Cream;
-        if (state.Phase == FishingPhase.Ready && !string.IsNullOrEmpty(state.Message)) _status.Text = state.Message;
+        if (state.Phase is (FishingPhase.Ready or FishingPhase.Loot) && !string.IsNullOrEmpty(state.Message)) _status.Text = state.Message;
         if (Environment.TickCount64 < _noticeUntil) _status.Text = _notice;
         for (var i = 0; i < 4; i++)
         {
@@ -324,6 +337,18 @@ internal sealed class FishingWindow : Base
             foreach (var (column, index) in new[] { 6, 8, 3, 18 }.Select((column, index) => (column, index)))
                 Sprite(skin, FishingSheet, column * 32, 0, 32, 32, 565 + index * 174, 782, 47, 48,
                     _skills[index].IsDisabled ? new Color(170, 190, 178, 160) : Color.White);
+            if (state.Phase == FishingPhase.Loot)
+            {
+                Panel(skin, 310, 320, 650, 285, new Color(245, 36, 24, 18));
+                DrawItem(skin, state.CatchItemId, 580, 335, 110, 100);
+                ButtonSurface(skin, _takeLoot, 340, 464, 285, 60, true);
+                ButtonSurface(skin, _discardLoot, 645, 464, 285, 60, false);
+                // A drawn bin stays readable independently of the system font's emoji support.
+                Fill(skin, 661, 487, 13, 17, Cream);
+                Fill(skin, 658, 483, 19, 3, Cream);
+                Fill(skin, 664, 479, 7, 3, Cream);
+            }
+            if (!_lootDestination.IsHidden) ButtonSurface(skin, _lootDestination, 340, 540, 590, 48, false);
             if (!_cast.IsHidden) ButtonSurface(skin, _cast, 416, 360, 391, 60, true);
             if (!_accept.IsHidden) ButtonSurface(skin, _accept, 416, 377, 391, 60, true);
             if (state.Phase == FishingPhase.LegendaryChallenge)
@@ -349,7 +374,7 @@ internal sealed class FishingWindow : Base
         {
             var x = 95 + (i * 147 + now * (7 + i % 4 * 3)) % 1000;
             var y = 340 + i % 4 * 72 + Math.Sin(now + i) * 8;
-            DrawCatch(skin, visibleCatches[i], (int)x, (int)y, 59, 42);
+            DrawCatch(skin, visibleCatches[i], (int)x, (int)y, 92, 66);
         }
         // Decorative seabed fauna use the supplied small atlas; actual reward icons always use authored catches.
         Sprite(skin, FaunaSheet, 0, 64, 32, 32, 815, 674, 67, 52);
@@ -362,6 +387,16 @@ internal sealed class FishingWindow : Base
         var targetX = 685 - state.Progress * 2.1;
         var targetY = 322 + state.Depth * 3.1 + Math.Sin(now * 2.4) * (state.Resisting ? 11 : 4);
         if (state.Phase is FishingPhase.Waiting) targetY = 355 + state.Depth * 2.4;
+        // Reeling raises both the hook and its attached fish toward the water surface.
+        if (state.Phase is FishingPhase.Fighting or FishingPhase.LegendaryChallenge)
+            targetY = 291 + (targetY - 291) * (1 - state.Progress * .7 / 100);
+        if (state.Phase is FishingPhase.Retrieving)
+        {
+            var lift = Math.Clamp(phaseElapsed / 1200d, 0, 1);
+            targetY = 291 + (322 + state.Depth * 3.1 - 291) * .3;
+            targetY += (291 - targetY) * lift;
+        }
+        if (state.Phase is FishingPhase.Caught or FishingPhase.Loot) targetY = 291;
         var endX = (int)targetX - 23; var endY = (int)targetY + 10;
         // A quadratic line enters from outside the view; no shore, dock, or substitute avatar.
         var previousX = 397d; var previousY = 121d;
@@ -393,8 +428,6 @@ internal sealed class FishingWindow : Base
     private static string ItemName(Guid id) => ItemDescriptor.TryGet(id, out var item) ? ClientLanguages.ContentText(item.Name) : "";
     private void DrawItem(SkinBase skin, Guid itemId, int x, int y, int width, int height)
     {
-        var entry = _zone?.Catches.FirstOrDefault(c => c.ItemId == itemId && c.Sprite.Length > 0);
-        if (entry != null) { DrawCatch(skin, entry, x, y, width, height); return; }
         if (ItemDescriptor.TryGet(itemId, out var item))
         {
             var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
@@ -403,10 +436,18 @@ internal sealed class FishingWindow : Base
     }
     private void DrawCatch(SkinBase skin, FishingCatchDefinition definition, int x, int y, int width, int height)
     {
-        if (definition.Sprite.Length > 0)
-            Sprite(skin, definition.Sprite, definition.SpriteX, definition.SpriteY, definition.SpriteWidth, definition.SpriteHeight, x, y, width, height);
-        else if (ItemDescriptor.TryGet(definition.ItemId, out var item) && GameContentManager.Current.GetTexture(TextureType.Item, item.Icon) is { } texture)
-            skin.Renderer.DrawTexturedRect(texture, SceneRect(x, y, width, height), Color.White);
+        // Items are the single source of appearance; animate their icon with a gentle swim.
+        if (ItemDescriptor.TryGet(definition.ItemId, out var item) &&
+            GameContentManager.Current.GetTexture(TextureType.Item, item.Icon) is { } texture)
+        {
+            var swim = Math.Sin(Environment.TickCount64 / 180d + definition.Id.GetHashCode());
+            var aspect = texture.Width / (double)Math.Max(1, texture.Height);
+            var w = Math.Min(width, (int)(height * aspect));
+            var h = Math.Min(height, (int)(width / aspect));
+            var pulse = 1 + swim * .035;
+            skin.Renderer.DrawTexturedRect(texture, SceneRect(x + (width - w) / 2,
+                y + (height - h) / 2 + (int)(swim * 3), Math.Max(1, (int)(w * pulse)), Math.Max(1, h)), Color.White);
+        }
     }
     private IGameTexture? Texture(string name)
     {

@@ -10,6 +10,9 @@ void Invalid(Action action, string name)
     try { action(); } catch (InvalidDataException) { checks++; return; }
     throw new Exception(name);
 }
+Check(!FishingRules.ShouldAutoCast(new FishingState { Automatic = true, Phase = FishingPhase.Loot }, 1000, 0) &&
+    !FishingRules.ShouldAutoCast(new FishingState { Automatic = true, Phase = FishingPhase.Retrieving }, 1000, 0),
+    "Automatic casting cannot overwrite a catch being retrieved or awaiting collection");
 var rod = Guid.NewGuid(); var cage = Guid.NewGuid(); var map = Guid.NewGuid(); var requirement = Guid.NewGuid();
 var fish = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [rod], Weight = 1 };
 var lobster = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [cage], Weight = 99 };
