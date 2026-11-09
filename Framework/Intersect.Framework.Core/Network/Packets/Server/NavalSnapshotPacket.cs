@@ -116,4 +116,5 @@ public sealed class NavalCrewStation
     [Key(0)] public Guid PlayerId { get; set; }
     [Key(1)] public bool Starboard { get; set; }
     [Key(2)] public int Index { get; set; }
+    [Key(3)] public double Yaw { get; set; }
 }

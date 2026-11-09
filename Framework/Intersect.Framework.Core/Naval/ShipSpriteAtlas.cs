@@ -9,15 +9,20 @@ public sealed class ShipSpriteAtlas
     public double PixelsPerTile { get; set; } = 64;
     public bool Loop { get; set; } = true;
     public string ForegroundGraphics { get; set; } = "";
+    public string CannonGraphics { get; set; } = "";
     public ShipSpriteFrame[][] Directions { get; set; } = [];
 
     public bool IsValid(int textureWidth, int textureHeight, int frames) =>
-        NavalPresentation.SafeAsset(ForegroundGraphics) && Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
+        NavalPresentation.SafeAsset(ForegroundGraphics) && NavalPresentation.SafeAsset(CannonGraphics) && Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
         textureWidth is > 0 and <= 16384 && textureHeight is > 0 and <= 16384 &&
         double.IsFinite(PixelsPerTile) && PixelsPerTile is >= 8 and <= 1024 &&
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
         Directions.All(row => row != null && row.Length == frames && row.All(frame =>
             frame != null && frame.CrewAnchors != null && frame.CrewAnchors.Length <= 16 &&
+            frame.CannonAnchors != null && frame.CannonAnchors.Length<=16 &&
+            (frame.CannonAnchors.Length==0 || !string.IsNullOrEmpty(CannonGraphics)) &&
+            frame.CannonAnchors.All(a=>a!=null && a.IsValid(frame.Width,frame.Height)) &&
+            frame.CannonAnchors.Select(a=>(a.Starboard,a.Index)).Distinct().Count()==frame.CannonAnchors.Length &&
             frame.CrewAnchors.All(a => a != null && a.IsValid(frame.Width, frame.Height)) &&
             frame.CrewAnchors.Select(a => (a.Role,a.Index)).Distinct().Count() == frame.CrewAnchors.Length && double.IsFinite(frame.RotationDegrees) && Math.Abs(frame.RotationDegrees)<=360 && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
             frame.Width <= textureWidth && frame.Height <= textureHeight &&
@@ -56,6 +61,7 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public ShipCannonAnchor[] CannonAnchors { get; set; } = [];
     public ShipCrewAnchor[] CrewAnchors { get; set; } = [];
     public double RotationDegrees {get;set;}
     public int[][]? Slices {get;set;}
@@ -66,6 +72,20 @@ public sealed class ShipSpriteFrame
     public int Height { get; set; }
     public double AnchorX { get; set; }
     public double AnchorY { get; set; }
+}
+
+/// <summary>Independent cannon cells: eight columns of 64 px, pivot at each cell's centre.</summary>
+public sealed class ShipCannonAnchor
+{
+    public const int CellSize=64, Columns=8;
+    public bool Starboard { get; set; }
+    public int Index { get; set; }
+    public int Sprite { get; set; }
+    public double X { get; set; }
+    public double Y { get; set; }
+    public bool BehindCrew { get; set; }
+    public bool IsValid(int width,int height)=>Index is >=0 and <8 && Sprite is >=0 and <256 &&
+        double.IsFinite(X) && double.IsFinite(Y) && X>=0 && Y>=0 && X<=width && Y<=height;
 }
 
 public enum ShipCrewRole { Helm, PortCannon, StarboardCannon, Passenger }

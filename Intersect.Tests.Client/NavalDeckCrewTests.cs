@@ -117,11 +117,12 @@ public sealed class NavalDeckCrewTests
     [Test]
     public void SeatAssignmentsSurviveNetworkSerialization()
     {
-        var ship=new ShipSnapshot {CrewStations=[new(){PlayerId=Guid.NewGuid(),Starboard=true,Index=2}]};
+        var ship=new ShipSnapshot {CrewStations=[new(){PlayerId=Guid.NewGuid(),Starboard=true,Index=2,Yaw=-32.5}]};
         var copy=MessagePackSerializer.Deserialize<ShipSnapshot>(MessagePackSerializer.Serialize(ship));
         Assert.That(copy.CrewStations.Single().PlayerId,Is.EqualTo(ship.CrewStations[0].PlayerId));
         Assert.That(copy.CrewStations[0].Starboard,Is.True);
         Assert.That(copy.CrewStations[0].Index,Is.EqualTo(2));
+        Assert.That(copy.CrewStations[0].Yaw,Is.EqualTo(-32.5));
     }
 
     [TestCase(double.NaN,100,false)]

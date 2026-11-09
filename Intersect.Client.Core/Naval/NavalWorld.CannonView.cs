@@ -18,6 +18,8 @@ internal static partial class NavalWorld
     internal static double GunElevation {get;set;}=-Math.Atan(.12)*180/Math.PI;
     internal static bool AutoPickCannonSide {get;set;}
     private static long _gunRenew,_gunFire,_gunAcquire;
+    private static double _sentGunYaw,_sentGunElevation;
+    private static long _gunAimSent;
     internal static void RequestStation(CannonStationAction action)
     {
         if(OwnShip is not {Sinking:false} own || Driver(own)==Globals.Me?.Id) return;
@@ -40,10 +42,14 @@ internal static partial class NavalWorld
     }
     internal static void RenewStation()
     {
-        if(Gunner.LeaseId==Guid.Empty || Environment.TickCount64<_gunRenew) return;
-        _gunRenew=Environment.TickCount64+1000;RequestStation(CannonStationAction.Renew);
+        var now=Environment.TickCount64;
+        if(Gunner.LeaseId==Guid.Empty || !ShouldSendGunAim(now,_gunAimSent,_gunRenew,Math.Abs(GunYaw-_sentGunYaw),Math.Abs(GunElevation-_sentGunElevation))) return;
+        _gunRenew=now+1000;_gunAimSent=now;_sentGunYaw=GunYaw;_sentGunElevation=GunElevation;
+        RequestStation(CannonStationAction.Renew);
     }
-    internal static void ClearGunnery() {AutoPickCannonSide=false;Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=0;}
+    internal static bool ShouldSendGunAim(long now,long last,long heartbeat,double yawChange,double elevationChange) =>
+        now-last>=150 && (now>=heartbeat || yawChange>=.5 || elevationChange>=.5);
+    internal static void ClearGunnery() {AutoPickCannonSide=false;Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=_gunAimSent=0;_sentGunYaw=_sentGunElevation=0;}
     internal static bool CannonViewOpen { get; set; }
     internal static bool CannonViewStarboard { get; set; }
 
@@ -112,8 +118,9 @@ internal static partial class NavalWorld
             {
                 var atlas=NavalSpriteCatalog.Get(filename,texture.Width,texture.Height,s.Frames);
                 if(atlas==null) continue; // Never treat an unverified atlas as a regular grid.
-                Add(texture,atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds),
-                    atlas.PixelsPerTile,sx,sy);
+                var pose=atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds);
+                Add(texture,pose,atlas.PixelsPerTile,sx,sy);
+                AddDeckCannonsToScene(sprites,vessel,atlas,pose,sx,sy);
             }
             else if(Globals.ContentManager?.GetTexture(TextureType.Entity,s.Graphics) is {} entity &&
                 s.Frames>0 && entity.Width%s.Frames==0 && entity.Height%8==0)

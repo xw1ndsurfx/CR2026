@@ -42,12 +42,14 @@ internal static partial class NavalWorld
         IGameTexture foreground, float x,float y,float scale)
     {
         if(ship.Sinking || ship.Health<=0) return;
+        DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
         foreach(var (id,anchor) in DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))
             if(Globals.Entities.TryGetValue(id,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
             {
                 var point=DeckPoint(pose,anchor,x,y,scale);
                 entity.DrawOnShip(point.X,point.Y,point.Facing);
             }
+        DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
         foreach(var part in NavalSpriteGeometry.Parts(pose))
             Graphics.DrawGameTexture(foreground,new FloatRect(part.X,part.Y,part.Width,part.Height),
                 NavalSpriteGeometry.Destination(part,x,y,scale),Color.White);
