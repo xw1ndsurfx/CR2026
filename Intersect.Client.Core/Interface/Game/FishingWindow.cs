@@ -38,7 +38,9 @@ internal sealed class FishingWindow : Base
     private readonly Button[] _skills = new Button[4];
     private readonly Button[] _challenge = new Button[4];
     private readonly Button _cast, _accept, _activeTab, _autoTab, _automatic, _previousPage, _nextPage;
-    private readonly Button _takeLoot, _discardLoot, _lootDestination;
+    private readonly Button _takeLoot, _discardLoot, _lootDestination, _lootPrevious, _lootNext;
+    private readonly Label[] _lootRows = new Label[3];
+    private int _lootPage;
     private FishingConfiguration _configuration = new();
     private FishingState? _state;
     private FishingZoneDefinition? _zone;
@@ -115,6 +117,14 @@ internal sealed class FishingWindow : Base
             _challenge[i] = AddButton("Challenge" + i, Directions[i], 322 + i * 150, 470, 140, 70, 20,
                 () => Send(FishingAction.ChallengeInput, input: input));
         }
+        for (var i = 0; i < _lootRows.Length; i++)
+        {
+            _lootRows[i] = AddLabel("LootRow" + i, "", 394, 328 + i * 34, 535, 32, 19);
+            _lootRows[i].Hide();
+        }
+        _lootPrevious = AddButton("LootPrevious", "‹", 340, 430, 65, 28, 21, () => { _lootPage = Math.Max(0, _lootPage - 1); Update(); });
+        _lootNext = AddButton("LootNext", "›", 865, 430, 65, 28, 21, () => { _lootPage++; Update(); });
+        _lootPrevious.Hide(); _lootNext.Hide();
         _takeLoot = AddButton("TakeLoot", "TAKE ALL", 340, 464, 285, 60, 22, () => Send(FishingAction.TakeLoot));
         _discardLoot = AddButton("DiscardLoot", "DISCARD ALL", 645, 464, 285, 60, 22, () => Send(FishingAction.DiscardLoot));
         _discardLoot.SetToolTipText(T("Discard the fish and all loot"));
@@ -138,7 +148,7 @@ internal sealed class FishingWindow : Base
                 if (state == null || state.SessionId == dismissed || (_state?.SessionId == state.SessionId && state.Revision <= _state.Revision)) return;
                 if (_state?.SessionId != state.SessionId) { _sequence = 0; _inventoryPage = 0; _leftSession = false; _queuedAutomatic = null; Release(); }
                 var enteringLegendaryPrompt = state.Phase == FishingPhase.LegendaryPrompt && _state?.Phase != FishingPhase.LegendaryPrompt;
-                if (_state?.SessionId != state.SessionId || _state.Phase != state.Phase) _phaseStarted = Environment.TickCount64;
+                if (_state?.SessionId != state.SessionId || _state.Phase != state.Phase) { _phaseStarted = Environment.TickCount64; _lootPage = 0; }
                 _state = state; _receivedAt = Environment.TickCount64;
                 _zone = _configuration.Zones.FirstOrDefault(z => z.Id == state.ZoneId);
                 _tool = _configuration.Tools.FirstOrDefault(t => t.ItemId == state.ToolItemId);
@@ -201,6 +211,18 @@ internal sealed class FishingWindow : Base
             state.Phase == FishingPhase.Fighting ? "Hold: reel in  ·  Release: let the line run" : "Choose active fishing or automatic fishing");
         var loot = state.Phase == FishingPhase.Loot;
         _takeLoot.IsHidden = _discardLoot.IsHidden = !loot;
+        var lootEntries = LootEntries(state);
+        _lootPage = Math.Clamp(_lootPage, 0, Math.Max(0, (lootEntries.Count - 1) / 3));
+        _lootPrevious.IsHidden = _lootNext.IsHidden = !loot || lootEntries.Count <= 3;
+        _lootPrevious.IsDisabled = _lootPage == 0;
+        _lootNext.IsDisabled = (_lootPage + 1) * 3 >= lootEntries.Count;
+        for (var i = 0; i < _lootRows.Length; i++)
+        {
+            var entry = lootEntries.ElementAtOrDefault(_lootPage * 3 + i);
+            _lootRows[i].IsHidden = !loot || entry == null;
+            _lootRows[i].Text = entry == null ? "" : F("{0} ×{1}", ItemName(entry.ItemId), entry.Quantity);
+            _lootRows[i].SetToolTipText(entry == null ? "" : ItemName(entry.ItemId));
+        }
         _lootDestination.IsHidden = !state.CanBankLoot || !(loot || ready);
         _lootDestination.Text = T(state.BankLoot ? "LOOT TO BANK · PREMIUM" : "LOOT TO INVENTORY");
         _cast.IsHidden = !ready || state.Automatic;
@@ -340,7 +362,12 @@ internal sealed class FishingWindow : Base
             if (state.Phase == FishingPhase.Loot)
             {
                 Panel(skin, 310, 320, 650, 285, new Color(245, 36, 24, 18));
-                DrawItem(skin, state.CatchItemId, 580, 335, 110, 100);
+                var lootEntries = LootEntries(state);
+                for (var i = 0; i < 3; i++)
+                    if (lootEntries.ElementAtOrDefault(_lootPage * 3 + i) is { } loot)
+                        DrawItem(skin, loot.ItemId, 342, 328 + i * 34, 38, 30);
+                if (!_lootPrevious.IsHidden) ButtonSurface(skin, _lootPrevious, 340, 430, 65, 28, false);
+                if (!_lootNext.IsHidden) ButtonSurface(skin, _lootNext, 865, 430, 65, 28, false);
                 ButtonSurface(skin, _takeLoot, 340, 464, 285, 60, true);
                 ButtonSurface(skin, _discardLoot, 645, 464, 285, 60, false);
                 // A drawn bin stays readable independently of the system font's emoji support.
@@ -425,6 +452,8 @@ internal sealed class FishingWindow : Base
         for (var i = 0; i <= 4; i++) Line(skin, 34, 317 + i * 85, 48, 317 + i * 85, Cream);
     }
 
+    private static IReadOnlyList<FishingInventoryEntry> LootEntries(FishingState state) => state.Loot.Count > 0
+        ? state.Loot : state.CatchItemId == Guid.Empty ? [] : [new() { ItemId = state.CatchItemId, Quantity = state.CatchQuantity }];
     private static string ItemName(Guid id) => ItemDescriptor.TryGet(id, out var item) ? ClientLanguages.ContentText(item.Name) : "";
     private void DrawItem(SkinBase skin, Guid itemId, int x, int y, int width, int height)
     {

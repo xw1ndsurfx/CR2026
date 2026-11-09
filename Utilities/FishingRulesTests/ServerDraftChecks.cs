@@ -159,9 +159,9 @@ internal static class ServerDraftChecks
                 zoneReference, Options.Instance.Map.MapWidth, 0, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
             Reject(config => config.Zones[0].Catches[1].ItemId = unknown,
                 "Fishing zone {0}, catch {1}: reward item {2} does not exist on the server.", zoneReference, catchReference, unknown);
-            Reject(config => config.Zones[0].Catches[1].ItemId = nonStackable.Id,
-                "Fishing zone {0}, catch {1}: reward item {2} must be stackable and cannot be equipment or a bag.",
-                zoneReference, catchReference, $"{nonStackable.Name} ({nonStackable.Id})");
+            Reject(config => config.Zones[0].Catches[1].BonusLoot = [new() { ItemId = unknown }],
+                "Fishing zone {0}, catch {1}: bonus loot item {2} is missing or has an invalid inventory stack.",
+                zoneReference, catchReference, unknown);
             legendary.MaxInventoryStack = 0;
             try
             {
@@ -172,6 +172,12 @@ internal static class ServerDraftChecks
             finally { legendary.MaxInventoryStack = 100; }
             Reject(config => config.Zones[0].Catches[1].RequiredVariableId = unknown,
                 "Fishing zone {0}, catch {1}: required player variable {2} does not exist on the server.", zoneReference, catchReference, unknown);
+
+            var ordinaryFish = FishingConfiguration.FromJson(activation.ToJson());
+            ordinaryFish.Zones[0].Catches[1].ItemId = nonStackable.Id;
+            ordinaryFish.Zones[0].Catches[1].BonusLoot = [new() { ItemId = normal.Id, Chance = 1 }, new() { ItemId = nonStackable.Id, Chance = .05 }];
+            check(Request(FishingAction.SaveConfiguration, ordinaryFish.ToJson())!.Saved,
+                "Non-stackable fish and rare equipment bonuses can be activated through the server");
 
             var applied = Request(FishingAction.SaveConfiguration, activation.ToJson())!;
             var appliedConfig = FishingConfiguration.FromJson(applied.ConfigurationJson);

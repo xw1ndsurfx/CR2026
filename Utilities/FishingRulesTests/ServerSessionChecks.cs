@@ -54,6 +54,7 @@ internal static class ServerSessionChecks
             CheckConfiguredNet(check);
             CheckAutomaticFailure(check);
             CheckPendingLoot(check);
+            CheckAutomaticLoot(check);
             CheckRejections(check);
             CheckMovementInterruption(check);
             ServerConnectionChecks.Run(check);
@@ -130,6 +131,7 @@ internal static class ServerSessionChecks
         using var fixture = new Fixture(withDialogue: true, worldProfile: false, customProfession: true);
         fixture.Configuration.Tools.Single().BaitItemId = Guid.Empty;
         fixture.Configuration.Zones.Single().AutomaticFailureChance = 0;
+        fixture.Configuration.Zones.Single().Catches.Single().BonusLoot = [new() { ItemId = fixture.RewardItemId, MinimumQuantity = 8, MaximumQuantity = 8 }];
         fixture.RunEvent(check, withDialogue: true);
         var ready = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Single(p => p.Open).StateJson)!;
         void Request(FishingAction action, long sequence, int input = 0) =>
@@ -147,6 +149,8 @@ internal static class ServerSessionChecks
         var loot = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
         check(loot.Phase == FishingPhase.Loot && fixture.Player.GetVariable(FishingRules.LastRewardId) == null,
             "Manual capture waits for a loot decision without granting items or XP");
+        check(loot.Loot.Count == 2 && loot.Loot[1].Quantity == 8, "Pending loot includes fish and separately rolled bonus currency");
+        var resolvedLoot = JsonSerializer.Serialize(loot.Loot);
         Request(FishingAction.SetLootDestination, 2, 1);
         var denied = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
         check(!denied.BankLoot && !denied.CanBankLoot, "Forged bank routing is denied without premium");
@@ -157,13 +161,31 @@ internal static class ServerSessionChecks
         var retry = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
         check(retry.Phase == FishingPhase.Loot && fixture.Player.GetVariable(FishingRules.LastRewardId) == null,
             "A failed checkpoint retains all pending loot for retry or discard");
+        check(JsonSerializer.Serialize(retry.Loot) == resolvedLoot, "A failed collection cannot reroll bonus loot or quantities");
         Request(FishingAction.DiscardLoot, 5);
         var discarded = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
-        check(discarded.Phase == FishingPhase.Ready && discarded.CatchItemId == Guid.Empty &&
+        check(discarded.Phase == FishingPhase.Ready && discarded.CatchItemId == Guid.Empty && discarded.Loot.Count == 0 &&
             fixture.Player.GetVariable(FishingRules.LastRewardId) == null,
             "Discarding all loot grants no fish or XP and permits a new cast");
         Request(FishingAction.TakeLoot, 6);
         check(fixture.Player.GetVariable(FishingRules.LastRewardId) == null, "Discarded loot cannot be claimed later");
+    }
+
+    private static void CheckAutomaticLoot(Action<bool, string> check)
+    {
+        using var fixture = new Fixture(withDialogue: true, worldProfile: false, customProfession: true);
+        fixture.Configuration.Tools.Single().BaitItemId = Guid.Empty;
+        var zone = fixture.Configuration.Zones.Single();
+        zone.AutomaticFailureChance = 0;
+        zone.Catches.Single().BonusLoot = [new() { ItemId = fixture.RewardItemId, MinimumQuantity = 12, MaximumQuantity = 12 }];
+        fixture.RunEvent(check, withDialogue: true);
+        var ready = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Single(p => p.Open).StateJson)!;
+        fixture.Player.HandleFishingRequest(new FishingRequestPacket
+        { Action = FishingAction.SetMode, SessionId = ready.SessionId, Sequence = 1, Automatic = true });
+        fixture.TickFishing(120_000); fixture.TickFishing(150_000); fixture.TickFishing(152_000);
+        var loot = FishingState.FromJson(fixture.Packets.OfType<FishingStatePacket>().Last().StateJson)!;
+        check(loot.Phase == FishingPhase.Loot && !loot.Automatic && loot.Message.Length > 0 && loot.Loot.Count == 2 && loot.Loot[1].Quantity == 12,
+            "Automatic capture attempts to collect all bonuses without a TakeLoot request and preserves them if saving fails");
     }
 
     private static void CheckAutomaticFailure(Action<bool, string> check)

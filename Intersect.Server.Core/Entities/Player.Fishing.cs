@@ -28,6 +28,7 @@ public partial class Player
         internal long LastRequest, LastSent, PhaseStarted, Deadline, FightDeadline, NextAnimation;
         internal readonly long[] SkillReadyAt = new long[4];
         internal bool CatchAutomatic;
+        internal List<FishingInventoryEntry> BonusLoot = [];
         internal FishingCatchDefinition? Catch;
         internal FishingFight? Fight;
         internal FishingLegendaryEncounter? Legendary;
@@ -157,6 +158,7 @@ public partial class Player
                     if (s.State.Phase == FishingPhase.Loot)
                     {
                         s.State.Phase = FishingPhase.Ready;
+                        s.State.Loot = []; s.BonusLoot = [];
                         s.State.CatchQuantity = 0;
                         s.State.CatchItemId = Guid.Empty;
                         s.State.Message = "";
@@ -239,6 +241,7 @@ public partial class Player
             return;
         }
         if (s.Tool.BaitItemId != Guid.Empty) RefreshFishingInventory(s.Tool.BaitItemId);
+        s.State.Loot = []; s.BonusLoot = [];
         s.AttemptId = Guid.NewGuid();
         s.Catch = null; s.Fight = null; s.Legendary = null;
         s.State.Phase = FishingPhase.Waiting; s.State.Reeling = false;
@@ -398,6 +401,8 @@ public partial class Player
             FailFishing("The catch escaped.", now);
             return;
         }
+        s.BonusLoot = FishingRules.RollBonusLoot(s.Catch, () => Random.Shared.NextDouble(), (min, max) => Random.Shared.Next(min, max));
+        s.State.Loot = [new() { ItemId = s.Catch.ItemId, Quantity = s.State.CatchQuantity }, ..s.BonusLoot];
         s.CatchAutomatic = s.State.Automatic;
         s.State.Phase = FishingPhase.Retrieving;
         s.State.Reeling = false;
@@ -419,7 +424,7 @@ public partial class Player
             ? FishingRules.AutomaticExperience(s.Zone, s.Catch.Experience)
             : s.Catch.Experience;
         var award = FishingRewards.Progress(this, s.Configuration, experience);
-        var result = FishingRewards.Reward(this, s.AttemptId, s.Catch.ItemId, s.State.CatchQuantity, award, s.State.BankLoot);
+        var result = FishingRewards.Reward(this, s.AttemptId, s.Catch.ItemId, s.State.CatchQuantity, award, s.State.BankLoot, s.BonusLoot);
         if (result is not (FishingRewardResult.Success or FishingRewardResult.AlreadyCommitted))
         {
             s.State.Automatic = false;
@@ -439,8 +444,12 @@ public partial class Player
         {
             if (!s.State.BankLoot)
             {
-                RefreshFishingInventory(s.Catch.ItemId);
-                SendPacket(new ItemChangeNotificationPacket(s.Catch.ItemId, s.State.CatchQuantity));
+                PacketSender.SendInventory(this);
+                foreach (var loot in s.State.Loot.GroupBy(loot => loot.ItemId))
+                {
+                    UpdateGatherItemQuests(loot.Key);
+                    SendPacket(new ItemChangeNotificationPacket(loot.Key, loot.Sum(entry => entry.Quantity)));
+                }
             }
             if (award.Profession != null) ProfessionRuntime.PublishFishingAward(this, award.Profession, award.PreviousLevel, award.Gained);
         }
@@ -523,7 +532,7 @@ public partial class Player
                 state.SkillCooldownsMs[index] == 0 && (index == 3 ? state.Phase == FishingPhase.Waiting && state.Depth < 100 :
                     state.Phase == FishingPhase.Fighting && (index != 2 || state.LineCondition < 100));
         }
-        var catchIds = s.Configuration.Zones.SelectMany(z => z.Catches).Select(c => c.ItemId).ToHashSet();
+        var catchIds = s.Configuration.Zones.SelectMany(z => z.Catches).SelectMany(c => new[] { c.ItemId }.Concat(c.BonusLoot.Select(loot => loot.ItemId))).ToHashSet();
         state.Inventory = Items.Where(item => catchIds.Contains(item.ItemId) && item.Quantity > 0).GroupBy(item => item.ItemId)
             .Select(group => new FishingInventoryEntry { ItemId = group.Key, Quantity = (int)Math.Min(int.MaxValue, group.Sum(i => (long)i.Quantity)) }).ToList();
         state.Revision++; s.LastSent = now;

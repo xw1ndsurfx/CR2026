@@ -63,12 +63,21 @@ public sealed class FishingToolDefinition
     public double Power { get; set; } = 1;
 }
 
+public sealed class FishingLootDefinition
+{
+    public Guid ItemId { get; set; }
+    public int MinimumQuantity { get; set; } = 1;
+    public int MaximumQuantity { get; set; } = 1;
+    public double Chance { get; set; } = 1;
+}
+
 public sealed class FishingCatchDefinition
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public FishingSounds Sounds { get; set; } = new();
     public Guid ItemId { get; set; }
     public List<Guid> ToolItemIds { get; set; } = [];
+    public List<FishingLootDefinition> BonusLoot { get; set; } = [];
     public double Weight { get; set; } = 1;
     public int MinimumLevel { get; set; } = 1;
     public int MinimumQuantity { get; set; } = 1;
@@ -207,6 +216,7 @@ public sealed class FishingState
     public string SoundCue { get; set; } = "";
     public long SoundSequence { get; set; }
     public List<FishingInventoryEntry> Inventory { get; set; } = [];
+    public List<FishingInventoryEntry> Loot { get; set; } = [];
     public static FishingState? FromJson(string json) => JsonSerializer.Deserialize<FishingState>(json, FishingConfiguration.JsonOptions);
     public string ToJson() => JsonSerializer.Serialize(this, FishingConfiguration.JsonOptions);
 }

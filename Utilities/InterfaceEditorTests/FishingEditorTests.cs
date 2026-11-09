@@ -65,7 +65,7 @@ internal static class FishingEditorTests
         var rod = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing fixture rod", ItemType = ItemType.Equipment };
         var net = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing fixture net", ItemType = ItemType.Equipment };
         var replacement = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing fixture replacement", ItemType = ItemType.Equipment };
-        var fish = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing fixture fish", Stackable = true, MaxInventoryStack = 9999 };
+        var fish = new ItemDescriptor(Guid.NewGuid()) { Name = "Fishing fixture fish", Stackable = false, MaxInventoryStack = 9999 };
         var items = new[] { rod, net, replacement, fish };
         foreach (var item in items) ItemDescriptor.Lookup.Add(item);
         var north = new MapListMap { MapId = Guid.NewGuid(), Name = "Fishing fixture north" };
@@ -145,6 +145,16 @@ internal static class FishingEditorTests
                 Click(tabs.SelectedTab!, "Delete tool");
 
                 Tab(form, 2);
+                Check(Input<ComboBox>(form, "Fish item").Items.Cast<object>().Any(item => item.ToString() == fish.Name),
+                    "The fish picker includes ordinary non-stackable items independently of configured catches.");
+                Click(tabs.SelectedTab!, "Add bonus loot");
+                var bonus = draft.Zones[0].Catches[0].BonusLoot.Single();
+                var bonusPicker = All(form).OfType<TableLayoutPanel>().Single(panel => panel.Controls.OfType<Label>().Any(label => label.Text == FishingEditorText.Get("Bonus item")));
+                Select(bonusPicker.Controls.OfType<ComboBox>().Single(), replacement.Name);
+                var chanceLabel = bonusPicker.Controls.OfType<Label>().Single(label => label.Text == FishingEditorText.Get("Drop chance (%)"));
+                ((NumericUpDown)bonusPicker.GetControlFromPosition(1, bonusPicker.GetPositionFromControl(chanceLabel).Row)!).Value = 5;
+                Check(bonus.ItemId == replacement.Id && bonus.Chance == .05,
+                    "Bonus loot can select equipment and persist a localized independent drop percentage.");
                 Input<NumericUpDown>(form, "Required variable value").Value = long.MaxValue - 1m;
                 Input<NumericUpDown>(form, "Start hour (UTC)").Value = 22;
                 Input<NumericUpDown>(form, "End hour (UTC, exclusive)").Value = 4;
@@ -272,7 +282,7 @@ internal static class FishingEditorTests
         Click(reopened, "Apply to game");
         Check(Field<TabControl>(reopened, "_tabs").SelectedIndex == 2 && Field<FishingCatchDefinition>(reopened, "_catch").Id == unfinishedCatchId,
             "After fixing its tool, activation guides the author to the next incomplete catch.");
-        Select(Input<ComboBox>(reopened, "Reward item"), fish.Name);
+        Select(Input<ComboBox>(reopened, "Fish item"), fish.Name);
         var allowed = Input<CheckedListBox>(reopened, "Allowed equipment");
         allowed.SetItemChecked(Enumerable.Range(0, allowed.Items.Count).Single(i => allowed.Items[i].ToString() == replacement.Name), true);
         Tab(reopened, 0); Input<CheckBox>(reopened, "Enabled").Checked = true;

@@ -256,7 +256,8 @@ public sealed partial class FrmFishing : Form
         foreach (var option in entries) selection.Items.Add(new Named<FishingCatchDefinition>(option, c => ItemName(c.ItemId)));
         selection.SelectedItem = selection.Items.OfType<Named<FishingCatchDefinition>>().FirstOrDefault(n => n.Value == _catch);
         selection.SelectedIndexChanged += (_, _) => { if (_loading) return; _catch = (selection.SelectedItem as Named<FishingCatchDefinition>)?.Value; BuildSelectedPage(); };
-        Row(table, "Catch", selection);
+        Row(table, "Configured catch", selection);
+        Note(table, "Configured catch lists your existing entries. Choose the fish below, or add a new catch.");
         var buttons = new FlowLayoutPanel { AutoSize = true };
         AddButton(buttons, "New catch", () => { _catch = new() { Legendary = legendaryOnly }; zone.Catches.Add(_catch); Changed(); BuildSelectedPage(); });
         AddButton(buttons, "Duplicate catch", () => {
@@ -271,7 +272,19 @@ public sealed partial class FrmFishing : Form
         });
         Row(table, "", buttons);
         if (_catch is not { } entry) { Note(table, "Add a catch and select its allowed equipment."); return; }
-        GuidField(table, "Reward item", entry.ItemId, ItemChoices(), id => entry.ItemId = id);
+        GuidField(table, "Fish item", entry.ItemId, ItemChoices(), id => {
+            entry.ItemId = id;
+            var index = selection.SelectedIndex;
+            if (index < 0) return;
+            _loading = true;
+            try
+            {
+                selection.Items[index] = new Named<FishingCatchDefinition>(entry, c => ItemName(c.ItemId));
+                selection.SelectedIndex = index;
+            }
+            finally { _loading = false; }
+        });
+        BuildBonusLoot(table, entry);
         var allowed = new CheckedListBox { CheckOnClick = true, Height = 110, Dock = DockStyle.Fill };
         foreach (var tool in _config.Tools.Where(t => t.ItemId != Guid.Empty))
             allowed.Items.Add(new Choice(tool.ItemId, ItemName(tool.ItemId)), entry.ToolItemIds.Contains(tool.ItemId));
@@ -300,7 +313,7 @@ public sealed partial class FrmFishing : Form
         Number(table, "Challenge steps", entry.ChallengeSteps, 1, 8, v => entry.ChallengeSteps = (int)v);
         Number(table, "Challenge response window (ms)", entry.ChallengeWindowMs, 800, 10000, v => entry.ChallengeWindowMs = (int)v);
         Note(table, "The fish uses the selected item icon, enlarged and animated in the mini-game.");
-        Note(table, "Only eligible catches participate in the weighted draw. Reward items must support inventory stacks.");
+        Note(table, "The fish is always included. Bonus loot is rolled independently for each successful catch.");
         if (legendaryOnly) Note(table, "Automatic fishing pauses for a legendary encounter. A player must accept and complete the challenge.");
     }
     private void BuildAnimations()
@@ -370,10 +383,13 @@ public sealed partial class FrmFishing : Form
                 {
                     if (entry.ItemId == Guid.Empty || entry.ToolItemIds.Count == 0)
                         return ShowValidationIssue(string.Format(T("Catch #{0} in {1}: choose a reward item and allowed equipment before applying to the game."), zone.Catches.IndexOf(entry) + 1, zone.Name),
-                            2, zone: zone, catchDefinition: entry, field: entry.ItemId == Guid.Empty ? "Reward item" : "Allowed equipment");
-                    if (ItemDescriptor.Get(entry.ItemId) is not { IsStackable: true, MaxInventoryStack: > 0 })
-                        return ShowValidationIssue(string.Format(T("Reward item {0} must allow inventory stacks."), ItemName(entry.ItemId)),
-                            2, zone: zone, catchDefinition: entry, field: "Reward item");
+                            2, zone: zone, catchDefinition: entry, field: entry.ItemId == Guid.Empty ? "Fish item" : "Allowed equipment");
+                    if (ItemDescriptor.Get(entry.ItemId) is not { } fish || fish.IsStackable && fish.MaxInventoryStack <= 0)
+                        return ShowValidationIssue(T("Choose an existing item with valid stack limits."),
+                            2, zone: zone, catchDefinition: entry, field: "Fish item");
+                    if (entry.BonusLoot.Any(loot => ItemDescriptor.Get(loot.ItemId) is not { } item || item.IsStackable && item.MaxInventoryStack <= 0))
+                        return ShowValidationIssue(T("Choose an existing item with valid stack limits."),
+                            2, zone: zone, catchDefinition: entry, field: "Bonus loot");
                     if (entry.ToolItemIds.Any(id => _config.Tools.All(tool => tool.ItemId != id)))
                         return ShowValidationIssue(string.Format(T("Catch #{0} in {1}: an allowed item has no fishing tool profile. Create its profile or remove that association."), zone.Catches.IndexOf(entry) + 1, zone.Name),
                             2, zone: zone, catchDefinition: entry, field: "Allowed equipment");

@@ -15,6 +15,44 @@ using Intersect.Server.Maps;
 
 internal static class ServerRewardChecks
 {
+    private static void CheckMixedLoot(Action<bool, string> check)
+    {
+        var fish = new ItemDescriptor(Guid.NewGuid()) { Name = "Ordinary salmon", Stackable = false };
+        var money = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 100 };
+        var rare = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Equipment };
+        foreach (var item in new[] { fish, money, rare }) ItemDescriptor.Lookup.Set(item.Id, item);
+        Player Player() { var player = new Player(); GC.SuppressFinalize(player); return player; }
+        FishingProgressAward Award() => new() { VariableId = FishingRules.FallbackExperienceId, Before = 0, After = 25, PreviousLevel = 1, NewLevel = 1 };
+        var bonus = new List<FishingInventoryEntry> { new() { ItemId = money.Id, Quantity = 25 }, new() { ItemId = rare.Id, Quantity = 1 } };
+        try
+        {
+            var player = Player(); var receipt = Guid.NewGuid();
+            check(FishingRewards.Commit(player, receipt, fish.Id, 1, Award(), Guid.Empty, 0,
+                () => UserSaveResult.Completed, bonusLoot: bonus) == FishingRewardResult.Success &&
+                player.Items.Where(i => i.ItemId == fish.Id).Sum(i => i.Quantity) == 1 &&
+                player.Items.Where(i => i.ItemId == money.Id).Sum(i => i.Quantity) == 25 &&
+                player.Items.Where(i => i.ItemId == rare.Id).Sum(i => i.Quantity) == 1,
+                "One atomic collection grants an ordinary non-stackable fish, currency and rare equipment");
+            check(FishingRewards.Commit(player, receipt, fish.Id, 1, Award(), Guid.Empty, 0,
+                () => throw new Exception("Duplicate"), bonusLoot: bonus) == FishingRewardResult.AlreadyCommitted,
+                "A repeated collection cannot duplicate any bonus");
+            var fresh = Player();
+            check(FishingRewards.Commit(fresh, Guid.NewGuid(), fish.Id, 1, Award(), Guid.Empty, 0,
+                () => UserSaveResult.DatabaseFailure, bonusLoot: bonus) == FishingRewardResult.SaveFailed &&
+                fresh.Items.All(i => i.ItemId == Guid.Empty) && fresh.GetVariable(FishingRules.LastRewardId) == null &&
+                fresh.GetVariable(FishingRules.FallbackExperienceId) == null,
+                "A failed save restores fish, currency, rare item, XP and receipt together");
+            var full = Player(); _ = full.FindOpenInventorySlots();
+            foreach (var slot in full.Items) slot.Set(new Item(rare.Id, 1));
+            full.Items[0].Set(Item.None); full.Items[1].Set(Item.None);
+            check(FishingRewards.Commit(full, Guid.NewGuid(), fish.Id, 1, Award(), Guid.Empty, 0,
+                () => throw new Exception("Partial loot saved"), bonusLoot: bonus) == FishingRewardResult.InventoryFull &&
+                full.Items[0].ItemId == Guid.Empty && full.Items[1].ItemId == Guid.Empty,
+                "Insufficient space for the rare item cannot partially grant fish or money");
+        }
+        finally { foreach (var item in new[] { fish, money, rare }) ItemDescriptor.Lookup.DeleteAt(item.Id); }
+    }
+
     private static void CheckBankLoot(Action<bool, string> check)
     {
         var shop = Intersect.Server.LogiCoins.LogiCoinShopRuntime.Current;
@@ -67,6 +105,7 @@ internal static class ServerRewardChecks
         Options.EnsureCreated();
         CheckZonePersistence(check);
         CheckBankLoot(check);
+        CheckMixedLoot(check);
         var fish = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 10 };
         var bait = new ItemDescriptor(Guid.NewGuid()) { ItemType = ItemType.Currency, MaxInventoryStack = 100 };
         ItemDescriptor.Lookup.Set(fish.Id, fish); ItemDescriptor.Lookup.Set(bait.Id, bait);

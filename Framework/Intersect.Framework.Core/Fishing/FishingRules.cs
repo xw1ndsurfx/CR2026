@@ -78,6 +78,10 @@ public static class FishingRules
                     entry.ChallengeSteps is < 1 or > 8 || entry.ChallengeWindowMs is < 800 or > 10000 ||
                     !SafeAssetPath(entry.Sprite, ".png") || entry.SpriteX is < 0 or > 16384 || entry.SpriteY is < 0 or > 16384 ||
                     entry.SpriteWidth is < 1 or > 2048 || entry.SpriteHeight is < 1 or > 2048) throw Invalid();
+                if (entry.BonusLoot is null || entry.BonusLoot.Count > 16 || entry.BonusLoot.Any(loot => loot is null ||
+                    (!draft && loot.ItemId == Guid.Empty) || loot.MinimumQuantity is < 1 or > 1000 ||
+                    loot.MaximumQuantity < loot.MinimumQuantity || loot.MaximumQuantity > 1000 ||
+                    !double.IsFinite(loot.Chance) || loot.Chance is < 0 or > 1)) throw Invalid();
                 ValidateSounds(entry.Sounds);
             }
         }
@@ -109,6 +113,24 @@ public static class FishingRules
     /// <summary>Automatic fishing grants a configurable, rounded-down fraction of the normal base XP.</summary>
     public static int AutomaticExperience(FishingZoneDefinition zone, int baseExperience) =>
         (int)Math.Floor(Math.Max(0, baseExperience) * zone.AutomaticExperienceMultiplier);
+
+    /// <summary>Resolve each bonus once at capture; callers retain the result for retries.</summary>
+    public static List<FishingInventoryEntry> RollBonusLoot(FishingCatchDefinition definition,
+        Func<double> roll, Func<int, int, int> quantity)
+    {
+        var result = new List<FishingInventoryEntry>();
+        foreach (var loot in definition.BonusLoot)
+        {
+            if (loot.Chance <= 0) continue;
+            var chance = loot.Chance >= 1 ? 0 : roll();
+            if (!double.IsFinite(chance) || chance is < 0 or >= 1) throw new ArgumentOutOfRangeException(nameof(roll));
+            if (chance >= loot.Chance) continue;
+            var count = quantity(loot.MinimumQuantity, loot.MaximumQuantity + 1);
+            if (count < loot.MinimumQuantity || count > loot.MaximumQuantity) throw new ArgumentOutOfRangeException(nameof(quantity));
+            result.Add(new() { ItemId = loot.ItemId, Quantity = count });
+        }
+        return result;
+    }
 
     public static bool ShouldAutoCast(FishingState state, long now, long nextCastAt) =>
         state.Automatic && state.Phase is FishingPhase.Ready or FishingPhase.Caught or FishingPhase.Failed && now >= nextCastAt;
