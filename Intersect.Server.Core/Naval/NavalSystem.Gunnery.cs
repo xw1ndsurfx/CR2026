@@ -1,3 +1,4 @@
+﻿using Intersect.Network.Packets.Server;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -30,6 +31,14 @@ internal static partial class NavalSystem
                 entry.Value.Owner!=vessel.State.CaptainId && (!vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500))
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
     }
+    private static NavalCrewStation[] CrewStationSnapshot(Vessel vessel,long now) => vessel.Guns
+        .Where(g => g.Key>=0 && g.Key<_settings.Gunnery.CannonsPerSide*2 && g.Value.Owner!=Guid.Empty &&
+            g.Value.Until>now && g.Value.Owner!=Driver(vessel) && vessel.SunkUntil==0 && vessel.Health>0 &&
+            !Repairs.ContainsKey(g.Value.Owner) && (g.Value.Owner==vessel.State.CaptainId ||
+            vessel.Crew.TryGetValue(g.Value.Owner,out var crew) && now-crew.Seen<=1500))
+        .Select(g => new NavalCrewStation {PlayerId=g.Value.Owner,Starboard=g.Key>=_settings.Gunnery.CannonsPerSide,
+            Index=g.Key%_settings.Gunnery.CannonsPerSide}).ToArray();
+
     private static GunneryState GunnerState(Player player,long now)
     {
         var settings=_settings.Gunnery;var progress=settings.Curve().Progress(player.GunneryExperience);

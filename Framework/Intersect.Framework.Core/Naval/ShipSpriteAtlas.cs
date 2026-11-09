@@ -1,4 +1,4 @@
-namespace Intersect.Framework.Core.Naval;
+﻿namespace Intersect.Framework.Core.Naval;
 
 /// <summary>Explicit source rectangles and waterline anchors. Directions: N, NE, E, SE, S, SW, W, NW.</summary>
 public sealed class ShipSpriteAtlas
@@ -8,15 +8,18 @@ public sealed class ShipSpriteAtlas
     public int ImageHeight { get; set; }
     public double PixelsPerTile { get; set; } = 64;
     public bool Loop { get; set; } = true;
+    public string ForegroundGraphics { get; set; } = "";
     public ShipSpriteFrame[][] Directions { get; set; } = [];
 
     public bool IsValid(int textureWidth, int textureHeight, int frames) =>
-        Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
+        NavalPresentation.SafeAsset(ForegroundGraphics) && Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
         textureWidth is > 0 and <= 16384 && textureHeight is > 0 and <= 16384 &&
         double.IsFinite(PixelsPerTile) && PixelsPerTile is >= 8 and <= 1024 &&
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
         Directions.All(row => row != null && row.Length == frames && row.All(frame =>
-            frame != null && double.IsFinite(frame.RotationDegrees) && Math.Abs(frame.RotationDegrees)<=360 && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
+            frame != null && frame.CrewAnchors != null && frame.CrewAnchors.Length <= 16 &&
+            frame.CrewAnchors.All(a => a != null && a.IsValid(frame.Width, frame.Height)) &&
+            frame.CrewAnchors.Select(a => (a.Role,a.Index)).Distinct().Count() == frame.CrewAnchors.Length && double.IsFinite(frame.RotationDegrees) && Math.Abs(frame.RotationDegrees)<=360 && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
             frame.Width <= textureWidth && frame.Height <= textureHeight &&
             frame.X <= textureWidth - frame.Width && frame.Y <= textureHeight - frame.Height &&
             double.IsFinite(frame.AnchorX) && double.IsFinite(frame.AnchorY) &&
@@ -53,6 +56,7 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public ShipCrewAnchor[] CrewAnchors { get; set; } = [];
     public double RotationDegrees {get;set;}
     public int[][]? Slices {get;set;}
     public bool FlipHorizontal { get; set; }
@@ -62,4 +66,17 @@ public sealed class ShipSpriteFrame
     public int Height { get; set; }
     public double AnchorX { get; set; }
     public double AnchorY { get; set; }
+}
+
+public enum ShipCrewRole { Helm, PortCannon, StarboardCannon, Passenger }
+public sealed class ShipCrewAnchor
+{
+    public ShipCrewRole Role { get; set; }
+    public int Index { get; set; }
+    public double X { get; set; }
+    public double Y { get; set; }
+    public Intersect.Enums.Direction Facing { get; set; }
+    public bool IsValid(int width,int height) => Enum.IsDefined(Role) && Index is >=0 and <8 &&
+        double.IsFinite(X) && double.IsFinite(Y) && X>=0 && Y>=0 && X<=width && Y<=height &&
+        Facing is Intersect.Enums.Direction.Up or Intersect.Enums.Direction.Down or Intersect.Enums.Direction.Left or Intersect.Enums.Direction.Right;
 }

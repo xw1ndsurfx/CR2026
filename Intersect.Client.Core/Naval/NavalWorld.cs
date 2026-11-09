@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
@@ -164,6 +164,11 @@ internal static partial class NavalWorld
                     foreach(var part in NavalSpriteGeometry.Parts(pose))
                         Graphics.DrawGameTexture(oceanTexture, new FloatRect(part.X, part.Y, part.Width, part.Height),
                             NavalSpriteGeometry.Destination(part,x,y,scale), Color.White);
+                    // Legacy artwork remains unchanged until a matching occlusion layer is available.
+                    if (!string.IsNullOrEmpty(atlas.ForegroundGraphics) && pose.CrewAnchors.Length>0 &&
+                        Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.ForegroundGraphics) is {} foreground &&
+                        foreground.Width==oceanTexture.Width && foreground.Height==oceanTexture.Height)
+                        DrawDeckCrew(s,atlas,pose,foreground,x,y,scale);
                     continue;
                 }
                 DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
