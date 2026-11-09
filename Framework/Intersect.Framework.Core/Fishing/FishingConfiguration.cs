@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Intersect.Framework.Core.Fishing;
 
 public enum FishingToolType { Rod, Cage, Net }
-public enum FishingPhase { Ready, Waiting, Fighting, LegendaryPrompt, LegendaryChallenge, Caught, Failed, Closed }
+public enum FishingPhase { Ready, Waiting, Fighting, LegendaryPrompt, LegendaryChallenge, Caught, Failed, Closed, Retrieving, Loot }
 public enum FishingSkillType { Stabilize, Pull, Repair, Dive }
 
 public sealed class FishingSkillDefinition
@@ -171,6 +171,8 @@ public sealed class FishingState
     public bool Automatic { get; set; }
     public bool AutomaticResumePending { get; set; }
     public bool Reeling { get; set; }
+    public bool CanBankLoot { get; set; }
+    public bool BankLoot { get; set; }
     public bool AllowAutomatic { get; set; }
     public Guid ToolItemId { get; set; }
     public Guid BaitItemId { get; set; }

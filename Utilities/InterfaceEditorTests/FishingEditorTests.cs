@@ -148,7 +148,8 @@ internal static class FishingEditorTests
                 Input<NumericUpDown>(form, "Required variable value").Value = long.MaxValue - 1m;
                 Input<NumericUpDown>(form, "Start hour (UTC)").Value = 22;
                 Input<NumericUpDown>(form, "End hour (UTC, exclusive)").Value = 4;
-                Input<NumericUpDown>(form, "Sprite X (pixels)").Value = 64;
+                Check(All(form).OfType<Label>().Any(control => control.Text == FishingEditorText.Get("The fish uses the selected item icon, enlarged and animated in the mini-game.")),
+                    "Fish appearance comes from the selected item.");
                 Tab(form, 4); Click(Field<TabControl>(form, "_tabs").SelectedTab!, "Use supplied Fishing Net profile");
                 Input<NumericUpDown>(form, "Frames per second").Value = 9;
                 Input<NumericUpDown>(form, "Offset X").Value = -16;
@@ -164,9 +165,9 @@ internal static class FishingEditorTests
                 var roundTrip = FishingConfiguration.FromJson(draft.ToJson());
                 Check(roundTrip.Zones[0].LegendaryChance == .0725 && roundTrip.Zones[0].Catches[0].RequiredVariableValue == long.MaxValue - 1 &&
                     roundTrip.Zones[0].Catches[0].UtcStartHour == 22 && roundTrip.Zones[0].Catches[0].UtcEndHour == 4 &&
-                    roundTrip.Zones[0].Catches[0].SpriteX == 64 && roundTrip.Tools[0].WorldProfile.FramesPerSecond == 9 &&
+                    roundTrip.Tools[0].WorldProfile.FramesPerSecond == 9 &&
                     roundTrip.Tools[0].WorldProfile.OffsetX == -16 && roundTrip.Zones[0].MapIds.SequenceEqual([current.MapId]) && !roundTrip.Zones[0].UseTileRadius,
-                    "Exact variable values, overnight gates, sprites, world anchors and multimap area settings survive the actual save format.");
+                    "Exact variable values, overnight gates, item references, world anchors and multimap area settings survive the actual save format.");
 
                 Tab(form, 0); Call(form, "DuplicateZone");
                 Check(draft.Zones.Select(z => z.Id).Distinct().Count() == 2 && draft.Zones.SelectMany(z => z.Catches).Select(c => c.Id).Distinct().Count() == 2,

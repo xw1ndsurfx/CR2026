@@ -52,24 +52,29 @@ internal static class FishingRewards
             return Commit(player, Guid.Empty, Guid.Empty, 0, null, baitId, quantity, () => user.Save(force: true));
     }
 
-    internal static FishingRewardResult Reward(Player player, Guid receipt, Guid itemId, int quantity, FishingProgressAward award)
+    internal static FishingRewardResult Reward(Player player, Guid receipt, Guid itemId, int quantity, FishingProgressAward award, bool bank = false)
     {
         if (player.User is not { } user) return FishingRewardResult.SaveFailed;
         lock (user.PokerSaveGate)
-            return Commit(player, receipt, itemId, quantity, award, Guid.Empty, 0, () => user.Save(force: true));
+            return Commit(player, receipt, itemId, quantity, award, Guid.Empty, 0, () => user.Save(force: true), bank);
     }
 
     /// <summary>Caller holds EntityLock and the account's save gate. No notification or item Event runs before commit.</summary>
     internal static FishingRewardResult Commit(Player player, Guid receipt, Guid itemId, int quantity,
-        FishingProgressAward? award, Guid baitId, int baitQuantity, Func<UserSaveResult> checkpoint)
+        FishingProgressAward? award, Guid baitId, int baitQuantity, Func<UserSaveResult> checkpoint, bool bank = false)
     {
         if (receipt != Guid.Empty && player.GetVariable(FishingRules.LastRewardId)?.Value.String == receipt.ToString("N"))
             return FishingRewardResult.AlreadyCommitted;
         if (itemId != Guid.Empty && (receipt == Guid.Empty || quantity is < 1 or > 1000 || award == null))
             return FishingRewardResult.SaveFailed;
+        if (bank && (!player.HasBankPremium || !player.BankAccount.Opened || baitId != Guid.Empty))
+            return FishingRewardResult.SaveFailed;
         // Sparse inventories must be expanded through the existing legal-slot resolver, never by adding slots past capacity.
         _ = player.FindOpenInventorySlots();
-        var slots = player.Items.OrderBy(s => s.Slot).ToArray();
+        if (bank) { player.EnsureBankCapacity(); player.Bank.FillToCapacity(); }
+        var inventorySlots = player.Items.OrderBy(s => s.Slot).ToArray();
+        var slots = bank ? player.Bank.Take(player.EnsureBankCapacity()).Cast<Item>().ToArray()
+            : inventorySlots.Cast<Item>().ToArray();
         var before = slots.Select(s => s.Clone()).ToArray();
         var plan = before.Select(item => item.Clone()).ToArray();
         if (baitId != Guid.Empty)
@@ -77,7 +82,7 @@ internal static class FishingRewards
             var remaining = baitQuantity;
             for (var i = 0; i < plan.Length && remaining > 0; i++)
             {
-                if (plan[i].ItemId != baitId || plan[i].BagId.GetValueOrDefault() != Guid.Empty || player.SlotIsEquipped(slots[i].Slot, out _)) continue;
+                if (plan[i].ItemId != baitId || plan[i].BagId.GetValueOrDefault() != Guid.Empty || player.SlotIsEquipped(inventorySlots[i].Slot, out _)) continue;
                 var take = Math.Min(remaining, Math.Max(0, plan[i].Quantity));
                 plan[i].Quantity -= take;
                 remaining -= take;
@@ -93,7 +98,8 @@ internal static class FishingRewards
         foreach (var grant in grants)
         {
             if (ItemDescriptor.Get(grant.ItemId) is not { } descriptor) return FishingRewardResult.SaveFailed;
-            var maximum = descriptor.IsStackable ? descriptor.MaxInventoryStack : 1;
+            if (bank && !descriptor.CanBank) return FishingRewardResult.InventoryFull;
+            var maximum = descriptor.IsStackable ? (bank ? descriptor.MaxBankStack : descriptor.MaxInventoryStack) : 1;
             if (maximum <= 0) return FishingRewardResult.SaveFailed;
             var remaining = grant.Quantity;
             if (descriptor.IsStackable)

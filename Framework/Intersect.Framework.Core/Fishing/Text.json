@@ -224,6 +224,11 @@
       "en": "Fishing zone {0}, catch {1}: required player variable {2} does not exist on the server.",
       "fr": "Zone de pêche {0}, prise {1} : la variable de joueur requise {2} n’existe pas sur le serveur.",
       "es": "Zona de pesca {0}, captura {1}: la variable de jugador requerida {2} no existe en el servidor."
+    },
+    "Not enough space for all loot. Free space, change destination or discard it.": {
+      "en": "Not enough space for all loot. Free space, change destination or discard it.",
+      "fr": "Pas assez de place pour tout le butin. Libérez de la place, changez la destination ou jetez-le.",
+      "es": "No hay espacio para todo el botín. Libera espacio, cambia el destino o descártalo."
     }
   }
 }

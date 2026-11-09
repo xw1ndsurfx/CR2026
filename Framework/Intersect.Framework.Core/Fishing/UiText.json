@@ -304,6 +304,41 @@
       "en": "Legendary catches require manual fishing",
       "fr": "Les prises légendaires se pêchent manuellement",
       "es": "Las capturas legendarias se pescan manualmente"
+    },
+    "TAKE ALL": {
+      "en": "TAKE ALL",
+      "fr": "TOUT PRENDRE",
+      "es": "TOMAR TODO"
+    },
+    "DISCARD ALL": {
+      "en": "DISCARD ALL",
+      "fr": "TOUT JETER",
+      "es": "DESCARTAR TODO"
+    },
+    "Discard the fish and all loot": {
+      "en": "Discard the fish and all loot",
+      "fr": "Jeter le poisson et tout le butin",
+      "es": "Descartar el pez y todo el botín"
+    },
+    "LOOT TO BANK · PREMIUM": {
+      "en": "LOOT TO BANK · PREMIUM",
+      "fr": "BUTIN EN BANQUE · PREMIUM",
+      "es": "BOTÍN AL BANCO · PREMIUM"
+    },
+    "LOOT TO INVENTORY": {
+      "en": "LOOT TO INVENTORY",
+      "fr": "BUTIN DANS L’INVENTAIRE",
+      "es": "BOTÍN AL INVENTARIO"
+    },
+    "Bringing the catch to the surface…": {
+      "en": "Bringing the catch to the surface…",
+      "fr": "La prise remonte à la surface…",
+      "es": "Subiendo la captura a la superficie…"
+    },
+    "{0} ×{1}\nTake all loot or discard it": {
+      "en": "{0} ×{1}\nTake all loot or discard it",
+      "fr": "{0} ×{1}\nTout prendre ou tout jeter",
+      "es": "{0} ×{1}\nTomar todo o descartarlo"
     }
   }
 }

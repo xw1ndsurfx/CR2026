@@ -1239,6 +1239,11 @@
       "en": "Refresh active configuration",
       "fr": "Actualiser la configuration active",
       "es": "Actualizar la configuración activa"
+    },
+    "The fish uses the selected item icon, enlarged and animated in the mini-game.": {
+      "en": "The fish uses the selected item icon, enlarged and animated in the mini-game.",
+      "fr": "Le poisson utilise l’icône de l’item sélectionné, agrandie et animée dans le mini-jeu.",
+      "es": "El pez usa el icono del objeto seleccionado, ampliado y animado en el minijuego."
     }
   }
 }

@@ -103,6 +103,31 @@ public sealed class FishingWindowTests
         Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
     }
 
+    [Test]
+    public void LootRequiresAChoiceAndPremiumDestinationIsServerControlled()
+    {
+        using var fixture = new ClientFixture(800, 600);
+        var config = Configuration();
+        var state = Ready(config);
+        state.Phase = FishingPhase.Loot;
+        state.CatchQuantity = 1;
+        fixture.Receive(OpenPacket(config, state));
+        var buttons = Descendants(fixture.Window!).OfType<Button>().ToDictionary(b => b.Name!);
+        Assert.That(buttons["FishingTakeLoot"].IsVisibleInTree, Is.True);
+        Assert.That(buttons["FishingDiscardLoot"].IsVisibleInTree, Is.True);
+        Assert.That(buttons["FishingCast"].IsVisibleInTree, Is.False);
+        Assert.That(buttons["FishingLootDestination"].IsVisibleInTree, Is.False);
+        Assert.That(fixture.Socket.Packets.OfType<FishingRequestPacket>(), Is.Empty,
+            "Showing manual loot must not silently accept or discard it.");
+        state.CanBankLoot = true;
+        state.Revision++;
+        fixture.Receive(new FishingStatePacket { StateJson = state.ToJson() });
+        Assert.That(buttons["FishingLootDestination"].IsVisibleInTree, Is.True);
+        typeof(FishingWindow).GetMethod("Render", Hidden)!.Invoke(fixture.Window, [fixture.Skin]);
+        Assert.That(buttons["FishingTakeLoot"].Right, Is.LessThanOrEqualTo(800));
+        Assert.That(buttons["FishingDiscardLoot"].Bottom, Is.LessThanOrEqualTo(600));
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void OpeningRefusalIsVisibleEvenWithAnAbsentOrBrokenNoticeSound(bool brokenAudio)
