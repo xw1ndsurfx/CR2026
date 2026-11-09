@@ -19,6 +19,9 @@ public sealed class NavalDeckCannonsTests
         var atlas=Newtonsoft.Json.JsonConvert.DeserializeObject<ShipSpriteAtlas>(File.ReadAllText(path))!;
         Assert.That(atlas.IsValid(3072,1024,4),Is.True);
         var pixels=File.ReadAllBytes(Path.Combine(ocean,atlas.CannonGraphics));
+        var cover=File.ReadAllBytes(Path.Combine(ocean,atlas.CannonOcclusionGraphics));
+        Assert.That(System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(cover.AsSpan(16,4)),Is.EqualTo(3072));
+        Assert.That(System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(cover.AsSpan(20,4)),Is.EqualTo(1024));
         Assert.That(System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(pixels.AsSpan(16,4)),Is.EqualTo(512));
         Assert.That(System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(pixels.AsSpan(20,4)),Is.EqualTo(384));
         for(var d=0;d<8;d++)for(var f=0;f<4;f++)
@@ -30,8 +33,34 @@ public sealed class NavalDeckCannonsTests
             var delta=new[]{0,-1,0,1}[f];
             for(var s=0;s<6;s++)Assert.That(pose.CannonAnchors[s].Y-atlas.Directions[d][0].CannonAnchors[s].Y,Is.EqualTo(delta));
         }
+        var coverName=atlas.CannonOcclusionGraphics;
+        atlas.CannonOcclusionGraphics="../outside.png";
+        Assert.That(atlas.IsValid(3072,1024,4),Is.False);
+        atlas.CannonOcclusionGraphics=coverName;
         atlas.CannonGraphics="../outside.png";
         Assert.That(atlas.IsValid(3072,1024,4),Is.False);
+    }
+
+    [Test]
+    public void SevenPlayersKeepSixDifferentAnglesAfterTransmissionToEveryObserver()
+    {
+        var captain=Guid.NewGuid();var crew=Enumerable.Range(0,6).Select(_=>Guid.NewGuid()).ToArray();
+        double[] angles=[-30,25,-15,40,-35,10];
+        var ship=new ShipSnapshot {CaptainId=captain,HelmsmanId=captain,CrewIds=crew,
+            CrewStations=crew.Select((id,i)=>new NavalCrewStation {PlayerId=id,Starboard=i>=3,Index=i%3,Yaw=angles[i]}).ToArray()};
+        // Fresh independent packets represent the captain, all six gunners and a shore observer.
+        var packet=MessagePack.MessagePackSerializer.Serialize(ship);
+        for(var observer=0;observer<8;observer++)
+        {
+            var received=MessagePack.MessagePackSerializer.Deserialize<ShipSnapshot>(packet);
+            var pose=new ShipSpriteFrame {CrewAnchors=[new(){Role=ShipCrewRole.Helm},
+                ..Enumerable.Range(0,6).Select(i=>new ShipCrewAnchor {Role=i>=3?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon,Index=i%3})]};
+            Assert.That(NavalWorld.DeckCrew(received,pose).Select(p=>p.PlayerId),Is.EquivalentTo(crew.Prepend(captain)));
+            for(var i=0;i<6;i++)
+                Assert.That(NavalWorld.DeckCannonYaw(received,received,new(){Starboard=i>=3,Index=i%3},1),Is.EqualTo(angles[i]));
+            received.CrewStations[0].Yaw=12;
+            for(var i=1;i<6;i++)Assert.That(NavalWorld.DeckCannonYaw(ship,received,new(){Starboard=i>=3,Index=i%3},1),Is.EqualTo(angles[i]));
+        }
     }
 
     [TestCase(-45)]

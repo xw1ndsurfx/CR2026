@@ -57,6 +57,13 @@ internal static partial class NavalWorld
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonGraphics) is not {} texture) return;
         const int cell=ShipCannonAnchor.CellSize,columns=ShipCannonAnchor.Columns;
         var size=(float)(cell/atlas.PixelsPerTile);
+        var cover=string.IsNullOrEmpty(atlas.CannonOcclusionGraphics)?null:
+            Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonOcclusionGraphics);
+        if(cover!=null && (cover.Width!=atlas.ImageWidth || cover.Height!=atlas.ImageHeight)) cover=null;
+        var foreground=string.IsNullOrEmpty(atlas.ForegroundGraphics)?null:
+            Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.ForegroundGraphics);
+        if(foreground!=null && (foreground.Width!=atlas.ImageWidth || foreground.Height!=atlas.ImageHeight))foreground=null;
+        if(cover!=null && foreground!=null) AddLayer(foreground);
         foreach(var a in pose.CannonAnchors.OrderBy(a=>a.Y))
         {
             var sx=a.Sprite%columns*cell;var sy=a.Sprite/columns*cell;
@@ -67,12 +74,14 @@ internal static partial class NavalWorld
             var anchor=CannonPerspectiveAnchor(offsetX,offsetY,size,yaw);
             sprites.Add(new(texture,new FloatRect(sx,sy,cell,cell),new(x,y),size,size,anchor.X,anchor.Y,pose.FlipHorizontal,RotationDegrees:(float)yaw));
         }
-        if(!string.IsNullOrEmpty(atlas.ForegroundGraphics) &&
-            Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.ForegroundGraphics) is {} foreground &&
-            foreground.Width==atlas.ImageWidth && foreground.Height==atlas.ImageHeight)
+        if((cover??foreground) is {} top) AddLayer(top);
+
+        void AddLayer(IGameTexture layer)
+        {
             foreach(var part in NavalSpriteGeometry.Parts(pose))
-                sprites.Add(new(foreground,new FloatRect(part.X,part.Y,part.Width,part.Height),new(x,y),
+                sprites.Add(new(layer,new FloatRect(part.X,part.Y,part.Width,part.Height),new(x,y),
                     (float)(part.Width/atlas.PixelsPerTile),(float)(part.Height/atlas.PixelsPerTile),
                     (float)(part.AnchorX/atlas.PixelsPerTile),(float)(part.AnchorY/atlas.PixelsPerTile),part.FlipHorizontal));
+        }
     }
 }

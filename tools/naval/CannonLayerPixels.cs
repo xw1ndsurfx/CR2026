@@ -7,6 +7,65 @@ using System.Runtime.InteropServices;
 // visible pixels are always taken from the registered game atlas.
 public static class CannonLayerPixels
 {
+    static void Blend(int[] output,int at,uint p)
+    {
+        int a=(int)(p>>24);if(a==0)return;uint q=(uint)output[at];
+        int r=(((int)(p>>16)&255)*a+((int)(q>>16)&255)*(255-a)+127)/255;
+        int g=(((int)(p>>8)&255)*a+((int)(q>>8)&255)*(255-a)+127)/255;
+        int b=(((int)p&255)*a+((int)q&255)*(255-a)+127)/255;
+        output[at]=unchecked((int)(0xff000000u|(uint)r<<16|(uint)g<<8|(uint)b));
+    }
+    static void Blit(int[] output,int width,int height,int[] source,int sourceWidth,int sx,int sy,int sw,int sh,double x,double y,double scale,double rotation=0)
+    {
+        double a=rotation*Math.PI/180,c=Math.Cos(a),s=Math.Sin(a);
+        int radius=(int)Math.Ceiling(Math.Sqrt(sw*sw+sh*sh)*scale/2);
+        for(int dy=-radius;dy<=radius;dy++)for(int dx=-radius;dx<=radius;dx++)
+        {
+            int u=(int)Math.Floor((c*dx+s*dy)/scale+sw/2d),v=(int)Math.Floor((-s*dx+c*dy)/scale+sh/2d);
+            int tx=(int)Math.Round(x)+dx,ty=(int)Math.Round(y)+dy;
+            if(u<0 || v<0 || u>=sw || v>=sh || tx<0 || ty<0 || tx>=width || ty>=height)continue;
+            Blend(output,ty*width+tx,(uint)source[(sy+v)*sourceWidth+sx+u]);
+        }
+    }
+    public static void ScaleComparison(string shipPath,string fringePath,string coverPath,string gunPath,string bodyPath,string pantsPath,string armorPath,string helmetPath,double[] crew,double[] pivots,string outputPath)
+    {
+        int[][] sheets=new int[8][];string[] paths={shipPath,fringePath,coverPath,gunPath,bodyPath,pantsPath,armorPath,helmetPath};
+        int[] widths=new int[8];for(int i=0;i<8;i++)using(var b=new Bitmap(paths[i])){sheets[i]=Read(b);widths[i]=b.Width;}
+        const int w=1152,h=2048;int[] pixels=new int[w*h];for(int i=0;i<pixels.Length;i++)pixels[i]=unchecked((int)0xff4a8ba2);
+        double[] scales={1,.75,.5},yaw={-30,25,-15,40,-35,10};
+        int[] rows={3,0,1,2};
+        for(int d=0;d<8;d++)for(int col=0;col<3;col++)
+        {
+            int ox=col*384,oy=d*256,ax=d%2*1536,ay=d/2*256;
+            Blit(pixels,w,h,sheets[0],3072,ax,ay,384,256,ox+192,oy+128,1);
+            for(int i=0;i<7;i++)if(crew[(d*7+i)*4+3]==0)Person(i);
+            Blit(pixels,w,h,sheets[1],3072,ax,ay,384,256,ox+192,oy+128,1);
+            for(int station=0;station<6;station++)
+            {
+                int n=d*6+station;
+                Blit(pixels,w,h,sheets[3],512,n%8*64,n/8*64,64,64,ox+pivots[n*2],oy+pivots[n*2+1],1,yaw[station]);
+            }
+            for(int i=0;i<7;i++)if(crew[(d*7+i)*4+3]!=0)Person(i);
+            Blit(pixels,w,h,sheets[2],3072,ax,ay,384,256,ox+192,oy+128,1);
+            void Person(int i)
+            {
+                int ci=(d*7+i)*4,row=rows[(int)crew[ci+2]],left=128,right=0,bottom=0;
+                for(int y=0;y<128;y++)for(int x=0;x<128;x++)
+                    if((uint)sheets[4][(row*128+y)*widths[4]+x]>>24>32){left=Math.Min(left,x);right=Math.Max(right,x+1);bottom=Math.Max(bottom,y+1);}
+                double scale=.75*scales[col];
+                double cx=ox+crew[ci]+(64-(left+right)/2d)*scale;
+                double cy=oy+crew[ci+1]+(64-bottom)*scale;
+                for(int layer=4;layer<8;layer++)
+                    if(layer!=7 || i%2==0)Blit(pixels,w,h,sheets[layer],widths[layer],0,row*128,128,128,cx,cy,scale);
+            }
+        }
+        // Nearest-neighbour enlargement exposes the pixel edges and layer ordering.
+        int[] enlarged=new int[w*h*4];
+        for(int y=0;y<h*2;y++)for(int x=0;x<w*2;x++)enlarged[y*w*2+x]=pixels[(y/2)*w+x/2];
+        Save(enlarged,w*2,h*2,outputPath);
+        int[] profile=new int[w*2*512];Array.Copy(enlarged,512*2*w*2,profile,0,profile.Length);
+        Save(profile,w*2,512,System.IO.Path.Combine(System.IO.Path.GetDirectoryName(outputPath),"Comparatif_profil_100_75_50.png"));
+    }
     public static int Cut(int[] ship,int[] fringe,int[] guns,int direction,int station,int[] box,int px,int py,string maskPath)
     {
         int originX=(direction%2)*1536,originY=(direction/2)*256,index=direction*6+station;
@@ -84,13 +143,51 @@ public static class CannonLayerPixels
             pixels[i]=unchecked((int)(0xff000000u|(uint)((r*a+74*(255-a))/255)<<16|(uint)((g*a+139*(255-a))/255)<<8|(uint)((b*a+162*(255-a))/255)));
         }
     }
-    public static void Preview(int[] ship,int[] fringe,int[] guns,double[] positions,string path)
+    public static int[] CannonCover(int[] fringe,int[] guns,double[] positions)
+    {
+        var cover=(int[])fringe.Clone();int[] bob={0,-1,0,1};
+        for(int d=0;d<8;d++)for(int station=0;station<6;station++)
+        {
+            int index=d*6+station;double radius=0;
+            for(int y=0;y<64;y++)for(int x=0;x<64;x++)
+                if((uint)guns[(index/8*64+y)*512+index%8*64+x]>>24>32)
+                    radius=Math.Max(radius,Math.Sqrt((x-32)*(x-32)+(y-32)*(y-32)));
+            int r=(int)Math.Ceiling(radius)+3;
+            for(int f=0;f<4;f++)
+            {
+                int ox=d%2*1536+f*384,oy=d/2*256;
+                int cx=(int)positions[index*2],cy=(int)positions[index*2+1]+bob[f];
+                for(int dy=-r;dy<=r;dy++)for(int dx=-r;dx<=r;dx++)
+                {
+                    int x=cx+dx,y=cy+dy;
+                    if(x<2 || y<2 || x>=382 || y>=254 || dx*dx+dy*dy>r*r)continue;
+                    bool rail=false,canvas=false;
+                    for(int yy=-1;yy<=1;yy++)for(int xx=-1;xx<=1;xx++)
+                    {
+                        uint p=(uint)fringe[(oy+y+yy)*3072+ox+x+xx];if(p>>24<32)continue;
+                        int red=(int)(p>>16)&255,green=(int)(p>>8)&255,blue=(int)p&255;
+                        canvas|=red>=170 && green>=145 && blue>=95 && red>=green && green>=blue && red-blue<=130;
+                        rail|=(red>=150 && green>=95 && blue<140 && red>blue*1.4) || (blue>red*1.1 && blue>green*.8);
+                    }
+                    // Only the rail colours and their outlines are excluded from the
+                    // barrel sweep. Original canvas edges always remain an occluder.
+                    if(rail && !canvas)cover[(oy+y)*3072+ox+x]=0;
+                }
+            }
+        }
+        return cover;
+    }
+    public static void Preview(int[] ship,int[] fringe,int[] cover,int[] guns,double[] positions,string path)
     {
         const int w=1152,h=2048;var output=new int[w*h];double[] angles={-30,0,30};
         for(int d=0;d<8;d++)for(int column=0;column<3;column++)
         {
             int ox=column*384,oy=d*256,ax=d%2*1536,ay=d/2*256;
             for(int y=0;y<256;y++)for(int x=0;x<384;x++)output[(oy+y)*w+ox+x]=ship[(ay+y)*3072+ax+x];
+            for(int y=0;y<256;y++)for(int x=0;x<384;x++)
+            {
+                int p=fringe[(ay+y)*3072+ax+x];if((uint)p>>24>=128)output[(oy+y)*w+ox+x]=p;
+            }
             for(int station=0;station<6;station++)
             {
                 int index=d*6+station;
@@ -98,7 +195,7 @@ public static class CannonLayerPixels
             }
             for(int y=0;y<256;y++)for(int x=0;x<384;x++)
             {
-                int p=fringe[(ay+y)*3072+ax+x];if((uint)p>>24>=128)output[(oy+y)*w+ox+x]=p;
+                int p=cover[(ay+y)*3072+ax+x];if((uint)p>>24>=128)output[(oy+y)*w+ox+x]=p;
             }
         }
         Water(output);Save(output,w,h,path);

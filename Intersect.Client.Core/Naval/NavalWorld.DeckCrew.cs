@@ -42,6 +42,21 @@ internal static partial class NavalWorld
         IGameTexture foreground, float x,float y,float scale)
     {
         if(ship.Sinking || ship.Health<=0) return;
+        if(!string.IsNullOrEmpty(atlas.CannonOcclusionGraphics) &&
+            Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonOcclusionGraphics) is {} cover &&
+            cover.Width==atlas.ImageWidth && cover.Height==atlas.ImageHeight)
+        {
+            // Rails hide feet, but must not repaint themselves over moving barrels.
+            // Operators on the far broadside stand in front of their own cannon.
+            var people=DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y).ToArray();
+            foreach(var person in people.Where(c=>!BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
+            DrawLayer(foreground);
+            DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
+            DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
+            foreach(var person in people.Where(c=>BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
+            DrawLayer(cover);
+            return;
+        }
         DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
         foreach(var (id,anchor) in DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))
             if(Globals.Entities.TryGetValue(id,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
@@ -53,5 +68,24 @@ internal static partial class NavalWorld
         foreach(var part in NavalSpriteGeometry.Parts(pose))
             Graphics.DrawGameTexture(foreground,new FloatRect(part.X,part.Y,part.Width,part.Height),
                 NavalSpriteGeometry.Destination(part,x,y,scale),Color.White);
+
+        void DrawPerson((Guid PlayerId,ShipCrewAnchor Anchor) person)
+        {
+            if(Globals.Entities.TryGetValue(person.PlayerId,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
+            {
+                var point=DeckPoint(pose,person.Anchor,x,y,scale);
+                entity.DrawOnShip(point.X,point.Y,point.Facing);
+            }
+        }
+        void DrawLayer(IGameTexture texture)
+        {
+            foreach(var part in NavalSpriteGeometry.Parts(pose))
+                Graphics.DrawGameTexture(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),
+                    NavalSpriteGeometry.Destination(part,x,y,scale),Color.White);
+        }
     }
+
+    internal static bool BehindDeckCannon(ShipSpriteFrame pose,ShipCrewAnchor crew)=>
+        (crew.Role is ShipCrewRole.PortCannon or ShipCrewRole.StarboardCannon) &&
+        pose.CannonAnchors.Any(a=>a.Index==crew.Index && a.Starboard==(crew.Role==ShipCrewRole.StarboardCannon) && a.BehindCrew);
 }

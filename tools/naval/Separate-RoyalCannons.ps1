@@ -9,6 +9,7 @@ $old='Ship_CorpsRoyaux_ThreeMast_Layered_v3_compat.png'
 $new='Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png'
 $foreground='Ship_CorpsRoyaux_ThreeMast_Layered_v4_fringe_compat.png'
 $cannons='Ship_CorpsRoyaux_ThreeMast_Cannons_v4.png'
+$occlusion='Ship_CorpsRoyaux_ThreeMast_Layered_v4_canopy_compat.png'
 $plan=Get-Content (Join-Path $PSScriptRoot 'cannon-cuts.json') -Raw | ConvertFrom-Json
 $atlas=Get-Content (Join-Path $ocean ($old+'.naval.json')) -Raw | ConvertFrom-Json
 function Pixels([string]$path){$image=[System.Drawing.Bitmap]::new($path);try{,[CannonLayerPixels]::Read($image)}finally{$image.Dispose()}}
@@ -62,16 +63,19 @@ for($d=0;$d -lt 8;$d++){
 }
 $atlas.ForegroundGraphics=$foreground
 $atlas | Add-Member CannonGraphics $cannons -Force
+$atlas | Add-Member CannonOcclusionGraphics $occlusion -Force
+$cover=[CannonLayerPixels]::CannonCover($fringe,$guns,$positions)
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 [CannonLayerPixels]::Save($ship,3072,1024,(Join-Path $OutputDirectory $new))
 [CannonLayerPixels]::Save($fringe,3072,1024,(Join-Path $OutputDirectory $foreground))
 [CannonLayerPixels]::Save($guns,512,384,(Join-Path $OutputDirectory $cannons))
+[CannonLayerPixels]::Save($cover,3072,1024,(Join-Path $OutputDirectory $occlusion))
 $atlas.SourceSha256=(Get-FileHash -LiteralPath (Join-Path $OutputDirectory $new) -Algorithm SHA256).Hash.ToLowerInvariant()
 $atlas.ReviewNotes='Independent iron cannons, fixed wooden carriages, real crew, sail fringe. 2D pivot animation; far diagonal barrels reuse the profile barrel behind occlusion. Live multiplayer validation pending.'
 $json=$atlas | ConvertTo-Json -Depth 30 -Compress
 if([Text.Encoding]::UTF8.GetByteCount($json) -gt 65536){throw 'Metadata exceeds the client limit'}
 [IO.File]::WriteAllText((Join-Path $OutputDirectory ($new+'.naval.json')),$json,[Text.UTF8Encoding]::new($false))
 $counts | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'extraction-counts.json') -Encoding utf8
-[CannonLayerPixels]::Preview($ship,$fringe,$guns,$positions,(Join-Path $OutputDirectory 'Apercu_canons_gauche_centre_droite.png'))
-foreach($name in @($new,$foreground,$cannons,($new+'.naval.json'))){Copy-Item -LiteralPath (Join-Path $OutputDirectory $name) -Destination $ocean -Force}
+[CannonLayerPixels]::Preview($ship,$fringe,$cover,$guns,$positions,(Join-Path $OutputDirectory 'Apercu_canons_gauche_centre_droite.png'))
+foreach($name in @($new,$foreground,$cannons,$occlusion,($new+'.naval.json'))){Copy-Item -LiteralPath (Join-Path $OutputDirectory $name) -Destination $ocean -Force}
 Write-Output ('Created 48 cannon sprites and '+[Text.Encoding]::UTF8.GetByteCount($json)+' bytes of metadata.')

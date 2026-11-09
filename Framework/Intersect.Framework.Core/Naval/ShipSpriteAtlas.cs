@@ -10,10 +10,12 @@ public sealed class ShipSpriteAtlas
     public bool Loop { get; set; } = true;
     public string ForegroundGraphics { get; set; } = "";
     public string CannonGraphics { get; set; } = "";
+    public string CannonOcclusionGraphics { get; set; } = "";
     public ShipSpriteFrame[][] Directions { get; set; } = [];
 
     public bool IsValid(int textureWidth, int textureHeight, int frames) =>
-        NavalPresentation.SafeAsset(ForegroundGraphics) && NavalPresentation.SafeAsset(CannonGraphics) && Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
+        NavalPresentation.SafeAsset(ForegroundGraphics) && NavalPresentation.SafeAsset(CannonGraphics) &&
+        NavalPresentation.SafeAsset(CannonOcclusionGraphics) && Version is 1 or 2 && ImageWidth == textureWidth && ImageHeight == textureHeight &&
         textureWidth is > 0 and <= 16384 && textureHeight is > 0 and <= 16384 &&
         double.IsFinite(PixelsPerTile) && PixelsPerTile is >= 8 and <= 1024 &&
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
