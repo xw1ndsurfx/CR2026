@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Intersect.Enums;
 using Intersect.Framework.Core.Jousting;
 using Intersect.Framework.Core.Mounts;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
@@ -125,17 +126,26 @@ public sealed class JoustSpectatorTests
         Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Set(npc.Id,npc); w.Arena.CrowdNpcId = npc.Id;
         try
         {
-            var c = JoustAudienceRuntime.Get(w.Arena,w.A.MapInstanceId)!; JoustAudienceRuntime.EnsureCrowd(c);
-            var filler = w.Instance.GetEntities().OfType<JoustAudienceActor>().Single();
-            Assert.That(((NpcEntityPacket)filler.EntityPacket()).JoustSeated, Is.True);
-            Assert.That(MessagePackSerializer.Deserialize<NpcEntityPacket>(MessagePackSerializer.Serialize((NpcEntityPacket)filler.EntityPacket())).JoustSeated, Is.True);
-            Assert.That(filler.CanAttack(w.A,null!), Is.False); Assert.That(w.A.CanAttack(filler,null!), Is.False);
-            w.A.X=7;w.A.Y=7; Request(w.A,JoustAction.ReserveSeat,w.Arena.Seats[0].Id);
-            Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>(), Is.Empty);
-            w.A.LeaveJoustSeat(false); JoustAudienceRuntime.EnsureCrowd(c);
-            Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>().Count(), Is.EqualTo(1));
-            w.Arena.CrowdNpcId=Guid.Empty;JoustAudienceRuntime.EnsureCrowd(c);
-            Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>(), Is.Empty);
+            var c = JoustAudienceRuntime.Get(w.Arena,w.A.MapInstanceId)!;
+            // This test checks a sequence of refreshes, not the background
+            // refresh timer racing each snapshot between EnsureCrowd and Single.
+            lock(w.A.EntityLock)lock(c.Lifecycle)
+            {
+                Assert.That(c.Retired,Is.False);Assert.That(c.Instance,Is.SameAs(w.Instance));
+                JoustAudienceRuntime.EnsureCrowd(c);
+                var fillers=w.Instance.GetEntities().OfType<JoustAudienceActor>().ToArray();
+                Assert.That(fillers,Has.Length.EqualTo(1),$"Crowd missing: arena={c.Arena!=null}, npc={NPCDescriptor.Get(npc.Id)!=null}, disposed={w.Instance.IsDisposed}, retired={c.Retired}.");
+                var filler=fillers.Single();
+                Assert.That(((NpcEntityPacket)filler.EntityPacket()).JoustSeated, Is.True);
+                Assert.That(MessagePackSerializer.Deserialize<NpcEntityPacket>(MessagePackSerializer.Serialize((NpcEntityPacket)filler.EntityPacket())).JoustSeated, Is.True);
+                Assert.That(filler.CanAttack(w.A,null!), Is.False); Assert.That(w.A.CanAttack(filler,null!), Is.False);
+                w.A.X=7;w.A.Y=7; Request(w.A,JoustAction.ReserveSeat,w.Arena.Seats[0].Id);
+                Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>(), Is.Empty);
+                w.A.LeaveJoustSeat(false); JoustAudienceRuntime.EnsureCrowd(c);
+                Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>().Count(), Is.EqualTo(1));
+                w.Arena.CrowdNpcId=Guid.Empty;JoustAudienceRuntime.EnsureCrowd(c);
+                Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>(), Is.Empty);
+            }
         }
         finally { Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Delete(npc); }
     }
