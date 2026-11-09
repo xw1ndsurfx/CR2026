@@ -16,6 +16,7 @@ public partial class HotBarWindow
     private readonly List<NavalActionButton> _navalButtons=[];
     private NavalSailingBar? _navalStatus;
     private NavalSailingBar? _sailingBar;
+    private NavalSailingBar? _deckHint;
     private NavalTargetHud? _targetHud;
     private NavalCargoWindow? _cargoWindow;
     private NavalCannonViewWindow? _cannonWindow;
@@ -48,6 +49,20 @@ public partial class HotBarWindow
         _rewardHud?.Update(reward,Y-64,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
+        if(own?.WalkableDeck==true && _deckHint==null)_deckHint=new NavalSailingBar(Parent,"DeckWalkingHint")
+            {AutoSizeToContents=false,Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false};
+        if(_deckHint!=null)
+        {
+            _deckHint.IsHidden=own?.WalkableDeck!=true || Interface.InGameUiOrNull?.SuppressStatusHuds==true;
+            if(own?.WalkableDeck==true)
+            {
+                _deckHint.SetBounds(X,Y-80,Width,23);
+                _deckHint.Text=N(Naval.NavalWorld.Driver(own)==Globals.Me?.Id?"WASD: steer - E: leave the helm":
+                    Naval.NavalWorld.Gunner.LeaseId!=Guid.Empty?"E: leave cannon - Mouse: aim and fire":"WASD / arrows: walk - E: use a free cannon or helm");
+                if(!string.IsNullOrEmpty(Naval.NavalWorld.Gunner.Message))_deckHint.Text=N(Naval.NavalWorld.Gunner.Message);
+                EventPanelText.Fit(_deckHint,_deckHint.Text,10,8);
+            }
+        }
         if (sailing && _activeSkillHud==null) _activeSkillHud=new NavalActiveSkillHud(Parent);
         _activeSkillHud?.Update(own,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         if(sailing && _cannonWindow==null) _cannonWindow=new NavalCannonViewWindow(Parent);

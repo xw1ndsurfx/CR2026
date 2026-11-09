@@ -17,6 +17,8 @@ namespace Intersect.Client.Interface.Game;
 
 public partial class PartyWindow
 {
+    private static int RosterSlots=>Math.Max(7,Options.Instance.Party.MaximumMembers);
+    private Base _crewScrollContent;
 
     private List<ImagePanel> mHpBar = new List<ImagePanel>();
 
@@ -86,7 +88,7 @@ public partial class PartyWindow
         mHpBarContainer.Clear();
         mHpBar.Clear();
 
-        for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
+        for (var i = 0; i < RosterSlots; i++)
         {
             //Labels
             mLblnames.Add(new Label(mPartyWindow, "MemberName" + i));
@@ -178,12 +180,12 @@ public partial class PartyWindow
 
     private void BuildCrewLayout()
     {
-        var memberCount = Options.Instance.Party.MaximumMembers;
+        var memberCount = RosterSlots;
         const int cardHeight = 82;
         const int cardGap = 5;
         const int cardTop = 99;
         // Five roster cards fit in a compact window without clipping the footer.
-        var windowHeight = Math.Max(310, cardTop + memberCount * (cardHeight + cardGap) + 65);
+        var windowHeight = Math.Max(310, cardTop + Math.Min(5,memberCount) * (cardHeight + cardGap) + 65);
         mPartyWindow.SetSize(515, windowHeight);
         mPartyWindow.Alignment = [Alignments.Center];
 
@@ -214,18 +216,23 @@ public partial class PartyWindow
         };
         _partySummary.SetBounds(30, 70, 455, 23);
 
+        var scroll=new ScrollControl(mPartyWindow,"CrewCardsScroll") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
+        scroll.SetBounds(0,cardTop,515,Math.Min(5,memberCount)*(cardHeight+cardGap));
+        _crewScrollContent=new Base(scroll,"CrewCardsContent");
+        _crewScrollContent.SetBounds(0,0,515,memberCount*(cardHeight+cardGap));
+
         // Member information comes from authoritative party packets. Portraits
         // aren't available in PartyMember, so we use a clear leader/crew badge.
         for (var i = 0; i < memberCount; i++)
         {
-            var top = cardTop + i * (cardHeight + cardGap);
-            var card = new PartyCardChrome(mPartyWindow, "CrewCard" + i, true);
+            var top = i * (cardHeight + cardGap);
+            var card = new PartyCardChrome(_crewScrollContent, "CrewCard" + i, true);
             card.SetBounds(28, top, 459, cardHeight);
             card.SendToBack();
             _memberCards.Add(card);
             card.Hide();
 
-            var role = new Label(mPartyWindow, "CrewRole" + i)
+            var role = new Label(_crewScrollContent, "CrewRole" + i)
             {
                 AutoSizeToContents = false,
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
@@ -238,7 +245,12 @@ public partial class PartyWindow
             role.Hide();
             _memberRoles.Add(role);
 
+            foreach(var control in new Base[]{mLblnames[i],mHpLabel[i],mHpValue[i],mMpLabel[i],mMpValue[i]})control.Parent=_crewScrollContent;
+            if(i>0)mKickButtons[i].Parent=_crewScrollContent;
+
             mLblnames[i].SetBounds(44, top + 5, 290, 25);
+            mLblnames[i].Font=GameContentManager.Current.GetFont("sourcesansproblack")??mLeaveButton.Font;
+            mLblnames[i].FontSize=11;
             mLblnames[i].TextColorOverride = Color.White;
             mLblnames[i].Clicked += PartyWindow_Clicked;
 
@@ -292,7 +304,7 @@ public partial class PartyWindow
         // beyond them and never overlays their clickable area.
         const int leftMenuClearance = 86;
         _rosterHud = new PartyRosterHud(canvas, "PartyRosterHud");
-        _rosterHud.SetBounds(Math.Max(leftMenuClearance,130), 78, 258, 48 + Options.Instance.Party.MaximumMembers * 42);
+        _rosterHud.SetBounds(Math.Max(leftMenuClearance,130), 78, 258, 48 + RosterSlots * 42);
         _rosterHud.Hide();
 
         _hudHeading = new Label(_rosterHud, "PartyRosterHeading")
@@ -325,7 +337,7 @@ public partial class PartyWindow
         _hudLeaveButton.SetToolTipText(Strings.Parties.LeaveTip);
         _hudLeaveButton.Clicked += leave_Clicked;
 
-        for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
+        for (var i = 0; i < RosterSlots; i++)
         {
             var name = new Label(_rosterHud, "PartyHudName" + i)
             {
@@ -390,7 +402,7 @@ public partial class PartyWindow
         _rosterHud.SetSize(258, 46 + count * 42);
         _hudLeaveButton.Show();
         _rosterHud.VisibleMembers = count;
-        _hudHeading.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"PARTY  {count}/{Options.Instance.Party.MaximumMembers}");
+        _hudHeading.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"PARTY  {count}/{Naval.NavalWorld.PartyCapacity}");
         // Only other nearby party members count and EXP goes to the killer.
         // This is the maximum potential bonus; actual kills require nearby,
         // alive companions, which the server validates authoritatively.
@@ -455,8 +467,8 @@ public partial class PartyWindow
     private sealed class PartyRosterHud : Base
     {
         public int VisibleMembers { get; set; }
-        public float[] Health { get; } = new float[Options.Instance.Party.MaximumMembers];
-        public float[] Mana { get; } = new float[Options.Instance.Party.MaximumMembers];
+        public float[] Health { get; } = new float[RosterSlots];
+        public float[] Mana { get; } = new float[RosterSlots];
 
         public PartyRosterHud(Base parent, string name) : base(parent, name)
         {
@@ -518,8 +530,9 @@ public partial class PartyWindow
         mLeaderText.Hide();
         mLeaveButton.Hide();
         _leaveCaption.Hide();
+        _crewScrollContent.SetSize(515,Math.Max(1,Math.Min(RosterSlots,Globals.Me.Party.Count))*87);
         _partySummary.Text = Intersect.Client.Localization.ClientLanguages.Text("NO CREW FORMED");
-        for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
+        for (var i = 0; i < RosterSlots; i++)
         {
             mHpBarContainer[i].Hide();
             mHpLabel[i].Hide();
@@ -542,9 +555,9 @@ public partial class PartyWindow
             mLeaderText.Show();
             mLeaveButton.Show();
             _leaveCaption.Show();
-            _partySummary.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{Globals.Me.Party.Count} / {Options.Instance.Party.MaximumMembers} CREW MEMBERS");
+            _partySummary.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{Globals.Me.Party.Count} / {Naval.NavalWorld.PartyCapacity} CREW MEMBERS");
 
-            for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
+            for (var i = 0; i < RosterSlots; i++)
             {
                 if (i < Globals.Me.Party.Count)
                 {

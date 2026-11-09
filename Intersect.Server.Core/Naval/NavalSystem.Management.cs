@@ -1,4 +1,4 @@
-﻿using Intersect.Core;
+using Intersect.Core;
 using Microsoft.Extensions.Logging;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -38,7 +38,7 @@ internal static partial class NavalSystem
     internal static SailingProgress CareerProgress(Player p,Guid id)
     {lock(Gate){_=IsEnabled();return id==NavalProfessions.Sailing?_settings.Sailing.Progress(p.SailingExperience):id==NavalProfessions.Gunnery?_settings.Gunnery.Curve().Progress(p.GunneryExperience):_settings.Repair.Curve().Progress(p.NavalCareer.RepairExperience);}}
     internal static long CareerExperience(Player p,Guid id)=>id==NavalProfessions.Sailing?p.SailingExperience:id==NavalProfessions.Gunnery?p.GunneryExperience:p.NavalCareer.RepairExperience;
-    private static Guid Driver(Vessel v)=>v.HelmsmanId==Guid.Empty?v.State.CaptainId:v.HelmsmanId;
+    private static Guid Driver(Vessel v)=>v.HelmVacant?Guid.Empty:v.HelmsmanId==Guid.Empty?v.State.CaptainId:v.HelmsmanId;
     private static int AmmoCount(Player p,Guid item)=>p.NavalCareer.Ammo.FirstOrDefault(a=>a.ItemId==item)?.Quantity??0;
     private static bool AmmoAdd(Player p,Guid item,int amount)
     {
@@ -253,14 +253,14 @@ internal static partial class NavalSystem
                     else if(mode==NavalManageAction.AcceptHelm)
                     {
                         if(v==null || v.HelmOfferTo!=p.Id || v.HelmOfferToken!=packet.Token || v.HelmOfferUntil<=now || !p.Party.Any(member=>member.Id==v.State.CaptainId))return;
-                        Repairs.Remove(p.Id);v.HelmsmanId=p.Id;v.HelmOfferTo=v.HelmOfferToken=Guid.Empty;v.Controls.Reset();
-                        foreach(var g in v.Guns.Values)g.Owner=g.Lease=Guid.Empty;
+                        Repairs.Remove(p.Id);v.HelmVacant=false;v.HelmsmanId=p.Id;v.HelmOfferTo=v.HelmOfferToken=Guid.Empty;v.Controls.Reset();
+                        foreach(var g in v.Guns.Values.Where(g=>!DeckEnabled(v) || g.Owner==Driver(v)))g.Owner=g.Lease=Guid.Empty;
                     }
                     else if(mode==NavalManageAction.ReclaimHelm)
                     {
                         if(v==null || v.State.CaptainId!=p.Id && Driver(v)!=p.Id)return;
-                        Repairs.Remove(v.State.CaptainId);v.HelmsmanId=v.HelmOfferTo=v.HelmOfferToken=Guid.Empty;v.Controls.Reset();
-                        foreach(var g in v.Guns.Values)g.Owner=g.Lease=Guid.Empty;
+                        Repairs.Remove(v.State.CaptainId);v.HelmVacant=false;v.HelmsmanId=v.HelmOfferTo=v.HelmOfferToken=Guid.Empty;v.Controls.Reset();
+                        foreach(var g in v.Guns.Values.Where(g=>!DeckEnabled(v) || g.Owner==Driver(v)))g.Owner=g.Lease=Guid.Empty;
                     }
                     else if(mode==NavalManageAction.Dock)
                     {if(v==null || v.State.CaptainId!=p.Id || !ByCrewDock(v))return;v.DockRequested=true;v.Anchored=true;v.Controls.Reset();}
@@ -328,7 +328,7 @@ internal static partial class NavalSystem
             if(Ships.TryGetValue(p.CaptainedShipId,out var v))
             {
                 if(v.HelmsmanId!=Guid.Empty && (!v.Crew.TryGetValue(v.HelmsmanId,out var crew) || now-crew.Seen>1500 || !p.Party.Any(member=>member.Id==v.HelmsmanId)))
-                {v.HelmsmanId=Guid.Empty;v.Controls.Reset();}
+                {v.HelmVacant=DeckEnabled(v);v.HelmsmanId=Guid.Empty;v.Controls.Reset();}
                 if(RepairRequests.Remove(v.State.Id,out requests) && v.Health>0 && v.SunkUntil==0)
                 {ship=v.State.Id;hull=Math.Min(100-v.Health,requests.Sum(r=>r.Hull)*(100+SkillPower(v,NavalSkillKind.RepairBonus,now))/100);}
             }

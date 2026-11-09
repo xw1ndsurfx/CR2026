@@ -5490,7 +5490,7 @@ public partial class Player : Entity
             }
         }
 
-        if (Party.Count >= Math.Min(Options.Instance.Party.MaximumMembers, Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
+        if (Party.Count >= Math.Min(Intersect.Server.Naval.NavalSystem.PartyCapacity(this), Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
         {
             PacketSender.SendChatMsg(this, Strings.Parties.LimitReached, ChatMessageType.Party, CustomColors.Alerts.Error);
             return false;

@@ -1,0 +1,10 @@
+<Project>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png;$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png.naval.json">
+      <Link>resources/ocean/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+</Project>

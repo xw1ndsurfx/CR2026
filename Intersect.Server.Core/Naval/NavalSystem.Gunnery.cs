@@ -1,3 +1,4 @@
+﻿using Intersect.Network.Packets.Server;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -15,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
-    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt;}
+    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt,AimAt;internal double Yaw;}
     private sealed record GunReward(long Experience,long RetryAt=0);
     private static readonly Dictionary<Guid,GunReward> PendingGunnery=[];
     private static int PendingCrewShots;
@@ -25,11 +26,19 @@ internal static partial class NavalSystem
     private static void PruneGuns(Vessel vessel,long now)
     {
         foreach(var entry in vessel.Guns)
-            if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
+            if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || DeckEnabled(vessel) && entry.Key%_settings.Gunnery.CannonsPerSide>=3 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
                 vessel.State.CaptainId==Guid.Empty || entry.Value.Owner==Driver(vessel) || Repairs.ContainsKey(entry.Value.Owner) ||
                 entry.Value.Owner!=vessel.State.CaptainId && (!vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500))
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
     }
+    private static NavalCrewStation[] CrewStationSnapshot(Vessel vessel,long now) => vessel.Guns
+        .Where(g => g.Key>=0 && g.Key<_settings.Gunnery.CannonsPerSide*2 && g.Value.Owner!=Guid.Empty &&
+            g.Value.Until>now && g.Value.Owner!=Driver(vessel) && vessel.SunkUntil==0 && vessel.Health>0 &&
+            !Repairs.ContainsKey(g.Value.Owner) && (g.Value.Owner==vessel.State.CaptainId ||
+            vessel.Crew.TryGetValue(g.Value.Owner,out var crew) && now-crew.Seen<=1500))
+        .Select(g => new NavalCrewStation {PlayerId=g.Value.Owner,Starboard=g.Key>=_settings.Gunnery.CannonsPerSide,
+            Index=g.Key%_settings.Gunnery.CannonsPerSide,Yaw=g.Value.Yaw}).ToArray();
+
     private static GunneryState GunnerState(Player player,long now)
     {
         var settings=_settings.Gunnery;var progress=settings.Curve().Progress(player.GunneryExperience);
@@ -62,30 +71,40 @@ internal static partial class NavalSystem
                 if(!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z!=0 ||
                     player.InstanceType!=MapInstanceType.Overworld || !Enum.IsDefined(packet.Action) ||
                     !Ships.TryGetValue(packet.ShipId,out var vessel) || player.MapId!=vessel.State.MapId || !GunnerEligible(player,vessel)) return;
-                if(now-player.LastGunneryRequest<100) return;
-                player.LastGunneryRequest=now;PruneGuns(vessel,now);
+                if(packet.Action!=CannonStationAction.Renew && packet.Action!=CannonStationAction.Release)
+                {
+                    if(now-player.LastGunneryRequest<100) return;
+                    player.LastGunneryRequest=now;
+                }
+                PruneGuns(vessel,now);
                 var count=_settings.Gunnery.CannonsPerSide;
                 var current=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
                 if(packet.Action==CannonStationAction.Release)
                 {
-                    if(current.Value!=null && current.Value.Lease==packet.LeaseId) current.Value.Owner=current.Value.Lease=Guid.Empty;
+                    if(current.Value==null || current.Value.Lease!=packet.LeaseId)return;
+                    current.Value.Owner=current.Value.Lease=Guid.Empty;
                     SendSnapshot(player);return;
                 }
                 if(!_settings.Gunnery.Enabled || !_settings.CannonsEnabled) {player.GunneryMessage="Crew cannons are disabled.";SendSnapshot(player);return;}
                 if(packet.Action==CannonStationAction.Acquire)
                 {
                     var start=packet.Starboard?count:0;
-                    var index=Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
-                    if(index<0) player.GunneryMessage="All cannons on this side are occupied.";
+                    var index=DeckEnabled(vessel)?NearestDeckGun(vessel,player.Id,packet.Starboard,now):
+                        Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
+                    if(index<0) player.GunneryMessage=DeckEnabled(vessel)?"Move closer to a free cannon or the helm.":"All cannons on this side are occupied.";
                     else
                     {
                         if(current.Value!=null) current.Value.Owner=current.Value.Lease=Guid.Empty;
                         if(!vessel.Guns.TryGetValue(index,out var gun)) vessel.Guns[index]=gun=new();
-                        gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;player.GunneryMessage="";
+                        gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;gun.Yaw=0;gun.AimAt=now-100;player.GunneryMessage="";
                     }
                     SendSnapshot(player);return;
                 }
                 if(current.Value==null || current.Value.Lease!=packet.LeaseId || ((current.Key>=count)!=packet.Starboard)) return;
+                if(!GunneryAim.Valid(packet.Yaw,packet.Elevation,_settings.Gunnery.AimArcDegrees)) return;
+                if(packet.Action==CannonStationAction.Renew && now-current.Value.AimAt<100) return;
+                current.Value.AimAt=now;
+                current.Value.Yaw=packet.Yaw;
                 current.Value.Until=now+3500;
                 if(packet.Action==CannonStationAction.Renew) return;
                 if(packet.Action!=CannonStationAction.Fire || !GunneryAim.Valid(packet.Yaw,packet.Elevation,_settings.Gunnery.AimArcDegrees) ||
