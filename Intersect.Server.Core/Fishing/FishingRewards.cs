@@ -52,20 +52,23 @@ internal static class FishingRewards
             return Commit(player, Guid.Empty, Guid.Empty, 0, null, baitId, quantity, () => user.Save(force: true));
     }
 
-    internal static FishingRewardResult Reward(Player player, Guid receipt, Guid itemId, int quantity, FishingProgressAward award, bool bank = false)
+    internal static FishingRewardResult Reward(Player player, Guid receipt, Guid itemId, int quantity, FishingProgressAward award, bool bank = false, IReadOnlyList<FishingInventoryEntry>? bonusLoot = null)
     {
         if (player.User is not { } user) return FishingRewardResult.SaveFailed;
         lock (user.PokerSaveGate)
-            return Commit(player, receipt, itemId, quantity, award, Guid.Empty, 0, () => user.Save(force: true), bank);
+            return Commit(player, receipt, itemId, quantity, award, Guid.Empty, 0, () => user.Save(force: true), bank, bonusLoot);
     }
 
     /// <summary>Caller holds EntityLock and the account's save gate. No notification or item Event runs before commit.</summary>
     internal static FishingRewardResult Commit(Player player, Guid receipt, Guid itemId, int quantity,
-        FishingProgressAward? award, Guid baitId, int baitQuantity, Func<UserSaveResult> checkpoint, bool bank = false)
+        FishingProgressAward? award, Guid baitId, int baitQuantity, Func<UserSaveResult> checkpoint, bool bank = false, IReadOnlyList<FishingInventoryEntry>? bonusLoot = null)
     {
         if (receipt != Guid.Empty && player.GetVariable(FishingRules.LastRewardId)?.Value.String == receipt.ToString("N"))
             return FishingRewardResult.AlreadyCommitted;
         if (itemId != Guid.Empty && (receipt == Guid.Empty || quantity is < 1 or > 1000 || award == null))
+            return FishingRewardResult.SaveFailed;
+        if (bonusLoot != null && (receipt == Guid.Empty || itemId == Guid.Empty || award == null || bonusLoot.Count > 16 ||
+            bonusLoot.Any(loot => loot == null || loot.ItemId == Guid.Empty || loot.Quantity is < 1 or > 1000)))
             return FishingRewardResult.SaveFailed;
         if (bank && (!player.HasBankPremium || !player.BankAccount.Opened || baitId != Guid.Empty))
             return FishingRewardResult.SaveFailed;
@@ -92,6 +95,7 @@ internal static class FishingRewards
         }
         var grants = new List<(Guid ItemId, int Quantity)>();
         if (itemId != Guid.Empty) grants.Add((itemId, quantity));
+        if (bonusLoot != null) grants.AddRange(bonusLoot.Select(loot => (loot.ItemId, loot.Quantity)));
         if (award?.Profession is { } profession)
             grants.AddRange(profession.LevelRewards.Where(r => r.Level > award.PreviousLevel && r.Level <= award.NewLevel && r.ItemId != Guid.Empty && r.Quantity > 0)
                 .Select(r => (r.ItemId, r.Quantity)));

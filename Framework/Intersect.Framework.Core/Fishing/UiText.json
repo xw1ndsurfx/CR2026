@@ -339,6 +339,11 @@
       "en": "{0} ×{1}\nTake all loot or discard it",
       "fr": "{0} ×{1}\nTout prendre ou tout jeter",
       "es": "{0} ×{1}\nTomar todo o descartarlo"
+    },
+    "{0} ×{1}": {
+      "en": "{0} ×{1}",
+      "fr": "{0} ×{1}",
+      "es": "{0} ×{1}"
     }
   }
 }

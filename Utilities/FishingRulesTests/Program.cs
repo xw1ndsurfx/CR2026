@@ -13,12 +13,35 @@ void Invalid(Action action, string name)
 Check(!FishingRules.ShouldAutoCast(new FishingState { Automatic = true, Phase = FishingPhase.Loot }, 1000, 0) &&
     !FishingRules.ShouldAutoCast(new FishingState { Automatic = true, Phase = FishingPhase.Retrieving }, 1000, 0),
     "Automatic casting cannot overwrite a catch being retrieved or awaiting collection");
+var bonusItem = Guid.NewGuid();
+var bonusCatch = new FishingCatchDefinition { BonusLoot = [
+    new() { ItemId = bonusItem, MinimumQuantity = 10, MaximumQuantity = 20, Chance = 1 },
+    new() { ItemId = Guid.NewGuid(), Chance = .05 }, new() { ItemId = Guid.NewGuid(), Chance = 0 }] };
+var rolls = 0;
+var won = FishingRules.RollBonusLoot(bonusCatch, () => { rolls++; return .049999; }, (min, max) => max - 1);
+Check(won.Count == 2 && won[0].ItemId == bonusItem && won[0].Quantity == 20 && rolls == 1,
+    "Fish bonuses support guaranteed currency, rare items and disabled drops with inclusive maximum quantities");
+var lost = FishingRules.RollBonusLoot(bonusCatch, () => .05, (min, max) => min);
+Check(lost.Count == 1 && lost[0].Quantity == 10, "Rare loot chance uses the exact boundary and currency remains guaranteed");
+Check(FishingConfiguration.FromJson("{}").Zones.Count == 0 &&
+    System.Text.Json.JsonSerializer.Deserialize<FishingCatchDefinition>("{}")!.BonusLoot.Count == 0,
+    "Legacy catches without bonus loot retain an empty bonus list");
 var rod = Guid.NewGuid(); var cage = Guid.NewGuid(); var map = Guid.NewGuid(); var requirement = Guid.NewGuid();
 var fish = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [rod], Weight = 1 };
 var lobster = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [cage], Weight = 99 };
 var rare = new FishingCatchDefinition { ItemId = Guid.NewGuid(), ToolItemIds = [rod], Legendary = true, Weight = 1000000 };
 var zone = new FishingZoneDefinition { Name = "Test", MapIds = [map], UseTileRadius = true, X = 10, Y = 20, Radius = 2, Catches = [fish, lobster, rare] };
 var config = new FishingConfiguration { Tools = [new() { ItemId = rod }, new() { ItemId = cage, Type = FishingToolType.Cage }], Zones = [zone] };
+fish.BonusLoot = [new() { ItemId = bonusItem, Chance = double.NaN }];
+Invalid(() => FishingRules.Validate(config), "Nonfinite loot probability rejected");
+fish.BonusLoot[0].Chance = 1.01;
+Invalid(() => FishingRules.ValidateDraft(config), "Loot probability above 100% rejected in drafts");
+fish.BonusLoot[0].Chance = 1; fish.BonusLoot[0].ItemId = Guid.Empty;
+Invalid(() => FishingRules.Validate(config), "Unassigned bonus loot cannot be activated");
+FishingRules.ValidateDraft(config); checks++;
+fish.BonusLoot[0].ItemId = bonusItem; fish.BonusLoot[0].MinimumQuantity = 2;
+Invalid(() => FishingRules.Validate(config), "Reversed loot quantity range rejected");
+fish.BonusLoot = [];
 FishingRules.Validate(config); checks++;
 Check(zone.AutomaticFailureChance == .50 && zone.AutomaticExperienceMultiplier == .20,
     "New zones default to 50% idle failures and 20% of normal XP");

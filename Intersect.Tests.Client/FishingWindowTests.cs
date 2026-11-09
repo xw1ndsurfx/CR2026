@@ -128,6 +128,30 @@ public sealed class FishingWindowTests
         Assert.That(buttons["FishingDiscardLoot"].Bottom, Is.LessThanOrEqualTo(600));
     }
 
+    [Test]
+    public void MultiItemLootListsEveryRewardAndSupportsLocalPagination()
+    {
+        using var fixture = new ClientFixture(800, 600);
+        var state = Ready(Configuration());
+        state.Phase = FishingPhase.Loot;
+        state.Loot = Enumerable.Range(1, 4).Select(i => new FishingInventoryEntry { ItemId = Guid.NewGuid(), Quantity = i }).ToList();
+        fixture.Receive(OpenPacket(Configuration(), state));
+        var controls = Descendants(fixture.Window!).OfType<Label>().ToDictionary(label => label.Name!);
+        Assert.That(controls["FishingLootRow0"].IsVisibleInTree, Is.True);
+        Assert.That(controls["FishingLootRow2"].Text, Does.EndWith("×3"));
+        var next = (Button)controls["FishingLootNext"];
+        Assert.That(next.IsVisibleInTree && !next.IsDisabled, Is.True);
+        InputHandler.HoveredControl = next;
+        var mouseInput = typeof(ControlBase).GetMethod("InputMouseButtonState", Hidden)!;
+        var position = next.ToCanvas(next.Width / 2, next.Height / 2);
+        mouseInput.Invoke(next, [MouseButton.Left, position, true, true]);
+        mouseInput.Invoke(next, [MouseButton.Left, position, false, true]);
+        Assert.That(controls["FishingLootRow0"].Text, Does.EndWith("×4"));
+        Assert.That(controls["FishingLootRow1"].IsVisibleInTree, Is.False);
+        Assert.That(fixture.Socket.Packets.OfType<FishingRequestPacket>(), Is.Empty,
+            "Viewing all loot pages must never accept, discard or reroll rewards.");
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void OpeningRefusalIsVisibleEvenWithAnAbsentOrBrokenNoticeSound(bool brokenAudio)

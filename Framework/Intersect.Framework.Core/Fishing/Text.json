@@ -229,6 +229,11 @@
       "en": "Not enough space for all loot. Free space, change destination or discard it.",
       "fr": "Pas assez de place pour tout le butin. Libérez de la place, changez la destination ou jetez-le.",
       "es": "No hay espacio para todo el botín. Libera espacio, cambia el destino o descártalo."
+    },
+    "Fishing zone {0}, catch {1}: bonus loot item {2} is missing or has an invalid inventory stack.": {
+      "en": "Fishing zone {0}, catch {1}: bonus loot item {2} is missing or has an invalid inventory stack.",
+      "fr": "Zone de pêche {0}, prise {1} : l’objet bonus {2} est introuvable ou sa limite de pile d’inventaire est invalide.",
+      "es": "Zona de pesca {0}, captura {1}: el objeto adicional {2} no existe o tiene un límite de pila de inventario inválido."
     }
   }
 }

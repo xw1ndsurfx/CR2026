@@ -1244,6 +1244,66 @@
       "en": "The fish uses the selected item icon, enlarged and animated in the mini-game.",
       "fr": "Le poisson utilise l’icône de l’item sélectionné, agrandie et animée dans le mini-jeu.",
       "es": "El pez usa el icono del objeto seleccionado, ampliado y animado en el minijuego."
+    },
+    "Configured catch": {
+      "en": "Configured catch",
+      "fr": "Prise configurée",
+      "es": "Captura configurada"
+    },
+    "Configured catch lists your existing entries. Choose the fish below, or add a new catch.": {
+      "en": "Configured catch lists your existing entries. Choose the fish below, or add a new catch.",
+      "fr": "Prise configurée liste les entrées déjà créées. Choisissez le poisson ci-dessous ou ajoutez une nouvelle prise.",
+      "es": "Captura configurada muestra las entradas existentes. Elige el pez abajo o añade una nueva captura."
+    },
+    "Fish item": {
+      "en": "Fish item",
+      "fr": "Objet poisson",
+      "es": "Objeto del pez"
+    },
+    "Bonus loot": {
+      "en": "Bonus loot",
+      "fr": "Butin bonus",
+      "es": "Botín adicional"
+    },
+    "Add bonus loot": {
+      "en": "Add bonus loot",
+      "fr": "Ajouter un butin bonus",
+      "es": "Añadir botín adicional"
+    },
+    "Remove bonus loot": {
+      "en": "Remove bonus loot",
+      "fr": "Supprimer ce bonus",
+      "es": "Eliminar este botín"
+    },
+    "Bonus item": {
+      "en": "Bonus item",
+      "fr": "Objet bonus",
+      "es": "Objeto adicional"
+    },
+    "Drop chance (%)": {
+      "en": "Drop chance (%)",
+      "fr": "Chance d’obtention (%)",
+      "es": "Probabilidad de obtención (%)"
+    },
+    "Bonus loot #{0}": {
+      "en": "Bonus loot #{0}",
+      "fr": "Butin bonus nº {0}",
+      "es": "Botín adicional n.º {0}"
+    },
+    "Add currency at 100% and rare items at a lower chance. All loot is taken or discarded together.": {
+      "en": "Add currency at 100% and rare items at a lower chance. All loot is taken or discarded together.",
+      "fr": "Ajoutez la monnaie à 100 % et les objets rares avec une chance plus faible. Tout le butin est pris ou jeté ensemble.",
+      "es": "Añade la moneda al 100 % y los objetos raros con una probabilidad menor. Todo el botín se toma o se descarta junto."
+    },
+    "The fish is always included. Bonus loot is rolled independently for each successful catch.": {
+      "en": "The fish is always included. Bonus loot is rolled independently for each successful catch.",
+      "fr": "Le poisson est toujours inclus. Chaque bonus est tiré indépendamment pour chaque prise réussie.",
+      "es": "El pez siempre está incluido. Cada botín adicional se sortea de forma independiente para cada captura lograda."
+    },
+    "Choose an existing item with valid stack limits.": {
+      "en": "Choose an existing item with valid stack limits.",
+      "fr": "Choisissez un objet existant avec des limites de pile valides.",
+      "es": "Elige un objeto existente con límites de pila válidos."
     }
   }
 }

@@ -217,13 +217,18 @@ internal static class FishingRuntime
                     throw FishingValidationDiagnostic.Create(
                         "Fishing zone {0}, catch {1}: reward item {2} does not exist on the server.", zoneReference, catchReference, entry.ItemId);
                 var rewardReference = FishingValidationDiagnostic.Reference(reward.Name, reward.Id);
-                if (!reward.IsStackable)
-                    throw FishingValidationDiagnostic.Create(
-                        "Fishing zone {0}, catch {1}: reward item {2} must be stackable and cannot be equipment or a bag.", zoneReference, catchReference, rewardReference);
-                if (reward.MaxInventoryStack <= 0)
+                if (reward.IsStackable && reward.MaxInventoryStack <= 0)
                     throw FishingValidationDiagnostic.Create(
                         "Fishing zone {0}, catch {1}: reward item {2} has maximum inventory stack {3}. Set a value greater than zero.",
                         zoneReference, catchReference, rewardReference, reward.MaxInventoryStack);
+                foreach (var loot in entry.BonusLoot)
+                {
+                    var bonus = ItemDescriptor.Get(loot.ItemId);
+                    if (bonus == null || bonus.IsStackable && bonus.MaxInventoryStack <= 0)
+                        throw FishingValidationDiagnostic.Create(
+                            "Fishing zone {0}, catch {1}: bonus loot item {2} is missing or has an invalid inventory stack.",
+                            zoneReference, catchReference, loot.ItemId);
+                }
                 if (entry.RequiredVariableId != Guid.Empty && PlayerVariableDescriptor.Get(entry.RequiredVariableId) == null)
                     throw FishingValidationDiagnostic.Create(
                         "Fishing zone {0}, catch {1}: required player variable {2} does not exist on the server.", zoneReference, catchReference, entry.RequiredVariableId);
