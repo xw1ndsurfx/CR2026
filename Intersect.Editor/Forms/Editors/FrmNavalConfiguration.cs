@@ -39,7 +39,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory"]));
+        general.Controls.Add(ScrollFields(Fields(_navigation, 0, ["AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory"])));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -47,16 +47,16 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             () => new HarbourOffer { ForSale = false, Id = "ship-" + Guid.NewGuid().ToString("N")[..12],
                 Ship = new() { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" } },
             offers => _catalogue.Offers = offers.ToArray());
-        Page("Sounds, icons and effects").Controls.Add(Fields(_navigation.Presentation,0,[]));
-        Page("Sailing progression").Controls.Add(Fields(_navigation.Sailing,0,[]));
+        Page("Sounds, icons and effects").Controls.Add(ScrollFields(Fields(_navigation.Presentation,0,[])));
+        Page("Sailing progression").Controls.Add(ScrollFields(Fields(_navigation.Sailing,0,[])));
         AddListPage("Herbonia AI patrols",_navigation.Herbonia.ToList(),0,()=>new HerboniaPatrol(),patrols=>_navigation.Herbonia=patrols.ToArray());
         var gunnery=Page("Crew cannons and gunnery");
         var split=new SplitContainer {Dock=DockStyle.Fill,Orientation=Orientation.Horizontal,Size=new(1000,620),SplitterDistance=220};
-        split.Panel1.Controls.Add(Fields(_navigation.Gunnery,0,[]));
+        split.Panel1.Controls.Add(ScrollFields(Fields(_navigation.Gunnery,0,[])));
         var ammoInventory=new GroupBox {Text=T("Ammunition inventory capacity"),Dock=DockStyle.Fill,Padding=new(4,22,4,4)};
-        ammoInventory.Controls.Add(Fields(_navigation.AmmoInventory,0,[]));split.Panel2.Controls.Add(ammoInventory);gunnery.Controls.Add(split);
+        ammoInventory.Controls.Add(ScrollFields(Fields(_navigation.AmmoInventory,0,[])));split.Panel2.Controls.Add(ammoInventory);gunnery.Controls.Add(split);
         AddListPage("Cannon ammunition",_navigation.Ammunition.ToList(),0,()=>CannonAmmunition.Defaults().FirstOrDefault(a=>!_navigation.Ammunition.Any(old=>old.Kind==a.Kind))??new CannonAmmunition(),ammo=>_navigation.Ammunition=ammo.ToArray());
-        Page("Ship repair activities").Controls.Add(Fields(_navigation.Repair,0,[]));
+        Page("Ship repair activities").Controls.Add(ScrollFields(Fields(_navigation.Repair,0,[])));
         AddListPage("Sailing skills",_navigation.Skills.ToList(),0,()=>NavalSkillDefinition.Defaults().FirstOrDefault(a=>!_navigation.Skills.Any(old=>old.Kind==a.Kind))??new NavalSkillDefinition(),skills=>_navigation.Skills=skills.ToArray());
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft };
         _save.Text = T("Save current section");
@@ -132,7 +132,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 var group=new GroupBox {Text=T("Ship model and movement"),Dock=DockStyle.Top,AutoSize=true,Padding=new(6,24,6,6)};
                 group.Controls.Add(model);fields.Controls.Add(group,0,fields.RowCount++);fields.SetColumnSpan(group,2);
             }
-            split.Panel2.Controls.Add(fields); MiniGameEditorTheme.Apply(split.Panel2);
+            split.Panel2.Controls.Add(ScrollFields(fields)); MiniGameEditorTheme.Apply(split.Panel2);
         };
         add.Click += (_, _) =>
         {
@@ -209,7 +209,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         list.SelectedIndexChanged+=(_,_)=>
         {
             foreach(Control child in detail.Controls.Cast<Control>().ToArray()) child.Dispose();
-            if(list.SelectedItem is NavalLootEntry entry) detail.Controls.Add(Fields(entry,section,[]));
+            if(list.SelectedItem is NavalLootEntry entry) detail.Controls.Add(ScrollFields(Fields(entry,section,[])));
             MiniGameEditorTheme.Apply(detail);
         };
         add.Click+=(_,_)=>{if(patrol.Loot.Length>=32) return;var entry=new NavalLootEntry();patrol.Loot=[..patrol.Loot,entry];Changed(section);Populate(entry);};
@@ -217,9 +217,18 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         group.Controls.Add(detail);group.Controls.Add(list);group.Controls.Add(buttons);Populate(patrol.Loot.FirstOrDefault());return group;
     }
 
+    // The viewport scrolls; the table keeps its full preferred height. A fill-docked
+    // TableLayoutPanel can compress its rows and hide controls beyond its scroll range.
+    private static Panel ScrollFields(TableLayoutPanel fields)
+    {
+        var viewport = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+        viewport.Controls.Add(fields);
+        return viewport;
+    }
+
     private TableLayoutPanel Fields(object target, int section, string[] skip)
     {
-        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, ColumnCount = 2, Padding = new(12), AutoSize = false };
+        var panel = new TableLayoutPanel { Dock = DockStyle.Top, AutoScroll = false, ColumnCount = 2, RowCount = 0, Padding = new(12), AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         panel.ColumnStyles.Add(new(SizeType.Absolute, 230)); panel.ColumnStyles.Add(new(SizeType.Percent, 100));
         foreach (var property in target.GetType().GetProperties().Where(p => p.CanRead && p.CanWrite && !skip.Contains(p.Name)))
         {
@@ -304,7 +313,6 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             panel.Controls.Add(new Label { Text = T(target is HerboniaPatrol && property.Name=="Enabled" ? "Enable patrol" : target is GunnerySettings && property.Name=="Enabled"?"Enable crew cannons":target is GunnerySettings && property.Name=="MaximumLevel"?"Maximum Gunnery level":property.Name), Dock = DockStyle.Top, Height = 35, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
             panel.Controls.Add(field, 1, row);
         }
-        panel.RowStyles.Add(new(SizeType.Percent,100));panel.RowCount++;
         return panel;
     }
 

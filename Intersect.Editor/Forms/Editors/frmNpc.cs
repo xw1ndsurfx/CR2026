@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Drawing.Imaging;
 using DarkUI.Controls;
 using DarkUI.Forms;
@@ -69,6 +69,7 @@ public partial class FrmNpc : EditorForm
         ApplyHooks();
         InitializeComponent();
         BuildBossControls();
+        BuildNpcSoundControls();
         BuildCombatAiControls();
         BuildCombatTelegraphControls();
         BuildSpellTelegraphControls();
@@ -880,6 +881,7 @@ public partial class FrmNpc : EditorForm
             );
             _npcDeathSeconds.Value = Math.Clamp(mEditorItem.DeathAnimationDurationSeconds, 0, 600);
             UpdateBossControlState();
+            LoadNpcSounds();
 
             _chkSmartCombatMovement.Checked = mEditorItem.SmartCombatMovement;
             _cmbCombatMovementMode.SelectedIndex = Math.Clamp(

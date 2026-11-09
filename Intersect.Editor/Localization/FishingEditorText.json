@@ -1304,6 +1304,11 @@
       "en": "Choose an existing item with valid stack limits.",
       "fr": "Choisissez un objet existant avec des limites de pile valides.",
       "es": "Elige un objeto existente con límites de pila válidos."
+    },
+    "Fish icon faces left": {
+      "en": "Fish icon faces left",
+      "fr": "L’icône du poisson regarde vers la gauche",
+      "es": "El icono del pez mira hacia la izquierda"
     }
   }
 }

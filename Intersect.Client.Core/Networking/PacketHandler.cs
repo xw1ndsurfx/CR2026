@@ -1276,6 +1276,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        en.PlayNpcDeathSound();
         en.ClearAnimations();
     }
 

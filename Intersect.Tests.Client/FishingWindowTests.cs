@@ -152,6 +152,47 @@ public sealed class FishingWindowTests
             "Viewing all loot pages must never accept, discard or reroll rewards.");
     }
 
+    [Test]
+    public void FishingLineUsesVisiblePixelsEvenWhenRendererHasNoLineImplementation()
+    {
+        using var fixture = new ClientFixture(1670, 941);
+        var config = Configuration();
+        var state = Ready(config); state.Phase = FishingPhase.Fighting;
+        fixture.Receive(OpenPacket(config, state));
+        fixture.Renderer.Fills.Clear();
+        typeof(FishingWindow).GetMethod("Render", Hidden)!.Invoke(fixture.Window, [fixture.Skin]);
+        Assert.That(fixture.Renderer.Fills.Any(rect => rect.X == FishingSceneGeometry.LineStartX &&
+            rect.Y == FishingSceneGeometry.LineStartY && rect.Width == 1 && rect.Height == 1), Is.True);
+        Assert.That(fixture.Renderer.Fills.Count(rect => rect.Width <= 3 && rect.Height <= 3), Is.GreaterThan(100));
+    }
+
+    [TestCase(1280, 720)]
+    [TestCase(800, 600)]
+    public void ExportationActionsAndCaptionsStayOnTheirArtworkPlaques(int width, int height)
+    {
+        using var fixture = new ClientFixture(width, height);
+        var window = new ExportationWindow(fixture.Canvas, (_, _, _) => { }, () => { }, () => { }, () => { });
+        try
+        {
+            window.Update();
+            var controls = Descendants(window).OfType<Label>().ToDictionary(label => label.Name!);
+            var scale = Math.Min(width / 1672d, height / 941d);
+            var left = (int)((width - 1672 * scale) / 2);
+            var top = (int)((height - 941 * scale) / 2);
+            var help = controls["ExportationHelp"];
+            Assert.That(help.X, Is.EqualTo(left + (int)Math.Round(1500 * scale)));
+            Assert.That(help.Y, Is.EqualTo(top + (int)Math.Round(48 * scale)));
+            Assert.That(controls["ExportationExit"].Y, Is.GreaterThan(top + 835 * scale));
+            Assert.That(controls["ExportationSeal"].Y, Is.GreaterThan(top + 820 * scale));
+            Assert.That(controls["ExportationSeal"].Right, Is.LessThanOrEqualTo(width));
+            Assert.That(controls["ExportationMaterialCrateCount"].X, Is.GreaterThan(left + 560 * scale));
+            Assert.That(controls["ExportationOtherCrateCount"].X, Is.GreaterThan(left + 875 * scale));
+            Assert.That(controls["ExportationGoodLabel0"].Bottom, Is.LessThan(controls["ExportationPreviousGoods"].Y));
+            typeof(ExportationWindow).GetMethod("Render", Hidden)!.Invoke(window, [fixture.Skin]);
+        }
+        finally { window.Destroy(); }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void OpeningRefusalIsVisibleEvenWithAnAbsentOrBrokenNoticeSound(bool brokenAudio)

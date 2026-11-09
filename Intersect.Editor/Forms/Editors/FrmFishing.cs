@@ -284,6 +284,7 @@ public sealed partial class FrmFishing : Form
             }
             finally { _loading = false; }
         });
+        Check(table, "Fish icon faces left", entry.IconFacesLeft, value => entry.IconFacesLeft = value);
         BuildBonusLoot(table, entry);
         var allowed = new CheckedListBox { CheckOnClick = true, Height = 110, Dock = DockStyle.Fill };
         foreach (var tool in _config.Tools.Where(t => t.ItemId != Guid.Empty))

@@ -22,3 +22,9 @@ Sous Butin bonus, ajouter par exemple :
 Le poisson principal reste garanti pour chaque capture réussie. Chaque bonus est tiré indépendamment; 0 % désactive le bonus, 100 % le garantit. Jusqu’à 16 bonus peuvent être configurés par prise. Les quantités minimales et maximales sont inclusives. Les anciennes configurations sans bonus continuent à ne donner que le poisson principal.
 
 Le loot affiche chaque objet obtenu et sa quantité; des flèches permettent de voir les pages suivantes. Tout prendre attribue le poisson et tous les bonus ensemble; Tout jeter les abandonne ensemble. La pêche auto et la destination premium en banque s’appliquent à tout ce butin. Le tirage est conservé pendant les nouvelles tentatives de collecte, sans retirer de nouveaux bonus. Si une récompense ne tient pas, aucune récompense n’est attribuée partiellement.
+
+## Poisson accroché et ligne visible
+
+La bouche du poisson reste sur la pointe de l’hameçon pendant le combat et la remontée. Les marges transparentes de l’icône sont exclues du placement. Le corps se trouve à gauche de la pointe et regarde vers la droite; pour une image initialement orientée à gauche, cocher « L’icône du poisson regarde vers la gauche » dans l’éditeur de pêche. L’icône originale dans l’inventaire ne change pas. La légère animation du corps conserve le point d’attache fixe.
+
+La ligne relie l’œillet de l’hameçon au coin supérieur gauche de la vue. Un trait clair avec contour sombre utilise des rectangles remplis, car la fonction GWEN DrawLine n’est pas implémentée dans ce rendu.
