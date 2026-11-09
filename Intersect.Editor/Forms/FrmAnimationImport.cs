@@ -305,6 +305,7 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly NumericUpDown _yFrames = new();
     private readonly NumericUpDown _frameCount = new();
     private readonly NumericUpDown _frameDuration = new();
+    private readonly ImportedResourceIndicator _importStatus = new();
     private readonly Label _assetInfo = new();
     private readonly Label _status = new();
     private readonly Button _importZipButton = new();
@@ -757,6 +758,7 @@ public sealed class FrmAnimationImport : DarkForm
         previewHost.Controls.Add(_preview);
         previewHost.Controls.Add(animationNavigation);
         previewHost.Controls.Add(_assetInfo);
+        previewHost.Controls.Add(_importStatus);
         _assetInfo.BringToFront();
         previewPanel.Controls.Add(previewHost, 0, 1);
         body.Controls.Add(previewPanel, 2, 0);
@@ -2456,6 +2458,7 @@ public sealed class FrmAnimationImport : DarkForm
             _selectedAsset = null;
             _preview.SetAnimation(null, 1, 1);
             _assetInfo.Text = string.Empty;
+            _importStatus.RefreshStatus(null, _animationsRoot, ImportStatusCache);
             UpdateFavoriteButton();
         }
 
@@ -2750,6 +2753,7 @@ public sealed class FrmAnimationImport : DarkForm
         _name.Text = asset.SuggestedName;
         _category.Text = asset.Category;
         _assetInfo.Text = $"Loading {asset.FileName}...";
+        RefreshImportStatus();
 
         AssetPreviewLoad? loaded = null;
 
@@ -2954,6 +2958,9 @@ public sealed class FrmAnimationImport : DarkForm
         _preview.SetGrid((int)_xFrames.Value, (int)_yFrames.Value);
     }
 
+    private string ImportStatusCache => Path.Combine(_gameRoot, ".animationimport-cache", "imported");
+    private void RefreshImportStatus() => _importStatus.RefreshStatus(_selectedAsset?.FilePath, _animationsRoot, ImportStatusCache);
+
     private void ImportSelectedAsset()
     {
         if (_selectedAsset == null || !File.Exists(_selectedAsset.FilePath))
@@ -3021,6 +3028,8 @@ public sealed class FrmAnimationImport : DarkForm
             File.Move(temporary, destination, false);
 
             GameContentManager.ReloadAnimationTextures();
+            ImportedResourceStatus.Record(_selectedAsset.FilePath, destination, ImportStatusCache);
+            RefreshImportStatus();
 
             _afterImport?.Invoke(
                 new GeneratedAnimationRequest

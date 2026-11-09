@@ -1,4 +1,5 @@
 using System.Globalization;
+using Intersect.Configuration;
 using Intersect.Client.General;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
@@ -53,6 +54,7 @@ internal sealed class ExportationWindow : Base
     private readonly Dictionary<string, IGameTexture?> _textures = new(StringComparer.Ordinal);
     private readonly List<(Base Control, int X, int Y, int Width, int Height, int Font)> _placements = [];
     private readonly Dictionary<Label, float> _textScaleCache = [];
+    private readonly Dictionary<Label, (string Text, int Wanted, int Width, int Height, IFont Font, string Family, int ForcedSize)> _fitRequests = [];
     private readonly Label[] _orderLabels = new Label[OrderSize];
     private readonly Label[] _shelfLabels = new Label[ShelfSize];
     private readonly Button[] _shelfButtons = new Button[ShelfSize];
@@ -100,59 +102,59 @@ internal sealed class ExportationWindow : Base
         // generated preview. Text must sit inside the original plaque artwork.
         Title("Title", "Exportation", 586, 69, 506, 54, 40, center: true);
         Title("Subtitle", "Cargo preparation", 632, 126, 410, 31, 24, center: true);
-        _level = Title("Profession", "Level {0}", 1245, 78, 210, 33, 22);
-        _professionXp = Title("ProfessionXp", "", 1245, 112, 252, 31, 16);
+        _level = Title("Profession", "Level {0}", 1290, 82, 112, 22, 20);
+        _professionXp = Title("ProfessionXp", "", 1290, 105, 112, 17, 14);
 
-        Title("OrderTitle", "ORDER SLIP", 143, 205, 322, 53, 28, center: true);
-        Title("CrateTitle", "PACK THE CRATES", 510, 200, 532, 43, 29, center: true);
-        Title("DeliveryTitle", "DELIVERY", 1099, 200, 395, 44, 27, center: true);
+        Title("OrderTitle", "ORDER SLIP", 145, 220, 294, 35, 24, center: true);
+        Title("CrateTitle", "PACK THE CRATES", 572, 185, 468, 38, 29, center: true);
+        Title("DeliveryTitle", "DELIVERY", 1143, 186, 385, 38, 27, center: true);
         Title("Instruction", "Click goods to pack a matching crate",
-            526, 244, 526, 38, 20, center: true);
+            535, 235, 540, 32, 20, center: true);
         _merchantInstruction = Title("Provided", "Goods provided by the merchant",
-            145, 684, 315, 50, 18, dark: true, center: true, wrap: true);
-        Title("AtDelivery", "At delivery", 1155, 539, 300, 39, 23, center: true);
+            145, 682, 315, 30, 18, dark: true, center: true, wrap: true);
+        Title("AtDelivery", "At delivery", 1183, 547, 300, 30, 23, center: true);
 
         // Preserve the portrait, parchment and route art, while adding the
         // missing headings from the original concept in their own empty areas.
-        Title("MerchantCaption", "MERCHANT", 252, 280, 204, 23, 14, dark: true);
-        _merchant = Title("Merchant", "", 252, 308, 215, 40, 22, dark: true, wrap: true);
-        Title("DestinationCaption", "DESTINATION", 252, 350, 204, 22, 14, dark: true);
-        _routeName = Title("Route", "", 247, 370, 211, 38, 20, dark: true, wrap: true);
+        Title("MerchantCaption", "MERCHANT", 257, 276, 204, 21, 14, dark: true);
+        _merchant = Title("Merchant", "", 257, 298, 205, 32, 22, dark: true, wrap: true);
+        Title("DestinationCaption", "DESTINATION", 257, 336, 204, 20, 14, dark: true);
+        _routeName = Title("Route", "", 257, 357, 205, 29, 20, dark: true, wrap: true);
         Title("GoodsCaption", "REQUESTED GOODS",
             144, 400, 319, 23, 17, dark: true, center: true);
 
-        _sourceMap = Title("Source", "", 1117, 254, 181, 42, 17, center: true, wrap: true);
+        _sourceMap = Title("Source", "", 1142, 251, 150, 42, 17, center: true, wrap: true);
         _destinationMap = Title("Destination", "",
-            1334, 349, 178, 52, 17, center: true, wrap: true);
-        _recipient = Title("Recipient", "", 1211, 423, 284, 54, 19, wrap: true);
-        _boat = Title("Boat", "", 1183, 485, 283, 35, 19, center: true);
-        _reward = Title("Reward", "", 1208, 576, 266, 44, 22, center: true, wrap: true);
+            1356, 367, 165, 42, 17, center: true, wrap: true);
+        _recipient = Title("Recipient", "", 1201, 434, 316, 34, 19, wrap: true);
+        _boat = Title("Boat", "", 1264, 497, 195, 25, 19, center: true);
+        _reward = Title("Reward", "", 1224, 586, 282, 32, 22, center: true, wrap: true);
         _experience = Title("Experience", "",
-            1204, 614, 269, 37, 20, center: true);
-        Title("AfterSeal", "After sealing", 1206, 678, 264, 34, 21, dark: true);
-        _status = Title("Status", "", 1163, 702, 330, 26, 17, dark: true);
-        _step2 = Title("DeliveryStepTwo", "", 1163, 729, 330, 25, 17, dark: true);
-        _step3 = Title("DeliveryStepThree", "", 1163, 755, 330, 25, 17, dark: true);
-        _progress = Title("Progress", "", 575, 574, 426, 37, 23, center: true);
-        _materialCrate = Title("MaterialCrateCount", "", 531, 514, 223, 47, 19, center: true);
-        _otherCrate = Title("OtherCrateCount", "", 808, 514, 223, 47, 19, center: true);
-        _leftCrateDone = Title("LeftCrateDone", "", 704, 300, 48, 37, 20, center: true);
-        _rightCrateDone = Title("RightCrateDone", "", 974, 300, 48, 37, 20, center: true);
-        _shelfSummary = Title("ShelfSummary", "", 614, 635, 332, 25, 16, center: true);
+            1225, 627, 290, 28, 20, center: true);
+        Title("AfterSeal", "After sealing", 1214, 687, 288, 24, 21, dark: true);
+        _status = Title("Status", "", 1214, 716, 290, 18, 17, dark: true);
+        _step2 = Title("DeliveryStepTwo", "", 1214, 735, 290, 18, 17, dark: true);
+        _step3 = Title("DeliveryStepThree", "", 1214, 754, 290, 18, 17, dark: true);
+        _progress = Title("Progress", "", 590, 579, 424, 30, 23, center: true);
+        _materialCrate = Title("MaterialCrateCount", "", 571, 522, 182, 38, 19, center: true);
+        _otherCrate = Title("OtherCrateCount", "", 885, 522, 180, 38, 19, center: true);
+        _leftCrateDone = Title("LeftCrateDone", "", 748, 285, 44, 32, 20, center: true);
+        _rightCrateDone = Title("RightCrateDone", "", 1040, 285, 44, 32, 20, center: true);
+        _shelfSummary = Title("ShelfSummary", "", 612, 640, 384, 15, 14, center: true);
         _warning = Title("Warning", "Death or sinking destroys the cargo",
-            379, 819, 689, 44, 20, center: true);
-        _shelfPageLabel = Title("ShelfPage", "", 794, 760, 173, 32, 17, center: true);
+            373, 844, 666, 34, 20, center: true);
+        _shelfPageLabel = Title("ShelfPage", "", 734, 795, 146, 22, 14, center: true);
         _orderPageLabel = Title("OrderPage", "", 196, 644, 182, 31, 16,
             dark: true, center: true);
 
         for (var i = 0; i < OrderSize; ++i)
         {
             var index = i;
-            _orderLabels[i] = Title("OrderLine" + i, "", 229, 426 + i * 78,
-                192, 52, 18, dark: true, wrap: true);
+            _orderLabels[i] = Title("OrderLine" + i, "", 208, 418 + i * 78,
+                205, 42, 18, dark: true, wrap: true);
             // This bitmap font does not contain the Unicode minus glyph:
             // the old button rendered '?' even in empty order lines.
-            _removeButtons[i] = Button("Remove" + i, "X", 425, 432 + i * 78, 34, 29, 17,
+            _removeButtons[i] = Button("Remove" + i, "X", 436, 426 + i * 78, 26, 28, 17,
                 () => RequestRemove(index));
             _removeButtons[i].TextColorOverride = new Color(255, 255, 199, 153);
             _removeButtons[i].IsHidden = true;
@@ -160,17 +162,17 @@ internal sealed class ExportationWindow : Base
         for (var i = 0; i < ShelfSize; ++i)
         {
             var index = i;
-            _shelfButtons[i] = Button("Good" + i, "", 497 + i * 111,
-                656, 105, 87, 18, () => RequestPack(index));
-            _shelfLabels[i] = Title("GoodLabel" + i, "", 495 + i * 111,
-                726, 113, 56, 16, center: true, wrap: true);
+            _shelfButtons[i] = Button("Good" + i, "", 526 + i * 113,
+                663, 98, 112, 18, () => RequestPack(index));
+            _shelfLabels[i] = Title("GoodLabel" + i, "", 526 + i * 113,
+                735, 98, 42, 14, center: true, wrap: false);
         }
 
-        _seal = Button("Seal", "SEAL THE CARGO", 1106, 806, 391, 61, 23, RequestSeal);
-        Button("Exit", "Close", 146, 812, 155, 55, 22, () => ExitRequested = true);
-        _previousGoods = Button("PreviousGoods", "‹", 506, 761, 45, 33,
+        _seal = Button("Seal", "SEAL THE CARGO", 1118, 825, 400, 54, 23, RequestSeal);
+        Button("Exit", "Close", 153, 845, 147, 39, 22, () => ExitRequested = true);
+        _previousGoods = Button("PreviousGoods", "‹", 690, 795, 28, 22,
             24, () => ChangeGoodsPage(-1));
-        _nextGoods = Button("NextGoods", "›", 1010, 761, 45, 33,
+        _nextGoods = Button("NextGoods", "›", 895, 795, 28, 22,
             24, () => ChangeGoodsPage(1));
         _previousOrder = Button("PreviousOrders", "‹", 143, 644, 36, 30,
             20, () => ChangeOrderPage(-1));
@@ -179,7 +181,7 @@ internal sealed class ExportationWindow : Base
 
         // Functional help: the final ? plaque in the original artwork now
         // opens an in-game modal with accurate Exportation rules.
-        _helpButton = Button("Help", "?", 1439, 75, 54, 53, 28, ToggleHelp);
+        _helpButton = Button("Help", "?", 1500, 48, 49, 49, 28, ToggleHelp);
         _helpButton.TooltipText = T("Exportation help");
         _helpOverlay = new ExportationHelpOverlay(this)
         {
@@ -198,7 +200,7 @@ internal sealed class ExportationWindow : Base
             514, 549, 656, 54, 21);
         HelpLabel("HelpWarning", "Death or shipwreck loses the cargo.",
             514, 616, 656, 47, 20);
-        _helpClose = new Button(_helpOverlay, "ExportationHelpClose")
+        _helpClose = new InkAlignedButton(_helpOverlay, "ExportationHelpClose")
         {
             Text = T("Close help"), Font = Skin.DefaultFont, FontSize = 22,
             TextColorOverride = Gold, ShouldDrawBackground = false,
@@ -227,7 +229,7 @@ internal sealed class ExportationWindow : Base
 
     private Label HelpLabel(string name, string key, int x, int y, int w, int h, int font)
     {
-        var label = new Label(_helpOverlay, "Exportation" + name)
+        var label = new InkAlignedLabel(_helpOverlay, "Exportation" + name)
         {
             Text = T(key), Font = Skin.DefaultFont, FontSize = font,
             AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped,
@@ -376,6 +378,8 @@ internal sealed class ExportationWindow : Base
         _nextOrder.IsDisabled = (_orderPage + 1) * OrderSize >= route.Lines.Length;
         _previousGoods.IsDisabled = _goodsPage == 0;
         _nextGoods.IsDisabled = (_goodsPage + 1) * ShelfSize >= route.Lines.Length;
+        _previousOrder.IsHidden = _nextOrder.IsHidden = _orderPageLabel.IsHidden = route.Lines.Length <= OrderSize;
+        _previousGoods.IsHidden = _nextGoods.IsHidden = _shelfPageLabel.IsHidden = route.Lines.Length <= ShelfSize;
         _orderPageLabel.Text = $"{_orderPage + 1} / {(route.Lines.Length + OrderSize - 1) / OrderSize}";
         _shelfPageLabel.Text = $"{_goodsPage + 1} / {(route.Lines.Length + ShelfSize - 1) / ShelfSize}";
         for (var i = 0; i < OrderSize; ++i)
@@ -527,35 +531,33 @@ internal sealed class ExportationWindow : Base
 
         // Main call-to-action is intentionally green, never purple; it is
         // subdued while sealed cargo is awaiting an actual sea arrival.
-        PaintAction(skin, 143, 808, 160, 62, new Color(115, 76, 51, 29));
+        PaintAction(skin, 148, 839, 164, 53, new Color(115, 76, 51, 29));
         if (!_seal.IsHidden)
         {
             var sealFill = _seal.IsDisabled
                 ? new Color(255, 85, 68, 42) : SealGreen;
-            FillScene(skin, RoyalGold, 1101, 801, 399, 70);
-            FillScene(skin, sealFill, 1106, 806, 389, 60);
-            FillScene(skin, new Color(255, 160, 209, 105), 1113, 812, 375, 3);
+            PaintAction(skin, 1114, 824, 410, 58, sealFill);
         }
 
         // Fixed top-right help button; it opens a real overlay with rules.
-        FillScene(skin, RoyalGold, 1440, 78, 50, 49);
-        FillScene(skin, RibbonRed, 1444, 82, 42, 41);
+        // The original red plaque at (1500,48) supplies its own border.
+        // Do not paint a second displaced square over the header.
 
         // Keep the warning legible on the existing ruby-coloured banner.
-        FillScene(skin, new Color(105, 105, 24, 27), 351, 828, 654, 38);
+        FillScene(skin, new Color(45, 105, 24, 27), 366, 840, 680, 42);
         // Profession experience is the server-authoritative custom profession
         // progression, not mini-game-only points.
         skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
-        skin.Renderer.DrawFilledRect(SceneRect(1245, 149, 236, 11));
+        skin.Renderer.DrawFilledRect(SceneRect(1284, 132, 124, 8));
         if (_maximumLevel || _experienceRequired > 0)
         {
-            var progress = _maximumLevel ? 236 :
-                (int)Math.Clamp((decimal)_experienceInLevel * 236m /
-                    Math.Max(1L, _experienceRequired), 0m, 236m);
+            var progress = _maximumLevel ? 124 :
+                (int)Math.Clamp((decimal)_experienceInLevel * 124m /
+                    Math.Max(1L, _experienceRequired), 0m, 124m);
             if (progress > 0)
             {
                 skin.Renderer.DrawColor = Green;
-                skin.Renderer.DrawFilledRect(SceneRect(1245, 149, progress, 11));
+                skin.Renderer.DrawFilledRect(SceneRect(1284, 132, progress, 8));
             }
         }
         if (_route is { } r && _run is { } s)
@@ -563,46 +565,46 @@ internal sealed class ExportationWindow : Base
             // Completed crates use a simple green badge, based entirely on
             // packed quantities, and never claim completion prematurely.
             if (!string.IsNullOrEmpty(_leftCrateDone.Text))
-                FillScene(skin, SealGreen, 697, 300, 55, 37);
+                FillScene(skin, SealGreen, 741, 285, 51, 32);
             if (!string.IsNullOrEmpty(_rightCrateDone.Text))
-                FillScene(skin, SealGreen, 967, 300, 55, 37);
+                FillScene(skin, SealGreen, 1033, 285, 51, 32);
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
-            DrawTexture(skin, SpriteDirectory + "destinataire.png", 1128, 427, 62, 63);
-            DrawTexture(skin, SpriteDirectory + "bateau.png", 1182, 476, 58, 50);
+            DrawTexture(skin, SpriteDirectory + "destinataire.png", 1152, 434, 40, 40);
+            DrawTexture(skin, SpriteDirectory + "bateau.png", 1220, 494, 36, 30);
             if (s.Stage == DeliveryStage.InTransit && s.BoardedByShip && !s.ArrivedByShip)
                 DrawTexture(skin, SpriteDirectory + "bateau.png", 1267, 306, 55, 50);
-            DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1128, 685, 61, 57);
+            DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1160, 690, 38, 38);
             DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 304, 719, 51, 58);
             // Real configured cargo only: never draw mock items or invented
             // quantities. The two illustrated crates represent Materials and
             // Fragile/Provisions, with up to four clear stacks per crate.
-            DrawCrateContents(skin, r, s, CargoGroup.Materials, 530, 312);
-            DrawCrateContents(skin, r, s, null, 823, 312);
+            DrawCrateContents(skin, r, s, CargoGroup.Materials, 551, 327);
+            DrawCrateContents(skin, r, s, null, 854, 327);
             for (var i = 0; i < OrderSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
                 if (line is null) continue;
                 var y = 421 + i * 78;
-                DrawGood(skin, line, 147, y, 64, 63);
+                DrawGood(skin, line, 150, y, 44, 40);
                 var amount = ExportationRules.Packed(s, line.ItemId);
-                FillScene(skin, new Color(150, 97, 66, 44), 224, y + 58, 192, 6);
+                FillScene(skin, new Color(150, 97, 66, 44), 208, y + 44, 205, 3);
                 if (amount > 0)
-                    FillScene(skin, Green, 224, y + 58,
-                        (int)Math.Round(192d * amount / line.Quantity), 6);
+                    FillScene(skin, Green, 208, y + 44,
+                        (int)Math.Round(205d * amount / line.Quantity), 3);
             }
             for (var i = 0; i < ShelfSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
                 if (line is null) continue;
-                var x = 495 + i * 111;
+                var x = 526 + i * 113;
                 var active = line.ItemId == _selectedGoodItem;
                 if (active)
                 {
-                    FillScene(skin, RoyalGold, x - 2, 655, 107, 94);
+                    FillScene(skin, RoyalGold, x - 2, 661, 102, 116);
                     FillScene(skin, new Color(255, 77, 53, 32),
-                        x + 2, 659, 99, 85);
+                        x + 2, 665, 94, 108);
                 }
-                DrawGood(skin, line, x + 12, 661, 77, 64);
+                DrawGood(skin, line, x + 15, 670, 68, 61);
             }
             // The server's actual item definition determines the payout icon.
             if (r.RewardQuantity > 0 && ItemDescriptor.TryGet(r.RewardItemId, out var rewardItem))
@@ -611,13 +613,13 @@ internal sealed class ExportationWindow : Base
                     TextureType.Item, rewardItem.Icon);
                 if (rewardIcon is not null)
                     skin.Renderer.DrawTexturedRect(rewardIcon,
-                        SceneRect(1127, 578, 48, 46), Color.White);
+                        SceneRect(1169, 587, 42, 42), Color.White);
             }
-            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 1135, 619, 40, 39);
+            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 1184, 630, 28, 28);
             var total = r.Lines.Sum(l => l.Quantity);
             var completed = r.Lines.Sum(l => ExportationRules.Packed(s, l.ItemId));
             skin.Renderer.DrawColor = Green;
-            var bar = SceneRect(582, 615, (int)(407d * completed / Math.Max(1, total)), 14);
+            var bar = SceneRect(600, 624, (int)(405d * completed / Math.Max(1, total)), 8);
             if (bar.Width > 0) skin.Renderer.DrawFilledRect(bar);
             if (s.Stage == DeliveryStage.InTransit) DrawTexture(skin, SpriteDirectory + "caisse_scellee.png", 783, 381, 118, 116);
         }
@@ -641,7 +643,7 @@ internal sealed class ExportationWindow : Base
             for (var count = 0; count < packed && slot < 4; count++, slot++)
             {
                 DrawGood(skin, line, x + slot % 2 * 108,
-                    y + slot / 2 * 96, 84, 76);
+                    y + slot / 2 * 96, 78, 66);
             }
             if (slot >= 4) break;
         }
@@ -668,7 +670,12 @@ internal sealed class ExportationWindow : Base
         {
             var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
             if (texture is not null)
-                skin.Renderer.DrawTexturedRect(texture, SceneRect(x, y, w, h), Color.White);
+            {
+                var ratio = Math.Min(w / (double)Math.Max(1, texture.Width), h / (double)Math.Max(1, texture.Height));
+                var width = Math.Max(1, (int)(texture.Width * ratio));
+                var height = Math.Max(1, (int)(texture.Height * ratio));
+                skin.Renderer.DrawTexturedRect(texture, SceneRect(x + (w - width) / 2, y + (h - height) / 2, width, height), Color.White);
+            }
         }
     }
 
@@ -701,7 +708,7 @@ internal sealed class ExportationWindow : Base
     private Label Title(string name, string source, int x, int y, int w, int h, int font,
         bool dark = false, bool center = false, bool wrap = false)
     {
-        var label = new Label(this, "Exportation" + name)
+        var label = new InkAlignedLabel(this, "Exportation" + name)
         {
             Text = T(source), Font = Skin.DefaultFont, FontSize = font,
             AutoSizeToContents = false,
@@ -717,7 +724,7 @@ internal sealed class ExportationWindow : Base
 
     private Button Button(string name, string source, int x, int y, int w, int h, int font, Action click)
     {
-        var button = new Button(this, "Exportation" + name)
+        var button = new InkAlignedButton(this, "Exportation" + name)
         {
             Text = T(source), Font = Skin.DefaultFont, FontSize = font, TextColorOverride = Gold,
             ShouldDrawBackground = false,
@@ -755,37 +762,54 @@ internal sealed class ExportationWindow : Base
     internal static float ScaleForMeasuredFont(int desiredHeight, int actualHeight) =>
         Math.Clamp(Math.Max(8, desiredHeight) / (float)Math.Max(1, actualHeight), 0.35f, 5f);
 
+    internal static float ScaleForVisibleInk(int wanted, int cellHeight, FontInkMetrics ink) =>
+        Math.Clamp(wanted * .75f / Math.Max(1, cellHeight * ink.HeightFraction), .35f, 5f);
+
     private void FitLabel(Label label, int designFont, int availableWidth)
     {
         var wanted = Math.Max(8, (int)Math.Round(designFont * _scale));
         var font = label.Font ?? Skin.DefaultFont;
         if (font is null) { label.FontSize = wanted; return; }
-
+        var request = (label.Text ?? "", wanted, availableWidth, label.Height, font,
+            ClientConfiguration.Instance.GlobalFontFamily ?? "", ClientConfiguration.Instance.GlobalFontSize);
+        if (_fitRequests.TryGetValue(label, out var previous) && previous == request) return;
         var (nativeSize, fallbackScale) = ResolvePixelFont(font, wanted);
-        // MeasureText goes through the same size override, bitmap scale and
-        // UI scale as the real text renderer. Avoid a hardcoded 10px assumption.
         var naturalHeight = Skin.Renderer.MeasureText(font, nativeSize, "Hg", 1f).Y;
-        var textScale = naturalHeight > 0
-            ? ScaleForMeasuredFont(wanted, naturalHeight)
-            : fallbackScale;
-
-        if (!string.IsNullOrWhiteSpace(label.Text))
+        var ink = font is IFontInkMetrics metrics ? metrics.InkMetrics : new FontInkMetrics(0, 1);
+        var textScale = naturalHeight <= 0 ? fallbackScale : font is IFontInkMetrics
+            ? ScaleForVisibleInk(wanted, naturalHeight, ink) : ScaleForMeasuredFont(wanted, naturalHeight);
+        var maxWidth = Math.Max(12, availableWidth - Math.Max(2, (int)(6 * _scale)));
+        var maxHeight = Math.Max(8, label.Height - Math.Max(2, (int)(2 * _scale)));
+        for (var attempt = 0; attempt < 4 && label.Text.Length > 0; attempt++)
         {
-            // Fit the full label horizontally without letting it overlap a
-            // neighboring panel. The explicit multiline slots keep wrapping.
             var measured = Skin.Renderer.MeasureText(font, nativeSize, label.Text, textScale);
-            var maxWidth = Math.Max(12, availableWidth - 12);
-            if (measured.X > maxWidth && label.WrappingBehavior == WrappingBehavior.NoWrap)
+            if (label.WrappingBehavior == WrappingBehavior.NoWrap && measured.X > maxWidth)
                 textScale *= maxWidth / (float)measured.X;
+            var lines = 0;
+            foreach (var explicitLine in label.Text.Replace("\r", "").Split('\n'))
+            {
+                lines++;
+                if (label.WrappingBehavior == WrappingBehavior.NoWrap) continue;
+                var current = "";
+                foreach (var word in explicitLine.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var candidate = current.Length == 0 ? word : current + " " + word;
+                    if (current.Length > 0 && Skin.Renderer.MeasureText(font, nativeSize, candidate, textScale).X > maxWidth)
+                    { lines++; current = word; }
+                    else current = candidate;
+                }
+            }
+            var visibleHeight = naturalHeight * textScale * (Math.Max(1, lines) - 1 + ink.HeightFraction);
+            if (visibleHeight <= maxHeight || visibleHeight <= 0) break;
+            textScale *= maxHeight / visibleHeight;
         }
-
         label.FontSize = nativeSize;
-        if (!_textScaleCache.TryGetValue(label, out var last) ||
-            Math.Abs(last - textScale) > .005f)
-        {
-            label.SetTextScale(textScale);
-            _textScaleCache[label] = textScale;
-        }
+        if (!_textScaleCache.TryGetValue(label, out var last) || Math.Abs(last - textScale) > .005f)
+        { label.SetTextScale(textScale); _textScaleCache[label] = textScale; }
+        if (label is IInkAlignedText aligned)
+            aligned.InkOffsetY = font is IFontInkMetrics
+                ? (int)Math.Round(naturalHeight * textScale * (.5f - ink.TopFraction - ink.HeightFraction / 2)) : 0;
+        _fitRequests[label] = request;
     }
 
     private void UpdateLayout()

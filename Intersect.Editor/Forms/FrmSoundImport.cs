@@ -160,6 +160,7 @@ public sealed partial class FrmSoundImport : DarkForm
     private readonly Button _favoriteButton = new();
     private readonly TextBox _name = new();
     private readonly ComboBox _category = new();
+    private readonly ImportedResourceIndicator _importStatus = new();
     private readonly Label _details = new();
     private readonly Label _status = new();
     private readonly Label _pageLabel = new();
@@ -509,19 +510,19 @@ public sealed partial class FrmSoundImport : DarkForm
         );
 
         _playButton.Text = "PLAY";
-        _playButton.Location = new System.Drawing.Point(14, 230);
+        _playButton.Location = new System.Drawing.Point(14, 276);
         _playButton.Size = new Size(118, 36);
         ConfigureDarkButtonStyle(_playButton);
         _playButton.Click += (_, _) => PlaySelected();
 
         _stopButton.Text = "STOP";
-        _stopButton.Location = new System.Drawing.Point(142, 230);
+        _stopButton.Location = new System.Drawing.Point(142, 276);
         _stopButton.Size = new Size(118, 36);
         ConfigureDarkButtonStyle(_stopButton);
         _stopButton.Click += (_, _) => StopPlayback();
 
         var openSource = CreateDarkButton("OPEN FILE LOCATION", 190);
-        openSource.Location = new System.Drawing.Point(14, 280);
+        openSource.Location = new System.Drawing.Point(14, 326);
         openSource.Click += (_, _) =>
         {
             if (_selectedAsset != null)
@@ -531,6 +532,7 @@ public sealed partial class FrmSoundImport : DarkForm
         };
 
         previewHost.Controls.Add(_details);
+        previewHost.Controls.Add(_importStatus);
         previewHost.Controls.Add(_playButton);
         previewHost.Controls.Add(_stopButton);
         previewHost.Controls.Add(openSource);
@@ -956,6 +958,7 @@ public sealed partial class FrmSoundImport : DarkForm
         {
             _selectedAsset = null;
             _details.Text = string.Empty;
+            RefreshImportStatus();
             UpdateFavoriteButton();
         }
     }
@@ -986,6 +989,7 @@ public sealed partial class FrmSoundImport : DarkForm
         _name.Text = asset.SuggestedName;
         _category.Text = asset.Category;
         _details.Text = $"Loading {asset.FileName}...";
+        RefreshImportStatus();
 
         try
         {
@@ -1533,6 +1537,10 @@ public sealed partial class FrmSoundImport : DarkForm
         );
     }
 
+    private string ImportStatusCache(SoundImportKind kind) => Path.Combine(_gameRoot, ".soundimport-cache", "imported", SoundImporter.Folder(kind));
+    private void RefreshImportStatus() => _importStatus.RefreshStatus(_selectedAsset?.FilePath,
+        SoundImporter.GameFolder(_gameRoot, TargetKind), ImportStatusCache(TargetKind));
+
     private async Task ImportAssetsToGameAsync(
         IReadOnlyList<(SoundAsset Asset, string FileName)> assets
     )
@@ -1569,6 +1577,7 @@ public sealed partial class FrmSoundImport : DarkForm
                         try
                         {
                             var destination = SoundImporter.Import(asset.FilePath, requestedDestination, cancellationToken);
+                            ImportedResourceStatus.Record(asset.FilePath, destination, ImportStatusCache(kind));
                             if (!string.Equals(destination, requestedDestination, StringComparison.OrdinalIgnoreCase)) renamedDuplicates++;
                             imported++;
                         }
@@ -1629,6 +1638,7 @@ public sealed partial class FrmSoundImport : DarkForm
             _operationCancellation?.Dispose();
             _operationCancellation = null;
             SetOperationUi(false, string.Empty);
+            RefreshImportStatus();
         }
     }
 

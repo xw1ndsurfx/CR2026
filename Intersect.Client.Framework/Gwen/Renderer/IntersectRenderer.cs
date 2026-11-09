@@ -223,6 +223,8 @@ public partial class IntersectRenderer : Base, ICacheToTexture
             return;
         }
 
+        var flipHorizontal = u2 < u1;
+        if (flipHorizontal) (u1, u2) = (u2, u1);
         var translatedTarget = Translate(targetRect);
         var rect = new FloatRect(
             translatedTarget.X,
@@ -255,7 +257,7 @@ public partial class IntersectRenderer : Base, ICacheToTexture
                 vdiff = (int)Math.Floor(diff / widthRatio);
                 rect.X += diff;
                 rect.Width -= diff;
-                u1 += vdiff;
+                if (flipHorizontal) u2 -= vdiff; else u1 += vdiff;
             }
 
             if (rect.X + rect.Width > clip.X + clip.Width)
@@ -263,7 +265,7 @@ public partial class IntersectRenderer : Base, ICacheToTexture
                 diff = rect.X + rect.Width - (clip.X + clip.Width);
                 vdiff = (int)Math.Floor(diff / widthRatio);
                 rect.Width -= diff;
-                u2 -= vdiff;
+                if (flipHorizontal) u1 += vdiff; else u2 -= vdiff;
             }
 
             if (rect.Y < clip.Y)
@@ -301,14 +303,14 @@ public partial class IntersectRenderer : Base, ICacheToTexture
         if (mRenderTarget == null)
         {
             mRenderer.DrawTexture(
-                tex, u1, v1, u2 - u1, v2 - v1, rect.X, rect.Y, rect.Width, rect.Height, mColor, mRenderTarget,
+                tex, u1, v1, u2 - u1, v2 - v1, flipHorizontal ? rect.X + rect.Width : rect.X, rect.Y, flipHorizontal ? -rect.Width : rect.Width, rect.Height, clr, mRenderTarget,
                 GameBlendModes.None, null, 0f, true
             );
         }
         else
         {
             mRenderer.DrawTexture(
-                tex, u1, v1, u2 - u1, v2 - v1, rect.X, rect.Y, rect.Width, rect.Height, mColor, mRenderTarget,
+                tex, u1, v1, u2 - u1, v2 - v1, flipHorizontal ? rect.X + rect.Width : rect.X, rect.Y, flipHorizontal ? -rect.Width : rect.Width, rect.Height, clr, mRenderTarget,
                 GameBlendModes.None, null, 0f, true
             );
         }

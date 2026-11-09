@@ -94,3 +94,7 @@ to the client `config.json`. The Corps Royaux client also defaults this setting 
 The Corps Royaux client now uses `GlobalFontSize: 10` together with `GlobalFontFamily: "empire7"`.
 
 This forces Empire 7 to render at logical size 10 everywhere in the client, including controls and layouts that previously requested larger or smaller font sizes. Set `GlobalFontSize` to `0` to restore per-control sizing.
+
+## Missing typographic glyphs
+
+The client now uses readable display equivalents when the selected font lacks a typographic character: multiplication signs become `x`, navigation chevrons become `<`/`>`, typographic quotes become straight quotes, ellipses become three dots and nonbreaking number separators become ordinary spaces. Existing glyphs, including supported French/Spanish accents, are preserved. Line breaks remain line breaks. The original localized strings, item names and network data are not rewritten. Both text measurement and drawing use the same conversion, including clipping and outlines. Unsupported characters without a safe equivalent keep the selected font’s normal fallback.

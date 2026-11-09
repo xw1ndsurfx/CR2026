@@ -1096,7 +1096,7 @@ internal partial class MonoRenderer : GameRenderer
         );
     }
 
-    private readonly Dictionary<SpriteFont, char> _defaultCharacterForSpriteFont = [];
+    private readonly Dictionary<SpriteFont, FontGlyphFallback> _textFallbackForSpriteFont = [];
     private GameShader _basicShader;
 
     protected override void OnCursorChanged(IGameTexture? newCursor)
@@ -1106,19 +1106,16 @@ internal partial class MonoRenderer : GameRenderer
 
     private string SanitizeText(string text, SpriteFont spriteFont)
     {
-        if (!_defaultCharacterForSpriteFont.TryGetValue(spriteFont, out var defaultCharacter))
+        if (!_textFallbackForSpriteFont.TryGetValue(spriteFont, out var fallback))
         {
-            defaultCharacter = spriteFont.DefaultCharacter ??
+            var defaultCharacter = spriteFont.DefaultCharacter ??
                                (spriteFont.Characters.Contains(' ') ? ' ' : spriteFont.Characters.FirstOrDefault());
-            _defaultCharacterForSpriteFont[spriteFont] = defaultCharacter;
+            fallback = new FontGlyphFallback(spriteFont.Characters, defaultCharacter);
+            _textFallbackForSpriteFont[spriteFont] = fallback;
         }
-
-        var invalidCharacters = text.Where(@char => !spriteFont.Characters.Contains(@char)).Distinct().ToArray();
-        text = invalidCharacters.Aggregate(
-            text,
-            (current, invalidCharacter) => current.Replace(invalidCharacter, defaultCharacter)
-        );
-        return text;
+        // Measurement and both drawing paths call this same conversion, so a
+        // multi-glyph fallback (such as ... or ->) gets its actual display width.
+        return fallback.Prepare(text);
     }
 
     private Matrix CreateViewMatrix(FloatRect view)

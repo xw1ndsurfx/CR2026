@@ -78,6 +78,7 @@ public sealed class FishingCatchDefinition
     public Guid ItemId { get; set; }
     public List<Guid> ToolItemIds { get; set; } = [];
     public List<FishingLootDefinition> BonusLoot { get; set; } = [];
+    public bool IconFacesLeft { get; set; }
     public double Weight { get; set; } = 1;
     public int MinimumLevel { get; set; } = 1;
     public int MinimumQuantity { get; set; } = 1;

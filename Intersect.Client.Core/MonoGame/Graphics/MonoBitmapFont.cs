@@ -10,9 +10,10 @@ namespace Intersect.Client.MonoGame.Graphics;
 /// Runtime SpriteFont backed directly by a fixed-cell bitmap font sheet.
 /// This avoids TTF rasterization so true pixel fonts keep their authored pixels.
 /// </summary>
-internal sealed class MonoBitmapFont : Font<SpriteFont>, IFont
+internal sealed class MonoBitmapFont : Font<SpriteFont>, IFont, IFontInkMetrics
 {
     private readonly SpriteFont _spriteFont;
+    public FontInkMetrics InkMetrics { get; private set; } = new(0, 1);
 
     public MonoBitmapFont(
         string fontName,
@@ -51,6 +52,22 @@ internal sealed class MonoBitmapFont : Font<SpriteFont>, IFont
 
         var columns = texture.Width / metrics.CellWidth;
         var totalCells = columns * (texture.Height / metrics.CellHeight);
+        // Read a single reference cell once; line spacing includes transparent
+        // padding and is not the visible height of Empire's capital letters.
+        var referenceIndex = metrics.CharacterSet.IndexOf('H');
+        if (referenceIndex >= 0 && referenceIndex < totalCells)
+        {
+            try
+            {
+                var pixels = new Microsoft.Xna.Framework.Color[metrics.CellWidth * metrics.CellHeight];
+                texture.GetData(0, new XNARectangle(referenceIndex % columns * metrics.CellWidth,
+                    referenceIndex / columns * metrics.CellHeight, metrics.CellWidth, metrics.CellHeight), pixels, 0, pixels.Length);
+                var ink = Intersect.Framework.Core.GameObjects.Events.GraphicBounds.Read(metrics.CellWidth, metrics.CellHeight,
+                    (x, y) => pixels[y * metrics.CellWidth + x].A > 0);
+                if (!ink.IsEmpty) InkMetrics = new(ink.Y / (float)metrics.CellHeight, ink.Height / (float)metrics.CellHeight);
+            }
+            catch { /* A backend without texture readback keeps the usual line-height metrics. */ }
+        }
         if (metrics.CharacterSet.Length + 1 > totalCells)
         {
             texture.Dispose();

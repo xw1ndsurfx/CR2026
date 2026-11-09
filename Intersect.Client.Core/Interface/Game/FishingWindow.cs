@@ -424,22 +424,32 @@ internal sealed class FishingWindow : Base
             targetY += (291 - targetY) * lift;
         }
         if (state.Phase is FishingPhase.Caught or FishingPhase.Loot) targetY = 291;
-        var endX = (int)targetX - 23; var endY = (int)targetY + 10;
-        // A quadratic line enters from outside the view; no shore, dock, or substitute avatar.
-        var previousX = 397d; var previousY = 121d;
-        for (var point = 1; point <= 32; point++)
+        var tipX = (int)targetX; var tipY = (int)targetY;
+        var hook = FishingSceneGeometry.HookAt(tipX, tipY);
+        var eye = FishingSceneGeometry.EyeAt(tipX, tipY);
+        // A little slack bends down toward the hook, from the upper-left corner.
+        for (var pass = 0; pass < 2; pass++)
         {
-            var t = point / 32d;
-            var x = (1 - t) * (1 - t) * 397 + 2 * (1 - t) * t * 458 + t * t * endX;
-            var y = (1 - t) * (1 - t) * 121 + 2 * (1 - t) * t * (endY - 3) + t * t * endY;
-            Line(skin, (int)previousX, (int)previousY, (int)x, (int)y, Cream);
-            previousX = x; previousY = y;
+            var previousX = (double)FishingSceneGeometry.LineStartX;
+            var previousY = (double)FishingSceneGeometry.LineStartY;
+            for (var point = 1; point <= 48; point++)
+            {
+                var t = point / 48d;
+                var x = (1 - t) * (1 - t) * FishingSceneGeometry.LineStartX +
+                    2 * (1 - t) * t * FishingSceneGeometry.LineStartX + t * t * eye.X;
+                var y = (1 - t) * (1 - t) * FishingSceneGeometry.LineStartY +
+                    2 * (1 - t) * t * (eye.Y + 60) + t * t * eye.Y;
+                Line(skin, (int)previousX, (int)previousY, (int)x, (int)y,
+                    pass == 0 ? new Color(255, 25, 44, 49) : Cream, pass == 0 ? 3 : 1);
+                previousX = x; previousY = y;
+            }
         }
-        Sprite(skin, FishingSheet, 14 * 32, 0, 32, 32, endX - 20, endY - 14, 27, 27);
-        if (_catch != null && state.Phase is not FishingPhase.Waiting)
+        skin.Renderer.DrawColor = Color.White;
+        Sprite(skin, FishingSheet, 14 * 32, 0, 32, 32, hook.X, hook.Y, hook.Width, hook.Height);
+        if (_catch != null && state.Phase is (FishingPhase.Fighting or FishingPhase.LegendaryPrompt or FishingPhase.LegendaryChallenge or FishingPhase.Retrieving or FishingPhase.Caught or FishingPhase.Loot))
         {
-            DrawCatch(skin, _catch, (int)targetX - 14, (int)targetY - 24, 105, 72);
-            Bar(skin, (int)targetX - 8, (int)targetY + 52, 94, 7, state.Progress / 100, Gold);
+            var fishBounds = DrawAttachedCatch(skin, _catch, tipX, tipY);
+            Bar(skin, fishBounds.X, fishBounds.Bottom + 7, fishBounds.Width, 7, state.Progress / 100, Gold);
             if (state.Resisting) Sprite(skin, Components, 929, 817, 62, 155, (int)targetX + 15, (int)targetY - 94, 24, 58);
             if (state.Legendary)
             {
@@ -477,6 +487,26 @@ internal sealed class FishingWindow : Base
             skin.Renderer.DrawTexturedRect(texture, SceneRect(x + (width - w) / 2,
                 y + (height - h) / 2 + (int)(swim * 3), Math.Max(1, (int)(w * pulse)), Math.Max(1, h)), Color.White);
         }
+    }
+    private Rect DrawAttachedCatch(SkinBase skin, FishingCatchDefinition definition, int tipX, int tipY)
+    {
+        var bounds = FishingSceneGeometry.FishAt(tipX, tipY, 105, 48);
+        if (!ItemDescriptor.TryGet(definition.ItemId, out var item) ||
+            GameContentManager.Current.GetTexture(TextureType.Item, item.Icon) is not { } texture) return bounds;
+        var visible = Intersect.Client.Entities.SpriteVisibleBounds.Get(texture,
+            new Intersect.Client.Framework.GenericClasses.FloatRect(0, 0, texture.Width, texture.Height));
+        if (visible.IsEmpty || visible.Width < 1 || visible.Height < 1) return bounds;
+        var pulse = 1 + Math.Sin(Environment.TickCount64 / 180d + definition.Id.GetHashCode()) * .035;
+        var scale = Math.Min(105d / visible.Width, 72d / visible.Height);
+        bounds = FishingSceneGeometry.FishAt(tipX, tipY,
+            Math.Max(1, (int)(visible.Width * scale * pulse)), Math.Max(1, (int)(visible.Height * scale)));
+        var left = visible.X / (float)texture.Width;
+        var right = (visible.X + visible.Width) / (float)texture.Width;
+        // The hooked fish sits left of the barb and must face right toward it.
+        skin.Renderer.DrawTexturedRect(texture, SceneRect(bounds.X, bounds.Y, bounds.Width, bounds.Height), Color.White,
+            definition.IconFacesLeft ? right : left, visible.Y / (float)texture.Height,
+            definition.IconFacesLeft ? left : right, (visible.Y + visible.Height) / (float)texture.Height);
+        return bounds;
     }
     private IGameTexture? Texture(string name)
     {
@@ -538,10 +568,20 @@ internal sealed class FishingWindow : Base
     }
     private void Panel(SkinBase skin, int x, int y, int w, int h, Color color)
     { Fill(skin, x - 2, y - 2, w + 4, h + 4, Gold); Fill(skin, x, y, w, h, color); }
-    private void Line(SkinBase skin, int x, int y, int endX, int endY, Color color)
+    private void Line(SkinBase skin, int x, int y, int endX, int endY, Color color, int thickness = 1)
     {
+        // GWEN's default DrawLine is a no-op. Filled pixels use its working,
+        // clipped UI rectangle path and remain visible at small resolutions.
         skin.Renderer.DrawColor = color;
-        skin.Renderer.DrawLine(_left + (int)(x * _scale), _top + (int)(y * _scale), _left + (int)(endX * _scale), _top + (int)(endY * _scale));
+        var start = SceneRect(x, y, 1, 1); var end = SceneRect(endX, endY, 1, 1);
+        var steps = Math.Max(Math.Abs(end.X - start.X), Math.Abs(end.Y - start.Y));
+        var width = Math.Max(1, (int)Math.Round(thickness * _scale));
+        for (var step = 0; step <= steps; step++)
+        {
+            var t = steps == 0 ? 0 : step / (double)steps;
+            skin.Renderer.DrawFilledRect(new Rect((int)Math.Round(start.X + (end.X - start.X) * t) - width / 2,
+                (int)Math.Round(start.Y + (end.Y - start.Y) * t) - width / 2, width, width));
+        }
     }
     private Label AddLabel(string name, string source, int x, int y, int w, int h, int font, bool center = false)
     {

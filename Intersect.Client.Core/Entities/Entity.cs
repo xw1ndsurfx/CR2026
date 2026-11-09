@@ -687,6 +687,7 @@ public partial class Entity : IEntity
             return false;
         }
 
+        UpdateNpcSounds();
         RenderList = DetermineRenderOrder(RenderList, LatestMap);
         if (mLastUpdate == 0)
         {

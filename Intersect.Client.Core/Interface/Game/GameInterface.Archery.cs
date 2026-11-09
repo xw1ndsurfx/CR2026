@@ -15,9 +15,24 @@ public partial class GameInterface
     private UniversalAmmunitionWindow? _ammunitionWindow;
     private WeaponSkillBar? _weaponSkills;
     private long _weaponSkillsRequestAt;
+    internal bool HasActiveMiniGame =>
+        _archeryWindow?.IsVisibleInTree == true || _fishingWindow?.IsVisibleInTree == true ||
+        _exportationWindow?.IsVisibleInTree == true || _cookingWindow?.IsVisibleInTree == true ||
+        _pokerWindow?.IsVisibleInTree == true || _blackjackWindow?.IsVisibleInTree == true ||
+        _potionWindow?.IsVisibleInTree == true || _rouletteWindow?.IsVisibleInTree == true ||
+        _diceWindow?.IsVisibleInTree == true || _lockpickingWindow?.IsVisibleInTree == true ||
+        _metalworkWindow?.IsVisibleInTree == true || _joustWindow?.IsVisibleInTree == true ||
+        _joustDuelWindow?.IsVisibleInTree == true || _joustSpectatorWindow?.IsVisibleInTree == true;
+
+    internal bool CanShowWeaponSkills => WeaponSkillHudVisibility.Allowed(
+        General.Globals.Me != null,
+        General.Globals.Me is { } player && Naval.NavalWorld.IsAboard(player.Id),
+        HasActiveMiniGame,
+        SuppressStatusHuds || Interface.InputBlockingComponents.Any(control => control.IsVisibleInTree && control.IsBlockingInput));
+
     private void UpdateWeaponSkills()
     {
-        if(General.Globals.Me==null) return;
+        if (!CanShowWeaponSkills) { _weaponSkills?.Hide(); return; }
         if(_weaponSkills?.HasMasteryState!=true && Environment.TickCount64>=_weaponSkillsRequestAt)
         {
             _weaponSkillsRequestAt=Environment.TickCount64+3000;
@@ -29,7 +44,7 @@ public partial class GameInterface
     {
         if(packet.WeaponSkillCooldownsJson.Length>0)
         {
-            _weaponSkills??=new WeaponSkillBar(GameCanvas);_weaponSkills.Apply(packet);return;
+            _weaponSkills??=new WeaponSkillBar(GameCanvas, () => CanShowWeaponSkills);_weaponSkills.Apply(packet);return;
         }
         if (packet.AmmunitionJson.Length > 0)
         {
@@ -40,7 +55,7 @@ public partial class GameInterface
         {
             if(!packet.MasteriesReadOnly)
             {
-                _weaponSkills??=new WeaponSkillBar(GameCanvas);_weaponSkills.Apply(packet);
+                _weaponSkills??=new WeaponSkillBar(GameCanvas, () => CanShowWeaponSkills);_weaponSkills.Apply(packet);
             }
             if (_masteriesWindow == null && !packet.Open) return;
             _masteriesWindow ??= new WeaponMasteriesWindow(GameCanvas); _masteriesWindow.Apply(packet); return;

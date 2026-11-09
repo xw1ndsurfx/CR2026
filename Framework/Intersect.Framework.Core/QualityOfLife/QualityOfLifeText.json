@@ -4793,6 +4793,15 @@
     "Granary capacity": {"en": "Granary capacity", "fr": "Capacité du grenier", "es": "Capacidad del granero"},
     "Hiring price": {"en": "Hiring price", "fr": "Coût de recrutement", "es": "Coste de contratación"},
     "Wage per cycle": {"en": "Wage per cycle", "fr": "Salaire par cycle", "es": "Salario por ciclo"},
-    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"}
+    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"},
+    "Checking import status...": {"en": "Checking import status...", "fr": "Vérification de l’import...", "es": "Comprobando la importación..."},
+    "Already imported: {0}": {"en": "Already imported: {0}", "fr": "Déjà importé : {0}", "es": "Ya importado: {0}"},
+    "No matching game copy detected.": {"en": "No matching game copy detected.", "fr": "Aucune copie correspondante détectée dans le jeu.", "es": "No se detectó una copia correspondiente en el juego."},
+    "Import status unavailable.": {"en": "Import status unavailable.", "fr": "État de l’import indisponible.", "es": "Estado de importación no disponible."},
+    "Sound ambience": {"en": "Sound ambience", "fr": "Ambiance sonore", "es": "Ambiente sonoro"},
+    "Death sound": {"en": "Death sound", "fr": "Son à la mort", "es": "Sonido al morir"},
+    "Player proximity sound": {"en": "Player proximity sound", "fr": "Son à proximité du joueur", "es": "Sonido de proximidad al jugador"},
+    "Trigger distance (tiles)": {"en": "Trigger distance (tiles)", "fr": "Distance de déclenchement (cases)", "es": "Distancia de activación (casillas)"},
+    "Plays on entering range; resets after leaving. Empty sound disables it.": {"en": "Plays on entering range; resets after leaving. Empty sound disables it.", "fr": "Joué à l’entrée dans la zone, réarmé après en être sorti. Un son vide le désactive.", "es": "Se reproduce al entrar en el radio y se rearma al salir. Un sonido vacío lo desactiva."}
   }
 }
