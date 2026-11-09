@@ -1538,7 +1538,7 @@ public sealed partial class FrmSoundImport : DarkForm
     }
 
     private string ImportStatusCache(SoundImportKind kind) => Path.Combine(_gameRoot, ".soundimport-cache", "imported", SoundImporter.Folder(kind));
-    private void RefreshImportStatus() => _importStatus.RefreshStatus(_selectedAsset?.FilePath,
+    private void RefreshImportStatus() => _ = _importStatus.RefreshStatus(_selectedAsset?.FilePath,
         SoundImporter.GameFolder(_gameRoot, TargetKind), ImportStatusCache(TargetKind));
 
     private async Task ImportAssetsToGameAsync(

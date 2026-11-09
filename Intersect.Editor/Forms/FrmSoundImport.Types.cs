@@ -18,7 +18,7 @@ public sealed partial class FrmSoundImport
         {
             if (_libraryKind.SelectedIndex > 0) _targetKind.SelectedIndex = _libraryKind.SelectedIndex - 1;
             StopPlayback(); _selectionCancellation?.Cancel(); _selectedAsset = null;
-            _importStatus.RefreshStatus(null, SoundImporter.GameFolder(_gameRoot, TargetKind), ImportStatusCache(TargetKind));
+            _ = _importStatus.RefreshStatus(null, SoundImporter.GameFolder(_gameRoot, TargetKind), ImportStatusCache(TargetKind));
             _name.Clear(); _details.Text = "Select an audio file to preview it.";
             _page = 0; PopulateSoundList(); UpdateFavoriteButton();
         };
