@@ -30,6 +30,14 @@ internal static partial class NavalSystem
     }
     private static bool DeckEnabled(Vessel v)=>v.Enemy==null && ShipDeck.Supports(v.Definition.Graphics);
     private static int VesselCapacity(Vessel v)=>DeckEnabled(v)?7:v.Definition.CrewCapacity;
+    private static string DeckGraphic(Vessel v)
+    {
+        var family=NavalShipModels.Find(v.Definition.Graphics);
+        if(v.State.DamageState>0 && family!=null)return NavalShipModels.Find(v.Definition.DamagedGraphics)?.Id==family.Id?v.Definition.DamagedGraphics:family.DamagedGraphics;
+        var idle=IdleGraphic(v.Definition);
+        return Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4 && family!=null && NavalShipModels.Find(idle)?.Id==family.Id?idle:v.Definition.Graphics;
+    }
+    private static string SinkingGraphic(Vessel ship)=>NavalShipModels.Find(ship.Definition.Graphics)?.SinkingGraphics??ship.SinkingGraphics;
     private static void EnsureDeck(Vessel v,long now)
     {
         if(!DeckEnabled(v))return;
@@ -101,6 +109,23 @@ internal static partial class NavalSystem
     }
     internal static void DeckInput(Player player,DeckInputPacket packet,long now)
     {
+        lock(player.EntityLock)
+        {
+            var fishing=DeckInputLocked(player,packet,now);if(fishing==null)return;
+            var opened=false;
+            try{opened=player.OpenFishingFromShip(fishing.Zone,fishing.Ship);}
+            finally
+            {
+                lock(Gate)
+                    if(Ships.TryGetValue(fishing.Ship,out var ship))
+                        foreach(var seat in ship.Guns.Values.Where(s=>s.Owner==player.Id && s.Lease==fishing.Lease))
+                            if(opened)seat.FishingStarted=true;
+                            else{seat.Owner=seat.Lease=Guid.Empty;seat.Until=0;}
+            }
+        }
+    }
+    private static DeckFishingRequest? DeckInputLocked(Player player,DeckInputPacket packet,long now)
+    {
         lock(player.EntityLock)lock(Gate)
         {
             if(!IsEnabled() || !Enum.IsDefined(packet.Action) || packet.Side is <-127 or >127 || packet.Forward is <-127 or >127 ||
@@ -108,19 +133,24 @@ internal static partial class NavalSystem
                 player.InstanceType!=MapInstanceType.Overworld || player.NavalShipId!=packet.ShipId ||
                 !Ships.TryGetValue(packet.ShipId,out var v) || !DeckEnabled(v) || v.State.CaptainId==Guid.Empty || v.State.MapId!=player.MapId ||
                 v.SunkUntil>0 || v.Health<=0 || v.EnemyBoardingEncounter!=Guid.Empty || Repairs.ContainsKey(player.Id) ||
-                player.Id!=v.State.CaptainId && (!player.Party.Any(p=>p.Id==v.State.CaptainId) || !v.Crew.TryGetValue(player.Id,out var crew) || now-crew.Seen>1500))return;
-            if(packet.Action==DeckAction.Walk && v.Deck.TryGetValue(player.Id,out var recent) && now-recent.LastMove<40)return;
+                player.Id!=v.State.CaptainId && (!player.Party.Any(p=>p.Id==v.State.CaptainId) || !v.Crew.TryGetValue(player.Id,out var crew) || now-crew.Seen>1500))return null;
+            if(packet.Action==DeckAction.Walk && v.Deck.TryGetValue(player.Id,out var recent) && now-recent.LastMove<40)return null;
             PruneGuns(v,now);EnsureDeck(v,now);
-            if(!v.Deck.TryGetValue(player.Id,out var walker))return;
+            if(!v.Deck.TryGetValue(player.Id,out var walker))return null;
             var seat=v.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id && g.Value.Until>now);
             if(packet.Action==DeckAction.Interact)
             {
-                if(now-walker.LastInteraction<250)return;walker.LastInteraction=now;
+                if(now-walker.LastInteraction<250)return null;walker.LastInteraction=now;
                 player.GunneryMessage="";
                 if(seat.Value!=null){seat.Value.Owner=seat.Value.Lease=Guid.Empty;seat.Value.Until=0;}
                 else if(Driver(v)==player.Id){v.HelmVacant=true;v.HelmsmanId=Guid.Empty;v.Controls.Reset();}
                 else if(v.HelmVacant && ShipDeck.Distance(walker.Position,ShipDeck.Helm)<=ShipDeck.UseDistance)
                 {v.HelmVacant=false;v.HelmsmanId=player.Id==v.State.CaptainId?Guid.Empty:player.Id;v.Controls.Reset();walker.Position=ShipDeck.Helm;}
+                else if(TryStartDeckRepair(v,player,now)){walker.LastMove=now;return null;}
+                else if(v.Definition.DeckActivity==ShipDeckActivity.Fishing)
+                {
+                    var fishing=ReserveDeckFishing(v,player,now);walker.LastMove=now;player.RegisterAfkActivity();SendSnapshot(player);return fishing;
+                }
                 else
                 {
                     var index=NearestDeckGun(v,player.Id,null,now);
@@ -133,15 +163,16 @@ internal static partial class NavalSystem
                     }
                     else player.GunneryMessage="Move closer to a free cannon or the helm.";
                 }
-                walker.LastMove=now;player.RegisterAfkActivity();SendSnapshot(player);return;
+                walker.LastMove=now;player.RegisterAfkActivity();SendSnapshot(player);return null;
             }
-            var elapsed=now-walker.LastMove;if(elapsed<40)return;walker.LastMove=now;
-            if(Driver(v)==player.Id || seat.Value!=null)return;
+            var elapsed=now-walker.LastMove;if(elapsed<40)return null;walker.LastMove=now;
+            if(Driver(v)==player.Id || seat.Value!=null)return null;
             var before=walker.Position;
             walker.Position=ShipDeck.Move(before,packet.Side/127d,packet.Forward/127d,Math.Min(100,elapsed)/1000d,
                 p=>v.Deck.Any(other=>other.Key!=player.Id && ShipDeck.Distance(p,other.Value.Position)<ShipDeck.Radius*2));
             if(ShipDeck.Distance(before,walker.Position)>.0001)
             {walker.FacingX=packet.Side/127d;walker.FacingY=packet.Forward/127d;walker.MovedAt=now;player.RegisterAfkActivity();}
         }
+        return null;
     }
 }

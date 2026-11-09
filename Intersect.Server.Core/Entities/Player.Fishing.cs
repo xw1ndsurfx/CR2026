@@ -23,7 +23,7 @@ public partial class Player
         internal required FishingZoneDefinition Zone;
         internal required FishingToolDefinition Tool;
         internal required FishingState State;
-        internal Guid StartMapId, InstanceId, AttemptId;
+        internal Guid StartMapId, InstanceId, AttemptId, ShipId;
         internal float StartX, StartY;
         internal long LastRequest, LastSent, PhaseStarted, Deadline, FightDeadline, NextAnimation;
         internal readonly long[] SkillReadyAt = new long[4];
@@ -131,7 +131,7 @@ public partial class Player
 
     private bool ValidFishing() => _fishing is { } s && InGame && !IsDisposed && Client is { IsEditor: false } && Client.IsConnected() &&
         Client.Entity == this && !IsDead && !HasPendingDeath && MapId == s.StartMapId && MapInstanceId == s.InstanceId && X == s.StartX && Y == s.StartY &&
-        FishingRules.WithinZone(s.Zone, MapId, X, Y) && ReferenceEquals(s.Configuration, FishingRuntime.Current) &&
+        FishingRules.WithinZone(s.Zone, MapId, X, Y) && (s.ShipId==Guid.Empty || Naval.NavalSystem.ValidFishingStation(this,s.ShipId)) && ReferenceEquals(s.Configuration, FishingRuntime.Current) &&
         EquippedFishingTool(s.Configuration)?.ItemId == s.Tool.ItemId && CombatTimer <= Timing.Global.Milliseconds && !IsCasting && !IsBusy();
 
     internal void HandleFishingRequest(FishingRequestPacket packet)

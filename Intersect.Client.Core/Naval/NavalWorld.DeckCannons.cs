@@ -12,6 +12,15 @@ internal static partial class NavalWorld
 {
     internal static double DeckCannonYaw(ShipSnapshot previous,ShipSnapshot current,ShipCannonAnchor anchor,double amount)
     {
+        if(current.Enemy)
+        {
+            var role=anchor.Starboard?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon;
+            var npc=(current.NpcDeckMembers??[]).FirstOrDefault(n=>n.Role==role && n.Index==anchor.Index);
+            if(npc==null || !double.IsFinite(npc.Yaw))return 0;
+            var oldNpc=(previous.NpcDeckMembers??[]).FirstOrDefault(n=>n.NpcId==npc.NpcId && n.Role==role && n.Index==anchor.Index);
+            var yaw=Math.Clamp(npc.Yaw,-90,90);var oldYaw=oldNpc!=null && double.IsFinite(oldNpc.Yaw)?Math.Clamp(oldNpc.Yaw,-90,90):yaw;
+            return oldYaw+(yaw-oldYaw)*Math.Clamp(amount,0,1);
+        }
         var seat=(current.CrewStations??[]).FirstOrDefault(s=>s.Starboard==anchor.Starboard && s.Index==anchor.Index);
         if(seat==null || seat.PlayerId==Guid.Empty || !HasMember(current,seat.PlayerId) || seat.PlayerId==Driver(current)) return 0;
         var target=double.IsFinite(seat.Yaw)?Math.Clamp(seat.Yaw,-90,90):0;

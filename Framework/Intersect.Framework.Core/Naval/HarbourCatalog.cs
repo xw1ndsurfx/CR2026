@@ -13,6 +13,10 @@ public sealed class HarbourOffer
     public int Price { get; set; }
     public int RepairPrice { get; set; }
     public bool PremiumRequired { get; set; }
+    public Guid RequiredQuestId { get; set; }
+    public bool EventUnlockRequired { get; set; }
+    public bool CanAccess(bool premium, bool questCompleted, bool eventUnlocked) =>
+        (!PremiumRequired || premium) && (RequiredQuestId == Guid.Empty || questCompleted) && (!EventUnlockRequired || eventUnlocked);
     public ShipDefinition Ship { get; set; } = new();
     public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
     public bool IsValid() => !string.IsNullOrWhiteSpace(Id) && Id.Length <= 64 &&

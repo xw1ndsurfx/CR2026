@@ -28,6 +28,7 @@ internal static partial class NavalSystem
             PruneEnemyBoardings(now);
             foreach(var id in Repairs.Where(p=>now-p.Value.Start>_settings.Repair.RoundSeconds*1000L).Select(p=>p.Key).ToArray())Repairs.Remove(id);
             foreach(var id in RepairCooldown.Where(p=>p.Value<now-60000).Select(p=>p.Key).ToArray())RepairCooldown.Remove(id);
+            MaintainFishingStations(now);
             var ocean=OceanMapResolver.Maps();
             EnemyDocks.Clear();
             EnemyHulls.Clear();
@@ -53,6 +54,7 @@ internal static partial class NavalSystem
             }
             UpdateCannonballs(now);
         }
+        ProcessEnemyBoardingRequests(now);
     }
 
     private static bool ClearEnemyHull(Vessel vessel,HashSet<Guid> ocean,Guid id,double x,double y)
@@ -99,6 +101,7 @@ internal static partial class NavalSystem
     private static void StepEnemy(Vessel enemy,HashSet<Guid> ocean,long now,double dt)
     {
         var config=enemy.Enemy;var s=enemy.State;var d=enemy.Definition;
+        enemy.EnemyHasTarget=false;
         if(enemy.EnemyBoardingEncounter!=Guid.Empty || BoardingCeasefire(enemy))
         {s.Speed=s.Throttle=0;enemy.Controls.Reset();return;}
         if(enemy.SunkUntil>0)
@@ -128,6 +131,8 @@ internal static partial class NavalSystem
         double desired;
         if(target!=null)
         {
+            enemy.EnemyHasTarget=true;enemy.EnemyTargetX=point.X;enemy.EnemyTargetY=point.Y;
+            QueueEnemyBoarding(enemy,target,now);
             var bearing=ShipEnemySteering.Bearing(point.X-s.X,point.Y-s.Y);
             if(nearest>_settings.CannonRange*.7) desired=bearing;
             else

@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$GameResources,[Parameter(Mandatory)][string]$OutputDirectory,[string]$ReplayPath)
+param([Parameter(Mandatory)][string]$GameResources,[Parameter(Mandatory)][string]$OutputDirectory,[string]$ReplayPath,[string]$OceanDirectory,[string]$Graphics='Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png')
 $ErrorActionPreference='Stop'
 $repo=Split-Path (Split-Path $PSScriptRoot)
 $bin=Join-Path $repo 'Intersect.Tests.Server/bin/Debug/net8.0/win-x64'
@@ -8,8 +8,8 @@ if(!$ReplayPath){$ReplayPath=Join-Path $bin 'deck-walk-replay.json'}
 Add-Type -AssemblyName System.Drawing
 $refs=@([System.Drawing.Bitmap].Assembly.Location,[System.Drawing.Color].Assembly.Location,(Join-Path $PSHOME 'System.Private.Windows.GdiPlus.dll'),(Join-Path $PSHOME 'System.Private.Windows.Core.dll'))
 Add-Type -ReferencedAssemblies $refs -Path (Join-Path $PSScriptRoot 'CannonLayerPixels.cs')
-$ocean=Join-Path $repo 'resources/ocean'
-$name='Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png'
+$ocean=if($OceanDirectory){$OceanDirectory}else{Join-Path $repo 'resources/ocean'}
+$name=$Graphics
 $atlas=[Newtonsoft.Json.JsonConvert]::DeserializeObject((Get-Content (Join-Path $ocean ($name+'.naval.json')) -Raw),[Intersect.Framework.Core.Naval.ShipSpriteAtlas])
 $replay=[Newtonsoft.Json.JsonConvert]::DeserializeObject((Get-Content -LiteralPath $ReplayPath -Raw),[Intersect.Network.Packets.Server.ShipSnapshot[]])
 function Pixels([string]$path){$b=[Drawing.Bitmap]::new($path);try{,[CannonLayerPixels]::Read($b)}finally{$b.Dispose()}}

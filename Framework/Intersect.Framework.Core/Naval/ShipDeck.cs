@@ -8,7 +8,7 @@ public static class ShipDeck
 {
     public const float AvatarScale=.75f;
     public const double Radius=.12,Speed=1.65,UseDistance=.48;
-    public static bool Supports(string graphics)=>string.Equals(graphics,"Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png",StringComparison.OrdinalIgnoreCase);
+    public static bool Supports(string graphics)=>NavalShipModels.Find(graphics)!=null;
     public static readonly DeckPoint Helm=new(0,-3.4);
     private static readonly DeckPoint[] Edge=[new(-.85,-3.7),new(.85,-3.7),new(1.12,-2.7),new(1.12,2.3),new(.55,3.6),new(-.55,3.6),new(-1.12,2.3),new(-1.12,-2.7)];
     private static readonly (DeckPoint Point,double Radius)[] Obstacles=[(new(0,-3.1),.13),(new(0,-2.5),.20),(new(0,0),.23),(new(0,2.5),.20),(new(-.5,3.0),.19),(new(.5,3.0),.19)];

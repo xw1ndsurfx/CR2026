@@ -58,7 +58,8 @@ public partial class HotBarWindow
             {
                 _deckHint.SetBounds(X,Y-80,Width,23);
                 _deckHint.Text=N(Naval.NavalWorld.Driver(own)==Globals.Me?.Id?"WASD: steer - E: leave the helm":
-                    Naval.NavalWorld.Gunner.LeaseId!=Guid.Empty?"E: leave cannon - Mouse: aim and fire":"WASD / arrows: walk - E: use a free cannon or helm");
+                    Naval.NavalWorld.Gunner.LeaseId!=Guid.Empty?"E: leave cannon - Mouse: aim and fire":Naval.NavalWorld.NearDamagedArea(own)?"E: repair damaged area":
+                    own.DeckActivity==ShipDeckActivity.Fishing?Naval.NavalWorld.NearFishingStation(own)?Math.Abs(own.Speed)<.05?"E: fish at this station":"Stop the boat before fishing.":"WASD / arrows: walk - E: use a free fishing station":"WASD / arrows: walk - E: use a free cannon or helm");
                 if(!string.IsNullOrEmpty(Naval.NavalWorld.Gunner.Message))_deckHint.Text=N(Naval.NavalWorld.Gunner.Message);
                 EventPanelText.Fit(_deckHint,_deckHint.Text,10,8);
             }

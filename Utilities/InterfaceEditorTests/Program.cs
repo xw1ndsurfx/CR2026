@@ -41,6 +41,7 @@ internal static class Program
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
         if (Environment.GetCommandLineArgs().Contains("--import-status-only")) { ImportedResourceIndicatorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--naval-crew-only")) { NavalCrewDamageEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--ui-fixes-only")) { ImportedResourceIndicatorTests.Run(); ImportStatusAndNavalScrollTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--promotions-only")) { ShopPromotionTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--invasion-only")) { InvasionEditorTests.Run(); InvasionConditionEditorTests.Run(); return; }
@@ -64,7 +65,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--animation-import-only")) { AnimationImportNavigationTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--weather-only")) { WeatherEnvironmentEditorTests.Run();QualityOfLifeEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--qol-only")) { ImportedResourceIndicatorTests.Run(); WeatherEnvironmentEditorTests.Run(); BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();AnimationImportNavigationTests.Run();AchievementRewardEditorTests.Run();NavalSystemEditorTests.Run();NavalPatrolCreatorEditorTests.Run();return; }
-        if (Environment.GetCommandLineArgs().Contains("--harbour-only")) { HarbourDockEditorTests.Run(); NavalShopEditorTests.Run(); NavalSystemEditorTests.Run(); NavalPatrolCreatorEditorTests.Run(); NavalCombatMusicEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--harbour-only")) { HarbourDockEditorTests.Run(); NavalShopEditorTests.Run(); NavalSystemEditorTests.Run(); NavalCrewDamageEditorTests.Run(); NavalPatrolCreatorEditorTests.Run(); NavalCombatMusicEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--dock-landing-only")) { HarbourDockEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
@@ -80,6 +81,7 @@ internal static class Program
         SoundImportTests.Run();
         ImportedResourceIndicatorTests.Run();
         NavalMapListTests.Run();
+        NavalCrewDamageEditorTests.Run();
         HarbourDockEditorTests.Run();
         ActivitiesEditorTests.Run();
         CombatPvpMetalworkEditorTests.Run();

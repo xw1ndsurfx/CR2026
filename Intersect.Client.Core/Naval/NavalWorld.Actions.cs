@@ -18,7 +18,7 @@ internal static partial class NavalWorld
     private static readonly HashSet<int> _pressedSlots = [];
     private sealed record BallView(CannonballSnapshot Previous,CannonballSnapshot Current,long Received);
     private static Dictionary<Guid,BallView> _balls = [];
-    internal static ShipSnapshot? OwnShip => Fresh ? _ships.Values.FirstOrDefault(v=>HasMember(v.Current,_viewer))?.Current : null;
+    internal static ShipSnapshot? OwnShip => Fresh && !OnBoardingDeck ? _ships.Values.FirstOrDefault(v=>HasMember(v.Current,_viewer))?.Current : null;
     private static void ClearActions() {CannonViewOpen=false;CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear();_balls.Clear(); }
 
     private static void ReadActions(bool busy)

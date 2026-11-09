@@ -16,11 +16,11 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
-    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt,AimAt;internal double Yaw;}
+    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt,AimAt;internal double Yaw;internal bool FishingStarted;}
     private sealed record GunReward(long Experience,long RetryAt=0);
     private static readonly Dictionary<Guid,GunReward> PendingGunnery=[];
     private static int PendingCrewShots;
-    private static bool GunnerEligible(Player player,Vessel vessel)=>!player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
+    private static bool GunnerEligible(Player player,Vessel vessel)=>vessel.Definition.DeckActivity==ShipDeckActivity.Cannons && !player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
         vessel.State.CaptainId!=Guid.Empty && (player.Id==vessel.State.CaptainId || player.Party.Any(m=>m.Id==vessel.State.CaptainId)) && vessel.Enemy==null && vessel.SunkUntil==0 && vessel.Health>0 && !Repairs.ContainsKey(player.Id) &&
         (vessel.State.CaptainId==player.Id || vessel.Crew.TryGetValue(player.Id,out var crew) && Timing.Global.Milliseconds-crew.Seen<=1500);
     private static void PruneGuns(Vessel vessel,long now)
@@ -32,7 +32,7 @@ internal static partial class NavalSystem
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
     }
     private static NavalCrewStation[] CrewStationSnapshot(Vessel vessel,long now) => vessel.Guns
-        .Where(g => g.Key>=0 && g.Key<_settings.Gunnery.CannonsPerSide*2 && g.Value.Owner!=Guid.Empty &&
+        .Where(g => vessel.Definition.DeckActivity==ShipDeckActivity.Cannons && g.Key>=0 && g.Key<_settings.Gunnery.CannonsPerSide*2 && g.Value.Owner!=Guid.Empty &&
             g.Value.Until>now && g.Value.Owner!=Driver(vessel) && vessel.SunkUntil==0 && vessel.Health>0 &&
             !Repairs.ContainsKey(g.Value.Owner) && (g.Value.Owner==vessel.State.CaptainId ||
             vessel.Crew.TryGetValue(g.Value.Owner,out var crew) && now-crew.Seen<=1500))
@@ -45,7 +45,9 @@ internal static partial class NavalSystem
         var result=new GunneryState {Level=progress.Level,Experience=progress.Experience,Required=progress.Required,
             CannonsPerSide=settings.CannonsPerSide,AimArcDegrees=settings.AimArcDegrees,Message=player.GunneryMessage??"",
             Enabled=_settings.CannonsEnabled && settings.Enabled};
-        if(!Ships.TryGetValue(player.NavalShipId,out var vessel) || !GunnerEligible(player,vessel)) return result;
+        if(!Ships.TryGetValue(player.NavalShipId,out var vessel))return result;
+        if(vessel.Definition.DeckActivity==ShipDeckActivity.Fishing){result.Enabled=false;return result;}
+        if(!GunnerEligible(player,vessel))return result;
         PruneGuns(vessel,now);result.ShipId=vessel.State.Id;
         var occupied=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
         if(occupied.Value!=null)

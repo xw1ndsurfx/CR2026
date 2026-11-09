@@ -3,6 +3,16 @@ namespace Intersect.Framework.Core.Naval;
 /// <summary>One server-controlled enemy, with a home and four local patrol waypoints.</summary>
 public sealed class HerboniaPatrol
 {
+    public bool CanBoardPlayerShips {get;set;}
+    public int PlayerBoardingHealthPercent {get;set;}=25;
+    public Guid DeckCaptainNpcId {get;set;}
+    public Guid PortGunner1NpcId {get;set;}
+    public Guid PortGunner2NpcId {get;set;}
+    public Guid PortGunner3NpcId {get;set;}
+    public Guid StarboardGunner1NpcId {get;set;}
+    public Guid StarboardGunner2NpcId {get;set;}
+    public Guid StarboardGunner3NpcId {get;set;}
+    public Guid[] DeckCrew()=>[DeckCaptainNpcId,PortGunner1NpcId,PortGunner2NpcId,PortGunner3NpcId,StarboardGunner1NpcId,StarboardGunner2NpcId,StarboardGunner3NpcId];
     public bool AutomaticBoardingDeck {get;set;}=true;
     public Guid BoardingCrewNpcId {get;set;}
     public int BoardingCrewCount {get;set;}=4;
@@ -13,8 +23,8 @@ public sealed class HerboniaPatrol
     public int BoardingHealthPercent {get;set;}=25;
     public double BoardingRange {get;set;}=4;
     public bool Enabled { get; set; }
-    public ShipDefinition Ship { get; set; } = new() { Graphics="Ship_Herbonia_001.png",
-        DamagedGraphics="Ship_Herbonia_001.png", SinkingGraphics="Ship_Herbonia_001_sink.png" };
+    public ShipDefinition Ship { get; set; } = new() { Graphics=NavalShipModels.ThreeMasts[1].Graphics,IdleGraphics=NavalShipModels.ThreeMasts[1].IdleGraphics,
+        DamagedGraphics=NavalShipModels.ThreeMasts[1].DamagedGraphics,SinkingGraphics=NavalShipModels.ThreeMasts[1].SinkingGraphics,CrewCapacity=7 };
     public NavalLootEntry[] Loot {get;set;}=[];
     public int Level { get; set; } = 1;
     public int MaximumHealth { get; set; } = 100;
@@ -25,7 +35,7 @@ public sealed class HerboniaPatrol
     public double PatrolRadius { get; set; } = 5;
     public double DockSafeRange { get; set; } = 6;
     public int RespawnSeconds { get; set; } = 60;
-    public bool IsValid() => BoardingCrewCount is >=1 and <=12 && BoardingHealthPercent is >=1 and <=50 && double.IsFinite(BoardingRange) && BoardingRange is >=2 and <=8 && BoardingEntryX is >=0 and <=255 && BoardingEntryY is >=0 and <=255 && (BoardingDungeonId==Guid.Empty || BoardingEntryMapId!=Guid.Empty) && Loot!=null && Loot.Length<=32 && Loot.All(e=>e?.IsValid()==true) && Ship?.IsValid()==true && Level is >=1 and <=200 && MaximumHealth is >=1 and <=100000 &&
+    public bool IsValid() => PlayerBoardingHealthPercent is >=1 and <=50 && BoardingCrewCount is >=1 and <=12 && BoardingHealthPercent is >=1 and <=50 && double.IsFinite(BoardingRange) && BoardingRange is >=2 and <=8 && BoardingEntryX is >=0 and <=255 && BoardingEntryY is >=0 and <=255 && (BoardingDungeonId==Guid.Empty || BoardingEntryMapId!=Guid.Empty) && Loot!=null && Loot.Length<=32 && Loot.All(e=>e?.IsValid()==true) && Ship?.IsValid()==true && Level is >=1 and <=200 && MaximumHealth is >=1 and <=100000 &&
         CannonDamage is >=1 and <=100 && SailingExperienceReward is >=0 and <=1000000000 &&
         new[]{DetectionRange,LeashRadius,PatrolRadius,DockSafeRange}.All(double.IsFinite) &&
         DetectionRange is >=3 and <=40 && LeashRadius>=DetectionRange && LeashRadius<=80 &&

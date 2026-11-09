@@ -39,7 +39,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(ScrollFields(Fields(_navigation, 0, ["AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory"])));
+        general.Controls.Add(ScrollFields(Fields(_navigation, 0, ["ShipAppearancesVersion", "AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory"])));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -234,7 +234,21 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         {
             var row = panel.RowCount++; var value = property.GetValue(target); Control field;
             void Set(object? changed) { property.SetValue(target, changed); Changed(section); }
-            if ((target is NavalPresentation || target is CannonAmmunition && property.Name is "Icon" or "StatusIcon" or "ProjectileGraphic" or "WaterGraphic" or "HullGraphic" || target is NavalSkillDefinition && property.Name=="Icon") && property.PropertyType==typeof(string))
+            if(target is ShipDefinition shipModel && property.Name=="DamageZones")field=DamageZoneField(shipModel,section);
+            else if(target is ShipDefinition fishingShip && property.Name=="FishingZoneId")field=FishingZoneField(fishingShip,section);
+            else if(property.PropertyType==typeof(ShipDeckActivity))
+            {
+                var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
+                box.Items.AddRange(Enum.GetValues<ShipDeckActivity>().Select(k=>T(k.ToString())).ToArray());box.SelectedIndex=(int)(ShipDeckActivity)value!;
+                box.SelectedIndexChanged+=(_,_)=>Set((ShipDeckActivity)box.SelectedIndex);field=box;
+            }
+            else if(property.PropertyType==typeof(NavalRepairKind))
+            {
+                var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
+                box.Items.AddRange(Enum.GetValues<NavalRepairKind>().Select(k=>T(k.ToString())).ToArray());box.SelectedIndex=(int)(NavalRepairKind)value!;
+                box.SelectedIndexChanged+=(_,_)=>Set((NavalRepairKind)box.SelectedIndex);field=box;
+            }
+            else if ((target is NavalPresentation || target is CannonAmmunition && property.Name is "Icon" or "StatusIcon" or "ProjectileGraphic" or "WaterGraphic" or "HullGraphic" || target is NavalSkillDefinition && property.Name=="Icon") && property.PropertyType==typeof(string))
                 field=AssetField(property.Name,value?.ToString()??"",changed=>Set(changed));
             else if(property.PropertyType==typeof(NavalSkillKind))
             {
@@ -268,10 +282,10 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             else if (property.PropertyType == typeof(Guid) && property.Name != "Id")
             {
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
-                if(property.Name is "ImpactAnimationId" or "HullImpactAnimationId" or "LevelUpAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
+                if(property.Name is "ImpactAnimationId" or "HullImpactAnimationId" or "LevelUpAnimationId" or "DamageAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
                 else if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
-                else if(property.Name=="BoardingCrewNpcId") choices.AddRange(Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>().OrderBy(n=>n.Name).Select(n=>new Choice(n.Id,n.Name)));
-                else if(property.Name=="UnlockQuestId") choices.AddRange(Intersect.GameObjects.QuestDescriptor.Lookup.Values.OrderBy(q=>q.Name).Select(q=>new Choice(q.Id,q.Name)));
+                else if(property.Name.EndsWith("NpcId")) choices.AddRange(Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>().OrderBy(n=>n.Name).Select(n=>new Choice(n.Id,n.Name)));
+                else if(property.Name is "UnlockQuestId" or "RequiredQuestId") choices.AddRange(Intersect.GameObjects.QuestDescriptor.Lookup.Values.OrderBy(q=>q.Name).Select(q=>new Choice(q.Id,q.Name)));
                 else if(property.Name=="BoardingDungeonId") choices.AddRange(Intersect.Framework.Core.Dungeons.DungeonConfiguration.Instance.Dungeons.Select(d=>new Choice(d.Id,d.Name)));
                 else if (property.Name.EndsWith("MapId")) choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));
                 else choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)));
@@ -282,7 +296,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             }
             else if (property.PropertyType == typeof(double) || property.PropertyType == typeof(int))
             {
-                var number = new NumericUpDown { Minimum = property.Name == "Heading" ? -360 : 0, Maximum = int.MaxValue, DecimalPlaces = property.PropertyType == typeof(double) ? 3 : 0,
+                var number = new NumericUpDown { Minimum = property.Name == "Heading" ? -360 : target is ShipDamageZone && property.Name is "X" or "Y" ? -4 : 0, Maximum = int.MaxValue, DecimalPlaces = property.PropertyType == typeof(double) ? 3 : 0,
                     Increment = property.PropertyType == typeof(double) ? .1m : 1, Dock = DockStyle.Fill };
                 number.Value = Math.Clamp(Convert.ToDecimal(value, CultureInfo.InvariantCulture), number.Minimum, number.Maximum);
                 number.ValueChanged += (_, _) => { if (property.PropertyType == typeof(double)) Set((double)number.Value); else Set((int)number.Value); }; field = number;

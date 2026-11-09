@@ -79,6 +79,7 @@ internal sealed partial class HarbourWindow : Window
     }
     private void RenderEntries()
     {
+        string T(string text)=>NavalManagementWindow.T(text);
         if(_view==HarbourView.Shop){RenderMerchant();return;}
         _cards.DeleteAllChildren();
         var pages = Math.Max(1, (_state.Entries.Length + 1) / 2); _page = Math.Clamp(_page, 0, pages - 1);
@@ -93,6 +94,8 @@ internal sealed partial class HarbourWindow : Window
             var status = entry.Owned ? (entry.Health == 0 ? ClientLanguages.Text("Sunken") :
                 string.Format(ClientLanguages.Text("Hull: {0}/100"), entry.Health)) : ClientLanguages.Text("Not owned");
             if (entry.PremiumRequired) status += " · " + ClientLanguages.Text("Premium required");
+            if (!entry.AccessGranted) status += " · " + T("Ship access locked");
+            if (entry.RequiredQuestName.Length>0) status += " · " + string.Format(T("Quest required: {0}"),ClientLanguages.ContentText(entry.RequiredQuestName));
             Text(_cards, "Condition" + i, status, 128, y+25, 480, 23);
             if (_view == HarbourView.Shop)
             {
@@ -129,7 +132,7 @@ internal sealed partial class HarbourWindow : Window
 
 internal static class HarbourUiRules
 {
-    internal static bool CanBuy(HarbourEntry e, bool premium) => e.ForSale && !e.Owned && e.CurrencyAvailable && e.Balance >= e.Price && (!e.PremiumRequired || premium);
-    internal static bool CanLaunch(HarbourEntry e, bool premium) => e.Owned && e.Health > 0 && (!e.PremiumRequired || premium);
+    internal static bool CanBuy(HarbourEntry e, bool premium) => e.AccessGranted && e.ForSale && !e.Owned && e.CurrencyAvailable && e.Balance >= e.Price && (!e.PremiumRequired || premium);
+    internal static bool CanLaunch(HarbourEntry e, bool premium) => e.AccessGranted && e.Owned && e.Health > 0 && (!e.PremiumRequired || premium);
     internal static bool CanRepair(HarbourEntry e) => e.Owned && e.Health < 100 && e.CurrencyAvailable && e.Balance >= e.RepairPrice;
 }

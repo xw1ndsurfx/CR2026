@@ -23,6 +23,9 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(41)] public ShipDeckActivity DeckActivity {get;set;}
+    [Key(40)] public ShipDamageZone[] DamageZones {get;set;}=[];
+    [Key(39)] public NavalNpcDeckMember[] NpcDeckMembers {get;set;}=[];
     [Key(36)] public NavalDeckMember[] DeckMembers {get;set;}=[];
     [Key(37)] public bool WalkableDeck {get;set;}
     [Key(38)] public bool HelmVacant {get;set;}
@@ -62,6 +65,16 @@ public sealed class ShipSnapshot
     [Key(22)] public int Level {get;set;}=1;
     [Key(23)] public int MaximumHealth {get;set;}=100;
     [Key(20)] public string Name {get;set;}="";
+}
+
+[MessagePackObject]
+public sealed class NavalNpcDeckMember
+{
+    [Key(0)] public Guid NpcId {get;set;}
+    [Key(1)] public string Sprite {get;set;}="";
+    [Key(2)] public ShipCrewRole Role {get;set;}
+    [Key(3)] public int Index {get;set;}
+    [Key(4)] public double Yaw {get;set;}
 }
 
 [MessagePackObject]

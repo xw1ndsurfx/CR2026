@@ -1288,6 +1288,7 @@ public partial class Entity : IEntity
         }
 
         var sprite = string.Empty;
+        using var boardingScale=map.BoardingScene!=null?Graphics.ScaleSprites(Origin.X,Origin.Y,Intersect.Framework.Core.Naval.ShipDeck.AvatarScale):null;
         // Copy the actual render color, because we'll be editing it later and don't want to overwrite it.
         var renderColor = new Color(Color.A, Color.R, Color.G, Color.B);
 

@@ -62,6 +62,7 @@ internal static partial class NavalSystem
                 {if(now-v.LastAction<150)return;v.LastAction=now;v.Anchored=!v.Anchored;Emit(NavalEffectKind.Anchor,v.State.MapId,v.State.X,v.State.Y,0,now);}
                 else
                 {
+                    if(v.Definition.DeckActivity==ShipDeckActivity.Fishing)return;
                     ready=starboard?v.StarboardReady:v.PortReady;
                     if(!ShipActions.CanFire(_settings.CannonsEnabled,true,false,now,ready) || Cannonballs.Count+PendingCrewShots>509)return;
                     ammo=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammunition);
@@ -90,7 +91,7 @@ internal static partial class NavalSystem
     private static void Fire(Vessel vessel,bool starboard,long now)=>FireAmmunition(vessel,starboard,now,null,null);
     private static void FireAmmunition(Vessel vessel, bool starboard, long now,CannonAmmunition ammo,List<Cannonball> planned)
     {
-        if(vessel.EnemyBoardingEncounter!=Guid.Empty || BoardingCeasefire(vessel))return;
+        if(vessel.Definition.DeckActivity==ShipDeckActivity.Fishing || vessel.EnemyBoardingEncounter!=Guid.Empty || BoardingCeasefire(vessel))return;
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
         if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
         if (starboard) vessel.StarboardReady = now + NavalSkillDefinition.Reload(_settings.CannonReloadMilliseconds,ammo?.ReloadPercent??100,SkillPower(vessel,NavalSkillKind.RapidReload,now));

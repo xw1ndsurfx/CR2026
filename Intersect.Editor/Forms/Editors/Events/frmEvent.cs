@@ -815,6 +815,9 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenNavalShop:
                 tmpCommand = new OpenNavalShopCommand();
                 break;
+            case EventCommandType.ShipReward:
+                tmpCommand = new ShipRewardCommand();
+                break;
             case EventCommandType.OpenQuestShop:
                 tmpCommand = new OpenQuestShopCommand();
 
@@ -949,6 +952,8 @@ public partial class FrmEvent : Form
             shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",
                 System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
                 { Name = "opennavalshop", Tag = (int)EventCommandType.OpenNavalShop });
+        if(shops!=null && !shops.Nodes.Cast<TreeNode>().Any(n=>n.Tag is int id && id==(int)EventCommandType.ShipReward))
+            shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.Naval.NavalSetupText.Get("Give or unlock a ship",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="shipreward",Tag=(int)EventCommandType.ShipReward});
     }
 
     private void AddQuestShopCommand()
@@ -1788,6 +1793,8 @@ public partial class FrmEvent : Form
                 cmdWindow=new EventCommandNavalShop(command,this);break;
             case EventCommandType.OpenNavalShop:
                 cmdWindow=new EventCommandNavalShop(command,this);break;
+            case EventCommandType.ShipReward:
+                cmdWindow=new EventCommandShipReward((ShipRewardCommand)command,this);break;
             case EventCommandType.OpenQuestShop:
                 cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);
                 break;

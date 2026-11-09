@@ -30,7 +30,7 @@ internal sealed partial class HarbourWindow
         {
             var name=ClientLanguages.ContentText(entry.ShipName.Length>0?entry.ShipName:entry.Name);
             var condition=string.Format(ClientLanguages.Text("Hull: {0}/100"),entry.Health);
-            if(!entry.Owned)Row(_buyList,ref by,name,entry.PremiumRequired?ClientLanguages.Text("Premium required"):T("Not owned"),$"{entry.Price} {entry.Currency}",T("Buy ship"),HarbourUiRules.CanBuy(entry,_state.Premium),()=>Request(HarbourAction.Buy,entry.ModelId),graphic:entry.Graphics,frames:entry.Frames);
+            if(!entry.Owned)Row(_buyList,ref by,name,!entry.AccessGranted?T("Ship access locked")+(entry.RequiredQuestName.Length>0?" · "+string.Format(T("Quest required: {0}"),ClientLanguages.ContentText(entry.RequiredQuestName)):""):entry.PremiumRequired?ClientLanguages.Text("Premium required"):T("Not owned"),$"{entry.Price} {entry.Currency}",T("Buy ship"),HarbourUiRules.CanBuy(entry,_state.Premium),()=>Request(HarbourAction.Buy,entry.ModelId),graphic:entry.Graphics,frames:entry.Frames);
             else
             {
                 Row(_buyList,ref by,name,condition,$"{entry.RepairPrice} {entry.Currency}",T("Fully repair"),HarbourUiRules.CanRepair(entry),()=>Request(HarbourAction.Repair,entry.ModelId),graphic:entry.Graphics,frames:entry.Frames);
