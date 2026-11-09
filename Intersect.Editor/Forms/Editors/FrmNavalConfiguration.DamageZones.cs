@@ -33,7 +33,7 @@ public sealed partial class FrmNavalConfiguration
             remove.Click+=(_,_)=>{if(list.SelectedIndex<0)return;var index=list.SelectedIndex;zones.RemoveAt(index);Populate(index);};
             save.Click+=(_,_)=>
             {
-                if(zones.Any(z=>!z.IsValid())){MessageBox.Show(dialog,T("Choose valid damage coordinates, hull thresholds and repair settings."),T("Damage zones"));return;}
+                if(zones.Any(z=>!z.IsValid(ShipDeck.Kind(ship.Graphics)))){MessageBox.Show(dialog,T("Choose valid damage coordinates, hull thresholds and repair settings."),T("Damage zones"));return;}
                 ship.DamageZones=zones.ToArray();if(zones.Count==0)ship.UseDefaultDamageZones=false;
                 Changed(section);dialog.DialogResult=DialogResult.OK;
             };

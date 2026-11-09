@@ -117,11 +117,12 @@ public partial class HotBarWindow
             var key=KeyCaption(i);
             button.IconFilename=Naval.NavalWorld.Presentation.Icon(action);
             button.NavalAction=action;button.ReloadMilliseconds=cooldown;
-            button.TooltipText=N(i==3?"Sailing skills":i==4?"Ammo":i==5?"Helm control":ShipActions.Caption(action));
+            button.TooltipText=N(i==3?"Sailing skills":i==4?"Ammo":i==5?"Helm control":action==ShipAction.PortCannons && ShipDeck.Kind(own!.Graphics)==ShipDeckKind.Raft?"Forward cannon":ShipActions.Caption(action));
             button.TextColorOverride=i==8 && own!.Anchored?new Color(255,240,200,70):null;
             button.IsDisabled=own!.Sinking || (action==ShipAction.None && !(i is >=3 and <=5 && Naval.NavalWorld.Driver(own)==Globals.Me?.Id)) ||
                 (Naval.NavalWorld.Driver(own)!=Globals.Me?.Id && action is not (ShipAction.CannonView or ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
-                (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || cooldown>0));
+                (action==ShipAction.CannonView && own.DeckActivity==ShipDeckActivity.Fishing) ||
+                (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Naval.NavalWorld.CannonCount(own,action==ShipAction.StarboardCannons)==0 || cooldown>0));
             button.SetCaption(key,cooldown>0?Math.Ceiling(cooldown/1000d).ToString(System.Globalization.CultureInfo.InvariantCulture):null,true);
         }
         if(_sailingBar!=null)

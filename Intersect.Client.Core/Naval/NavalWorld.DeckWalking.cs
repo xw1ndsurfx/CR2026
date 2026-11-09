@@ -10,8 +10,8 @@ namespace Intersect.Client.Naval;
 internal static partial class NavalWorld
 {
     internal static int PartyCapacity=>Math.Max(Math.Max(Intersect.Options.Instance.Party.MaximumMembers,Globals.Me?.PartyMemberCapacity??0),
-        Math.Max(Globals.Me?.Party?.Count??0,Fresh && _ships.Values.Any(v=>v.Current.WalkableDeck &&
-            Globals.Me?.Party?.Any(p=>p.Id==v.Current.CaptainId)==true)?7:0));
+        Math.Max(Globals.Me?.Party?.Count??0,Fresh?_ships.Values.Where(v=>v.Current.WalkableDeck &&
+            Globals.Me?.Party?.Any(p=>p.Id==v.Current.CaptainId)==true).Select(v=>NavalShipModels.Find(v.Current.Graphics)?.CrewCapacity??7).DefaultIfEmpty(0).Max():0));
     private static bool _deckInteractDown;
     private static long _deckInputTime;
     private static Guid _deckLease;
@@ -26,7 +26,7 @@ internal static partial class NavalWorld
     {
         if(!_ships.TryGetValue(ship.Id,out var view))return member;
         var old=(view.Previous.DeckMembers??[]).FirstOrDefault(p=>p.PlayerId==member.PlayerId);
-        if(old==null || !ShipDeck.Contains(new(old.X,old.Y)) || ShipDeck.Distance(new(old.X,old.Y),new(member.X,member.Y))>.8)return member;
+        if(old==null || !ShipDeck.Contains(new(old.X,old.Y),ShipDeck.Kind(ship.Graphics)) || ShipDeck.Distance(new(old.X,old.Y),new(member.X,member.Y))>.8)return member;
         var t=Math.Clamp((Environment.TickCount64-view.Received)/100d,0,1);
         return new(){PlayerId=member.PlayerId,X=old.X+(member.X-old.X)*t,Y=old.Y+(member.Y-old.Y)*t,
             FacingX=member.FacingX,FacingY=member.FacingY,Walking=member.Walking};

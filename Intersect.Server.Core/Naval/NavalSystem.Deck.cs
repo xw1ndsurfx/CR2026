@@ -29,19 +29,20 @@ internal static partial class NavalSystem
         internal long LastMove,LastInteraction,MovedAt;
     }
     private static bool DeckEnabled(Vessel v)=>v.Enemy==null && ShipDeck.Supports(v.Definition.Graphics);
-    private static int VesselCapacity(Vessel v)=>DeckEnabled(v)?7:v.Definition.CrewCapacity;
+    private static int VesselCapacity(Vessel v)=>DeckEnabled(v)?NavalShipModels.Find(v.Definition.Graphics)!.CrewCapacity:v.Definition.CrewCapacity;
     private static string DeckGraphic(Vessel v)
     {
         var family=NavalShipModels.Find(v.Definition.Graphics);
         if(v.State.DamageState>0 && family!=null)return NavalShipModels.Find(v.Definition.DamagedGraphics)?.Id==family.Id?v.Definition.DamagedGraphics:family.DamagedGraphics;
         var idle=IdleGraphic(v.Definition);
+        if(family!=null && NavalShipModels.Find(idle)?.Id!=family.Id)idle=family.IdleGraphics;
         return Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4 && family!=null && NavalShipModels.Find(idle)?.Id==family.Id?idle:v.Definition.Graphics;
     }
     private static string SinkingGraphic(Vessel ship)=>NavalShipModels.Find(ship.Definition.Graphics)?.SinkingGraphics??ship.SinkingGraphics;
     private static void EnsureDeck(Vessel v,long now)
     {
         if(!DeckEnabled(v))return;
-        if(v.State.CaptainId!=Guid.Empty)DeckPartyCapacities[v.State.CaptainId]=7;
+        if(v.State.CaptainId!=Guid.Empty)DeckPartyCapacities[v.State.CaptainId]=VesselCapacity(v);
         var members=v.Crew.Where(c=>now-c.Value.Seen<=1500).Select(c=>c.Key).Append(v.State.CaptainId).Where(id=>id!=Guid.Empty).ToHashSet();
         foreach(var id in v.Deck.Keys.Where(id=>!members.Contains(id)).ToArray())v.Deck.Remove(id);
         foreach(var id in members.OrderBy(id=>id))
@@ -50,12 +51,12 @@ internal static partial class NavalSystem
             {
                 walker=new(){Position=SpawnDeck(v),LastMove=now,LastInteraction=now-250};v.Deck[id]=walker;
             }
-            if(!ShipDeck.Contains(walker.Position))walker.Position=SpawnDeck(v);
+            if(!ShipDeck.Contains(walker.Position,DeckKind(v)))walker.Position=SpawnDeck(v);
             if(id==Driver(v))walker.Position=ShipDeck.Helm;
             else
             {
                 var seat=v.Guns.FirstOrDefault(g=>g.Value.Owner==id && g.Value.Until>now);
-                if(seat.Value!=null)walker.Position=ShipDeck.Station(seat.Key>=_settings.Gunnery.CannonsPerSide,seat.Key%_settings.Gunnery.CannonsPerSide);
+                if(seat.Value!=null)walker.Position=ShipDeck.Station(seat.Key>=_settings.Gunnery.CannonsPerSide,seat.Key%_settings.Gunnery.CannonsPerSide,DeckKind(v));
             }
         }
         // A seat/helm transfer may snap its new operator onto a walking player's
@@ -71,7 +72,7 @@ internal static partial class NavalSystem
                 {
                     if(x==0 && y==0)continue;var length=Math.Sqrt(x*x+y*y);
                     var candidate=new DeckPoint(origin.X+x*radius/length,origin.Y+y*radius/length);
-                    if(ShipDeck.Contains(candidate) && !v.Deck.Any(other=>other.Key!=pair.Key && ShipDeck.Distance(candidate,other.Value.Position)<ShipDeck.Radius*2+.001))free=candidate;
+                    if(ShipDeck.Contains(candidate,DeckKind(v)) && !v.Deck.Any(other=>other.Key!=pair.Key && ShipDeck.Distance(candidate,other.Value.Position)<ShipDeck.Radius*2+.001))free=candidate;
                 }
                 if(free.HasValue)break;
             }
@@ -84,7 +85,7 @@ internal static partial class NavalSystem
             foreach(var x in new[]{-.5,.5,-.25,.25})
             {
                 var p=new DeckPoint(x,y);
-                if(ShipDeck.Contains(p) && !v.Deck.Values.Any(w=>ShipDeck.Distance(w.Position,p)<ShipDeck.Radius*2.1))return p;
+                if(ShipDeck.Contains(p,DeckKind(v)) && !v.Deck.Values.Any(w=>ShipDeck.Distance(w.Position,p)<ShipDeck.Radius*2.1))return p;
             }
         return new(-.5,-1.3);
     }
@@ -100,11 +101,10 @@ internal static partial class NavalSystem
     {
         EnsureDeck(v,now);
         if(!v.Deck.TryGetValue(player,out var walker))return -1;
-        var count=Math.Min(3,_settings.Gunnery.CannonsPerSide);
         return Enumerable.Range(0,_settings.Gunnery.CannonsPerSide*2)
-            .Where(i=>i%_settings.Gunnery.CannonsPerSide<count && (!side.HasValue || side.Value==(i>=_settings.Gunnery.CannonsPerSide)) &&
+            .Where(i=>ValidGunKey(v,i) && (!side.HasValue || side.Value==(i>=_settings.Gunnery.CannonsPerSide)) &&
                 (!v.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Until<=now || gun.Owner==player))
-            .Select(i=>(Index:i,Distance:ShipDeck.Distance(walker.Position,ShipDeck.Station(i>=_settings.Gunnery.CannonsPerSide,i%_settings.Gunnery.CannonsPerSide))))
+            .Select(i=>(Index:i,Distance:ShipDeck.Distance(walker.Position,ShipDeck.Station(i>=_settings.Gunnery.CannonsPerSide,i%_settings.Gunnery.CannonsPerSide,DeckKind(v)))))
             .Where(p=>p.Distance<=ShipDeck.UseDistance).OrderBy(p=>p.Distance).Select(p=>p.Index).FirstOrDefault(-1);
     }
     internal static void DeckInput(Player player,DeckInputPacket packet,long now)
@@ -147,7 +147,7 @@ internal static partial class NavalSystem
                 else if(v.HelmVacant && ShipDeck.Distance(walker.Position,ShipDeck.Helm)<=ShipDeck.UseDistance)
                 {v.HelmVacant=false;v.HelmsmanId=player.Id==v.State.CaptainId?Guid.Empty:player.Id;v.Controls.Reset();walker.Position=ShipDeck.Helm;}
                 else if(TryStartDeckRepair(v,player,now)){walker.LastMove=now;return null;}
-                else if(v.Definition.DeckActivity==ShipDeckActivity.Fishing)
+                else if(ShipDeck.Activity(v.Definition)==ShipDeckActivity.Fishing)
                 {
                     var fishing=ReserveDeckFishing(v,player,now);walker.LastMove=now;player.RegisterAfkActivity();SendSnapshot(player);return fishing;
                 }
@@ -158,7 +158,7 @@ internal static partial class NavalSystem
                     {
                         if(!v.Guns.TryGetValue(index,out var gun))v.Guns[index]=gun=new();
                         gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;gun.Yaw=0;gun.AimAt=now-100;
-                        walker.Position=ShipDeck.Station(index>=_settings.Gunnery.CannonsPerSide,index%_settings.Gunnery.CannonsPerSide);
+                        walker.Position=ShipDeck.Station(index>=_settings.Gunnery.CannonsPerSide,index%_settings.Gunnery.CannonsPerSide,DeckKind(v));
                         player.GunneryMessage="";
                     }
                     else player.GunneryMessage="Move closer to a free cannon or the helm.";
@@ -169,7 +169,7 @@ internal static partial class NavalSystem
             if(Driver(v)==player.Id || seat.Value!=null)return null;
             var before=walker.Position;
             walker.Position=ShipDeck.Move(before,packet.Side/127d,packet.Forward/127d,Math.Min(100,elapsed)/1000d,
-                p=>v.Deck.Any(other=>other.Key!=player.Id && ShipDeck.Distance(p,other.Value.Position)<ShipDeck.Radius*2));
+                p=>v.Deck.Any(other=>other.Key!=player.Id && ShipDeck.Distance(p,other.Value.Position)<ShipDeck.Radius*2),DeckKind(v));
             if(ShipDeck.Distance(before,walker.Position)>.0001)
             {walker.FacingX=packet.Side/127d;walker.FacingY=packet.Forward/127d;walker.MovedAt=now;player.RegisterAfkActivity();}
         }

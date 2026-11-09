@@ -48,7 +48,7 @@ public sealed class ShipDefinition
     public double Drag { get; set; } = .5;
     public double TurnRate { get; set; } = 45;
 
-    public bool IsValid() => Enum.IsDefined(DeckActivity) && DamageZones is {Length:<=16} && DamageZones.All(z=>z?.IsValid()==true) && DamageZones.Select(z=>z.Id).Distinct(StringComparer.Ordinal).Count()==DamageZones.Length && CrewCapacity is >=1 and <=8 && CargoCapacity is >=0 and <=200 && (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
+    public bool IsValid() => Enum.IsDefined(DeckActivity) && DamageZones is {Length:<=16} && DamageZones.All(z=>z?.IsValid(ShipDeck.Kind(Graphics))==true) && DamageZones.Select(z=>z.Id).Distinct(StringComparer.Ordinal).Count()==DamageZones.Length && CrewCapacity is >=1 and <=8 && CargoCapacity is >=0 and <=200 && (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
         new[] { X, Y, Heading, Width, Length, MaxSpeed, ReverseSpeed, Acceleration, Drag, TurnRate }.All(double.IsFinite) &&
         X >= 0 && X < 256 && Y >= 0 && Y < 256 && DockX is >= 0 and < 256 && DockY is >= 0 and < 256 &&
         Width >= .5 && Width <= 16 && Length >= .5 && Length <= 16 &&

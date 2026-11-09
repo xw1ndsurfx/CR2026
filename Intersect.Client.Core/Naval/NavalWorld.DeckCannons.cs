@@ -31,7 +31,7 @@ internal static partial class NavalWorld
 
     private static void DrawDeckCannons(ShipSnapshot ship,ShipSpriteAtlas atlas,ShipSpriteFrame pose,float x,float y,float scale,bool behindCrew)
     {
-        if(string.IsNullOrEmpty(atlas.CannonGraphics) ||
+        if(ship.DeckActivity==ShipDeckActivity.Fishing || string.IsNullOrEmpty(atlas.CannonGraphics) ||
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonGraphics) is not {} texture) return;
         const int cell=ShipCannonAnchor.CellSize,columns=ShipCannonAnchor.Columns;
         _ships.TryGetValue(ship.Id,out var view);

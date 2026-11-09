@@ -11,17 +11,19 @@ internal static partial class NavalSystem
         var ids=ship.Enemy.DeckCrew();var result=new List<NavalNpcDeckMember>();
         for(int i=0;i<ids.Length;i++)
         {
+            var starboard=i>3;var index=i==0?0:(i-1)%3;
+            if(i>0 && index>=MountedCannons(ship,starboard))continue;
             var id=ids[i]==Guid.Empty?ship.Enemy.BoardingCrewNpcId:ids[i];
             if(NPCDescriptor.Get(id) is not {} npc || string.IsNullOrWhiteSpace(npc.Sprite))continue;
             var yaw=0d;
             if(i>0 && ship.EnemyHasTarget)
             {
-                var heading=ship.State.Heading*Math.PI/180;var along=((i-1)%3-1)*ship.Definition.Length/3;
-                var side=(i<=3?-1:1)*ship.Definition.Width/2;
-                var x=ship.State.X+Math.Sin(heading)*along+Math.Cos(heading)*side;
-                var y=ship.State.Y-Math.Cos(heading)*along+Math.Sin(heading)*side;
+                var heading=ship.State.Heading*Math.PI/180;var along=DeckKind(ship)==ShipDeckKind.Raft?0:GunneryAim.StationOffset(index,MountedCannons(ship,starboard),ship.Definition.Length);
+                var beam=CannonBeam(ship,starboard);var radius=(DeckKind(ship)==ShipDeckKind.Raft?ship.Definition.Length:ship.Definition.Width)/2;
+                var x=ship.State.X+Math.Sin(heading)*along+beam.X*radius;
+                var y=ship.State.Y-Math.Cos(heading)*along+beam.Y*radius;
                 var bearing=ShipEnemySteering.Bearing(ship.EnemyTargetX-x,ship.EnemyTargetY-y);
-                yaw=Math.Clamp(ShipEnemySteering.Error(ship.State.Heading+(i<=3?-90:90),bearing),-_settings.Gunnery.AimArcDegrees,_settings.Gunnery.AimArcDegrees);
+                yaw=Math.Clamp(ShipEnemySteering.Error(CannonHeading(ship,starboard),bearing),-_settings.Gunnery.AimArcDegrees,_settings.Gunnery.AimArcDegrees);
             }
             result.Add(new(){NpcId=id,Sprite=npc.Sprite,Role=i==0?ShipCrewRole.Helm:i<=3?ShipCrewRole.PortCannon:ShipCrewRole.StarboardCannon,Index=i==0?0:(i-1)%3,Yaw=yaw});
         }

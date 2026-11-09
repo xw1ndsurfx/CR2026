@@ -10,8 +10,8 @@ public sealed class ShipDamageZone
     [Key(4)] public Guid DamageAnimationId {get;set;}
     [Key(5)] public bool Repairable {get;set;}=true;
     [Key(6)] public NavalRepairKind RepairKind {get;set;}
-    public bool IsValid()=>!string.IsNullOrWhiteSpace(Id) && Id.Length<=40 && double.IsFinite(X) && double.IsFinite(Y) &&
-        Math.Abs(X)<=4 && Math.Abs(Y)<=4 && HealthThreshold is >=1 and <=100 && Enum.IsDefined(RepairKind) && (!Repairable || ShipDeck.Contains(new(X,Y)));
+    public bool IsValid(ShipDeckKind kind=ShipDeckKind.ThreeMast)=>!string.IsNullOrWhiteSpace(Id) && Id.Length<=40 && double.IsFinite(X) && double.IsFinite(Y) &&
+        Math.Abs(X)<=4 && Math.Abs(Y)<=4 && HealthThreshold is >=1 and <=100 && Enum.IsDefined(RepairKind) && (!Repairable || ShipDeck.Contains(new(X,Y),kind));
     public static ShipDamageZone[] Defaults()=>Enumerable.Range(0,6).Select(i=>new ShipDamageZone
     {Id="hull-"+i,X=i%2==0?.5:-.5,Y=i<2?-1.4:i<4?.7:1.4,HealthThreshold=100-i*16}).ToArray();
     public static IEnumerable<ShipDamageZone> Active(ShipDefinition ship,int health,int maximumHealth)

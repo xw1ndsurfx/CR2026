@@ -16,6 +16,7 @@ internal static class NavalCrewDamageEditorTests
         try
         {
             using var editor=new FrmNavalConfiguration(new NavalConfigurationPacket {NavigationJson="{}",CatalogueJson="{}",NavigationVersion="1",CatalogueVersion="1"});
+            Check(editor.Controls.Find("NavalShipPresetCreator",true).Length==3,"Test ships, ship shops and NPC patrols can create a matching-state ship preset");
             var fields=typeof(FrmNavalConfiguration).GetMethod("Fields",hidden)!;
             var patrol=new HerboniaPatrol();
             using var patrolPanel=(TableLayoutPanel)fields.Invoke(editor,[patrol,0,new[]{"Ship","Loot"}])!;

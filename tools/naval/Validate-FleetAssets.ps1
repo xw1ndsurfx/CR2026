@@ -19,7 +19,8 @@ foreach($stem in $Stems){
         $cover=if($sinking){''}else{Join-Path $OceanDirectory $meta.CannonOcclusionGraphics}
         $spectral=$stem -like 'Ship_Ghost_*'
         $null=[ShipFamilyPixels]::Validate($path,$front,$cover,$sinking,$spectral)
-        if(!$sinking -and !(Test-Path -LiteralPath (Join-Path $OceanDirectory $meta.CannonGraphics))){throw "Missing independent cannon atlas: $name"}
+        if(!$sinking -and $meta.CannonGraphics -and !(Test-Path -LiteralPath (Join-Path $OceanDirectory $meta.CannonGraphics) -PathType Leaf)){throw "Missing independent cannon atlas: $name"}
+        if(!$sinking -and !$meta.CannonGraphics -and @($meta.Directions | ForEach-Object {$_ | ForEach-Object {$_.CannonAnchors}}).Count -gt 0){throw "Cannon anchors have no sprite sheet: $name"}
         $checked++
     }
 }

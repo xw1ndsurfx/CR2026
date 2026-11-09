@@ -21,7 +21,8 @@ internal static partial class NavalSystem
     private static (DungeonDefinition Dungeon,MapController Map,int X,int Y)? CreateBoardingDeckCore(HerboniaPatrol patrol,long now,NavalBoardingScene? scene)
     {
         var layout=new NavalBoardingDeckLayout(Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight);
-        var count=scene==null?patrol.BoardingCrewCount:7;
+        var model=NavalShipModels.Find(patrol.Ship.Graphics);
+        var count=scene==null?patrol.BoardingCrewCount:model!.CrewCapacity;
         var positions=scene?.CrewPositions(count)??layout.CrewPositions(count);
         var entryX=scene?.EntryX??layout.EntryX;var entryY=scene?.EntryY??layout.EntryY;
         if(positions.Length!=count || !(scene?.Walkable(entryX,entryY)??layout.Walkable(entryX,entryY)))return null;
@@ -42,7 +43,8 @@ internal static partial class NavalSystem
         for(var i=0;i<npc.Stats.Length;i++)npc.Stats[i]=Math.Max(1,patrol.Level*2);
         return npc;
         }
-        var authored=scene==null?Enumerable.Repeat(source,count).ToArray():patrol.DeckCrew().Select(id=>id==Guid.Empty?source:NPCDescriptor.Get(id)).ToArray();
+        var authored=scene==null?Enumerable.Repeat(source,count).ToArray():patrol.DeckCrew()
+            .Where((id,i)=>i==0 || (i-1)%3<model!.CannonCount(i>3)).Select(id=>id==Guid.Empty?source:NPCDescriptor.Get(id)).ToArray();
         if(authored.Any(n=>n==null || string.IsNullOrWhiteSpace(n.Sprite)))return null;
         var crew=authored.DistinctBy(n=>n.Id).ToDictionary(n=>n.Id,CloneCrew);
         var map=new MapController(Guid.NewGuid()){Name=string.IsNullOrWhiteSpace(patrol.Ship.Name)?source.Name:patrol.Ship.Name,GeneratedBoardingDeck=true,BoardingScene=scene,IsIndoors=true,Brightness=100};

@@ -17,12 +17,13 @@ internal static partial class NavalWorld
             var emitted=new HashSet<Guid>();
             foreach(var member in ship.DeckMembers??[])
             {
-                if(!HasMember(ship,member.PlayerId) || !emitted.Add(member.PlayerId) || !ShipDeck.Contains(new(member.X,member.Y)))continue;
+                if(!HasMember(ship,member.PlayerId) || !emitted.Add(member.PlayerId) || !ShipDeck.Contains(new(member.X,member.Y),ShipDeck.Kind(ship.Graphics)))continue;
                 var p=InterpolatedDeckMember(ship,member);var point=new DeckPoint(p.X,p.Y);
                 var source=ShipDeckProjection.Project(pose,point);
                 var seat=(ship.CrewStations??[]).FirstOrDefault(s=>s.PlayerId==member.PlayerId);
                 var role=Driver(ship)==member.PlayerId?ShipCrewRole.Helm:seat==null?ShipCrewRole.Passenger:seat.Starboard?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon;
-                var facing=DeckFacing(pose,point,seat!=null?(seat.Starboard?1:-1):p.FacingX,seat!=null?0:p.FacingY);
+                var bowGun=ShipDeck.Kind(ship.Graphics)==ShipDeckKind.Raft;
+                var facing=DeckFacing(pose,point,seat!=null?(bowGun?0:seat.Starboard?1:-1):p.FacingX,seat!=null?(bowGun?1:0):p.FacingY);
                 yield return(member.PlayerId,new(){Role=role,Index=seat?.Index??0,X=source.X,Y=source.Y,Facing=facing});
             }
             yield break;

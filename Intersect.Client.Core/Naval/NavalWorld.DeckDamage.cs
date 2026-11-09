@@ -9,16 +9,17 @@ internal static partial class NavalWorld
 {
     internal static bool NearDamagedArea(ShipSnapshot ship)=>
         (ship.DeckMembers??[]).FirstOrDefault(p=>p.PlayerId==Globals.Me?.Id) is {} me &&
-        (ship.DamageZones??[]).Any(z=>z.Repairable && z.IsValid() && ShipDeck.Distance(new(me.X,me.Y),new(z.X,z.Y))<=ShipDeck.UseDistance);
+        (ship.DamageZones??[]).Any(z=>z.Repairable && z.IsValid(ShipDeck.Kind(ship.Graphics)) && ShipDeck.Distance(new(me.X,me.Y),new(z.X,z.Y))<=ShipDeck.UseDistance);
     internal static bool NearFishingStation(ShipSnapshot ship)=>ship.DeckActivity==ShipDeckActivity.Fishing &&
         (ship.DeckMembers??[]).FirstOrDefault(p=>p.PlayerId==Globals.Me?.Id) is {} me &&
-        Enumerable.Range(0,6).Any(i=>ShipDeck.Distance(new(me.X,me.Y),ShipDeck.Station(i>=3,i%3))<=ShipDeck.UseDistance);
+        Enumerable.Range(0,6).Where(i=>i%3<(NavalShipModels.Find(ship.Graphics)?.CannonCount(i>=3)??3))
+            .Any(i=>ShipDeck.Distance(new(me.X,me.Y),ShipDeck.Station(i>=3,i%3,ShipDeck.Kind(ship.Graphics)))<=ShipDeck.UseDistance);
     private static void DrawDeckDamage(ShipSnapshot ship,ShipSpriteFrame pose,float x,float y,float scale,bool animations)
     {
         if(ship.Sinking || ship.Health<=0 || pose.DeckMasts.Length!=3)return;
         foreach(var zone in (ship.DamageZones??[]).Take(16))
         {
-            if(!zone.IsValid())continue;
+            if(!zone.IsValid(ShipDeck.Kind(ship.Graphics)))continue;
             var source=ShipDeckProjection.Project(pose,new(zone.X,zone.Y));
             float px=x+(float)(source.X-pose.AnchorX)*scale*(pose.FlipHorizontal?-1:1),py=y+(float)(source.Y-pose.AnchorY)*scale;
             if(animations)

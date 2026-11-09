@@ -4,16 +4,18 @@
 
 Demandes du 9 novembre 2026, à réaliser un modèle après l'autre et à vérifier dans les huit orientations. Chaque nouveau modèle doit avoir quatre états : navigation, idle à voiles repliées, endommagé et naufrage. Prévoir des couches de premier plan distinctes, des canons indépendants et des ancrages adaptés à l'équipage à 75 %. Les éléments ci-dessous constituent le travail demandé ; leur présence dans cette liste ne signifie pas qu'ils sont déjà livrés.
 
+Apparence de base demandée ensuite : chaque type de coque doit avoir un modèle « aventurier » sobre pour les joueurs, avec bois naturel, voiles écrues et aucun emblème de faction. Les apparences Corps Royaux, Herbonia, Majestya, pirate, squelette et fantôme restent distinctes. Le nouveau trois-mâts joueur par défaut et le premier choix des modèles utilisent l'aventurier. Les modèles et identifiants déjà publiés ne sont pas remplacés silencieusement : le bouton « Changer l’apparence du navire » permet d'appliquer les quatre états à une offre existante en conservant son identifiant, ses conditions d'accès et les flottes qui la possèdent. Le futur Ship of the Line devra également avoir sa base aventurier.
+
 - Trois-mâts Corps Royaux : idle à voiles repliées, état endommagé et naufrage v5 assemblés ; vérification du raccord des états dans le client final encore nécessaire.
 - Herbonia : quatre états rouges assemblés dans les huit directions ; choix des NPC du capitaine et de chacun des six canons dans l'éditeur. Les deux anciens fichiers Herbonia standard sont migrés une seule fois, sans changer les positions, les caractéristiques physiques ni les graphismes personnalisés.
 - Squelette : quatre états assemblés dans les huit directions, avec coque sombre, ornements osseux, pavillon à tête de mort et voiles usées ; contrôle visuel dans le client final encore nécessaire.
-- Fantôme : coque et voiles translucides, lueur spectrale, lisibilité sur mer de jour et de nuit.
-- Pirate : voiles noires et pavillon noir à tête de mort, apparence distincte.
-- Majestya : identité verte, avec coque, voiles et drapeau assortis.
-- Sloop Corps Royaux : modèle plus petit et visuellement différent, un mât, deux canons joueurs au total, un de chaque côté, plus le capitaine.
+- Fantôme : quatre états translucides assemblés dans les huit directions ; pixels répartis dans des couches disjointes pour ne pas multiplier l'opacité, canons teintés assortis. Vérification des joueurs et de la lisibilité dans le client final encore nécessaire.
+- Pirate : quatre états assemblés dans les huit directions, voiles noires et pavillon noir à tête de mort.
+- Majestya : quatre états assemblés dans les huit directions, coque et voiles vertes, drapeau assorti.
+- Sloop aventurier et Corps Royaux : quatre états chacun ; coque courte distincte, un mât, deux canons joueurs au total, un de chaque côté, plus le capitaine. Pont, barre et canons recalibrés dans les huit directions.
 - Ship of the Line : ajouté à la liste des futurs navires ; grand vaisseau de ligne distinct des modèles précédents.
-- Radeau : modèle minimal avec un seul canon joueur sur le pont.
-- Bateau de pêche : à l'arrêt, les postes de pêche remplacent les canons et ouvrent une zone choisie dans l'éditeur de pêche ; validation de l'immobilité côté serveur.
+- Radeau aventurier : quatre états assemblés, un capitaine au timon et un canon joueur à l’avant ; pas de mât ni de voile. L’état idle conserve le même radeau et ses quatre phases de flottement.
+- Bateau de pêche aventurier : quatre états assemblés, filets et repose-cannes sans artillerie. À l’arrêt, les six postes ouvrent une zone choisie dans l’éditeur de pêche ; validation de l’immobilité côté serveur.
 
 Les variantes Herbonia, squelette, fantôme et pirate doivent aussi pouvoir appartenir aux joueurs. Prévoir leurs entrées de catalogue et leurs conditions d'obtention configurables : achat à la boutique de bateaux, premium, quête terminée et attribution/déblocage par commande d'événement. Les permissions, paiements et sauvegardes restent validés par le serveur. L'abordage doit utiliser les ponts des bateaux, avec leurs collisions et couches de premier plan, en conservant le combat, les retours et les récompenses existants.
 
@@ -24,6 +26,8 @@ Réparations physiques : afficher des trous sur le pont selon les dégâts du na
 Animations de dégâts : zones locales configurables dans l'éditeur naval, chacune avec une animation existante choisie dans l'éditeur d'animations (par exemple de petites flammes), apparition selon les dégâts et extinction après réparation. Maintenir ces zones alignées dans les huit directions et pour les quatre états graphiques.
 
 Le rendu monde sépare les bordures qui cachent les pieds et la couche qui masque les fûts mobiles. Les canons doivent passer devant les bordures dans leur zone de balayage, tandis que la toile et ses contours restent devant eux. Les personnages aux canons éloignés passent devant leur propre canon ; les personnages proches restent derrière les bordures. Les textures de premier plan utilisent les pixels du dessin original.
+
+Le catalogue livré compte **onze modèles et quarante-quatre états** : quatre bases aventurier, six trois-mâts de faction et le sloop Corps Royaux. Les atlas et couches sont contrôlés dans les huit directions. Les aperçus hors ligne utilisent les vrais personnages du jeu ; une validation dans le client graphique multijoueur reste nécessaire avant déploiement.
 
 ## Activer le trois-mâts
 
@@ -57,7 +61,7 @@ Les sources de découpe et le script Windows sont dans `tools/naval`. Les images
 
 ## Déplacement libre à 75 %
 
-Le modèle v4 active le pont praticable. Les personnages et leurs couches d'apparence sont dessinés à **75 %**, autour des pieds ; leurs animations de marche utilisent les feuilles du personnage déjà reçu. Le contexte de dessin est restauré après chaque personnage, même en cas d'erreur. La taille et le déplacement à terre restent ceux du moteur habituel. Les autres modèles de navire conservent leurs postes fixes.
+Le modèle v4 active le pont praticable. Les personnages et leurs couches d'apparence sont dessinés à **75 %**, autour des pieds ; leurs animations de marche utilisent les feuilles du personnage déjà reçu. Le contexte de dessin est restauré après chaque personnage, même en cas d'erreur. La taille et le déplacement à terre restent ceux du moteur habituel. Les onze modèles enregistrés utilisent leur profil de pont : trois mâts et six postes, sloop à un mât et deux postes, radeau sans mât et canon avant. Les anciens graphismes personnalisés gardent leurs postes fixes.
 
 Les membres embarqués apparaissent sur une place libre du pont au lieu d'être automatiquement installés à un canon. **WASD ou les flèches** déplacent le personnage dans les directions de l'écran. **E** utilise un canon libre à proximité ou une barre vacante. À un canon, E ou la fermeture de la vue canon libère le poste. Les boutons de changement de bord de cette vue ne permettent pas de réserver à distance un autre canon. Les instructions sont traduites en anglais, français et espagnol par le catalogue naval et utilisent la préférence de langue du client.
 
@@ -85,7 +89,7 @@ Le bouton de configuration des zones de dégâts permet de régler leur position
 
 Pour placer plusieurs petits feux, ajouter plusieurs zones et choisir dans chacune l'animation déjà créée dans l'éditeur d'animations. Les coordonnées X/Y suivent le pont quand le bateau avance ou tourne. L'animation boucle pendant que la zone est active ; sa taille et ses couches proviennent de la définition d'animation. Une zone peut être uniquement visuelle en décochant son caractère réparable. Le seuil dépend de la santé globale de la coque, et non d'une réserve de points de vie indépendante par trou. Les effets sont dessinés sous les voiles et les cordages de premier plan.
 
-Le mode de pont « Pêche » réserve les anciens emplacements de canon à la pêche et désactive leurs tirs. Choisir la zone dans le sélecteur alimenté par l'éditeur de pêche ; le bouton d'actualisation recharge cette liste. Le joueur doit s'approcher d'un poste libre et interagir avec E sur un bateau immobile. Le serveur conserve les règles de position de la zone et l'outil équipé, puis ouvre le mini-jeu existant avec ses prises, récompenses, progression et loot automatique. Le mouvement du bateau ou la perte des conditions de pêche interrompt la session. Le dessin du bateau de pêche distinct reste dans les modèles à produire.
+Le mode de pont « Pêche » réserve les anciens emplacements de canon à la pêche et désactive leurs tirs. Choisir la zone dans le sélecteur alimenté par l'éditeur de pêche ; le bouton d'actualisation recharge cette liste. Le joueur doit s'approcher d'un poste libre et interagir avec E sur un bateau immobile. Le serveur conserve les règles de position de la zone et l'outil équipé, puis ouvre le mini-jeu existant avec ses prises, récompenses, progression et loot automatique. Le mouvement du bateau ou la perte des conditions de pêche interrompt la session. Le modèle dédié reste désarmé même si son ancien réglage de mode indique encore « Canons ».
 
 Les offres de navire peuvent exiger le premium, une quête terminée et/ou un déblocage d'événement. Les conditions activées sont cumulatives et vérifiées côté serveur avant l'achat et le lancement. La commande « Offrir ou débloquer un navire » permet soit de débloquer le modèle pour la boutique, soit d'ajouter le navire à la flotte sans paiement ; l'attribution débloque aussi le modèle. Les conditions de navigation restent applicables. Les modèles débloqués sont enregistrés avec la carrière navale ; la flotte est restaurée si la sauvegarde échoue. Les répétitions d'une récompense ne créent pas de doublons.
 

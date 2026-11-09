@@ -26,7 +26,8 @@ internal static partial class NavalWorld
     internal static ShipCrewState CrewState {get;private set;}=new();
     internal static Guid Driver(ShipSnapshot ship)=>ship.HelmVacant?Guid.Empty:ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
-    private static bool OnBoardingDeck=>Globals.Me?.MapInstance is MapInstance {GeneratedBoardingDeck:true};
+    internal static int CannonCount(ShipSnapshot ship,bool starboard)=>ship.DeckActivity==ShipDeckActivity.Fishing?0:NavalShipModels.Find(ship.Graphics)?.CannonCount(starboard)??3;
+    internal static bool OnBoardingDeck=>Globals.Me?.MapInstance is MapInstance {GeneratedBoardingDeck:true};
     internal static bool IsAboard(Guid playerId)=>Fresh && !OnBoardingDeck && _ships.Values.Any(v=>HasMember(v.Current,playerId));
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && !OnBoardingDeck && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;

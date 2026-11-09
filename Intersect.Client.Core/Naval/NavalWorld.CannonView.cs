@@ -55,10 +55,10 @@ internal static partial class NavalWorld
     internal static bool CannonViewStarboard { get; set; }
 
     // The camera stays aligned with the beam; individual crew shot yaw is validated separately by the server.
-    internal static Vector2 CannonViewDirection(double heading, bool starboard)
+    internal static Vector2 CannonViewDirection(double heading, bool starboard,ShipDeckKind kind=ShipDeckKind.ThreeMast)
     {
-        var (x,y) = ShipActions.Direction(heading,starboard);
-        return new((float)x,(float)y);
+        var angle=ShipDeck.CannonHeading(heading,starboard,kind)*Math.PI/180;
+        return new((float)Math.Sin(angle),(float)-Math.Cos(angle));
     }
     internal static double CannonViewRelativeHeading(double heading,double cameraHeading) =>
         ShipMovement.Normalize(heading-cameraHeading);
@@ -79,10 +79,11 @@ internal static partial class NavalWorld
         if(own is not {Sinking:false} || !_ships.TryGetValue(own.Id,out var helm) ||
             !Position(helm,out var x,out var y,out var heading)) return null;
         var tw=Options.Instance.Map.TileWidth;var th=Options.Instance.Map.TileHeight;
-        var forward=CannonViewDirection(heading,CannonViewStarboard);
-        var beam=ShipMovement.Normalize(heading+(CannonViewStarboard?90:-90));
+        var kind=ShipDeck.Kind(own.Graphics);
+        var forward=CannonViewDirection(heading,CannonViewStarboard,kind);
+        var beam=ShipDeck.CannonHeading(heading,CannonViewStarboard,kind);
         // Place the eye just outside the hull; keep the exact floating position across map boundaries.
-        var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)(own.Width/2+.1);
+        var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)((kind==ShipDeckKind.Raft?own.Length:own.Width)/2+.1);
         if(Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==own.Id && Gunner.Starboard==CannonViewStarboard)
         {
             var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);

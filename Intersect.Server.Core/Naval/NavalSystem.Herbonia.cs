@@ -134,16 +134,18 @@ internal static partial class NavalSystem
             enemy.EnemyHasTarget=true;enemy.EnemyTargetX=point.X;enemy.EnemyTargetY=point.Y;
             QueueEnemyBoarding(enemy,target,now);
             var bearing=ShipEnemySteering.Bearing(point.X-s.X,point.Y-s.Y);
-            if(nearest>_settings.CannonRange*.7) desired=bearing;
+            var bowGun=DeckKind(enemy)==ShipDeckKind.Raft;
+            if(nearest>_settings.CannonRange*.7 || bowGun) desired=bearing;
             else
             {
                 // Choose the closer broadside heading, then orbit instead of ramming the target.
                 var port=ShipMovement.Normalize(bearing+90);var starboard=ShipMovement.Normalize(bearing-90);
                 desired=Math.Abs(ShipEnemySteering.Error(s.Heading,port))<Math.Abs(ShipEnemySteering.Error(s.Heading,starboard))?port:starboard;
-                if(nearest<Math.Max(d.Length,4)) desired=ShipMovement.Normalize(bearing+180);
             }
-            if(nearest<=_settings.CannonRange && ShipEnemySteering.BroadsideAligned(s.Heading,bearing) && EnemyLineClear(enemy,target,point,ocean))
-                Fire(enemy,ShipEnemySteering.Error(s.Heading,bearing)>0,now);
+            if(nearest<Math.Max(d.Length,4)) desired=ShipMovement.Normalize(bearing+180);
+            var aligned=bowGun?Math.Abs(ShipEnemySteering.Error(s.Heading,bearing))<=22:ShipEnemySteering.BroadsideAligned(s.Heading,bearing);
+            if(nearest<=_settings.CannonRange && aligned && EnemyLineClear(enemy,target,point,ocean))
+                Fire(enemy,!bowGun && ShipEnemySteering.Error(s.Heading,bearing)>0,now);
         }
         else
         {

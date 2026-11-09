@@ -68,7 +68,7 @@ public static class ShipFamilyPixels
         for(int k=-2;k<=2;k++)for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++)Try(cs+k*.01,cx+x,cy+y);
         return best<count*.1?new[]{1d,0d,0d}:new[]{bs,bx,by};
     }
-    public static double[] Assemble(string artPath,string maskPath,string referencePath,string foregroundPath,double[] pivots,string target,string fringeTarget,int palette=0)
+    public static double[] Assemble(string artPath,string maskPath,string referencePath,string foregroundPath,double[] pivots,string target,string fringeTarget,int palette=0,bool eraseFixedGuns=true)
     {
         int[] source,mask,reference,oldForeground;int sw,sh,mw,mh;
         using(var b=new Bitmap(artPath)){source=CannonLayerPixels.Read(b);sw=b.Width;sh=b.Height;}
@@ -122,10 +122,10 @@ public static class ShipFamilyPixels
                 if(sx>=0 && sy>=0 && sx<W && sy<H)
                 {pixel=authored[sy*W+sx];if(selection[sy*W+sx])front=pixel;}
                 uint p=(uint)pixel;int r=(int)(p>>16)&255,g=(int)(p>>8)&255,b=(int)p&255;
-                for(int gun=0;gun<6;gun++)
+                for(int gun=0;eraseFixedGuns && gun<6;gun++)
                 {
                     double px=pivots[(d*6+gun)*2],py=pivots[(d*6+gun)*2+1];
-                    if((x-px)*(x-px)+(y-py)*(y-py)>20*20 || p>>24<96 || Math.Max(r,Math.Max(g,b))>175 || Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))>45)continue;
+                    if(front!=0 || (x-px)*(x-px)+(y-py)*(y-py)>20*20 || p>>24<96 || Math.Max(r,Math.Max(g,b))>175 || Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))>45)continue;
                     // The authored fixed iron is replaced by the original,
                     // independently animated gun. Its wooden carriage stays.
                     bool onHull=original[y*W+x]!=0;
@@ -189,6 +189,65 @@ public static class ShipFamilyPixels
         CannonLayerPixels.Save(body,AW,AH,basePath);CannonLayerPixels.Save(front,AW,AH,fringePath);
         CannonLayerPixels.Save(cover,AW,AH,coverPath);CannonLayerPixels.Save(guns,512,384,gunTarget);
     }
+    public static void CanonicalContact(string artPath,string target)
+    {
+        int[] source;int sw,sh;using(var b=new Bitmap(artPath)){source=CannonLayerPixels.Read(b);sw=b.Width;sh=b.Height;}
+        var output=new int[AW*AH];int[] bob={0,-1,0,1};
+        for(int d=0;d<8;d++)for(int y=8;y<H-8;y++)for(int x=12;x<W-12;x++)
+        {
+            int sx=Math.Min(sw-1,(int)((d%2+(x-12+.5)/(W-24))*sw/2d));
+            int sy=Math.Min(sh-1,(int)((d/2+(y-8+.5)/(H-16))*sh/4d));
+            int p=Clean(source[sy*sw+sx]);
+            for(int f=0;f<4;f++)output[(d/2*H+y+bob[f])*AW+d%2*1536+f*W+x]=p;
+        }
+        CannonLayerPixels.Save(output,AW,AH,target);
+    }
+    public static double ScaleCannonCells(string sourcePath,string target,int[] sprites,double requested)
+    {
+        int[] source;using(var b=new Bitmap(sourcePath))source=CannonLayerPixels.Read(b);
+        var output=(int[])source.Clone();int radius=1;
+        foreach(int sprite in sprites)for(int y=0;y<64;y++)for(int x=0;x<64;x++)
+            if((uint)source[(sprite/8*64+y)*512+sprite%8*64+x]>>24>32)
+                radius=Math.Max(radius,Math.Max(Math.Abs(x-32),Math.Abs(y-32)));
+        double factor=Math.Min(requested,30d/radius);
+        foreach(int sprite in sprites)for(int y=0;y<64;y++)for(int x=0;x<64;x++)
+        {
+            int sx=(int)Math.Round(32+(x-32)/factor),sy=(int)Math.Round(32+(y-32)/factor);
+            output[(sprite/8*64+y)*512+sprite%8*64+x]=sx>=0 && sy>=0 && sx<64 && sy<64?source[(sprite/8*64+sy)*512+sprite%8*64+sx]:0;
+        }
+        CannonLayerPixels.Save(output,512,384,target);return factor;
+    }
+    public static void Thumbnail(string bodyPath,string frontPath,string coverPath,string gunPath,double[] stations,int sourceX,int sourceY,string target)
+    {
+        int[] body,front,cover,guns=null;int sw;
+        using(var b=new Bitmap(bodyPath)){body=CannonLayerPixels.Read(b);sw=b.Width;}
+        using(var b=new Bitmap(frontPath))front=CannonLayerPixels.Read(b);
+        using(var b=new Bitmap(coverPath))cover=CannonLayerPixels.Read(b);
+        if(stations.Length>0)using(var b=new Bitmap(gunPath))guns=CannonLayerPixels.Read(b);
+        var pixels=new int[W*H];
+        void Blend(int at,int source)
+        {
+            uint p=(uint)source,q=(uint)pixels[at];int sa=(int)(p>>24),da=(int)(q>>24);if(sa==0)return;
+            int a=sa+(da*(255-sa)+127)/255,denominator=a*255;
+            int Channel(int shift)=>((((int)(p>>shift)&255)*sa*255+((int)(q>>shift)&255)*da*(255-sa))+denominator/2)/denominator;
+            pixels[at]=unchecked((int)((uint)a<<24|(uint)Channel(16)<<16|(uint)Channel(8)<<8|(uint)Channel(0)));
+        }
+        void Layer(int[] layer)
+        {
+            for(int y=0;y<H;y++)for(int x=0;x<W;x++)Blend(y*W+x,layer[(sourceY+y)*sw+sourceX+x]);
+        }
+        Layer(body);Layer(front);
+        for(int i=0;i<stations.Length;i+=3)
+        {
+            int sprite=(int)stations[i],cx=(int)Math.Round(stations[i+1]),cy=(int)Math.Round(stations[i+2]);
+            for(int y=0;y<64;y++)for(int x=0;x<64;x++)
+            {
+                int dx=cx+x-32,dy=cy+y-32;if(dx<0 || dy<0 || dx>=W || dy>=H)continue;
+                Blend(dy*W+dx,guns[(sprite/8*64+y)*512+sprite%8*64+x]);
+            }
+        }
+        Layer(cover);CannonLayerPixels.Save(pixels,W,H,target);
+    }
     public static void Sinking(string artPath,string target,bool spectral=false)
     {
         int[] source;int sw,sh;using(var image=new Bitmap(artPath)){source=CannonLayerPixels.Read(image);sw=image.Width;sh=image.Height;}
@@ -247,10 +306,10 @@ public static class ShipFamilyPixels
         }
         return translucent;
     }
-    public static void Preview(string[] states,string[] fronts,string[] covers,string gunPath,double[] pivots,string target,bool sinkingOnly=false)
+    public static void Preview(string[] states,string[] fronts,string[] covers,string gunPath,double[] pivots,int[] sprites,string target,bool sinkingOnly=false)
     {
         var output=new int[W*4*H*8];for(int i=0;i<output.Length;i++)output[i]=unchecked((int)0xff4a8ba2);
-        int[] guns;using(var b=new Bitmap(gunPath))guns=CannonLayerPixels.Read(b);
+        int[] guns=null;if(gunPath.Length>0)using(var b=new Bitmap(gunPath))guns=CannonLayerPixels.Read(b);
         for(int col=0;col<4;col++)
         {
             int[] art,front=null,cover=null;using(var b=new Bitmap(states[sinkingOnly?3:col]))art=CannonLayerPixels.Read(b);
@@ -263,8 +322,8 @@ public static class ShipFamilyPixels
                 if(front!=null)Draw(front);
                 if(!sinkingOnly && col<3)for(int gun=0;gun<6;gun++)
                 {
-                    int n=d*6+gun;
-                    CannonLayerPixels.Over(output,W*4,H*8,guns,512,n%8*64,n/8*64,64,ox+pivots[n*2],oy+pivots[n*2+1],0);
+                    int n=d*6+gun,sprite=sprites[n];if(sprite<0)continue;
+                    CannonLayerPixels.Over(output,W*4,H*8,guns,512,sprite%8*64,sprite/8*64,64,ox+pivots[n*2],oy+pivots[n*2+1],0);
                 }
                 if(cover!=null)Draw(cover);
                 void Draw(int[] source)

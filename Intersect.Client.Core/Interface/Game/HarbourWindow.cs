@@ -12,6 +12,9 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed partial class HarbourWindow : Window
 {
+    private static string ShipCaption(HarbourEntry entry)=>entry.ShipName.Length>0?entry.ShipName:
+        NavalShipModels.All.Any(m=>m.Caption==entry.Name)?NavalManagementWindow.T(entry.Name):
+        entry.Name is "Royal ship" or "Royal ship (Premium)"?ClientLanguages.Text(entry.Name):ClientLanguages.ContentText(entry.Name);
     private readonly Label _message, _pageLabel;
     private readonly ScrollControl _cards;
     private readonly Button _previous, _next,_refresh;
@@ -90,7 +93,7 @@ internal sealed partial class HarbourWindow : Window
             var y = i++ * 155;
             var preview=new NavalShipPreview(_cards,"FleetShipPreview"+i,entry.Graphics,entry.Frames);
             preview.SetBounds(4,y+4,112,136);
-            Text(_cards, "Name" + i, entry.ShipName.Length>0?entry.ShipName:entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 128, y, 480, 24);
+            Text(_cards, "Name" + i, ShipCaption(entry), 128, y, 480, 24);
             var status = entry.Owned ? (entry.Health == 0 ? ClientLanguages.Text("Sunken") :
                 string.Format(ClientLanguages.Text("Hull: {0}/100"), entry.Health)) : ClientLanguages.Text("Not owned");
             if (entry.PremiumRequired) status += " · " + ClientLanguages.Text("Premium required");

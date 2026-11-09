@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$ArtPath,[Parameter(Mandatory)][string]$OutputDirectory,[string]$Stem='Ship_CorpsRoyaux_ThreeMast',[switch]$Spectral)
+param([Parameter(Mandatory)][string]$ArtPath,[Parameter(Mandatory)][string]$OutputDirectory,[string]$Stem='Ship_CorpsRoyaux_ThreeMast',[switch]$Spectral,[string]$TemplatePath)
 $ErrorActionPreference='Stop'
 $repo=Split-Path (Split-Path $PSScriptRoot)
 Add-Type -AssemblyName System.Drawing
@@ -7,7 +7,8 @@ Add-Type -ReferencedAssemblies $refs -Path @((Join-Path $PSScriptRoot 'CannonLay
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $name=$Stem+'_Sinking_v5_compat.png'
 [ShipFamilyPixels]::Sinking($ArtPath,(Join-Path $OutputDirectory $name),$Spectral.IsPresent)
-$atlas=Get-Content -LiteralPath (Join-Path $repo 'resources/ocean/Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png.naval.json') -Raw | ConvertFrom-Json
+if(!$TemplatePath){$TemplatePath=Join-Path $repo 'resources/ocean/Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png.naval.json'}
+$atlas=Get-Content -LiteralPath $TemplatePath -Raw | ConvertFrom-Json
 $atlas.Loop=$false;$atlas.ForegroundGraphics='';$atlas.CannonGraphics='';$atlas.CannonOcclusionGraphics=''
 foreach($direction in $atlas.Directions){foreach($frame in $direction){$frame.CrewAnchors=@();$frame.CannonAnchors=@();$frame | Add-Member -NotePropertyName Slices -NotePropertyValue $null -Force}}
 $atlas.SourceSha256=(Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()

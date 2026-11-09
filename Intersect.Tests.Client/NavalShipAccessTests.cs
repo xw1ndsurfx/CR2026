@@ -11,6 +11,36 @@ namespace Intersect.Tests.Client;
 public sealed class NavalShipAccessTests
 {
     [Test]
+    public void NewPlayerBoatsUseNeutralAdventurerModelsAndKeepFactionSkinsAvailable()
+    {
+        Assert.That(NavalShipModels.Adventurers.Select(m=>m.Id),Is.EquivalentTo(new[]{"adventurer-three-mast","adventurer-sloop","adventurer-raft","adventurer-fishing"}));
+        var offer=new HarbourOffer();
+        Assert.That(offer.Ship.Graphics,Is.EqualTo(NavalShipModels.PlayerDefault.Graphics));
+        Assert.That(offer.Ship.IdleGraphics,Is.EqualTo(NavalShipModels.PlayerDefault.IdleGraphics));
+        Assert.That(offer.Ship.DamagedGraphics,Is.EqualTo(NavalShipModels.PlayerDefault.DamagedGraphics));
+        Assert.That(offer.SinkingGraphics,Is.EqualTo(NavalShipModels.PlayerDefault.SinkingGraphics));
+        Assert.That(NavalShipModels.All.Select(m=>m.Id).Distinct().Count(),Is.EqualTo(NavalShipModels.All.Length));
+        Assert.That(NavalShipModels.ThreeMasts,Has.Length.EqualTo(6));
+        var fishing=NavalShipModels.Adventurers.Single(m=>m.Id=="adventurer-fishing");
+        Assert.That(ShipDeck.Activity(new(){Graphics=fishing.Graphics,DeckActivity=ShipDeckActivity.Cannons}),Is.EqualTo(ShipDeckActivity.Fishing));
+    }
+    [Test]
+    public void ShipPresetsSetMatchingStatesAndRealCrewWithoutReplacingAuthoredMapIdentity()
+    {
+        foreach(var model in NavalShipModels.All)
+        {
+            var ship=new ShipDefinition {MapId=Guid.NewGuid(),X=12,Y=9,Name="My ship"};
+            var identity=(ship.Id,ship.MapId,ship.X,ship.Y,ship.Name);
+            model.ApplyTo(ship);
+            Assert.That((ship.Id,ship.MapId,ship.X,ship.Y,ship.Name),Is.EqualTo(identity));
+            Assert.That(ship.CrewCapacity,Is.EqualTo(model.CrewCapacity));Assert.That(ship.Frames,Is.EqualTo(4));
+            Assert.That(NavalShipModels.Find(ship.Graphics),Is.EqualTo(model));Assert.That(NavalShipModels.Find(ship.IdleGraphics),Is.EqualTo(model));
+            Assert.That(NavalShipModels.Find(ship.DamagedGraphics),Is.EqualTo(model));Assert.That(ship.SinkingGraphics,Is.EqualTo(model.SinkingGraphics));
+            Assert.That(ship.DeckActivity,Is.EqualTo(model.Activity));
+            Assert.That(ship.IsValid(),Is.True);
+        }
+    }
+    [Test]
     public void LegacyHerboniaAppearanceUpgradesWithoutChangingAuthoredNavigationOrCustomArt()
     {
         var legacy=new ShipDefinition {Graphics="Ship_Herbonia_001.png",MapId=Guid.NewGuid(),X=12,Y=9,Width=2,Length=4};

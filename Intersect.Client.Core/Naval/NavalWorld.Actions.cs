@@ -61,8 +61,8 @@ internal static partial class NavalWorld
         if(own!=null && Driver(own)==Globals.Me?.Id && slot is >=3 and <=5 && !DragAndDrop.IsDragging && Globals.Me?.IsBusy==false)
         {Interface.Game.NavalManagementWindow.Request(slot==3?NavalManageAction.Skills:slot==4?NavalManageAction.Ammo:NavalManageAction.OfferHelm);return;}
         if(own==null || DragAndDrop.IsDragging || Globals.Me?.IsBusy!=false || own.Sinking || action==ShipAction.None ||
-            (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Cooldown(slot)>0))) return;
-        if(action==ShipAction.CannonView) {if(own.WalkableDeck && Driver(own)!=Globals.Me?.Id && Gunner.LeaseId==Guid.Empty)InteractDeck();else CannonViewOpen=!CannonViewOpen;return;}
+            (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || CannonCount(own,action==ShipAction.StarboardCannons)==0 || Cooldown(slot)>0))) return;
+        if(action==ShipAction.CannonView) {if(own.DeckActivity==ShipDeckActivity.Fishing)return;if(own.WalkableDeck && Driver(own)!=Globals.Me?.Id && Gunner.LeaseId==Guid.Empty)InteractDeck();else CannonViewOpen=!CannonViewOpen;return;}
         if(action==ShipAction.Crew) {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew});return;}
         if(Driver(own)!=Globals.Me!.Id && action==ShipAction.LeaveHelm)
         {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew,Action=HarbourAction.LeaveCrew});return;}

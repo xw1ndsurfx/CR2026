@@ -423,7 +423,7 @@ internal static partial class NavalSystem
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
                     PortReloadMilliseconds = (int)Math.Clamp(v.PortReady-now,0,60000),
                     StarboardReloadMilliseconds = (int)Math.Clamp(v.StarboardReady-now,0,60000),
-                    DeckActivity=v.Definition.DeckActivity,Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled && v.Definition.DeckActivity==ShipDeckActivity.Cannons, Sinking = v.SunkUntil > 0,
+                    DeckActivity=ShipDeck.Activity(v.Definition),Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled && ShipDeck.Activity(v.Definition)==ShipDeckActivity.Cannons, Sinking = v.SunkUntil > 0,
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))
