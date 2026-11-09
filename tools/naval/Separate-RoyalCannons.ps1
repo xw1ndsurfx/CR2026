@@ -78,4 +78,6 @@ if([Text.Encoding]::UTF8.GetByteCount($json) -gt 65536){throw 'Metadata exceeds 
 $counts | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'extraction-counts.json') -Encoding utf8
 [CannonLayerPixels]::Preview($ship,$fringe,$cover,$guns,$positions,(Join-Path $OutputDirectory 'Apercu_canons_gauche_centre_droite.png'))
 foreach($name in @($new,$foreground,$cannons,$occlusion,($new+'.naval.json'))){Copy-Item -LiteralPath (Join-Path $OutputDirectory $name) -Destination $ocean -Force}
+& (Join-Path $PSScriptRoot 'Apply-DeckCalibration.ps1') -AtlasPath (Join-Path $OutputDirectory ($new+'.naval.json'))
+Copy-Item -LiteralPath (Join-Path $OutputDirectory ($new+'.naval.json')) -Destination $ocean -Force
 Write-Output ('Created 48 cannon sprites and '+[Text.Encoding]::UTF8.GetByteCount($json)+' bytes of metadata.')

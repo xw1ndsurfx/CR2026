@@ -74,6 +74,7 @@ internal sealed class NavalCannonViewWindow : Window
     }
     private void ChooseSide(bool starboard)
     {
+        if(NavalWorld.OwnShip?.WalkableDeck==true)return;
         NavalWorld.AutoPickCannonSide=false;NavalWorld.CannonViewStarboard=starboard;
         if(_viewport.CrewMode && NavalWorld.Gunner.LeaseId!=Guid.Empty) NavalWorld.RequestStation(CannonStationAction.Acquire);
     }
@@ -86,6 +87,8 @@ internal sealed class NavalCannonViewWindow : Window
         }
         if(_ship!=ship.Id) {_ship=ship.Id;NavalWorld.CannonViewStarboard=false;_viewport.Release();}
         var crew=NavalWorld.Driver(ship)!=Globals.Me?.Id;
+        _port.IsDisabled=_starboard.IsDisabled=crew && ship.WalkableDeck;
+        if(ship.WalkableDeck && NavalWorld.Gunner.LeaseId!=Guid.Empty)NavalWorld.CannonViewStarboard=NavalWorld.Gunner.Starboard;
         _viewport.CrewMode=crew;_crewWasOpen=crew;
         _fullscreen=crew;DrawShadow=!crew;Titlebar.IsHidden=crew;
         Alignment=crew?[]:[Alignments.Center];

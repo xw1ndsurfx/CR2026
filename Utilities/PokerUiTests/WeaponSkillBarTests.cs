@@ -30,13 +30,16 @@ internal static class WeaponSkillBarTests
             var config=new RoyalCombatConfiguration();var category=config.Masteries.Single(c=>c.Key=="swords");category.WeaponIds=[weapon];
             var talent=category.Talents.First(t=>t.Skill.Enabled);
             var type=typeof(GameInterface).Assembly.GetType("Intersect.Client.Interface.Game.WeaponSkillBar",true)!;
-            var bar=(Base)Activator.CreateInstance(type,hidden,null,[canvas],null)!;
+            var canShow=true;
+            var bar=(Base)Activator.CreateInstance(type,hidden,null,[canvas,(Func<bool>)(()=>canShow)],null)!;
             void Apply(ArcheryStatePacket packet)=>type.GetMethod("Apply",hidden)!.Invoke(bar,[packet]);
             void Update()=>type.GetMethod("Update",hidden)!.Invoke(bar,null);
             Apply(new ArcheryStatePacket { ConfigurationJson=config.ToJson(),MasteriesJson=JsonSerializer.Serialize(new Dictionary<string,long>{{category.Key,500}}),
                 MasteryRanksJson=JsonSerializer.Serialize(new Dictionary<string,Dictionary<string,int>>{{category.Key,new(){{talent.Key,1}}}}) });
             var button=bar.Children.OfType<Button>().Single();
             Check(!bar.IsHidden && !button.IsDisabled,"Learned active skill is available in its own bar");
+            canShow=false;Update();Check(bar.IsHidden,"The current game mode can hide weapon skills");
+            canShow=true;Update();Check(!bar.IsHidden,"Returning to land restores weapon skills");
             Apply(new ArcheryStatePacket { WeaponSkillCooldownsJson=JsonSerializer.Serialize(new Dictionary<string,long>{{category.Key+"/"+talent.Key,5000}}) });
             Check(button.IsDisabled && button.Text.Contains("s)"),"Server cooldown is visible and prevents another activation");
             Apply(new ArcheryStatePacket { MasteriesReadOnly=true,MasteriesJson="{}",ConfigurationJson=config.ToJson() });

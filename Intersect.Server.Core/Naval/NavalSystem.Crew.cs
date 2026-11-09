@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Client;
@@ -33,7 +33,7 @@ internal static partial class NavalSystem
         ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes,player.X+.5,player.Y+.5,_settings.DockInteractionRange)!=null;
     private static bool EligibleCrewShip(Player player,Vessel vessel)=>vessel.OwnerId!=Guid.Empty && vessel.State.CaptainId!=Guid.Empty &&
         vessel.State.MapId==player.MapId && vessel.Enemy==null && ShipCrewRules.CanBoard(BesideCrewDock(player),player.Party.Any(p=>p.Id==vessel.State.CaptainId),
-            vessel.BoardingOpen,NearCrewDock(vessel),vessel.SunkUntil==0,vessel.Crew.Count+1,vessel.Definition.CrewCapacity) &&
+            vessel.BoardingOpen,NearCrewDock(vessel),vessel.SunkUntil==0,vessel.Crew.Count+1,VesselCapacity(vessel)) &&
         Distance(player.X+.5,player.Y+.5,vessel.State.X,vessel.State.Y)<=8;
 
     private static ShipCrewState CrewState(Player player)
@@ -43,10 +43,10 @@ internal static partial class NavalSystem
             .Concat(own.Crew.Select(m=>new ShipCrewMember {PlayerId=m.Key,Name=m.Value.Name})).Where(m=>m.PlayerId!=Guid.Empty).ToArray();
         var dock=own!=null?NearCrewDock(own):BesideCrewDock(player);
         return new() {ShipId=own?.State.Id??Guid.Empty,CaptainId=own?.State.CaptainId??Guid.Empty,ShipName=own?.Name??"",
-            Capacity=own?.Definition.CrewCapacity??0,BoardingOpen=own?.BoardingOpen??false,Members=members,AtDock=dock,
+            Capacity=own==null?0:VesselCapacity(own),BoardingOpen=own?.BoardingOpen??false,Members=members,AtDock=dock,
             PersonalCargoCount=player.NavalCrewPassage?.Ship.Cargo.Count??0,
             Offers=own!=null || !dock?[]:Ships.Values.Where(v=>EligibleCrewShip(player,v)).Take(32).Select(v=>new ShipCrewOffer {
-                ShipId=v.State.Id,Name=v.Name,CaptainName=v.CaptainName,Occupied=v.Crew.Count+1,Capacity=v.Definition.CrewCapacity}).ToArray()};
+                ShipId=v.State.Id,Name=v.Name,CaptainName=v.CaptainName,Occupied=v.Crew.Count+1,Capacity=VesselCapacity(v)}).ToArray()};
     }
     internal static void Crew(Player player,HarbourRequestPacket packet)
     {
@@ -192,8 +192,8 @@ internal static partial class NavalSystem
                     }
                     if((ship.Health<=0 || ship.SunkUntil>0) && passage!=null) {passage.Ship.Health=0;passage.Ship.Cargo.Clear();}
                     foreach(var gun in ship.Guns.Values.Where(g=>g.Owner==player.Id)) gun.Owner=gun.Lease=Guid.Empty;
-                    ship.Crew.Remove(player.Id);Repairs.Remove(player.Id);
-                    if(ship.HelmsmanId==player.Id){ship.HelmsmanId=Guid.Empty;ship.Controls.Reset();}
+                    ship.Crew.Remove(player.Id);ship.Deck.Remove(player.Id);Repairs.Remove(player.Id);
+                    if(ship.HelmsmanId==player.Id){ship.HelmVacant=DeckEnabled(ship);ship.HelmsmanId=Guid.Empty;ship.Controls.Reset();}
                     if(ship.Crew.Count==0 && ship.State.CaptainId==Guid.Empty && ship.OwnerId!=Guid.Empty) Ships.Remove(ship.State.Id);
                 }
                 player.BoardedShipId=Guid.Empty;

@@ -1439,6 +1439,7 @@ public partial class Entity : IEntity
     {
         get
         {
+            if(_navalDeckOrigin.HasValue)return _deckWalking?(int)(Environment.TickCount64/140%Math.Max(1,SpriteFrames)):0;
             var frame = this is Player { ActiveMount: not null } && string.IsNullOrEmpty(TransformedSprite) ? Math.Min(1, SpriteFrames - 1) : WalkFrame;
 
             if (IsBlocking)

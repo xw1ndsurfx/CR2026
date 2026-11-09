@@ -32,6 +32,7 @@ internal static partial class NavalWorld
     internal static bool ShouldAcquireStation(long now,long next,bool enabled,bool busy,bool occupied)=>enabled && !busy && !occupied && now>=next;
     internal static void EnsureStation()
     {
+        if(OwnShip?.WalkableDeck==true){RenewStation();return;}
         var now=Environment.TickCount64;
         if(Gunner.LeaseId!=Guid.Empty) AutoPickCannonSide=false;
         else if(AutoPickCannonSide && Gunner.Message=="All cannons on this side are occupied.")

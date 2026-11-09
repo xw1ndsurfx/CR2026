@@ -1,5 +1,9 @@
 {
   "Entries": {
+    "WASD: steer - E: leave the helm": { "en": "WASD: steer - E: leave the helm", "fr": "WASD : piloter - E : quitter la barre", "es": "WASD: pilotar - E: dejar el timón" },
+    "E: leave cannon - Mouse: aim and fire": { "en": "E: leave cannon - Mouse: aim and fire", "fr": "E : quitter le canon - Souris : viser et tirer", "es": "E: dejar el cañón - Ratón: apuntar y disparar" },
+    "WASD / arrows: walk - E: use a free cannon or helm": { "en": "WASD / arrows: walk - E: use a free cannon or helm", "fr": "WASD / flèches : marcher - E : utiliser un canon libre ou la barre", "es": "WASD / flechas: caminar - E: usar un cañón libre o el timón" },
+    "Move closer to a free cannon or the helm.": { "en": "Move closer to a free cannon or the helm.", "fr": "Approchez-vous d’un canon libre ou de la barre.", "es": "Acércate a un cañón libre o al timón." },
     "This tile is blocked. Choose a walkable pier tile without Q or Block.": { "en": "This tile is blocked. Choose a walkable pier tile without Q or Block.", "fr": "Cette case est bloquée. Choisissez une case praticable du ponton, sans Q ni Block.", "es": "Esta casilla está bloqueada. Elija una casilla transitable del muelle, sin Q ni Block." },
     "Disembarkation point": { "en": "Disembarkation point", "fr": "Point de débarquement", "es": "Punto de desembarco" },
     "Choose the arrival tile": { "en": "Choose the arrival tile", "fr": "Choisir la case d’arrivée", "es": "Elegir la casilla de llegada" },

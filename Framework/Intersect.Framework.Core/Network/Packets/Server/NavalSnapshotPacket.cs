@@ -5,6 +5,7 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject(AllowPrivate = true)]
 public partial class NavalSnapshotPacket : IntersectPacket
 {
+    [Key(12)] public int PartyCapacity {get;set;}
     [Key(11)] public ShipSnapshot? ShoreCargo {get;set;}
     [Key(10)] public GunneryState Gunnery {get;set;}=new();
     [Key(9)] public ShipCrewState Crew {get;set;}=new();
@@ -22,6 +23,9 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(36)] public NavalDeckMember[] DeckMembers {get;set;}=[];
+    [Key(37)] public bool WalkableDeck {get;set;}
+    [Key(38)] public bool HelmVacant {get;set;}
     [Key(35)] public NavalCrewStation[] CrewStations { get; set; } = [];
     [Key(34)] public bool BoardingReady {get;set;}
     [Key(33)] public NavalCannonStatus[] CannonStatuses {get;set;}=[];
@@ -58,6 +62,17 @@ public sealed class ShipSnapshot
     [Key(22)] public int Level {get;set;}=1;
     [Key(23)] public int MaximumHealth {get;set;}=100;
     [Key(20)] public string Name {get;set;}="";
+}
+
+[MessagePackObject]
+public sealed class NavalDeckMember
+{
+    [Key(0)] public Guid PlayerId {get;set;}
+    [Key(1)] public double X {get;set;}
+    [Key(2)] public double Y {get;set;}
+    [Key(3)] public double FacingX {get;set;}
+    [Key(4)] public double FacingY {get;set;}
+    [Key(5)] public bool Walking {get;set;}
 }
 
 [MessagePackObject]

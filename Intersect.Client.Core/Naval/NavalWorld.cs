@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
@@ -21,10 +21,10 @@ internal static partial class NavalWorld
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime,_voyageReturnUntil;
     private static bool _lastAboard,_lastAboardSinking;
-    internal static void Clear() {ClearCinematicFleet();ClearGunnery();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {ClearCinematicFleet();ClearGunnery();ClearDeck();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipSnapshot? ShoreCargo {get;private set;}
     internal static ShipCrewState CrewState {get;private set;}=new();
-    internal static Guid Driver(ShipSnapshot ship)=>ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
+    internal static Guid Driver(ShipSnapshot ship)=>ship.HelmVacant?Guid.Empty:ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
     internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
@@ -32,6 +32,7 @@ internal static partial class NavalWorld
 
     internal static void Apply(NavalSnapshotPacket packet)
     {
+        if(Globals.Me!=null && packet.PartyCapacity>0)Globals.Me.PartyMemberCapacity=Math.Clamp(packet.PartyCapacity,1,100);
         var now = Environment.TickCount64;
         var sameViewer=_viewer!=Guid.Empty && _viewer==Globals.Me?.Id;
         var aboard=packet.Ships.FirstOrDefault(s=>HasMember(s,Globals.Me?.Id??Guid.Empty));
@@ -63,9 +64,10 @@ internal static partial class NavalWorld
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         var crewShip=OwnShip;
         var crewId=crewShip!=null && Driver(crewShip)!=_viewer?crewShip.Id:Guid.Empty;
-        if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking)
+        if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking && !crewShip.WalkableDeck)
             {CannonViewOpen=true;AutoPickCannonSide=true;}
         _crewCannonShip=crewId;
+        ApplyDeckMode(crewShip);
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
         // Rendering and camera use the independent interpolated ship center below.
         foreach (var view in next.Values)
@@ -80,6 +82,7 @@ internal static partial class NavalWorld
         if (!Fresh || Globals.Me == null) return;
         ReadActions(busy);
         var own = _ships.Values.FirstOrDefault(v => HasMember(v.Current,Globals.Me.Id))?.Current;
+        if(own?.WalkableDeck==true && InputDeck(own,busy))return;
         if (own == null || Driver(own)!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
         bool Down(Keys key) => !busy && Globals.InputManager.IsKeyDown(key);

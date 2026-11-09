@@ -26,7 +26,7 @@ internal static partial class NavalSystem
     private static void PruneGuns(Vessel vessel,long now)
     {
         foreach(var entry in vessel.Guns)
-            if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
+            if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || DeckEnabled(vessel) && entry.Key%_settings.Gunnery.CannonsPerSide>=3 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
                 vessel.State.CaptainId==Guid.Empty || entry.Value.Owner==Driver(vessel) || Repairs.ContainsKey(entry.Value.Owner) ||
                 entry.Value.Owner!=vessel.State.CaptainId && (!vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500))
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
@@ -71,7 +71,7 @@ internal static partial class NavalSystem
                 if(!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z!=0 ||
                     player.InstanceType!=MapInstanceType.Overworld || !Enum.IsDefined(packet.Action) ||
                     !Ships.TryGetValue(packet.ShipId,out var vessel) || player.MapId!=vessel.State.MapId || !GunnerEligible(player,vessel)) return;
-                if(packet.Action!=CannonStationAction.Renew)
+                if(packet.Action!=CannonStationAction.Renew && packet.Action!=CannonStationAction.Release)
                 {
                     if(now-player.LastGunneryRequest<100) return;
                     player.LastGunneryRequest=now;
@@ -81,15 +81,17 @@ internal static partial class NavalSystem
                 var current=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
                 if(packet.Action==CannonStationAction.Release)
                 {
-                    if(current.Value!=null && current.Value.Lease==packet.LeaseId) current.Value.Owner=current.Value.Lease=Guid.Empty;
+                    if(current.Value==null || current.Value.Lease!=packet.LeaseId)return;
+                    current.Value.Owner=current.Value.Lease=Guid.Empty;
                     SendSnapshot(player);return;
                 }
                 if(!_settings.Gunnery.Enabled || !_settings.CannonsEnabled) {player.GunneryMessage="Crew cannons are disabled.";SendSnapshot(player);return;}
                 if(packet.Action==CannonStationAction.Acquire)
                 {
                     var start=packet.Starboard?count:0;
-                    var index=Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
-                    if(index<0) player.GunneryMessage="All cannons on this side are occupied.";
+                    var index=DeckEnabled(vessel)?NearestDeckGun(vessel,player.Id,packet.Starboard,now):
+                        Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
+                    if(index<0) player.GunneryMessage=DeckEnabled(vessel)?"Move closer to a free cannon or the helm.":"All cannons on this side are occupied.";
                     else
                     {
                         if(current.Value!=null) current.Value.Owner=current.Value.Lease=Guid.Empty;

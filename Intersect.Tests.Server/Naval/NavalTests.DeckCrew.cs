@@ -59,6 +59,9 @@ public sealed partial class NavalTests
         NavalSystem.Station(player,packet,now+800);
         var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!.GetValue(null)!;
         Assert.That(balls.Count,Is.EqualTo(1),"A valid shot 50 ms after an aim update must still fire.");
+        packet.Action=CannonStationAction.Release;
+        NavalSystem.Station(player,packet,now+810);
+        Assert.That((NavalCrewStation[])world.Invoke("CrewStationSnapshot",ship,now+820)!,Is.Empty,"Closing the cannon immediately after firing must release the station without waiting for the fire rate limit.");
         Assert.That((NavalCrewStation[])world.Invoke("CrewStationSnapshot",ship,now+4500)!,Is.Empty);
     }
 

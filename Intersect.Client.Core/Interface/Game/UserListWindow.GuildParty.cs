@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments.InputSubmissionEvent;
@@ -149,7 +149,7 @@ internal sealed partial class UserListWindow
         _partyVitals.Clear();
 
         AddLabel(_body, "PartyHeader",
-            count > 0 ? "PARTY   " + count + " / " + Options.Instance.Party.MaximumMembers
+            count > 0 ? "PARTY   " + count + " / " + Naval.NavalWorld.PartyCapacity
                       : "NO PARTY FORMED",
             7, 4, 446, 26, 13, Gold, true);
 

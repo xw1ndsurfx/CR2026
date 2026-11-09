@@ -21,6 +21,12 @@ public sealed class ShipSpriteAtlas
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
         Directions.All(row => row != null && row.Length == frames && row.All(frame =>
             frame != null && frame.CrewAnchors != null && frame.CrewAnchors.Length <= 16 &&
+            frame.DeckMasts!=null && (frame.DeckMasts.Length==0 || frame.DeckMasts.Length==3) &&
+            frame.DeckMasts.All(p=>double.IsFinite(p.X) && double.IsFinite(p.Y) && p.X>=0 && p.Y>=0 && p.X<=frame.Width && p.Y<=frame.Height) &&
+            (!frame.DeckBow.HasValue || double.IsFinite(frame.DeckBow.Value.X) && double.IsFinite(frame.DeckBow.Value.Y) &&
+                frame.DeckBow.Value.X>=0 && frame.DeckBow.Value.X<=frame.Width && frame.DeckBow.Value.Y>=0 && frame.DeckBow.Value.Y<=frame.Height) &&
+            new[]{frame.DeckPort,frame.DeckStarboard}.All(points=>points!=null && (points.Length==0 || points.Length==3) &&
+                points.All(p=>double.IsFinite(p.X) && double.IsFinite(p.Y) && p.X>=0 && p.Y>=0 && p.X<=frame.Width && p.Y<=frame.Height)) &&
             frame.CannonAnchors != null && frame.CannonAnchors.Length<=16 &&
             (frame.CannonAnchors.Length==0 || !string.IsNullOrEmpty(CannonGraphics)) &&
             frame.CannonAnchors.All(a=>a!=null && a.IsValid(frame.Width,frame.Height)) &&
@@ -63,6 +69,10 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public DeckPoint[] DeckMasts {get;set;}=[];
+    public DeckPoint[] DeckPort {get;set;}=[];
+    public DeckPoint[] DeckStarboard {get;set;}=[];
+    public DeckPoint? DeckBow {get;set;}
     public ShipCannonAnchor[] CannonAnchors { get; set; } = [];
     public ShipCrewAnchor[] CrewAnchors { get; set; } = [];
     public double RotationDegrees {get;set;}

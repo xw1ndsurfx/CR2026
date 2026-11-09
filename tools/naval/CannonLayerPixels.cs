@@ -7,6 +7,51 @@ using System.Runtime.InteropServices;
 // visible pixels are always taken from the registered game atlas.
 public static class CannonLayerPixels
 {
+    public static int[] DeckReplayFrame(int[] ship,int[] fringe,int[] cover,int[] guns,int[][] sheets,int[] widths,double[] frame)
+    {
+        const int w=384,h=256;var pixels=new int[w*h];for(int i=0;i<pixels.Length;i++)pixels[i]=unchecked((int)0xff4a8ba2);
+        int d=(int)frame[0],phase=(int)frame[1],ax=d%2*1536+phase*384,ay=d/2*256;
+        Blit(pixels,w,h,ship,3072,ax,ay,384,256,192,128,1);
+        for(int i=0;i<7;i++)if(frame[4+i*5+4]==0)Person(i);
+        Blit(pixels,w,h,fringe,3072,ax,ay,384,256,192,128,1);
+        for(int station=0;station<6;station++)
+        {
+            int n=d*6+station,at=39+station*3;
+            Blit(pixels,w,h,guns,512,n%8*64,n/8*64,64,64,frame[at],frame[at+1],1,frame[at+2]);
+        }
+        for(int i=0;i<7;i++)if(frame[4+i*5+4]!=0)Person(i);
+        Blit(pixels,w,h,cover,3072,ax,ay,384,256,192,128,1);
+        void Person(int i)
+        {
+            int ci=4+i*5,row=(int)frame[ci+2],column=frame[ci+3]!=0?(int)(frame[2]/140)%6:0;
+            int left=128,right=0,bottom=0;
+            for(int y=0;y<128;y++)for(int x=0;x<128;x++)
+                if((uint)sheets[0][(row*128+y)*widths[0]+column*128+x]>>24>32){left=Math.Min(left,x);right=Math.Max(right,x+1);bottom=Math.Max(bottom,y+1);}
+            double scale=.75*frame[3],cx=frame[ci]+(64-(left+right)/2d)*scale,cy=frame[ci+1]+(64-bottom)*scale;
+            for(int layer=0;layer<4;layer++)
+                if(layer!=3 || i%2==0)Blit(pixels,w,h,sheets[layer],widths[layer],column*128,row*128,128,128,cx,cy,scale);
+        }
+        var enlarged=new int[w*h*4];for(int y=0;y<h*2;y++)for(int x=0;x<w*2;x++)enlarged[y*w*2+x]=pixels[y/2*w+x/2];return enlarged;
+    }
+    public static void DotMask(int[] pixels,double[] points)
+    {
+        for(int i=0;i<points.Length;i+=2)
+        {
+            int x=(int)Math.Round(points[i]*2),y=(int)Math.Round(points[i+1]*2);
+            for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)if(x+dx>=0 && x+dx<768 && y+dy>=0 && y+dy<512)
+                Blend(pixels,(y+dy)*768+x+dx,0xa055ff88);
+        }
+    }
+    public static void Contact(string[] paths,int columns,string output)
+    {
+        int[] pixels=null;int width=0,height=0;
+        for(int i=0;i<paths.Length;i++)using(var image=new Bitmap(paths[i]))
+        {
+            if(pixels==null){width=image.Width*columns;height=image.Height*((paths.Length+columns-1)/columns);pixels=new int[width*height];}
+            var p=Read(image);for(int y=0;y<image.Height;y++)Array.Copy(p,y*image.Width,pixels,(i/columns*image.Height+y)*width+i%columns*image.Width,image.Width);
+        }
+        Save(pixels,width,height,output);
+    }
     static void Blend(int[] output,int at,uint p)
     {
         int a=(int)(p>>24);if(a==0)return;uint q=(uint)output[at];

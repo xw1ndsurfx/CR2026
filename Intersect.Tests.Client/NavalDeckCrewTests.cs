@@ -36,6 +36,7 @@ public sealed class NavalDeckCrewTests
 
     private sealed class FailingCrewEntity : Intersect.Client.Entities.Entity
     {
+        public override bool IsStealthed=>false;
         public FailingCrewEntity() : base(Guid.Empty,null,EntityType.Player) { }
         public override void Draw()
         {
@@ -53,7 +54,10 @@ public sealed class NavalDeckCrewTests
         var entity=(FailingCrewEntity)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(FailingCrewEntity));
         GC.SuppressFinalize(entity);
         entity.WorldPos=new(10,20,30,40);
-        Assert.Throws<InvalidOperationException>(()=>entity.DrawOnShip(30,40,Direction.Right));
+        entity.SpriteAnimation=Intersect.Client.Framework.Entities.SpriteAnimations.Idle;
+        Assert.Throws<InvalidOperationException>(()=>entity.DrawOnShip(30,40,Direction.Right,.75f,true));
+        Assert.That(entity.SpriteAnimation,Is.EqualTo(Intersect.Client.Framework.Entities.SpriteAnimations.Idle));
+        Assert.That(Intersect.Client.Core.Graphics.ScaledSpriteRectangle(new(10,20,30,40)).Width,Is.EqualTo(30));
         Assert.That(entity.WorldPos.X,Is.EqualTo(10));
         Assert.That(entity.WorldPos.Y,Is.EqualTo(20));
         Assert.That(entity.DirectionFacing,Is.EqualTo(Direction.Up));

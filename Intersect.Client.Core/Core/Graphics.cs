@@ -1588,6 +1588,7 @@ public static partial class Graphics
             return;
         }
 
+        targetRect=ScaledSpriteRectangle(targetRect);
         if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 
         Renderer?.DrawTexture(

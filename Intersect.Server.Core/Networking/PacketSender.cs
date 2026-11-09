@@ -2130,7 +2130,7 @@ public static partial class PacketSender
             );
         }
 
-        player.SendPacket(new PartyPacket(memberPackets));
+        player.SendPacket(new PartyPacket(memberPackets) {MaximumMembers=Intersect.Server.Naval.NavalSystem.PartyCapacity(player.Party.FirstOrDefault()??player)});
     }
 
     //PartyUpdatePacket

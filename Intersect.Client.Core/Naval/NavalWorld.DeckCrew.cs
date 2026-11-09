@@ -12,6 +12,21 @@ internal static partial class NavalWorld
 {
     internal static IEnumerable<(Guid PlayerId, ShipCrewAnchor Anchor)> DeckCrew(ShipSnapshot ship, ShipSpriteFrame pose)
     {
+        if(ship.WalkableDeck)
+        {
+            var emitted=new HashSet<Guid>();
+            foreach(var member in ship.DeckMembers??[])
+            {
+                if(!HasMember(ship,member.PlayerId) || !emitted.Add(member.PlayerId) || !ShipDeck.Contains(new(member.X,member.Y)))continue;
+                var p=InterpolatedDeckMember(ship,member);var point=new DeckPoint(p.X,p.Y);
+                var source=ShipDeckProjection.Project(pose,point);
+                var seat=(ship.CrewStations??[]).FirstOrDefault(s=>s.PlayerId==member.PlayerId);
+                var role=Driver(ship)==member.PlayerId?ShipCrewRole.Helm:seat==null?ShipCrewRole.Passenger:seat.Starboard?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon;
+                var facing=DeckFacing(pose,point,seat!=null?(seat.Starboard?1:-1):p.FacingX,seat!=null?0:p.FacingY);
+                yield return(member.PlayerId,new(){Role=role,Index=seat?.Index??0,X=source.X,Y=source.Y,Facing=facing});
+            }
+            yield break;
+        }
         var drawn = new HashSet<Guid>();
         var members = (ship.CrewIds ?? []).Prepend(ship.CaptainId).Where(id=>id!=Guid.Empty).ToHashSet();
         var driver = Driver(ship);
@@ -62,7 +77,8 @@ internal static partial class NavalWorld
             if(Globals.Entities.TryGetValue(id,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
             {
                 var point=DeckPoint(pose,anchor,x,y,scale);
-                entity.DrawOnShip(point.X,point.Y,point.Facing);
+                entity.DrawOnShip(point.X,point.Y,point.Facing,ship.WalkableDeck?ShipDeck.AvatarScale:1,
+                    (ship.DeckMembers??[]).Any(p=>p.PlayerId==id && p.Walking));
             }
         DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
         foreach(var part in NavalSpriteGeometry.Parts(pose))
@@ -74,7 +90,8 @@ internal static partial class NavalWorld
             if(Globals.Entities.TryGetValue(person.PlayerId,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
             {
                 var point=DeckPoint(pose,person.Anchor,x,y,scale);
-                entity.DrawOnShip(point.X,point.Y,point.Facing);
+                entity.DrawOnShip(point.X,point.Y,point.Facing,ship.WalkableDeck?ShipDeck.AvatarScale:1,
+                    (ship.DeckMembers??[]).Any(p=>p.PlayerId==person.PlayerId && p.Walking));
             }
         }
         void DrawLayer(IGameTexture texture)
