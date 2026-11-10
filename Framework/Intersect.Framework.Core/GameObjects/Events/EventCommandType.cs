@@ -157,6 +157,7 @@ public enum EventCommandType
 
     OpenNavalShop = 1050,
     OpenNavalAmmoShop = 1051,
+    ShipReward = 1052,
     GrantExperienceBonus = 1060,
     GrantLootBonus = 1061,
     OpenAdventureLobby = 1062,

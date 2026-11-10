@@ -8,18 +8,20 @@ using System.Runtime.InteropServices;
 public static class CannonLayerPixels
 {
     public static int[] DeckReplayFrame(int[] ship,int[] fringe,int[] cover,int[] guns,int[][] sheets,int[] widths,double[] frame)
+        => DeckActorsFrame(ship,fringe,cover,guns,sheets,widths,frame,7,6,null);
+    public static int[] DeckActorsFrame(int[] ship,int[] fringe,int[] cover,int[] guns,int[][] sheets,int[] widths,double[] frame,int crewCount,int cannonCount,int[] sprites)
     {
         const int w=384,h=256;var pixels=new int[w*h];for(int i=0;i<pixels.Length;i++)pixels[i]=unchecked((int)0xff4a8ba2);
         int d=(int)frame[0],phase=(int)frame[1],ax=d%2*1536+phase*384,ay=d/2*256;
         Blit(pixels,w,h,ship,3072,ax,ay,384,256,192,128,1);
-        for(int i=0;i<7;i++)if(frame[4+i*5+4]==0)Person(i);
+        for(int i=0;i<crewCount;i++)if(frame[4+i*5+4]==0)Person(i);
         Blit(pixels,w,h,fringe,3072,ax,ay,384,256,192,128,1);
-        for(int station=0;station<6;station++)
+        for(int station=0;station<cannonCount;station++)
         {
-            int n=d*6+station,at=39+station*3;
+            int n=sprites==null?d*6+station:sprites[station],at=4+crewCount*5+station*3;
             Blit(pixels,w,h,guns,512,n%8*64,n/8*64,64,64,frame[at],frame[at+1],1,frame[at+2]);
         }
-        for(int i=0;i<7;i++)if(frame[4+i*5+4]!=0)Person(i);
+        for(int i=0;i<crewCount;i++)if(frame[4+i*5+4]!=0)Person(i);
         Blit(pixels,w,h,cover,3072,ax,ay,384,256,192,128,1);
         void Person(int i)
         {
@@ -188,7 +190,8 @@ public static class CannonLayerPixels
             pixels[i]=unchecked((int)(0xff000000u|(uint)((r*a+74*(255-a))/255)<<16|(uint)((g*a+139*(255-a))/255)<<8|(uint)((b*a+162*(255-a))/255)));
         }
     }
-    public static int[] CannonCover(int[] fringe,int[] guns,double[] positions)
+    public static int[] CannonCover(int[] fringe,int[] guns,double[] positions)=>CannonCover(fringe,guns,positions,false);
+    public static int[] CannonCover(int[] fringe,int[] guns,double[] positions,bool naturalWood)
     {
         var cover=(int[])fringe.Clone();int[] bob={0,-1,0,1};
         for(int d=0;d<8;d++)for(int station=0;station<6;station++)
@@ -213,6 +216,7 @@ public static class CannonLayerPixels
                         int red=(int)(p>>16)&255,green=(int)(p>>8)&255,blue=(int)p&255;
                         canvas|=red>=170 && green>=145 && blue>=95 && red>=green && green>=blue && red-blue<=130;
                         rail|=(red>=150 && green>=95 && blue<140 && red>blue*1.4) || (blue>red*1.1 && blue>green*.8);
+                        rail|=naturalWood && red>90 && green>40 && blue<110 && red>green*1.08 && green>blue*1.2;
                     }
                     // Only the rail colours and their outlines are excluded from the
                     // barrel sweep. Original canvas edges always remain an occluder.

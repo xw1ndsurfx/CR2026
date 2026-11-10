@@ -114,6 +114,11 @@ internal sealed class ShopProductRow : Base
 
     internal void ShowShipPreview(string graphic,int frames)
     {
+        if(Intersect.Framework.Core.Naval.NavalShipModels.Find(graphic) is {} model &&
+            GameContentManager.Current.GetTexture(Framework.Content.TextureType.Ocean,model.PreviewGraphics) is {} preview)
+        {
+            _icon.Texture=preview;_icon.MaintainAspectRatio=true;_icon.SetTextureRect(0,0,preview.Width,preview.Height);return;
+        }
         var texture=GameContentManager.Current.GetTexture(Framework.Content.TextureType.Ocean,graphic);
         var atlas=texture==null?null:Naval.NavalSpriteCatalog.Get(graphic,texture.Width,texture.Height,frames);
         if(atlas==null)return;

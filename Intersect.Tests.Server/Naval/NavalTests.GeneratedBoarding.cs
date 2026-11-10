@@ -12,6 +12,41 @@ namespace Intersect.Tests.Server.Naval;
 
 public sealed partial class NavalTests
 {
+    [Test]
+    public void BoardingOnRealShipsUsesAllSevenAuthoredAppearancesAndCleansUpOnlyTheirClones()
+    {
+        using var world=new EnemyTestWorld();
+        var sources=Enumerable.Range(0,7).Select(i=>new NPCDescriptor(Guid.NewGuid()){Name="Deck crew "+i,Sprite="crew-"+i+".png",Level=2}).ToArray();
+        MapController? deck=null;
+        try
+        {
+            foreach(var source in sources)NPCDescriptor.Lookup.Set(source.Id,source);
+            var patrol=new HerboniaPatrol {Level=12,DeckCaptainNpcId=sources[0].Id,
+                PortGunner1NpcId=sources[1].Id,PortGunner2NpcId=sources[2].Id,PortGunner3NpcId=sources[3].Id,
+                StarboardGunner1NpcId=sources[4].Id,StarboardGunner2NpcId=sources[5].Id,StarboardGunner3NpcId=sources[6].Id};
+            var generated=NavalSystem.CreateBoardingDeckOnShips(patrol,new(){Graphics=NavalShipModels.ThreeMasts[0].Graphics},1000);
+            Assert.That(generated.HasValue,Is.True);deck=generated!.Value.Map;
+            Assert.That(deck.BoardingScene,Is.Not.Null);Assert.That(deck.Spawns,Has.Count.EqualTo(7));
+            var cloneIds=deck.Spawns.Select(s=>s.NpcId).ToArray();
+            Assert.That(cloneIds.Distinct().Count(),Is.EqualTo(7));
+            for(var i=0;i<7;i++)
+            {
+                var clone=NPCDescriptor.Get(cloneIds[i])!;
+                Assert.That(clone.Sprite,Is.EqualTo(sources[i].Sprite));Assert.That(clone.Level,Is.EqualTo(12));
+                Assert.That(clone.Id,Is.Not.EqualTo(sources[i].Id));Assert.That(sources[i].Level,Is.EqualTo(2));
+                Assert.That(deck.BoardingScene!.Walkable(deck.Spawns[i].X,deck.Spawns[i].Y),Is.True);
+            }
+            world.Invoke("PruneGeneratedBoardingDecks",31001L);
+            Assert.That(MapController.Get(deck.Id),Is.Null);
+            foreach(var clone in cloneIds)Assert.That(NPCDescriptor.Get(clone),Is.Null);
+            foreach(var source in sources)Assert.That(NPCDescriptor.Get(source.Id),Is.SameAs(source));
+        }
+        finally
+        {
+            world.Invoke("PruneGeneratedBoardingDecks",long.MaxValue);
+            foreach(var source in sources)NPCDescriptor.Lookup.DeleteAt(source.Id);
+        }
+    }
     private sealed class BoardingTestPlayer : Intersect.Server.Entities.Player
     {
         public override long GetMaxVital(int vital) => vital == (int)Vital.Health ? 100000 : base.GetMaxVital(vital);

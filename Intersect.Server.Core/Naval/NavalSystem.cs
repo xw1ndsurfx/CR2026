@@ -45,6 +45,8 @@ internal static partial class NavalSystem
         internal int MaximumHealth => Enemy?.MaximumHealth??100;
         internal string Name=definition.Name;
         internal HerboniaPatrol Enemy;
+        internal bool EnemyHasTarget;
+        internal double EnemyTargetX,EnemyTargetY;
         internal int SinkingSerial;
         internal string CaptainName="";
         internal bool BoardingOpen;
@@ -412,16 +414,16 @@ internal static partial class NavalSystem
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
                 .Select(v => new ShipSnapshot { BoardingReady=EnemyBoardingReady(v),CannonStatuses=CannonStatusSnapshot(v,now), EnemyBoardingTargetId=v.State.Id==player.CaptainedShipId?EnemyBoardingTarget(player):Guid.Empty, ActiveSkills=v.State.Id==player.NavalShipId?v.SkillUntil.Where(entry=>entry.Value>now).Select(entry=>new NavalActiveSkill {Kind=entry.Key,Icon=_settings.Skills.FirstOrDefault(def=>def.Kind==entry.Key)?.Icon??"",RemainingMilliseconds=(int)Math.Clamp(entry.Value-now,0,120000)}).ToArray():[], RepairAvailable=_settings.Repair.Enabled && v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && v.LeftLaunchDock && now-v.LaunchedAt>=8000 && ByCrewDock(v),
-                    DeckMembers=DeckSnapshot(v,now),WalkableDeck=DeckEnabled(v),HelmVacant=v.HelmVacant,HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),CrewStations=CrewStationSnapshot(v,now),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
+                    DamageZones=v.SunkUntil>0?[]:ShipDamageZone.Active(v.Definition,v.Health,v.MaximumHealth).ToArray(),NpcDeckMembers=NpcDeckSnapshot(v),DeckMembers=DeckSnapshot(v,now),WalkableDeck=DeckEnabled(v),HelmVacant=v.HelmVacant,HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),CrewStations=CrewStationSnapshot(v,now),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
                     Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
-                    Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : DeckEnabled(v)?v.Definition.Graphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
-                    Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
+                    Graphics = v.SunkUntil > 0 ? SinkingGraphic(v) : ShipDeck.Supports(v.Definition.Graphics)?DeckGraphic(v) : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
+                    Frames = v.Definition.Frames, FrameMilliseconds = v.SunkUntil>0 && NavalShipModels.Find(v.Definition.Graphics)!=null?500:v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
                     PortReloadMilliseconds = (int)Math.Clamp(v.PortReady-now,0,60000),
                     StarboardReloadMilliseconds = (int)Math.Clamp(v.StarboardReady-now,0,60000),
-                    Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled, Sinking = v.SunkUntil > 0,
+                    DeckActivity=ShipDeck.Activity(v.Definition),Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled && ShipDeck.Activity(v.Definition)==ShipDeckActivity.Cannons, Sinking = v.SunkUntil > 0,
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))

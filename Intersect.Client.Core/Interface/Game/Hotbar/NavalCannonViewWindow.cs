@@ -80,14 +80,17 @@ internal sealed class NavalCannonViewWindow : Window
     }
     internal void Update(ShipSnapshot? ship,bool open)
     {
-        if(!open || ship is not {Sinking:false})
+        if(!open || ship is not {Sinking:false} || ship.DeckActivity==ShipDeckActivity.Fishing)
         {
             if(_crewWasOpen) NavalWorld.RequestStation(CannonStationAction.Release);
             _crewWasOpen=false;NavalWorld.CannonViewOpen=false;_ship=Guid.Empty;Hide();_viewport.Release();return;
         }
         if(_ship!=ship.Id) {_ship=ship.Id;NavalWorld.CannonViewStarboard=false;_viewport.Release();}
         var crew=NavalWorld.Driver(ship)!=Globals.Me?.Id;
+        var bowGun=ShipDeck.Kind(ship.Graphics)==ShipDeckKind.Raft;
+        if(NavalWorld.CannonCount(ship,true)==0)NavalWorld.CannonViewStarboard=false;
         _port.IsDisabled=_starboard.IsDisabled=crew && ship.WalkableDeck;
+        _starboard.IsHidden=NavalWorld.CannonCount(ship,true)==0;
         if(ship.WalkableDeck && NavalWorld.Gunner.LeaseId!=Guid.Empty)NavalWorld.CannonViewStarboard=NavalWorld.Gunner.Starboard;
         _viewport.CrewMode=crew;_crewWasOpen=crew;
         _fullscreen=crew;DrawShadow=!crew;Titlebar.IsHidden=crew;
@@ -107,20 +110,20 @@ internal sealed class NavalCannonViewWindow : Window
         _ammo.SetBounds(16,height-117,width-32,30);_gunnery.SetBounds(16,height-82,width-32,22);
         _repair.IsHidden=!crew;
         _repair.IsDisabled=!ship.RepairAvailable;_repair.Text=T("Ship repairs");
-        var buttons=_repair.IsHidden?new[]{_port,_starboard,_fire,_close}:new[]{_port,_starboard,_fire,_repair,_close};var bw=(width-56)/buttons.Length;
+        var buttons=(_repair.IsHidden?new[]{_port,_starboard,_fire,_close}:new[]{_port,_starboard,_fire,_repair,_close}).Where(b=>!b.IsHidden).ToArray();var bw=(width-56)/buttons.Length;
         for(var i=0;i<buttons.Length;i++) buttons[i].SetBounds(16+i*(bw+6),height-51,bw,30);
-        Title=T("Cannon view");_port.Text=T("Port");_starboard.Text=T("Starboard");_close.Text=T("Close");
-        _side.Text=T(NavalWorld.CannonViewStarboard?"Starboard cannon view":"Port cannon view");
+        Title=T("Cannon view");_port.Text=T(bowGun?"Forward cannon":"Port");_starboard.Text=T("Starboard");_close.Text=T("Close");
+        _side.Text=T(bowGun?"Forward cannon view":NavalWorld.CannonViewStarboard?"Starboard cannon view":"Port cannon view");
         EventPanelText.Fit(_limit,T("Real loaded maps only · Terrain has no height data"),11,8);
-        EventPanelText.Fit(_hint,T("Shots follow the selected broadside · The captain keeps control"),11,8);
+        EventPanelText.Fit(_hint,T(bowGun?"Shots follow the forward cannon · The captain keeps control":"Shots follow the selected broadside · The captain keeps control"),11,8);
         var slot=NavalWorld.CannonViewStarboard?1:0;var cooldown=NavalWorld.Cooldown(slot);
-        _fire.Text=cooldown>0?string.Format(T("Reload: {0}s"),(int)Math.Ceiling(cooldown/1000d)):T("Fire broadside");
+        _fire.Text=cooldown>0?string.Format(T("Reload: {0}s"),(int)Math.Ceiling(cooldown/1000d)):T(NavalWorld.CannonCount(ship,NavalWorld.CannonViewStarboard)==1?"Fire cannon":"Fire broadside");
         _fire.IsDisabled=NavalWorld.Driver(ship)!=Globals.Me?.Id || !ship.CannonsEnabled || cooldown>0 || Globals.Me?.IsBusy!=false;
         _fire.TooltipText=T("Only the captain can fire the broadside in this preview.");
         if(crew)
         {
             var gun=NavalWorld.Gunner;var selected=gun.Ammunition.FirstOrDefault(a=>a.Kind==NavalWorld.SelectedAmmo);
-            _side.Text=gun.LeaseId==Guid.Empty?T("Crew cannon station"):string.Format(T("Cannon {0} · {1}"),gun.Station+1,T(gun.Starboard?"Starboard":"Port"));
+            _side.Text=gun.LeaseId==Guid.Empty?T("Crew cannon station"):bowGun?T("Forward cannon"):string.Format(T("Cannon {0} · {1}"),gun.Station+1,T(gun.Starboard?"Starboard":"Port"));
             _gunnery.Value=gun.Required<=0?1:(float)Math.Clamp(gun.Experience/(double)gun.Required,0,1);
             _gunnery.Text=gun.Required<=0?string.Format(T("Gunnery · Level {0} · MAX"),gun.Level):string.Format(T("Gunnery · Level {0} · {1}/{2} EXP"),gun.Level,gun.Experience,gun.Required);
             var qty=selected?.Quantity??0;

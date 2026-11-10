@@ -17,12 +17,13 @@ internal static partial class NavalWorld
             var emitted=new HashSet<Guid>();
             foreach(var member in ship.DeckMembers??[])
             {
-                if(!HasMember(ship,member.PlayerId) || !emitted.Add(member.PlayerId) || !ShipDeck.Contains(new(member.X,member.Y)))continue;
+                if(!HasMember(ship,member.PlayerId) || !emitted.Add(member.PlayerId) || !ShipDeck.Contains(new(member.X,member.Y),ShipDeck.Kind(ship.Graphics)))continue;
                 var p=InterpolatedDeckMember(ship,member);var point=new DeckPoint(p.X,p.Y);
                 var source=ShipDeckProjection.Project(pose,point);
                 var seat=(ship.CrewStations??[]).FirstOrDefault(s=>s.PlayerId==member.PlayerId);
                 var role=Driver(ship)==member.PlayerId?ShipCrewRole.Helm:seat==null?ShipCrewRole.Passenger:seat.Starboard?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon;
-                var facing=DeckFacing(pose,point,seat!=null?(seat.Starboard?1:-1):p.FacingX,seat!=null?0:p.FacingY);
+                var bowGun=ShipDeck.Kind(ship.Graphics)==ShipDeckKind.Raft;
+                var facing=DeckFacing(pose,point,seat!=null?(bowGun?0:seat.Starboard?1:-1):p.FacingX,seat!=null?(bowGun?1:0):p.FacingY);
                 yield return(member.PlayerId,new(){Role=role,Index=seat?.Index??0,X=source.X,Y=source.Y,Facing=facing});
             }
             yield break;
@@ -57,6 +58,7 @@ internal static partial class NavalWorld
         IGameTexture foreground, float x,float y,float scale)
     {
         if(ship.Sinking || ship.Health<=0) return;
+        DrawDeckDamage(ship,pose,x,y,scale,false);
         if(!string.IsNullOrEmpty(atlas.CannonOcclusionGraphics) &&
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonOcclusionGraphics) is {} cover &&
             cover.Width==atlas.ImageWidth && cover.Height==atlas.ImageHeight)
@@ -64,15 +66,20 @@ internal static partial class NavalWorld
             // Rails hide feet, but must not repaint themselves over moving barrels.
             // Operators on the far broadside stand in front of their own cannon.
             var people=DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y).ToArray();
+            var npcs=NpcDeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y).ToArray();
             foreach(var person in people.Where(c=>!BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
+            foreach(var npc in npcs.Where(c=>!BehindDeckCannon(pose,c.Anchor)))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
             DrawLayer(foreground);
             DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
             DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
             foreach(var person in people.Where(c=>BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
+            foreach(var npc in npcs.Where(c=>BehindDeckCannon(pose,c.Anchor)))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
+            DrawDeckDamage(ship,pose,x,y,scale,true);
             DrawLayer(cover);
             return;
         }
         DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
+        foreach(var npc in NpcDeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
         foreach(var (id,anchor) in DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))
             if(Globals.Entities.TryGetValue(id,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
             {
@@ -81,6 +88,7 @@ internal static partial class NavalWorld
                     (ship.DeckMembers??[]).Any(p=>p.PlayerId==id && p.Walking));
             }
         DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
+        DrawDeckDamage(ship,pose,x,y,scale,true);
         foreach(var part in NavalSpriteGeometry.Parts(pose))
             Graphics.DrawGameTexture(foreground,new FloatRect(part.X,part.Y,part.Width,part.Height),
                 NavalSpriteGeometry.Destination(part,x,y,scale),Color.White);

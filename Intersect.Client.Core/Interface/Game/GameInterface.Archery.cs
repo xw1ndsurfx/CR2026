@@ -26,7 +26,7 @@ public partial class GameInterface
 
     internal bool CanShowWeaponSkills => WeaponSkillHudVisibility.Allowed(
         General.Globals.Me != null,
-        General.Globals.Me is { } player && Naval.NavalWorld.IsAboard(player.Id),
+        General.Globals.Me is { } player && (Naval.NavalWorld.IsAboard(player.Id) || Naval.NavalWorld.OnBoardingDeck),
         HasActiveMiniGame,
         SuppressStatusHuds || Interface.InputBlockingComponents.Any(control => control.IsVisibleInTree && control.IsBlockingInput));
 

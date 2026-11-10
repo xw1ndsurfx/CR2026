@@ -18,6 +18,21 @@ public sealed class NavalDeckWalkingTests
         return Newtonsoft.Json.JsonConvert.DeserializeObject<ShipSpriteAtlas>(File.ReadAllText(Path.Combine(root!.FullName,"resources/ocean/Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png.naval.json")))!;
     }
     [Test]
+    public void EnemyNpcOperatorsUseTheSameCalibratedDeckPositionsAsWalkingPlayers()
+    {
+        foreach(var row in Atlas().Directions)
+        {
+            var frame=row[0];var ship=new ShipSnapshot {Graphics=NavalShipModels.PlayerDefault.Graphics,
+                NpcDeckMembers=frame.CrewAnchors.Where(a=>a.Role!=ShipCrewRole.Passenger).Select(a=>new NavalNpcDeckMember {NpcId=Guid.NewGuid(),Sprite="crew.png",Role=a.Role,Index=a.Index}).ToArray()};
+            var crew=NavalWorld.NpcDeckCrew(ship,frame).ToArray();Assert.That(crew,Has.Length.EqualTo(7));
+            foreach(var (npc,anchor) in crew)
+            {
+                var local=npc.Role==ShipCrewRole.Helm?ShipDeck.Helm:ShipDeck.Station(npc.Role==ShipCrewRole.StarboardCannon,npc.Index);
+                Assert.That(new DeckPoint(anchor.X,anchor.Y),Is.EqualTo(ShipDeckProjection.Project(frame,local)));
+            }
+        }
+    }
+    [Test]
     public void SweptMovementNeverCrossesTheHullMastsCannonsOrBarrels()
     {
         var random=new Random(731);var p=new DeckPoint(-.5,-1.3);

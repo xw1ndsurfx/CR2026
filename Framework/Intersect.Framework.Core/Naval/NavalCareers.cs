@@ -8,12 +8,13 @@ public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectA
 public sealed class NavalAmmoStack {public Guid ItemId {get;set;} public int Quantity {get;set;}}
 public sealed class NavalCareerData
 {
+    public HashSet<string> UnlockedShipModels {get;set;}=[];
     public List<NavalAmmoStack> Ammo {get;set;}=[];
     public int AmmoUpgradeLevel {get;set;}
     public HashSet<NavalSkillKind> Skills {get;set;}=[];
     public long RepairExperience {get;set;}
     public Dictionary<NavalTaskKind,long> Counters {get;set;}=[];
-    public bool IsValid()=>AmmoUpgradeLevel is >=0 and <=20 && Ammo is {Count:<=512} && Ammo.All(a=>a!=null && a.ItemId!=Guid.Empty && a.Quantity is >0 and <=1000000000) &&
+    public bool IsValid()=>UnlockedShipModels is {Count:<=256} && UnlockedShipModels.All(id=>!string.IsNullOrWhiteSpace(id) && id.Length<=64) && AmmoUpgradeLevel is >=0 and <=20 && Ammo is {Count:<=512} && Ammo.All(a=>a!=null && a.ItemId!=Guid.Empty && a.Quantity is >0 and <=1000000000) &&
         Ammo.Select(a=>a.ItemId).Distinct().Count()==Ammo.Count && Skills!=null && Skills.All(Enum.IsDefined) && RepairExperience is >=0 and <=200000000000000L &&
         Counters is {Count:<=32} && Counters.All(p=>Enum.IsDefined(p.Key) && p.Value is >=0 and <=200000000000000L);
 }

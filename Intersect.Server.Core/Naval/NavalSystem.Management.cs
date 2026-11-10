@@ -29,7 +29,7 @@ internal static partial class NavalSystem
         try{foreach(var hold in holds)hold.Cargo.Clear();ok=save();return ok;}
         finally{if(!ok)p.NavalFleetJson=before;}
     }
-    private sealed class RepairRound {internal Guid Token=Guid.NewGuid(),Ship;internal NavalRepairKind Kind;internal long Start,Last;internal int Hits,Target,Revision;internal byte[] Cells=[];internal string Name="";internal SailingProgress Progress;}
+    private sealed class RepairRound {internal Guid Token=Guid.NewGuid(),Ship;internal string ZoneId="";internal NavalRepairKind Kind;internal long Start,Last;internal int Hits,Target,Revision;internal byte[] Cells=[];internal string Name="";internal SailingProgress Progress;}
     private static readonly Dictionary<Guid,RepairRound> Repairs=[];
     private static readonly Dictionary<Guid,long> RepairCooldown=[];
     private static readonly Dictionary<Guid,long> RepairRewards=[];
@@ -216,6 +216,7 @@ internal static partial class NavalSystem
                     }
                     else if(mode==NavalManageAction.Repair)
                     {
+                        if(v!=null && DeckEnabled(v)){TryStartDeckRepair(v,p,now,reportMissing:true);return;}
                         if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || (Driver(v)==p.Id) ||
                             RepairCooldown.GetValueOrDefault(p.Id)>now || p.NavalBusy)
                         {SendManagement(p,NavalManageAction.Repair,now,"Repair unavailable. Check hull, role and cooldown.");return;}
@@ -226,7 +227,7 @@ internal static partial class NavalSystem
                     else if(mode==NavalManageAction.RepairInput)
                     {
                         if(!Repairs.TryGetValue(p.Id,out var r) || r.Token!=packet.Token)return;
-                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || (Driver(v)==p.Id) || now-r.Start>_settings.Repair.RoundSeconds*1000)
+                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || (Driver(v)==p.Id) || now-r.Start>_settings.Repair.RoundSeconds*1000 || r.ZoneId.Length>0 && !ShipDamageZone.Active(v.Definition,v.Health,v.MaximumHealth).Any(z=>z.Id==r.ZoneId))
                         {Repairs.Remove(p.Id);message="Repair cancelled.";}
                         else if(now-r.Last>=400)
                         {
@@ -289,6 +290,7 @@ internal static partial class NavalSystem
     private static string IdleGraphic(ShipDefinition d)
     {
         if(!string.IsNullOrEmpty(d.IdleGraphics))return d.IdleGraphics;
+        if(NavalShipModels.Find(d.Graphics) is {} model)return model.IdleGraphics;
         return d.Graphics.ToLowerInvariant() switch {"ship_corpsroyaux_002.png"=>"Ship_CorpsRoyaux_idle.png","ship_herbonia_001.png" or "ship_herbonia_002.png"=>"Ship_Herbonia_idle.png",_=>d.Graphics};
     }
     private static ShipDefinition MovementDefinition(Vessel v,long now)

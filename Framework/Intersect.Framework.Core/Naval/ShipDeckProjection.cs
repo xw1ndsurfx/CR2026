@@ -3,6 +3,22 @@ namespace Intersect.Framework.Core.Naval;
 /// <summary>Calibrated deck surface; centreline landmarks match the painted mast feet.</summary>
 public static class ShipDeckProjection
 {
+    public static bool TryUnproject(ShipSpriteFrame frame,DeckPoint source,out DeckPoint point)
+    {
+        point=new(0,0);
+        if(!double.IsFinite(source.X) || !double.IsFinite(source.Y) || frame.DeckMasts.Length!=3 || frame.DeckPort.Length!=3 || frame.DeckStarboard.Length!=3)return false;
+        for(int i=0;i<20;i++)
+        {
+            var p=Project(frame,point);double dx=source.X-p.X,dy=source.Y-p.Y;
+            if(Math.Abs(dx)+Math.Abs(dy)<.02)return true;
+            var sx=Project(frame,new(point.X+.001,point.Y));var sy=Project(frame,new(point.X,point.Y+.001));
+            double xx=(sx.X-p.X)*1000,xy=(sx.Y-p.Y)*1000,yx=(sy.X-p.X)*1000,yy=(sy.Y-p.Y)*1000,det=xx*yy-xy*yx;
+            if(!double.IsFinite(det) || Math.Abs(det)<.00001)return false;
+            point=new(point.X+(dx*yy-dy*yx)/det,point.Y+(xx*dy-xy*dx)/det);
+            if(!double.IsFinite(point.X) || !double.IsFinite(point.Y) || Math.Abs(point.X)>6 || Math.Abs(point.Y)>8)return false;
+        }
+        return false;
+    }
     private static DeckPoint Mix(DeckPoint a,DeckPoint b,double t)=>new(a.X+(b.X-a.X)*t,a.Y+(b.Y-a.Y)*t);
     public static DeckPoint Project(ShipSpriteFrame frame,DeckPoint point)
     {

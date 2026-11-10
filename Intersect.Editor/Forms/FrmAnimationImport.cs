@@ -2458,7 +2458,7 @@ public sealed class FrmAnimationImport : DarkForm
             _selectedAsset = null;
             _preview.SetAnimation(null, 1, 1);
             _assetInfo.Text = string.Empty;
-            _importStatus.RefreshStatus(null, _animationsRoot, ImportStatusCache);
+            _ = _importStatus.RefreshStatus(null, _animationsRoot, ImportStatusCache);
             UpdateFavoriteButton();
         }
 
@@ -2959,7 +2959,7 @@ public sealed class FrmAnimationImport : DarkForm
     }
 
     private string ImportStatusCache => Path.Combine(_gameRoot, ".animationimport-cache", "imported");
-    private void RefreshImportStatus() => _importStatus.RefreshStatus(_selectedAsset?.FilePath, _animationsRoot, ImportStatusCache);
+    private void RefreshImportStatus() => _ = _importStatus.RefreshStatus(_selectedAsset?.FilePath, _animationsRoot, ImportStatusCache);
 
     private void ImportSelectedAsset()
     {

@@ -6,15 +6,20 @@ public sealed class HarbourOffer
 {
     [JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public string Id { get; set; } = "";
-    public string Name { get; set; } = "Royal ship";
+    public string Name { get; set; } = NavalShipModels.PlayerDefault.Caption;
     public bool ForSale { get; set; } = true;
     public Guid CurrencyItemId { get; set; }
     public string Currency { get; set; } = "Aureons";
     public int Price { get; set; }
     public int RepairPrice { get; set; }
     public bool PremiumRequired { get; set; }
-    public ShipDefinition Ship { get; set; } = new();
-    public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
+    public Guid RequiredQuestId { get; set; }
+    public bool EventUnlockRequired { get; set; }
+    public bool CanAccess(bool premium, bool questCompleted, bool eventUnlocked) =>
+        (!PremiumRequired || premium) && (RequiredQuestId == Guid.Empty || questCompleted) && (!EventUnlockRequired || eventUnlocked);
+    private static ShipDefinition DefaultPlayerModel(){var ship=new ShipDefinition();NavalShipModels.PlayerDefault.ApplyTo(ship);return ship;}
+    public ShipDefinition Ship { get; set; } = DefaultPlayerModel();
+    public string SinkingGraphics { get; set; } = NavalShipModels.PlayerDefault.SinkingGraphics;
     public bool IsValid() => !string.IsNullOrWhiteSpace(Id) && Id.Length <= 64 &&
         !string.IsNullOrWhiteSpace(Name) && Name.Length <= 120 && Price >= 0 && RepairPrice >= 0 &&
         Currency is "Aureons" or "Auragems" && Ship != null &&

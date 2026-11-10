@@ -1,6 +1,6 @@
 <Project>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png;$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png.naval.json">
+    <Content Include="$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png;$(MSBuildThisFileDirectory)../resources/ocean/Ship_CorpsRoyaux_ThreeMast_*v4*.png.naval.json;$(MSBuildThisFileDirectory)../resources/ocean/Ship_*_v5*.png;$(MSBuildThisFileDirectory)../resources/ocean/Ship_*_v5*.png.naval.json">
       <Link>resources/ocean/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

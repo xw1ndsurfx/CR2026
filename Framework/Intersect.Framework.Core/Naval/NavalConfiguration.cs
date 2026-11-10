@@ -5,13 +5,24 @@ namespace Intersect.Framework.Core.Naval;
 
 public sealed class NavalConfiguration
 {
+    public int ShipAppearancesVersion {get;set;}=1;
     public int AmmunitionVisualsVersion {get;set;}=1;
     public int SkillsVersion {get;set;}=1;
     [System.Runtime.Serialization.OnDeserializing]
-    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context){SkillsVersion=0;AmmunitionVisualsVersion=0;}
+    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context){SkillsVersion=0;AmmunitionVisualsVersion=0;ShipAppearancesVersion=0;}
     [System.Runtime.Serialization.OnDeserialized]
     private void UpgradeSkills(System.Runtime.Serialization.StreamingContext context)
     {
+        if(ShipAppearancesVersion<1 && Herbonia!=null)
+        {
+            var model=NavalShipModels.ThreeMasts[1];
+            foreach(var patrol in Herbonia.Where(p=>p?.Ship?.Graphics?.ToLowerInvariant() is "ship_herbonia_001.png" or "ship_herbonia_002.png"))
+            {
+                patrol.Ship.Graphics=model.Graphics;patrol.Ship.IdleGraphics=model.IdleGraphics;
+                patrol.Ship.DamagedGraphics=model.DamagedGraphics;patrol.Ship.SinkingGraphics=model.SinkingGraphics;patrol.Ship.Frames=4;patrol.Ship.FrameMilliseconds=180;patrol.Ship.CrewCapacity=7;
+            }
+            ShipAppearancesVersion=1;
+        }
         if(SkillsVersion<1 && Skills!=null)
         {
             // Append only the new abilities once; preserve authored prices, omissions and future removals.
