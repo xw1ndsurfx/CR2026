@@ -22,6 +22,9 @@ internal static partial class NavalWorld
                 var source=ShipDeckProjection.Project(pose,point);
                 var seat=(ship.CrewStations??[]).FirstOrDefault(s=>s.PlayerId==member.PlayerId);
                 var role=Driver(ship)==member.PlayerId?ShipCrewRole.Helm:seat==null?ShipCrewRole.Passenger:seat.Starboard?ShipCrewRole.StarboardCannon:ShipCrewRole.PortCannon;
+                if(seat!=null && ShipDeck.LowerGunDeck(ShipDeck.Kind(ship.Graphics),seat.Index) &&
+                    pose.CrewAnchors.FirstOrDefault(a=>a.Role==role && a.Index==seat.Index) is {} lower)
+                    source=new(lower.X,lower.Y);
                 var bowGun=ShipDeck.Kind(ship.Graphics)==ShipDeckKind.Raft;
                 var facing=DeckFacing(pose,point,seat!=null?(bowGun?0:seat.Starboard?1:-1):p.FacingX,seat!=null?(bowGun?1:0):p.FacingY);
                 yield return(member.PlayerId,new(){Role=role,Index=seat?.Index??0,X=source.X,Y=source.Y,Facing=facing});

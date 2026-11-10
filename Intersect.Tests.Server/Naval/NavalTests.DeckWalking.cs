@@ -10,20 +10,23 @@ using NUnit.Framework;
 namespace Intersect.Tests.Server.Naval;
 public sealed partial class NavalTests
 {
-    [Test]
-    public void SixPlayersWalkToFreeStationsOnATurningMovingShipAndKeepTheirOwnAim()
+    [TestCase(ShipDeckKind.ThreeMast,6)]
+    [TestCase(ShipDeckKind.ShipOfLine,12)]
+    public void PlayersWalkToFreeStationsOnATurningMovingShipAndKeepTheirOwnAim(ShipDeckKind kind,int guns)
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);EnableWalking(world,ship);
-        var players=Enumerable.Range(0,6).Select(_=>GunnerPlayer(world,ship)).ToArray();
+        var perSide=guns/2;
+        if(kind==ShipDeckKind.ShipOfLine)NavalShipModels.Adventurers.Single(m=>m.DeckKind==kind).ApplyTo(world.Field<ShipDefinition>(ship,"Definition"));
+        var players=Enumerable.Range(0,guns).Select(_=>GunnerPlayer(world,ship)).ToArray();
         var state=world.State(ship);state.Speed=3;var definition=world.Field<ShipDefinition>(ship,"Definition");
-        var now=Timing.Global.Milliseconds;var frames=new List<ShipSnapshot>();double[] angles=[-30,25,-15,40,-35,10];
+        var now=Timing.Global.Milliseconds;var frames=new List<ShipSnapshot>();double[] angles=[-30,25,-15,40,-35,10,-18,12,-6,36,-24,6];
         world.Invoke("EnsureDeck",ship,now);
         void Tick()
         {
             now+=100;
             foreach(var p in players){((IDictionary)world.Field<object>(ship,"Crew")).Remove(p.Id);AddCrewPresence(world,ship,p.Id,now);}
             ShipMovement.Step(state,definition,new(1,1,false),.1,(map,x,y,heading)=>(true,map,x,y));
-            for(var i=0;i<6;i++)
+            for(var i=0;i<guns;i++)
             {
                 var gun=(GunneryState)world.Invoke("GunnerState",players[i],now)!;
                 if(gun.LeaseId!=Guid.Empty)NavalSystem.Station(players[i],new(){Action=CannonStationAction.Renew,ShipId=state.Id,LeaseId=gun.LeaseId,Starboard=gun.Starboard,Yaw=angles[i]},now);
@@ -38,13 +41,13 @@ public sealed partial class NavalTests
             frames.Add(MessagePack.MessagePackSerializer.Deserialize<ShipSnapshot>(MessagePack.MessagePackSerializer.Serialize(snapshot)));
         }
         Capture();
-        for(var actor=0;actor<6;actor++)
+        for(var actor=0;actor<guns;actor++)
         {
             var current=Walkers(world,ship,now);var me=current.Single(p=>p.PlayerId==players[actor].Id);
-            var goal=ShipDeck.Station(actor>=3,actor%3);
+            var goal=ShipDeck.Station(actor>=perSide,actor%perSide,kind);
             var others=current.Where(p=>p.PlayerId!=me.PlayerId).Select(p=>new DeckPoint(p.X,p.Y)).ToArray();
-            var route=DeckRoute(new(me.X,me.Y),goal,others);
-            Assert.That(route,Is.Not.Empty,"Each of the six stations must be reachable without crossing a mast or another player.");
+            var route=DeckRoute(new(me.X,me.Y),goal,others,kind);
+            Assert.That(route,Is.Not.Empty,"Each gun station must be reachable without crossing a mast or another player.");
             foreach(var waypoint in route)
             {
                 Tick();me=Walkers(world,ship,now).Single(p=>p.PlayerId==players[actor].Id);
@@ -53,37 +56,37 @@ public sealed partial class NavalTests
                 NavalSystem.DeckInput(players[actor],new(){ShipId=state.Id,Side=(sbyte)Math.Clamp(Math.Round(dx/(ShipDeck.Speed*.1)/gain*127),-127,127),Forward=(sbyte)Math.Clamp(Math.Round(dy/(ShipDeck.Speed*.1)/gain*127),-127,127)},now);
                 me=Walkers(world,ship,now).Single(p=>p.PlayerId==players[actor].Id);
                 Assert.That(ShipDeck.Distance(new(me.X,me.Y),waypoint),Is.LessThan(.06));
-                Assert.That(ShipDeck.Contains(new(me.X,me.Y)),Is.True);Capture();
+                Assert.That(ShipDeck.Contains(new(me.X,me.Y),kind),Is.True);Capture();
             }
             Tick();NavalSystem.DeckInput(players[actor],new(){ShipId=state.Id,Action=DeckAction.Interact},now);
             var taken=(GunneryState)world.Invoke("GunnerState",players[actor],now)!;
-            Assert.That(taken.LeaseId,Is.Not.EqualTo(Guid.Empty));Assert.That(taken.Starboard,Is.EqualTo(actor>=3));Assert.That(taken.Station,Is.EqualTo(actor%3));
+            Assert.That(taken.LeaseId,Is.Not.EqualTo(Guid.Empty));Assert.That(taken.Starboard,Is.EqualTo(actor>=perSide));Assert.That(taken.Station,Is.EqualTo(actor%perSide));
             Capture();
         }
         Tick();Capture();
-        var last=frames[^1];Assert.That(last.DeckMembers,Has.Length.EqualTo(7));Assert.That(last.CrewStations,Has.Length.EqualTo(6));
-        for(var i=0;i<6;i++)Assert.That(last.CrewStations.Single(s=>s.PlayerId==players[i].Id).Yaw,Is.EqualTo(angles[i]));
+        var last=frames[^1];Assert.That(last.DeckMembers,Has.Length.EqualTo(guns+1));Assert.That(last.CrewStations,Has.Length.EqualTo(guns));
+        for(var i=0;i<guns;i++)Assert.That(last.CrewStations.Single(s=>s.PlayerId==players[i].Id).Yaw,Is.EqualTo(angles[i]));
         Assert.That(frames.Select(f=>ShipMovement.DirectionRow(f.Heading)).Distinct().Count(),Is.GreaterThan(1));
         Assert.That(ShipDeck.Distance(new(frames[0].X,frames[0].Y),new(last.X,last.Y)),Is.GreaterThan(.1));
-        File.WriteAllText(Path.Combine(TestContext.CurrentContext.TestDirectory,"deck-walk-replay.json"),Newtonsoft.Json.JsonConvert.SerializeObject(frames));
+        File.WriteAllText(Path.Combine(TestContext.CurrentContext.TestDirectory,kind==ShipDeckKind.ShipOfLine?"deck-walk-replay-line.json":"deck-walk-replay.json"),Newtonsoft.Json.JsonConvert.SerializeObject(frames));
     }
-    private static DeckPoint[] DeckRoute(DeckPoint start,DeckPoint goal,DeckPoint[] others)
+    private static DeckPoint[] DeckRoute(DeckPoint start,DeckPoint goal,DeckPoint[] others,ShipDeckKind kind=ShipDeckKind.ThreeMast)
     {
-        const int width=21,height=71;var nodes=new DeckPoint[width*height];var free=new bool[nodes.Length];
+        int halfWidth=kind==ShipDeckKind.ShipOfLine?15:10,width=2*halfWidth+1;const int height=71;var nodes=new DeckPoint[width*height];var free=new bool[nodes.Length];
         for(var y=0;y<height;y++)for(var x=0;x<width;x++)
         {
-            var p=new DeckPoint((x-10)/10d,(y-35)/10d);var index=y*width+x;nodes[index]=p;
-            free[index]=ShipDeck.Contains(p) && others.All(o=>ShipDeck.Distance(p,o)>=ShipDeck.Radius*2+.015);
+            var p=new DeckPoint((x-halfWidth)/10d,(y-35)/10d);var index=y*width+x;nodes[index]=p;
+            free[index]=ShipDeck.Contains(p,kind) && others.All(o=>ShipDeck.Distance(p,o)>=ShipDeck.Radius*2+.015);
         }
         var first=Enumerable.Range(0,nodes.Length).Where(i=>free[i]).OrderBy(i=>ShipDeck.Distance(nodes[i],start)).First();
         var before=Enumerable.Repeat(-2,nodes.Length).ToArray();before[first]=-1;var queue=new Queue<int>();queue.Enqueue(first);int found=-1;
         while(queue.TryDequeue(out var i))
         {
-            if(ShipDeck.Distance(nodes[i],goal)<=.28){found=i;break;}
+            if(ShipDeck.Distance(nodes[i],goal)<=(kind==ShipDeckKind.ShipOfLine?.11:.28)){found=i;break;}
             foreach(var next in new[]{i-1,i+1,i-width,i+width})
             {
                 if(next<0 || next>=nodes.Length || before[next]!=-2 || !free[next] || ShipDeck.Distance(nodes[i],nodes[next])>.101)continue;
-                var a=nodes[i];var b=nodes[next];var reached=ShipDeck.Move(a,(b.X-a.X)/.165,(b.Y-a.Y)/.165,.1,p=>others.Any(o=>ShipDeck.Distance(p,o)<ShipDeck.Radius*2));
+                var a=nodes[i];var b=nodes[next];var reached=ShipDeck.Move(a,(b.X-a.X)/.165,(b.Y-a.Y)/.165,.1,p=>others.Any(o=>ShipDeck.Distance(p,o)<ShipDeck.Radius*2),kind);
                 if(ShipDeck.Distance(reached,b)>.001)continue;
                 before[next]=i;queue.Enqueue(next);
             }

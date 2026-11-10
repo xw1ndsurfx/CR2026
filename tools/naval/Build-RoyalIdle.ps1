@@ -19,18 +19,20 @@ function SourceAsset([string]$asset){
     throw ('Missing source asset: '+$asset)
 }
 if($NoCannons){foreach($row in $atlas.Directions){foreach($frame in $row){$frame.CannonAnchors=@()}}}
-$pivots=[double[]]::new(96)
+$perSide=[Math]::Max(3,1+($atlas.Directions[0][0].CannonAnchors | ForEach-Object { $_.Index } | Measure-Object -Maximum).Maximum)
+$pivots=[double[]]::new(8*$perSide*4)
 for($i=0;$i -lt $pivots.Length;$i++){$pivots[$i]=-1000000}
-for($d=0;$d -lt 8;$d++){foreach($a in $atlas.Directions[$d][0].CannonAnchors){$slot=[int]$a.Index+$(if($a.Starboard){3}else{0});$pivots[($d*6+$slot)*2]=$a.X;$pivots[($d*6+$slot)*2+1]=$a.Y}}
+for($d=0;$d -lt 8;$d++){foreach($a in $atlas.Directions[$d][0].CannonAnchors){$slot=[int]$a.Index+$(if($a.Starboard){$perSide}else{0});$pivots[($d*($perSide*2)+$slot)*2]=$a.X;$pivots[($d*($perSide*2)+$slot)*2+1]=$a.Y}}
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
-$registration=[ShipFamilyPixels]::Assemble($ArtPath,$MaskPath,$ReferenceGraphicPath,(SourceAsset $atlas.ForegroundGraphics),$pivots,(Join-Path $OutputDirectory $name),(Join-Path $OutputDirectory $fringe),$Palette,!$NoFixedGunRemoval.IsPresent)
+$footprintCut=if($Stem -like "*_Raft" -and $Palette -in @(3,4)){.28}elseif($Stem -like "*_Fishing" -and $Palette -eq 4){.45}else{0}
+$registration=[ShipFamilyPixels]::Assemble($ArtPath,$MaskPath,$ReferenceGraphicPath,(SourceAsset $atlas.ForegroundGraphics),$pivots,(Join-Path $OutputDirectory $name),(Join-Path $OutputDirectory $fringe),$Palette,!$NoFixedGunRemoval.IsPresent,$footprintCut)
 $gunName=if($atlas.CannonGraphics){$atlas.CannonGraphics}else{(Get-Content -LiteralPath (Join-Path $ocean ($sailing+'.naval.json')) -Raw | ConvertFrom-Json).CannonGraphics}
 $gunAsset=SourceAsset $gunName
 $front=[Drawing.Bitmap]::new((Join-Path $OutputDirectory $fringe));$guns=[Drawing.Bitmap]::new($gunAsset)
 try{
     if($Palette -in @(3,4)){
-        $referenceName=if($State -eq 'Normal'){$atlas.CannonOcclusionGraphics}else{'Ship_CorpsRoyaux_ThreeMast_'+$State+'_v5_canopy_compat.png'}
-        $referenceCover=[Drawing.Bitmap]::new((Join-Path $ocean $referenceName))
+        $referenceName=if($atlas.CannonOcclusionGraphics -match '_Normal_'){$atlas.CannonOcclusionGraphics.Replace('_Normal_',('_'+$State+'_'))}elseif($State -eq 'Normal'){$atlas.CannonOcclusionGraphics}else{'Ship_CorpsRoyaux_ThreeMast_'+$State+'_v5_canopy_compat.png'}
+        $referenceCover=[Drawing.Bitmap]::new((SourceAsset $referenceName))
         try{$pixels=[ShipFamilyPixels]::RegisteredCannonCover([CannonLayerPixels]::Read($front),[CannonLayerPixels]::Read($referenceCover),[CannonLayerPixels]::Read($guns),$pivots)}finally{$referenceCover.Dispose()}
     }else{$pixels=[CannonLayerPixels]::CannonCover([CannonLayerPixels]::Read($front),[CannonLayerPixels]::Read($guns),$pivots,($Palette -eq 5))}
     [CannonLayerPixels]::Save($pixels,3072,1024,(Join-Path $OutputDirectory $cover))
@@ -45,7 +47,7 @@ $atlas.ForegroundGraphics=$fringe;$atlas.CannonOcclusionGraphics=$cover
 $atlas.SourceSha256=(Get-FileHash -LiteralPath (Join-Path $OutputDirectory $name) -Algorithm SHA256).Hash.ToLowerInvariant()
 $atlas.ReviewNotes=$Stem+' '+$State+' state. Generated art registered to the supplied hull reference and calibrated station pivots. Foreground selects authored image pixels. Walking and hull registration require live visual verification.'
 $json=$atlas | ConvertTo-Json -Depth 30 -Compress
-if([Text.Encoding]::UTF8.GetByteCount($json) -gt 65536){throw 'Idle metadata exceeds 64KiB'}
+if([Text.Encoding]::UTF8.GetByteCount($json) -gt 131072){throw 'Idle metadata exceeds 128KiB'}
 [IO.File]::WriteAllText((Join-Path $OutputDirectory ($name+'.naval.json')),$json,[Text.UTF8Encoding]::new($false))
 $registration | ConvertTo-Json | Set-Content (Join-Path $OutputDirectory 'registration.json') -Encoding utf8
 Write-Output ('Created '+$Stem+' '+$State+' layers and '+[Text.Encoding]::UTF8.GetByteCount($json)+' bytes of metadata.')

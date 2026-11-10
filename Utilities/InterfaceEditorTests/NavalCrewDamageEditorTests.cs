@@ -20,7 +20,7 @@ internal static class NavalCrewDamageEditorTests
             var fields=typeof(FrmNavalConfiguration).GetMethod("Fields",hidden)!;
             var patrol=new HerboniaPatrol();
             using var patrolPanel=(TableLayoutPanel)fields.Invoke(editor,[patrol,0,new[]{"Ship","Loot"}])!;
-            foreach(var name in new[]{"DeckCaptainNpcId","PortGunner1NpcId","PortGunner2NpcId","PortGunner3NpcId","StarboardGunner1NpcId","StarboardGunner2NpcId","StarboardGunner3NpcId"})
+            foreach(var name in new[]{"DeckCaptainNpcId","PortGunner1NpcId","PortGunner2NpcId","PortGunner3NpcId","StarboardGunner1NpcId","StarboardGunner2NpcId","StarboardGunner3NpcId","PortGunner4NpcId","PortGunner5NpcId","PortGunner6NpcId","StarboardGunner4NpcId","StarboardGunner5NpcId","StarboardGunner6NpcId"})
             {
                 var choices=(ComboBox)patrolPanel.Controls[name]!;
                 choices.SelectedItem=choices.Items.Cast<object>().Single(c=>((Guid)c.GetType().GetProperty("Id")!.GetValue(c)!)==npc.Id);
@@ -40,7 +40,14 @@ internal static class NavalCrewDamageEditorTests
             Check(model.DeckActivity==ShipDeckActivity.Fishing,"A ship can replace cannon stations with fishing stations");
             var zoneChoices=modelPanel.Controls["FishingZoneId"]!.Controls.OfType<ComboBox>().Single();
             Check((Guid)zoneChoices.SelectedItem!.GetType().GetProperty("Id")!.GetValue(zoneChoices.SelectedItem)! == model.FishingZoneId,"A saved fishing zone is preserved before its editor resources arrive");
-            Console.WriteLine("PASS naval crew and damage editor: seven NPC selectors, opt-in enemy boarding, existing animations, negative port coordinates and dedicated damage-zone editor");
+            var monster=new NavalMonsterDefinition();
+            using var monsterPanel=(TableLayoutPanel)fields.Invoke(editor,[monster,0,new[]{"Loot"}])!;
+            var monsterNpc=(ComboBox)monsterPanel.Controls["TentacleNpcId"]!;monsterNpc.SelectedItem=monsterNpc.Items.Cast<object>().Single(c=>((Guid)c.GetType().GetProperty("Id")!.GetValue(c)!)==npc.Id);
+            var boss=(ComboBox)monsterPanel.Controls["BossAnimationId"]!;boss.SelectedItem=boss.Items.Cast<object>().Single(c=>((Guid)c.GetType().GetProperty("Id")!.GetValue(c)!)==animation.Id);
+            ((NumericUpDown)monsterPanel.Controls["BossAnimationOffsetY"]!).Value=-120;
+            ((ComboBox)monsterPanel.Controls["Kind"]!).SelectedIndex=(int)NavalMonsterKind.Leviathan;
+            Check(monster.TentacleNpcId==npc.Id && monster.BossAnimationId==animation.Id && monster.BossAnimationOffsetY==-120 && monster.Kind==NavalMonsterKind.Leviathan,"Naval Monsters chooses real NPCs, boss animations, negative offsets and monster kinds");
+            Console.WriteLine("PASS naval crew and damage editor: thirteen NPC selectors and Naval Monsters, opt-in enemy boarding, existing animations, negative port coordinates and dedicated damage-zone editor");
         }
         finally{NPCDescriptor.Lookup.DeleteAt(npc.Id);AnimationDescriptor.Lookup.DeleteAt(animation.Id);}
     }

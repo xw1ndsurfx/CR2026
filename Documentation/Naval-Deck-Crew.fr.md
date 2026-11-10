@@ -77,7 +77,7 @@ Le protocole ajoute `DeckInputPacket`, puis les clés 36 à 38 de `ShipSnapshot`
 
 ## Équipage ennemi et abordage
 
-Les patrouilles disposent de sept sélecteurs de NPC existants : capitaine, trois canonniers bâbord et trois tribord. Le serveur transmet leurs sprites, rôles et visées, sans réservations de joueurs. Les personnages passent dans les mêmes couches que l'équipage joueur. Dans les abordages automatiques, les apparences choisies sont clonées en définitions temporaires ; les statistiques de combat conservent l'équilibrage naval selon le niveau de la patrouille. Les NPC d'origine ne sont pas modifiés.
+Les patrouilles peuvent choisir un PNJ pour le capitaine et pour chaque canon. Le trois-mâts dispose de six postes de canon ; le vaisseau de ligne en dispose de douze. Les modèles plus petits utilisent uniquement les postes qu'ils possèdent. Le serveur transmet leurs sprites, rôles et visées. Dans les abordages automatiques, les apparences choisies sont clonées en définitions temporaires avec les statistiques de la patrouille. Les PNJ d'origine ne sont pas modifiés.
 
 La case « Peut aborder les navires des joueurs » autorise un ennemi à engager un abordage lorsque la coque du joueur passe sous le seuil configuré, à portée et hors des zones de sécurité des quais. Les vérifications sont répétées au démarrage. La création de carte et les verrous des joueurs restent hors du verrou global naval.
 
@@ -93,9 +93,15 @@ Le mode de pont « Pêche » réserve les anciens emplacements de canon à la p�
 
 Les offres de navire peuvent exiger le premium, une quête terminée et/ou un déblocage d'événement. Les conditions activées sont cumulatives et vérifiées côté serveur avant l'achat et le lancement. La commande « Offrir ou débloquer un navire » permet soit de débloquer le modèle pour la boutique, soit d'ajouter le navire à la flotte sans paiement ; l'attribution débloque aussi le modèle. Les conditions de navigation restent applicables. Les modèles débloqués sont enregistrés avec la carrière navale ; la flotte est restaurée si la sauvegarde échoue. Les répétitions d'une récompense ne créent pas de doublons.
 
+## Vaisseau de ligne
+
+Le vaisseau de ligne accueille 13 joueurs : un capitaine et douze canonniers. À bâbord comme à tribord, les trois premiers postes sont ceux de la batterie supérieure ; les trois suivants appartiennent à la batterie inférieure. Les accès aux postes inférieurs sont sur le pont, en retrait du bord. Le personnage rejoint le sabord lorsqu'il prend le poste et revient à l'accès en le quittant. Les canons ont chacun leur propre visée ; la rangée inférieure partage l'alignement longitudinal de la rangée supérieure.
+
+Les cinq formats (radeau, sloop, bateau de pêche, trois-mâts et vaisseau de ligne) ont chacun des apparences aventurier, Corps Royaux, Herbonia, Majestya, pirate, squelette et fantôme. Le choix de l'apparence règle les quatre états et les postes sans modifier l'identité du navire. Les règles de boutique, de quête, de premium et d'événement sont celles de l'offre. Les couches des variantes fantômes restent translucides et les bateaux de pêche sont désarmés.
+
 ## Rejouer le scénario de vérification
 
-Le test serveur `SixPlayersWalkToFreeStationsOnATurningMovingShipAndKeepTheirOwnAim` fait réellement parcourir le masque aux six joueurs, par les paquets de déplacement, pendant que `ShipMovement.Step` avance et tourne le navire. Chaque joueur prend un poste différent et garde sa propre visée. Les snapshots sont sérialisés puis décodés par MessagePack, et le test écrit `deck-walk-replay.json` dans son dossier de sortie.
+Le test serveur `PlayersWalkToFreeStationsOnATurningMovingShipAndKeepTheirOwnAim` fait parcourir le masque aux six canonniers du trois-mâts et aux douze canonniers du vaisseau de ligne, par les paquets de déplacement, pendant que le navire avance et tourne. Chaque joueur prend un poste et garde sa propre visée. Le test sérialise les snapshots et écrit `deck-walk-replay.json` et `deck-walk-replay-line.json` dans son dossier de sortie.
 
 `Render-DeckReplay.ps1 -GameResources <resources-du-jeu> -OutputDirectory <sortie>` transforme ce replay en images avec des corps et équipements de démonstration issus du jeu. `pack-deck-apng.py <sortie/frames> <sortie/Deplacement_pont_75.png>` assemble l'aperçu animé sans modifier ses pixels. Le masque vert des huit vues montre les emplacements de pieds autorisés, y compris sous les voiles. Ce replay vérifie le résultat serveur hors ligne ; il ne constitue pas un essai de sept clients connectés ni une capture du client graphique final.
 

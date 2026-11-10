@@ -1,0 +1,15 @@
+{
+  "Version": 1,
+  "Columns": 4,
+  "Rows": [
+    "Idle",
+    "Emerge",
+    "Attack",
+    "Hurt",
+    "Retreat",
+    "Crush"
+  ],
+  "FrameMilliseconds": 180,
+  "ImageWidth": 1024,
+  "ImageHeight": 1536
+}

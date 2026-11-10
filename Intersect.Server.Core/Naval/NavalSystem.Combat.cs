@@ -37,7 +37,9 @@ internal static partial class NavalSystem
         int damage;Guid id;
         lock(Gate)
         {
-            if(!Ships.TryGetValue(player.CaptainedShipId,out var vessel) || vessel.OwnerId!=player.Id || vessel.PendingDamage<=0) return true;
+            var shipId=player.CaptainedShipId;
+            if(shipId==Guid.Empty && BoardingPlayers.TryGetValue(player.Id,out var encounter) && EnemyBoardings.TryGetValue(encounter,out var boarding) && boarding.Captain==player.Id && boarding.Monster!=null)shipId=boarding.Ship;
+            if(!Ships.TryGetValue(shipId,out var vessel) || vessel.OwnerId!=player.Id || vessel.PendingDamage<=0) return true;
             if(!force && now<vessel.NextDamageAttempt) return false;
             id=vessel.State.Id;damage=vessel.PendingDamage;vessel.PendingDamage=0;
         }
@@ -56,7 +58,7 @@ internal static partial class NavalSystem
             {
                 if(!IsEnabled() || player.NavalPartyExitRequested || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z!=0 ||
                     player.InstanceType!=MapInstanceType.Overworld || player.NavalShipId!=packet.ShipId ||
-                    !Ships.TryGetValue(packet.ShipId,out var v) || Driver(v)!=player.Id || player.Id!=v.State.CaptainId && !player.Party.Any(m=>m.Id==v.State.CaptainId) || v.State.MapId!=player.MapId || v.SunkUntil>0 || !ShipActions.IsServerAction(packet.Action))return;
+                    !Ships.TryGetValue(packet.ShipId,out var v) || Driver(v)!=player.Id || player.Id!=v.State.CaptainId && !player.Party.Any(m=>m.Id==v.State.CaptainId) || v.State.MapId!=player.MapId || v.SunkUntil>0 || v.EnemyBoardingEncounter!=Guid.Empty || !ShipActions.IsServerAction(packet.Action))return;
                 if(packet.Action==ShipAction.LeaveHelm){if(v.State.CaptainId!=player.Id){v.HelmsmanId=Guid.Empty;v.Controls.Reset();return;}leave=true;}
                 else if(packet.Action==ShipAction.Anchor)
                 {if(now-v.LastAction<150)return;v.LastAction=now;v.Anchored=!v.Anchored;Emit(NavalEffectKind.Anchor,v.State.MapId,v.State.X,v.State.Y,0,now);}
@@ -106,9 +108,9 @@ internal static partial class NavalSystem
         var sounded=false;
         for (var index=0;index<gunCount;index++)
         {
-            var gun=index-(gunCount-1)/2d;
-            var map=s.MapId; var x=s.X+direction.X*radius+forwardX*gun*d.Length/4;
-            var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
+            var offset=StationOffset(vessel,index,starboard);
+            var map=s.MapId; var x=s.X+direction.X*radius+forwardX*offset;
+            var y=s.Y+direction.Y*radius+forwardY*offset;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             if(planned==null)Emit(NavalEffectKind.Fire,map,x,y,heading,now,!sounded);sounded=true;
             (planned??Cannonballs).Add(new() { Ammo=ammo,ImpactAnimationId=ammo?.ImpactAnimationId??_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=heading,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,

@@ -27,12 +27,21 @@ public static class ShipFamilyPixels
         if(right-left<16 || bottom-top<3)throw new InvalidOperationException("Missing royal hull registration features");
         return new[]{left,top,right,bottom};
     }
-    static int[] SpriteBounds(int[] pixels)
+    static int[] SpriteBounds(int[] pixels,int startY=0,int minAlpha=96)
     {
         int left=W,top=H,right=0,bottom=0;
-        for(int y=0;y<H;y++)for(int x=0;x<W;x++)if((uint)pixels[y*W+x]>>24>96)
+        for(int y=startY;y<H;y++)for(int x=0;x<W;x++)if((uint)pixels[y*W+x]>>24>minAlpha)
         {left=Math.Min(left,x);top=Math.Min(top,y);right=Math.Max(right,x);bottom=Math.Max(bottom,y);}
         return new[]{left,top,right,bottom};
+    }
+    static int[] SolidFootprint(int[] pixels,double cutoff)
+    {
+        var full=SpriteBounds(pixels);
+        // A pennant, a bone ornament or the spectral glow can be wider than the logs.
+        // Register the solid deck footprint to the collision template instead.
+        var start=full[1]+(int)((full[3]-full[1])*cutoff);
+        var solid=SpriteBounds(pixels,Math.Max(0,start),180);
+        return solid[2]-solid[0]>=16?solid:SpriteBounds(pixels,Math.Max(0,start));
     }
     static double[] AlignMask(int[] art,int[] mask)
     {
@@ -68,7 +77,7 @@ public static class ShipFamilyPixels
         for(int k=-2;k<=2;k++)for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++)Try(cs+k*.01,cx+x,cy+y);
         return best<count*.1?new[]{1d,0d,0d}:new[]{bs,bx,by};
     }
-    public static double[] Assemble(string artPath,string maskPath,string referencePath,string foregroundPath,double[] pivots,string target,string fringeTarget,int palette=0,bool eraseFixedGuns=true)
+    public static double[] Assemble(string artPath,string maskPath,string referencePath,string foregroundPath,double[] pivots,string target,string fringeTarget,int palette=0,bool eraseFixedGuns=true,double footprintCut=0)
     {
         int[] source,mask,reference,oldForeground;int sw,sh,mw,mh;
         using(var b=new Bitmap(artPath)){source=CannonLayerPixels.Read(b);sw=b.Width;sh=b.Height;}
@@ -97,9 +106,10 @@ public static class ShipFamilyPixels
                 for(int dy=-1;dy<=1 && !selection[y*W+x];dy++)for(int dx=-1;dx<=1;dx++)
                     if(mx+dx>=0 && my+dy>=0 && mx+dx<W && my+dy<H && (uint)authoredMask[(my+dy)*W+mx+dx]>>24>=180){selection[y*W+x]=true;break;}
             }
-            var before=palette>=3?SpriteBounds(original):Bounds(original);var after=palette>=3?SpriteBounds(authored):Bounds(authored,palette);
+            var before=footprintCut>0?SolidFootprint(original,footprintCut):palette>=3?SpriteBounds(original):Bounds(original);
+            var after=footprintCut>0?SolidFootprint(authored,footprintCut):palette>=3?SpriteBounds(authored):Bounds(authored,palette);
             double scaleX=(before[2]-before[0])/(double)(after[2]-after[0]);
-            if(palette>0 && (scaleX<.8 || scaleX>1.2))
+            if(footprintCut==0 && palette>0 && (scaleX<.8 || scaleX>1.2))
             {
                 before=SpriteBounds(original);after=SpriteBounds(authored);
                 scaleX=(before[2]-before[0])/(double)(after[2]-after[0]);
@@ -113,7 +123,7 @@ public static class ShipFamilyPixels
             double tx=before[0]-after[0]*scaleX,ty=before[3]-after[3]*scaleY;
             tx=Math.Clamp(tx,3-artBounds[0]*scaleX,W-4-artBounds[2]*scaleX);
             ty=Math.Clamp(ty,3-artBounds[1]*scaleY,H-4-artBounds[3]*scaleY);
-            if(scaleX<.8 || scaleX>1.2)throw new InvalidOperationException("Hull changed scale: "+d);
+            if(scaleX<.8 || scaleX>1.2)throw new InvalidOperationException($"Hull changed scale in direction {d}: {scaleX:F3}");
             registration[d*4]=scaleX;registration[d*4+1]=scaleY;registration[d*4+2]=tx;registration[d*4+3]=ty;
             for(int y=1;y<H-1;y++)for(int x=1;x<W-1;x++)
             {
@@ -122,15 +132,19 @@ public static class ShipFamilyPixels
                 if(sx>=0 && sy>=0 && sx<W && sy<H)
                 {pixel=authored[sy*W+sx];if(selection[sy*W+sx])front=pixel;}
                 uint p=(uint)pixel;int r=(int)(p>>16)&255,g=(int)(p>>8)&255,b=(int)p&255;
-                for(int gun=0;eraseFixedGuns && gun<6;gun++)
+                for(int gun=0;eraseFixedGuns && gun<pivots.Length/16;gun++)
                 {
-                    double px=pivots[(d*6+gun)*2],py=pivots[(d*6+gun)*2+1];
+                    double px=pivots[(d*(pivots.Length/16)+gun)*2],py=pivots[(d*(pivots.Length/16)+gun)*2+1];
                     if(front!=0 || (x-px)*(x-px)+(y-py)*(y-py)>20*20 || p>>24<96 || Math.Max(r,Math.Max(g,b))>175 || Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))>45)continue;
                     // The authored fixed iron is replaced by the original,
                     // independently animated gun. Its wooden carriage stays.
                     bool onHull=original[y*W+x]!=0;
                     pixel=onHull?unchecked((int)0xff19120e):0;front=0;break;
                 }
+                // The lower gun deck is behind the hull except inside the authored dark sabords.
+                if(pivots.Length==192 && Math.Max(r,Math.Max(g,b))<70)
+                    for(int side=0;side<2;side++)for(int gun=3;gun<6;gun++)
+                    {int n=d*12+side*6+gun;double px=pivots[n*2],py=pivots[n*2+1];if(Math.Abs(x-px)<6 && Math.Abs(y-py)<6)front=0;}
                 for(int f=0;f<4;f++)
                 {
                     int at=(oy+y+bob[f])*AW+ox+f*W+x;atlas[at]=pixel;fringe[at]=front;
@@ -143,11 +157,11 @@ public static class ShipFamilyPixels
     public static int[] RegisteredCannonCover(int[] fringe,int[] referenceCover,int[] guns,double[] positions)
     {
         var cover=(int[])fringe.Clone();int[] bob={0,-1,0,1};
-        for(int d=0;d<8;d++)for(int gun=0;gun<6;gun++)
+        for(int d=0;d<8;d++)for(int gun=0;gun<positions.Length/16;gun++)
         {
-            int n=d*6+gun;double radius=0;
+            int n=d*(positions.Length/16)+gun;int perSide=positions.Length/32,sprite=d*6+gun%perSide%3+(gun>=perSide?3:0);double radius=0;
             for(int y=0;y<64;y++)for(int x=0;x<64;x++)
-                if((uint)guns[(n/8*64+y)*512+n%8*64+x]>>24>32)radius=Math.Max(radius,Math.Sqrt((x-32)*(x-32)+(y-32)*(y-32)));
+                if((uint)guns[(sprite/8*64+y)*512+sprite%8*64+x]>>24>32)radius=Math.Max(radius,Math.Sqrt((x-32)*(x-32)+(y-32)*(y-32)));
             int r=(int)Math.Ceiling(radius)+3;
             for(int f=0;f<4;f++)for(int dy=-r;dy<=r;dy++)for(int dx=-r;dx<=r;dx++)
             {
@@ -320,9 +334,9 @@ public static class ShipFamilyPixels
                 int ox=col*W,oy=d*H,phase=sinkingOnly?col:0,ax=d%2*1536+phase*W,ay=d/2*H;
                 Draw(art);
                 if(front!=null)Draw(front);
-                if(!sinkingOnly && col<3)for(int gun=0;gun<6;gun++)
+                if(!sinkingOnly && col<3)for(int gun=0;gun<pivots.Length/16;gun++)
                 {
-                    int n=d*6+gun,sprite=sprites[n];if(sprite<0)continue;
+                    int n=d*(pivots.Length/16)+gun,sprite=sprites[n];if(sprite<0)continue;
                     CannonLayerPixels.Over(output,W*4,H*8,guns,512,sprite%8*64,sprite/8*64,64,ox+pivots[n*2],oy+pivots[n*2+1],0);
                 }
                 if(cover!=null)Draw(cover);

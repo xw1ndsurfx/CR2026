@@ -56,7 +56,7 @@ internal static partial class NavalSystem
             else
             {
                 var seat=v.Guns.FirstOrDefault(g=>g.Value.Owner==id && g.Value.Until>now);
-                if(seat.Value!=null)walker.Position=ShipDeck.Station(seat.Key>=_settings.Gunnery.CannonsPerSide,seat.Key%_settings.Gunnery.CannonsPerSide,DeckKind(v));
+                if(seat.Value!=null)walker.Position=ShipDeck.Station(seat.Key>=GunStride(v),seat.Key%GunStride(v),DeckKind(v));
             }
         }
         // A seat/helm transfer may snap its new operator onto a walking player's
@@ -101,10 +101,10 @@ internal static partial class NavalSystem
     {
         EnsureDeck(v,now);
         if(!v.Deck.TryGetValue(player,out var walker))return -1;
-        return Enumerable.Range(0,_settings.Gunnery.CannonsPerSide*2)
-            .Where(i=>ValidGunKey(v,i) && (!side.HasValue || side.Value==(i>=_settings.Gunnery.CannonsPerSide)) &&
+        return Enumerable.Range(0,GunStride(v)*2)
+            .Where(i=>ValidGunKey(v,i) && (!side.HasValue || side.Value==(i>=GunStride(v))) &&
                 (!v.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Until<=now || gun.Owner==player))
-            .Select(i=>(Index:i,Distance:ShipDeck.Distance(walker.Position,ShipDeck.Station(i>=_settings.Gunnery.CannonsPerSide,i%_settings.Gunnery.CannonsPerSide,DeckKind(v)))))
+            .Select(i=>(Index:i,Distance:ShipDeck.Distance(walker.Position,ShipDeck.Station(i>=GunStride(v),i%GunStride(v),DeckKind(v)))))
             .Where(p=>p.Distance<=ShipDeck.UseDistance).OrderBy(p=>p.Distance).Select(p=>p.Index).FirstOrDefault(-1);
     }
     internal static void DeckInput(Player player,DeckInputPacket packet,long now)
@@ -158,7 +158,7 @@ internal static partial class NavalSystem
                     {
                         if(!v.Guns.TryGetValue(index,out var gun))v.Guns[index]=gun=new();
                         gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;gun.Yaw=0;gun.AimAt=now-100;
-                        walker.Position=ShipDeck.Station(index>=_settings.Gunnery.CannonsPerSide,index%_settings.Gunnery.CannonsPerSide,DeckKind(v));
+                        walker.Position=ShipDeck.Station(index>=GunStride(v),index%GunStride(v),DeckKind(v));
                         player.GunneryMessage="";
                     }
                     else player.GunneryMessage="Move closer to a free cannon or the helm.";

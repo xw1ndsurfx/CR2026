@@ -13,8 +13,9 @@ public partial class MapInstance
         Fill(0,0,layout.Width*tw,layout.Height*th,new Color(255,39,91,117));
         if(BoardingScene is {} scene)
         {
+            Intersect.Client.Naval.NavalWorld.DrawBoardingMonster(Id,X,Y,false);
             DrawBoardingShips(false);
-            Fill(scene.BridgeLeft*tw,scene.BridgeY*th,(scene.BridgeRight-scene.BridgeLeft+1)*tw,th,new Color(255,121,76,42));
+            if(scene.BridgeY>=0)Fill(scene.BridgeLeft*tw,scene.BridgeY*th,(scene.BridgeRight-scene.BridgeLeft+1)*tw,th,new Color(255,121,76,42));
             for(int x=scene.BridgeLeft;x<=scene.BridgeRight;x++)
             {Fill(x*tw,scene.BridgeY*th,2,th,new Color(255,60,34,20));Fill(x*tw,(scene.BridgeY+.12f)*th,tw,2,new Color(255,179,129,72));}
             return;
@@ -34,7 +35,7 @@ public partial class MapInstance
 
     internal void DrawGeneratedBoardingForeground()
     {
-        if(GeneratedBoardingDeck && BoardingScene!=null)DrawBoardingShips(true);
+        if(GeneratedBoardingDeck && BoardingScene!=null){DrawBoardingShips(true);Intersect.Client.Naval.NavalWorld.DrawBoardingMonster(Id,X,Y,true);}
     }
     private void DrawBoardingShips(bool foreground)
     {

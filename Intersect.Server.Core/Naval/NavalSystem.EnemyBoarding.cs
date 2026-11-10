@@ -22,6 +22,8 @@ internal static partial class NavalSystem
         internal readonly HashSet<Guid> Members=[],DefeatedCrew=[];
         internal bool Starting=true,Finished,Won;
         internal long Started;
+        internal NavalMonsterDefinition? Monster;
+        internal NavalMonsterBattle? MonsterBattle;
     }
     private static readonly Dictionary<Guid,EnemyBoardingRun> EnemyBoardings=[];
     private static readonly Dictionary<Guid,Guid> BoardingPlayers=[];
@@ -126,6 +128,7 @@ internal static partial class NavalSystem
             if(!run.Members.Contains(run.Captain) || Player.FindOnline(run.Captain) is {NavalPartyExitRequested:true})won=false;
             if(Ships.TryGetValue(run.Ship,out var source))
                 foreach(var id in source.Crew.Keys.ToArray())if(Player.FindOnline(id) is {} member && !CanReceiveBoardingReward(member,encounter))source.Crew.Remove(id);
+            if(run.Monster!=null){FinishMonsterAssault(run,won,Timing.Global.Milliseconds);return;}
             run.Finished=true;run.Won=won;
             if (won)
                 foreach (var id in run.Members)
@@ -236,7 +239,11 @@ internal static partial class NavalSystem
             DungeonRunRuntime.LeaveNavalBoarding(player,run.Id);
             ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;
         }
-        if(run.Finished){ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;}
+        if(run.Finished)
+        {
+            if(run.Monster!=null && !run.Won)DungeonRunRuntime.LeaveNavalBoarding(player,run.Id);
+            ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;
+        }
         if(!DungeonRunRuntime.IsPlayerInActiveRun(player))
         {
             // Also handles a run that expired while this player was disconnected.

@@ -14,7 +14,8 @@ internal static partial class NavalSystem
 
     // Gate is held. Credit the captain who fired the killing shot, only if still at this helm.
     // Respawn constructs a new Vessel, so a second death earns its own single reward.
-    private static void CreditEnemySink(Vessel victim,Guid attackerId,Guid captainId)
+    private static void CreditEnemySink(Vessel victim,Guid attackerId,Guid captainId)=>CreditNavalVictory(victim,attackerId,captainId,true);
+    private static void CreditNavalVictory(Vessel victim,Guid attackerId,Guid captainId,bool shipKill)
     {
         if(victim.Enemy==null || victim.Health!=0 || victim.RewardClaimed) return;
         victim.RewardClaimed=true;
@@ -42,7 +43,7 @@ internal static partial class NavalSystem
             }
         foreach(var participant in participants.Where(id=>weights[id]>0))
         {
-            QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
+            if(shipKill)QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
             PendingSailingRewards.TryGetValue(participant,out var pending);
             PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+experience.GetValueOrDefault(participant)),
                 Cargo:(pending?.Cargo??[]).Concat(awards[participant]).Take(6400).ToArray(),

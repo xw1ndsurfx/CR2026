@@ -35,6 +35,7 @@ internal static partial class NavalWorld
     internal static void Apply(NavalSnapshotPacket packet)
     {
         if(Globals.Me!=null && packet.PartyCapacity>0)Globals.Me.PartyMemberCapacity=Math.Clamp(packet.PartyCapacity,1,100);
+        ObserveMonsters(packet.Monsters??[]);
         var now = Environment.TickCount64;
         var sameViewer=_viewer!=Guid.Empty && _viewer==Globals.Me?.Id;
         var aboard=packet.Ships.FirstOrDefault(s=>HasMember(s,Globals.Me?.Id??Guid.Empty));
@@ -142,6 +143,7 @@ internal static partial class NavalWorld
         if (Graphics.Renderer == null || !Fresh && CurrentCinematicFleet == null) return;
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         DrawCannonballs(row);
+        DrawMonsters(row,false);
         foreach (var view in RenderedShipViews())
         {
             if (!Position(view, out var x, out var y, out var heading)) continue;
@@ -165,6 +167,13 @@ internal static partial class NavalWorld
                 {
                     var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
                     var scale = (float)(tw / atlas.PixelsPerTile);
+                    var crushing=CrushingProgress(s.Id);
+                    if(crushing>0)
+                    {
+                        scale*=1-.18f*crushing;
+                        x+=(float)Math.Sin(Environment.TickCount64/75d)*tw*.1f*crushing;
+                        y+=th*.3f*crushing;
+                    }
                     DrawShipName(ShipNameplate(s),x,y-(float)(pose.AnchorY*scale)-22);
                     foreach(var part in NavalSpriteGeometry.Parts(pose))
                         Graphics.DrawGameTexture(oceanTexture, new FloatRect(part.X, part.Y, part.Width, part.Height),
@@ -193,6 +202,7 @@ internal static partial class NavalWorld
             DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
             DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
         }
+        DrawMonsters(row,true);
         DrawNavalEffects(row);
     }
 

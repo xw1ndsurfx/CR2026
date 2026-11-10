@@ -13,7 +13,7 @@ public sealed class NavalShipAccessTests
     [Test]
     public void NewPlayerBoatsUseNeutralAdventurerModelsAndKeepFactionSkinsAvailable()
     {
-        Assert.That(NavalShipModels.Adventurers.Select(m=>m.Id),Is.EquivalentTo(new[]{"adventurer-three-mast","adventurer-sloop","adventurer-raft","adventurer-fishing"}));
+        Assert.That(NavalShipModels.Adventurers.Select(m=>m.Id),Is.EquivalentTo(new[]{"adventurer-three-mast","adventurer-sloop","adventurer-raft","adventurer-fishing","adventurer-line"}));
         var offer=new HarbourOffer();
         Assert.That(offer.Ship.Graphics,Is.EqualTo(NavalShipModels.PlayerDefault.Graphics));
         Assert.That(offer.Ship.IdleGraphics,Is.EqualTo(NavalShipModels.PlayerDefault.IdleGraphics));

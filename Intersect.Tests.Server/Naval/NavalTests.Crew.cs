@@ -141,6 +141,6 @@ public sealed partial class NavalTests
         var id=Guid.NewGuid();var packet=new NavalSnapshotPacket {Crew=new(){ShipId=id,Members=[new(){PlayerId=id,Name="Sailor"}]},Ships=[new(){Id=id,CrewIds=[id]}]};
         var copy=MessagePackSerializer.Deserialize<NavalSnapshotPacket>(MessagePackSerializer.Serialize(packet));
         Assert.That(copy.Ships[0].CrewIds.Single(),Is.EqualTo(id));Assert.That(copy.Crew.Members[0].Name,Is.EqualTo("Sailor"));
-        Assert.Throws<InvalidDataException>(()=>new NavalConfiguration {Ships=[new(){MapId=Guid.NewGuid(),CrewCapacity=9}]}.Validate(32,32));
+        Assert.Throws<InvalidDataException>(()=>new NavalConfiguration {Ships=[new(){MapId=Guid.NewGuid(),CrewCapacity=17}]}.Validate(32,32));
     }
 }

@@ -18,14 +18,21 @@ internal static partial class NavalSystem
         =>CreateBoardingDeckCore(patrol,now,null);
     internal static (DungeonDefinition Dungeon,MapController Map,int X,int Y)? CreateBoardingDeckOnShips(HerboniaPatrol patrol,ShipDefinition playerShip,long now)
         =>CreateBoardingDeckCore(patrol,now,NavalBoardingScene.Create(playerShip.Graphics,patrol.Ship.Graphics,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight));
-    private static (DungeonDefinition Dungeon,MapController Map,int X,int Y)? CreateBoardingDeckCore(HerboniaPatrol patrol,long now,NavalBoardingScene? scene)
+    internal static (DungeonDefinition Dungeon,MapController Map,int X,int Y)? CreateMonsterDeck(NavalMonsterDefinition monster,ShipDefinition playerShip,long now)
+    {
+        var scene=NavalBoardingScene.CreateSingle(playerShip.Graphics,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight);
+        if(scene==null || NPCDescriptor.Get(monster.TentacleNpcId) is not {Sprite.Length:>0})return null;
+        return CreateBoardingDeckCore(new(){Level=monster.Level,BoardingCrewNpcId=monster.TentacleNpcId,Ship=playerShip},now,scene,monster);
+    }
+    private static (DungeonDefinition Dungeon,MapController Map,int X,int Y)? CreateBoardingDeckCore(HerboniaPatrol patrol,long now,NavalBoardingScene? scene,NavalMonsterDefinition? monster=null)
     {
         var layout=new NavalBoardingDeckLayout(Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight);
         var model=NavalShipModels.Find(patrol.Ship.Graphics);
-        var count=scene==null?patrol.BoardingCrewCount:model!.CrewCapacity;
-        var positions=scene?.CrewPositions(count)??layout.CrewPositions(count);
+        var count=monster?.TentacleCount??(scene==null?patrol.BoardingCrewCount:model!.CrewCapacity);
+        var positions=monster!=null?scene!.AssaultPositions(count):scene?.CrewPositions(count)??layout.CrewPositions(count);
+        if(monster!=null)count=positions.Length;
         var entryX=scene?.EntryX??layout.EntryX;var entryY=scene?.EntryY??layout.EntryY;
-        if(positions.Length!=count || !(scene?.Walkable(entryX,entryY)??layout.Walkable(entryX,entryY)))return null;
+        if(count==0 || positions.Length!=count || !(scene?.Walkable(entryX,entryY)??layout.Walkable(entryX,entryY)))return null;
         var source=NPCDescriptor.Get(patrol.BoardingCrewNpcId)??NPCDescriptor.Get(patrol.DeckCaptainNpcId);
         if(source==null && patrol.BoardingCrewNpcId==Guid.Empty)
             source=NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().Where(n=>!string.IsNullOrWhiteSpace(n.Sprite))
@@ -38,13 +45,19 @@ internal static partial class NavalSystem
         var npc=new NPCDescriptor(Guid.NewGuid()){Name=appearance.Name,Sprite=appearance.Sprite,Aggressive=true,
             // Wait at spawn between fights while keeping combat movement enabled.
             Movement=(byte)NpcMovement.StandStill,SightRange=Math.Min(byte.MaxValue,sightRange),
-            Level=patrol.Level,Damage=Math.Max(2,patrol.Level*2),AttackSpeedValue=1000,Experience=0,ExperienceMaximum=0};
-        npc.MaxVitals[(int)Vital.Health]=40+patrol.Level*12;npc.MaxVitals[(int)Vital.Mana]=100;
+            Level=patrol.Level,Damage=monster?.TentacleDamage??Math.Max(2,patrol.Level*2),AttackSpeedValue=1000,Experience=0,ExperienceMaximum=0};
+        npc.MaxVitals[(int)Vital.Health]=monster?.TentacleHealth??40+patrol.Level*12;npc.MaxVitals[(int)Vital.Mana]=100;
+        if(monster!=null)
+        {
+            npc.AttackAnimationId=appearance.AttackAnimationId;
+            npc.DeathAnimationId=appearance.DeathAnimationId;
+            npc.DeathAnimationDurationSeconds=appearance.DeathAnimationDurationSeconds;
+        }
         for(var i=0;i<npc.Stats.Length;i++)npc.Stats[i]=Math.Max(1,patrol.Level*2);
         return npc;
         }
-        var authored=scene==null?Enumerable.Repeat(source,count).ToArray():patrol.DeckCrew()
-            .Where((id,i)=>i==0 || (i-1)%3<model!.CannonCount(i>3)).Select(id=>id==Guid.Empty?source:NPCDescriptor.Get(id)).ToArray();
+        var authored=scene==null || monster!=null?Enumerable.Repeat(source,count).ToArray():patrol.DeckStations()
+            .Select(s=>s.NpcId==Guid.Empty?source:NPCDescriptor.Get(s.NpcId)).ToArray();
         if(authored.Any(n=>n==null || string.IsNullOrWhiteSpace(n.Sprite)))return null;
         var crew=authored.DistinctBy(n=>n.Id).ToDictionary(n=>n.Id,CloneCrew);
         var map=new MapController(Guid.NewGuid()){Name=string.IsNullOrWhiteSpace(patrol.Ship.Name)?source.Name:patrol.Ship.Name,GeneratedBoardingDeck=true,BoardingScene=scene,IsIndoors=true,Brightness=100};

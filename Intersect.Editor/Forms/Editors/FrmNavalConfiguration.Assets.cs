@@ -7,7 +7,7 @@ public sealed partial class FrmNavalConfiguration
     private SoundPlayer? _navalSoundPreview;
     private Control AssetField(string name,string current,Action<string> set)
     {
-        var crewArt=name=="CrewCannonGraphic";var icon=name.EndsWith("Icon");var sound=name.EndsWith("Sound");
+        var monsterArt=name=="MonsterGraphics";var crewArt=name=="CrewCannonGraphic";var icon=name.EndsWith("Icon");var sound=name.EndsWith("Sound");
         var folder=icon?"spells":sound?"sounds":"ocean";
         var directory=Path.Combine("resources",folder);
         var panel=new Panel {Dock=DockStyle.Fill};
@@ -15,7 +15,8 @@ public sealed partial class FrmNavalConfiguration
         Styling.SearchableChoices.SetResourceDirectory(box, directory);
         var names=Directory.Exists(directory)?Directory.GetFiles(directory,sound?"*.wav":"*.png").Select(Path.GetFileName).Where(n=>NavalPresentation.SafeAsset(n)).Cast<string>().OrderBy(n=>n).ToList():[];
         if(crewArt) names=names.Where(n=>CompatibleCrewArtwork(Path.Combine(directory,n+".crew.json"))).ToList();
-        else if(!icon && !sound) names=names.Where(n=>CompatibleEffect(Path.Combine(directory,n+".effects.json"),name)).ToList();
+        else if(!icon && !sound && !monsterArt) names=names.Where(n=>CompatibleEffect(Path.Combine(directory,n+".effects.json"),name)).ToList();
+        if(monsterArt)names=names.Where(n=>n.StartsWith("Naval_",StringComparison.OrdinalIgnoreCase) && CompatibleMonsterAtlas(Path.Combine(directory,n))).ToList();
         names.Insert(0,"");if(!names.Contains(current)) names.Add(current);
         box.Items.AddRange(names.Cast<object>().ToArray());box.SelectedItem=current;
         PictureBox? preview=null;
@@ -50,6 +51,18 @@ public sealed partial class FrmNavalConfiguration
         panel.Resize+=(_,_)=>AlignSelector();AlignSelector();
         box.SelectedIndexChanged+=(_,_)=>{set(box.Text);ShowPreview();};ShowPreview();
         return panel;
+    }
+    private static bool CompatibleMonsterAtlas(string path)
+    {
+        try
+        {
+            using var stream=File.OpenRead(path);Span<byte> header=stackalloc byte[24];stream.ReadExactly(header);
+            var width=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header[16..20]);
+            var height=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(header[20..24]);
+            return width is >0 and <=4096 && height is >0 and <=4096 && width%4==0 && height%6==0 && width/4==height/6;
+        }
+        catch(IOException){return false;}
+        catch(UnauthorizedAccessException){return false;}
     }
     private static bool CompatibleCrewArtwork(string path)
     {
