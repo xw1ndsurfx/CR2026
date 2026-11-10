@@ -12,7 +12,22 @@ public sealed class HerboniaPatrol
     public Guid StarboardGunner1NpcId {get;set;}
     public Guid StarboardGunner2NpcId {get;set;}
     public Guid StarboardGunner3NpcId {get;set;}
+    public Guid PortGunner4NpcId {get;set;}
+    public Guid PortGunner5NpcId {get;set;}
+    public Guid PortGunner6NpcId {get;set;}
+    public Guid StarboardGunner4NpcId {get;set;}
+    public Guid StarboardGunner5NpcId {get;set;}
+    public Guid StarboardGunner6NpcId {get;set;}
     public Guid[] DeckCrew()=>[DeckCaptainNpcId,PortGunner1NpcId,PortGunner2NpcId,PortGunner3NpcId,StarboardGunner1NpcId,StarboardGunner2NpcId,StarboardGunner3NpcId];
+    public IEnumerable<(ShipCrewRole Role,int Index,Guid NpcId)> DeckStations()
+    {
+        yield return(ShipCrewRole.Helm,0,DeckCaptainNpcId);
+        var model=NavalShipModels.Find(Ship.Graphics);
+        Guid[][] sides=[[PortGunner1NpcId,PortGunner2NpcId,PortGunner3NpcId,PortGunner4NpcId,PortGunner5NpcId,PortGunner6NpcId],
+            [StarboardGunner1NpcId,StarboardGunner2NpcId,StarboardGunner3NpcId,StarboardGunner4NpcId,StarboardGunner5NpcId,StarboardGunner6NpcId]];
+        for(int side=0;side<2;side++)for(int i=0;i<(model?.CannonCount(side==1)??3);i++)
+            yield return(side==0?ShipCrewRole.PortCannon:ShipCrewRole.StarboardCannon,i,sides[side][i]);
+    }
     public bool AutomaticBoardingDeck {get;set;}=true;
     public Guid BoardingCrewNpcId {get;set;}
     public int BoardingCrewCount {get;set;}=4;

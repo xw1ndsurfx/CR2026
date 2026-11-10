@@ -20,7 +20,7 @@ internal static partial class NavalSystem
     private sealed record GunReward(long Experience,long RetryAt=0);
     private static readonly Dictionary<Guid,GunReward> PendingGunnery=[];
     private static int PendingCrewShots;
-    private static bool GunnerEligible(Player player,Vessel vessel)=>ShipDeck.Activity(vessel.Definition)==ShipDeckActivity.Cannons && !player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
+    private static bool GunnerEligible(Player player,Vessel vessel)=>vessel.EnemyBoardingEncounter==Guid.Empty && ShipDeck.Activity(vessel.Definition)==ShipDeckActivity.Cannons && !player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
         vessel.State.CaptainId!=Guid.Empty && (player.Id==vessel.State.CaptainId || player.Party.Any(m=>m.Id==vessel.State.CaptainId)) && vessel.Enemy==null && vessel.SunkUntil==0 && vessel.Health>0 && !Repairs.ContainsKey(player.Id) &&
         (vessel.State.CaptainId==player.Id || vessel.Crew.TryGetValue(player.Id,out var crew) && Timing.Global.Milliseconds-crew.Seen<=1500);
     private static void PruneGuns(Vessel vessel,long now)
@@ -36,8 +36,8 @@ internal static partial class NavalSystem
             g.Value.Until>now && g.Value.Owner!=Driver(vessel) && vessel.SunkUntil==0 && vessel.Health>0 &&
             !Repairs.ContainsKey(g.Value.Owner) && (g.Value.Owner==vessel.State.CaptainId ||
             vessel.Crew.TryGetValue(g.Value.Owner,out var crew) && now-crew.Seen<=1500))
-        .Select(g => new NavalCrewStation {PlayerId=g.Value.Owner,Starboard=g.Key>=_settings.Gunnery.CannonsPerSide,
-            Index=g.Key%_settings.Gunnery.CannonsPerSide,Yaw=g.Value.Yaw}).ToArray();
+        .Select(g => new NavalCrewStation {PlayerId=g.Value.Owner,Starboard=g.Key>=GunStride(vessel),
+            Index=g.Key%GunStride(vessel),Yaw=g.Value.Yaw}).ToArray();
 
     private static GunneryState GunnerState(Player player,long now)
     {
@@ -53,8 +53,8 @@ internal static partial class NavalSystem
         var occupied=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
         if(occupied.Value!=null)
         {
-            result.LeaseId=occupied.Value.Lease;result.Station=occupied.Key%settings.CannonsPerSide;
-            result.Starboard=occupied.Key>=settings.CannonsPerSide;
+            result.LeaseId=occupied.Value.Lease;result.Station=occupied.Key%GunStride(vessel);
+            result.Starboard=occupied.Key>=GunStride(vessel);
             result.ReloadMilliseconds=(int)Math.Clamp(occupied.Value.ReadyAt-now,0,180000);
         }
         result.Ammunition=_settings.Ammunition.Select(a=>new CannonAmmoView {Icon=a.Icon,Kind=a.Kind,RequiredLevel=a.RequiredLevel,
@@ -80,7 +80,7 @@ internal static partial class NavalSystem
                     player.LastGunneryRequest=now;
                 }
                 PruneGuns(vessel,now);
-                var count=_settings.Gunnery.CannonsPerSide;
+                var count=GunStride(vessel);
                 var current=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
                 if(packet.Action==CannonStationAction.Release)
                 {
@@ -118,7 +118,7 @@ internal static partial class NavalSystem
                 if(ammo.RequiresItem && (ammo.ItemId==Guid.Empty || ItemDescriptor.Get(ammo.ItemId)?.IsStackable!=true || AmmoCount(player,ammo.ItemId)<ammo.UnitsPerShot))
                 {player.GunneryMessage="Not enough ammunition for this cannonball.";SendSnapshot(player);return;}
                 var s=vessel.State;var beam=CannonBeam(vessel,packet.Starboard);
-                var offset=DeckKind(vessel)==ShipDeckKind.Raft?0:GunneryAim.StationOffset(current.Key%count,MountedCannons(vessel,packet.Starboard),vessel.Definition.Length);
+                var offset=StationOffset(vessel,current.Key%count,packet.Starboard);
                 var angle=s.Heading*Math.PI/180;var radius=(DeckKind(vessel)==ShipDeckKind.Raft?vessel.Definition.Length:vessel.Definition.Width)/2+.1;
                 var map=s.MapId;var x=s.X+beam.X*radius+Math.Sin(angle)*offset;var y=s.Y+beam.Y*radius-Math.Cos(angle)*offset;
                 if(!OceanMapResolver.Resolve(OceanMapResolver.Maps(),ref map,ref x,ref y) || BlocksCannonball(map,x,y))

@@ -14,6 +14,17 @@ internal static partial class NavalWorld
         (ship.DeckMembers??[]).FirstOrDefault(p=>p.PlayerId==Globals.Me?.Id) is {} me &&
         Enumerable.Range(0,6).Where(i=>i%3<(NavalShipModels.Find(ship.Graphics)?.CannonCount(i>=3)??3))
             .Any(i=>ShipDeck.Distance(new(me.X,me.Y),ShipDeck.Station(i>=3,i%3,ShipDeck.Kind(ship.Graphics)))<=ShipDeck.UseDistance);
+    internal static bool NearLowerBattery(ShipSnapshot ship)
+    {
+        if(!Gunner.Enabled || ShipDeck.Kind(ship.Graphics)!=ShipDeckKind.ShipOfLine ||
+            (ship.DeckMembers??[]).FirstOrDefault(p=>p.PlayerId==Globals.Me?.Id) is not {} me)return false;
+        var used=(ship.CrewStations??[]).Select(s=>(s.Starboard,s.Index)).ToHashSet();
+        var nearest=(from side in new[]{false,true} from index in Enumerable.Range(0,6)
+            where !used.Contains((side,index))
+            let distance=ShipDeck.Distance(new(me.X,me.Y),ShipDeck.Station(side,index,ShipDeckKind.ShipOfLine))
+            where distance<=ShipDeck.UseDistance orderby distance select index).FirstOrDefault(-1);
+        return nearest>=3;
+    }
     private static void DrawDeckDamage(ShipSnapshot ship,ShipSpriteFrame pose,float x,float y,float scale,bool animations)
     {
         if(ship.Sinking || ship.Health<=0 || pose.DeckMasts.Length!=3)return;

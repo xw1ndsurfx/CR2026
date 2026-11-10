@@ -15,7 +15,15 @@ New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $files=[Collections.Generic.List[string]]::new()
 for($d=0;$d -lt 8;$d++){
     $pose=$atlas.Directions[$d][0];$people=@($pose.CrewAnchors | Where-Object {[int]$_.Role -ne 3});$anchors=@($pose.CannonAnchors)
-    if($Graphics -notmatch '_(Sloop|Raft)_'){
+    if($Graphics -match '_ShipOfLine_'){
+        foreach($person in $people | Where-Object {[int]$_.Role -in @(1,2) -and $_.Index -lt 3}){
+            $index=[int]$person.Index;$point=if([int]$person.Role -eq 1){$pose.DeckPort[$index]}else{$pose.DeckStarboard[$index]}
+            $helm=$pose.CrewAnchors | Where-Object Role -EQ 0 | Select-Object -First 1
+            $y=($index-1)*2;$a=if($y -le 0){$pose.DeckMasts[0]}else{$pose.DeckMasts[1]};$b=if($y -le 0){$pose.DeckMasts[1]}else{$pose.DeckMasts[2]};$t=if($y -le 0){($y+2.5)/2.5}else{$y/2.5}
+            $cx=$a.X+($b.X-$a.X)*$t;$cy=$a.Y+($b.Y-$a.Y)*$t
+            $person.X=$cx+($point.X-$cx)*1.15/.78;$person.Y=$cy+($point.Y-$cy)*1.15/.78
+        }
+    }elseif($Graphics -notmatch '_(Sloop|Raft)_'){
         foreach($person in $people | Where-Object {[int]$_.Role -in @(1,2)}){
             $point=if([int]$person.Role -eq 1){$pose.DeckPort[$person.Index]}else{$pose.DeckStarboard[$person.Index]}
             $person.X=$point.X;$person.Y=$point.Y

@@ -194,11 +194,11 @@ public static class CannonLayerPixels
     public static int[] CannonCover(int[] fringe,int[] guns,double[] positions,bool naturalWood)
     {
         var cover=(int[])fringe.Clone();int[] bob={0,-1,0,1};
-        for(int d=0;d<8;d++)for(int station=0;station<6;station++)
+        for(int d=0;d<8;d++)for(int station=0;station<positions.Length/16;station++)
         {
-            int index=d*6+station;double radius=0;
+            int index=d*(positions.Length/16)+station;int sprite=d*6+(station%(positions.Length/32))%3+(station>=positions.Length/32?3:0);double radius=0;
             for(int y=0;y<64;y++)for(int x=0;x<64;x++)
-                if((uint)guns[(index/8*64+y)*512+index%8*64+x]>>24>32)
+                if((uint)guns[(sprite/8*64+y)*512+sprite%8*64+x]>>24>32)
                     radius=Math.Max(radius,Math.Sqrt((x-32)*(x-32)+(y-32)*(y-32)));
             int r=(int)Math.Ceiling(radius)+3;
             for(int f=0;f<4;f++)

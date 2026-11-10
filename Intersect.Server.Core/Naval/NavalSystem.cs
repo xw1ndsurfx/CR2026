@@ -265,6 +265,7 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        UpdateNavalMonsters(player,now);
         if(UpdateEnemyBoarding(player,now))return;
         var nearDock=player.NavalShipId==Guid.Empty && player.InGame && !player.IsDead && !player.HasPendingDeath && BesideCrewDock(player);
         if(!nearDock)player.NavalDockPromptSeen=false;
@@ -406,7 +407,7 @@ internal static partial class NavalSystem
         var progress=_settings.Sailing.Progress(player.SailingExperience);
         var targetId=CombatTarget(player.NavalShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket {PartyCapacity=PartyCapacity(player),ShoreCargo=ShoreCargo(player),Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket {Monsters=MonsterSnapshots(player,now,visible),PartyCapacity=PartyCapacity(player),ShoreCargo=ShoreCargo(player),Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,

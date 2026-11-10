@@ -86,7 +86,7 @@ internal static partial class NavalWorld
         var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)((kind==ShipDeckKind.Raft?own.Length:own.Width)/2+.1);
         if(Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==own.Id && Gunner.Starboard==CannonViewStarboard)
         {
-            var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);
+            var offset=(float)GunneryAim.StationOffset(ShipDeck.Kind(own.Graphics)==ShipDeckKind.ShipOfLine?Gunner.Station%3:Gunner.Station,ShipDeck.Kind(own.Graphics)==ShipDeckKind.ShipOfLine?3:Gunner.CannonsPerSide,own.Length);
             camera+=new Vector2((float)Math.Sin(heading*Math.PI/180)*tw,-(float)Math.Cos(heading*Math.PI/180)*th)*offset;
         }
         return WorldPerspectiveScene(camera,forward,beam,own.Id);

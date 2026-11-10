@@ -2,7 +2,8 @@
 import json,pathlib,struct,sys,zlib
 directory=pathlib.Path(sys.argv[1]);target=pathlib.Path(sys.argv[2])
 manifest=directory/'manifest.json'
-frames=[directory/name for name in json.loads(manifest.read_text(encoding='utf-8-sig'))] if manifest.exists() else sorted(directory.glob('frame-*.png'))
+entries=json.loads(manifest.read_text(encoding='utf-8-sig')) if manifest.exists() else [p.name for p in sorted(directory.glob('frame-*.png'))]
+frames=[directory/(entry['File'] if isinstance(entry,dict) else entry) for entry in entries]
 def chunks(path):
     data=path.read_bytes();pos=8;out=[]
     while pos<len(data):
@@ -19,7 +20,8 @@ output+=chunk(b'acTL',struct.pack('>II',len(frames),0));sequence=0
 for index,path in enumerate(frames):
     parts=chunks(path)
     if parts[0][1]!=ihdr:raise ValueError('All replay frames must use identical PNG headers')
-    output+=chunk(b'fcTL',struct.pack('>IIIIIHHBB',sequence,width,height,0,0,1,1 if index==len(frames)-1 else 5,0,0));sequence+=1
+    delay=max(1,min(65535,int(entries[index].get('Milliseconds',200)))) if isinstance(entries[index],dict) else 1000 if index==len(frames)-1 else 200
+    output+=chunk(b'fcTL',struct.pack('>IIIIIHHBB',sequence,width,height,0,0,delay,1000,0,0));sequence+=1
     pixels=b''.join(payload for kind,payload in parts if kind==b'IDAT')
     if index==0:output+=chunk(b'IDAT',pixels)
     else:output+=chunk(b'fdAT',struct.pack('>I',sequence)+pixels);sequence+=1

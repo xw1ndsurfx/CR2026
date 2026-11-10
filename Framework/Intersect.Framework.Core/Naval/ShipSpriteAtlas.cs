@@ -3,6 +3,7 @@
 /// <summary>Explicit source rectangles and waterline anchors. Directions: N, NE, E, SE, S, SW, W, NW.</summary>
 public sealed class ShipSpriteAtlas
 {
+    public const int MaximumMetadataBytes=131072;
     public int Version { get; set; } = 1;
     public int ImageWidth { get; set; }
     public int ImageHeight { get; set; }

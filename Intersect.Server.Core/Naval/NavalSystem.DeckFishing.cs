@@ -14,8 +14,8 @@ internal static partial class NavalSystem
         if(ship.Definition.FishingZoneId==Guid.Empty){player.GunneryMessage="No fishing zone is configured for this ship.";return null;}
         if(!ship.Guns.TryGetValue(station,out var seat))ship.Guns[station]=seat=new();
         seat.Owner=player.Id;seat.Lease=Guid.NewGuid();seat.Until=now+3500;seat.Yaw=0;seat.FishingStarted=false;
-        ship.Deck[player.Id].Position=ShipDeck.Station(station>=_settings.Gunnery.CannonsPerSide,station%_settings.Gunnery.CannonsPerSide,DeckKind(ship));
-        ship.Deck[player.Id].FacingX=DeckKind(ship)==ShipDeckKind.Raft?0:station>=_settings.Gunnery.CannonsPerSide?1:-1;
+        ship.Deck[player.Id].Position=ShipDeck.Station(station>=GunStride(ship),station%GunStride(ship),DeckKind(ship));
+        ship.Deck[player.Id].FacingX=DeckKind(ship)==ShipDeckKind.Raft?0:station>=GunStride(ship)?1:-1;
         ship.Deck[player.Id].FacingY=DeckKind(ship)==ShipDeckKind.Raft?1:0;
         return new(ship.State.Id,ship.Definition.FishingZoneId,seat.Lease);
     }

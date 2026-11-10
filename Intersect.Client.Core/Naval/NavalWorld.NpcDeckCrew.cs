@@ -13,13 +13,14 @@ internal static partial class NavalWorld
     internal static IEnumerable<(NavalNpcDeckMember Npc,ShipCrewAnchor Anchor)> NpcDeckCrew(ShipSnapshot ship,ShipSpriteFrame pose)
     {
         var used=new HashSet<(ShipCrewRole,int)>();
-        foreach(var member in (ship.NpcDeckMembers??[]).Take(7))
+        foreach(var member in (ship.NpcDeckMembers??[]).Take(13))
         {
             if(member.NpcId==Guid.Empty || !NavalPresentation.SafeAsset(member.Sprite) || string.IsNullOrWhiteSpace(member.Sprite) ||
                 !Enum.IsDefined(member.Role) || !used.Add((member.Role,member.Index)))continue;
             var anchor=pose.CrewAnchors.FirstOrDefault(a=>a.Role==member.Role && a.Index==member.Index);
             if(anchor==null)continue;
-            if(ShipDeck.Supports(ship.Graphics) && pose.DeckMasts.Length==3 && member.Role!=ShipCrewRole.Passenger)
+            if(ShipDeck.Supports(ship.Graphics) && pose.DeckMasts.Length==3 && member.Role!=ShipCrewRole.Passenger &&
+                !ShipDeck.LowerGunDeck(ShipDeck.Kind(ship.Graphics),member.Index))
             {
                 var kind=ShipDeck.Kind(ship.Graphics);var helm=member.Role==ShipCrewRole.Helm;
                 var local=helm?ShipDeck.Helm:ShipDeck.Station(member.Role==ShipCrewRole.StarboardCannon,member.Index,kind);
