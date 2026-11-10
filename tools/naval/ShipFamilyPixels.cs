@@ -154,32 +154,54 @@ public static class ShipFamilyPixels
         CannonLayerPixels.Save(atlas,AW,AH,target);CannonLayerPixels.Save(fringe,AW,AH,fringeTarget);
         return registration;
     }
-    public static void RemoveSloopIdleFarRails(string path)
+    public static int MoveFarRailsToHull(string bodyPath,string fringePath,string coverPath,int[] regions)
     {
-        int[] pixels;
-        using(var bitmap=new Bitmap(path))pixels=CannonLayerPixels.Read(bitmap);
-
-        // The hull already contains these rails. Keep only the near rail and
-        // rigging in front of crew. Bounds are in the canonical idle frame.
-        var regions=new (int Direction,int Left,int Top,int Right,int Bottom)[]
-        {
-            (2,122,150,147,165),
-            (2,195,150,246,165),
-            (4,150,109,173,133),
-            (4,185,109,211,133),
-            (6,111,153,183,168),
-            (6,212,153,247,168),
-        };
+        int[] body,fringe,cover;
+        using (var image=new Bitmap(bodyPath)) body=CannonLayerPixels.Read(image);
+        using (var image=new Bitmap(fringePath)) fringe=CannonLayerPixels.Read(image);
+        using (var image=new Bitmap(coverPath)) cover=CannonLayerPixels.Read(image);
         int[] bob={0,-1,0,1};
-        foreach(var region in regions)
+        int moved=0;
+        bool bodyChanged=false,fringeChanged=false,coverChanged=false;
+        for(int i=0;i<regions.Length;i+=5)
         {
-            int x=region.Direction%2*1536;
-            int y=region.Direction/2*H;
-            for(int frame=0;frame<4;frame++)
-                for(int row=region.Top;row<region.Bottom;row++)
-                    Array.Clear(pixels,(y+row+bob[frame])*AW+x+frame*W+region.Left,region.Right-region.Left);
+            int direction=regions[i],left=regions[i+1],top=regions[i+2],right=regions[i+3],bottom=regions[i+4];
+            int originX=direction%2*1536,originY=direction/2*H;
+            for(int phase=0;phase<4;phase++)
+            for(int row=top;row<bottom;row++)
+            for(int x=left;x<right;x++)
+            {
+                int index=(originY+row+bob[phase])*AW+originX+phase*W+x;
+                bool hasFringe=(uint)fringe[index]>>24!=0,hasCover=(uint)cover[index]>>24!=0;
+                if(!hasFringe && !hasCover)continue;
+                // Preserve the assembled rail's colour and opacity while moving
+                // it below the crew. Ghost rails already have disjoint passes.
+                int pixel=Over(Over(body[index],fringe[index]),cover[index]);
+                if(body[index]!=pixel)
+                {
+                    body[index]=pixel;
+                    bodyChanged=true;
+                }
+
+                if(hasFringe){fringe[index]=0;fringeChanged=true;}
+                if(hasCover){cover[index]=0;coverChanged=true;}
+                moved++;
+            }
         }
-        CannonLayerPixels.Save(pixels,AW,AH,path);
+        if(bodyChanged) CannonLayerPixels.Save(body,AW,AH,bodyPath);
+        if(fringeChanged) CannonLayerPixels.Save(fringe,AW,AH,fringePath);
+        if(coverChanged) CannonLayerPixels.Save(cover,AW,AH,coverPath);
+        return moved;
+    }
+
+    private static int Over(int background,int foreground)
+    {
+        int alpha=(int)((uint)foreground>>24),below=(int)((uint)background>>24);
+        if(alpha==0)return background;
+        if(alpha==255 || below==0)return foreground;
+        int weight=alpha*255,remainder=below*(255-alpha),combined=weight+remainder;
+        int Channel(int shift)=>(((foreground>>shift)&255)*weight+((background>>shift)&255)*remainder+combined/2)/combined;
+        return ((combined+127)/255<<24)|(Channel(16)<<16)|(Channel(8)<<8)|Channel(0);
     }
 
     public static int[] RegisteredCannonCover(int[] fringe,int[] referenceCover,int[] guns,double[] positions)
