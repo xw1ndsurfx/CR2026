@@ -8,7 +8,7 @@ namespace Intersect.Client.Core;
 
 public static partial class Graphics
 {
-    private const float HelmZoomFactor = .65f;
+    private const float HelmZoomFactor = .45f;
     private static float? _preparedWorldScale;
     private static FloatRect? _preparedWorldBounds;
 

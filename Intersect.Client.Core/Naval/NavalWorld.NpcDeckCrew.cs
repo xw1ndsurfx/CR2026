@@ -31,7 +31,7 @@ internal static partial class NavalWorld
             yield return(member,anchor);
         }
     }
-    private static void DrawNpcOnDeck(NavalNpcDeckMember npc,ShipCrewAnchor anchor,ShipSpriteFrame pose,float x,float y,float scale)
+    private static void DrawNpcOnDeck(NavalNpcDeckMember npc,ShipCrewAnchor anchor,ShipSpriteFrame pose,float x,float y,float scale,float avatarScale)
     {
         if(Globals.ContentManager?.GetTexture(TextureType.Entity,npc.Sprite) is not {} texture)return;
         int columns=Math.Max(1,Options.Instance.Sprites.NormalFrames),rows=Math.Max(1,Options.Instance.Sprites.Directions);
@@ -40,7 +40,8 @@ internal static partial class NavalWorld
         int row=point.Facing switch {Direction.Left=>1,Direction.Right=>2,Direction.Up=>3,_=>0};
         if(row>=rows)return;
         var source=new FloatRect(0,row*height,width,height);var bounds=SpriteVisibleBounds.Get(texture,source);
-        float s=ShipDeck.AvatarScale;
-        Graphics.DrawGameTexture(texture,source,new FloatRect(point.X-(bounds.X+bounds.Width/2f)*s,point.Y-(bounds.Y+bounds.Height)*s,width*s,height*s),Color.White);
+        var destination = new FloatRect(point.X - (bounds.X + bounds.Width / 2f) * avatarScale,
+            point.Y - (bounds.Y + bounds.Height) * avatarScale, width * avatarScale, height * avatarScale);
+        Graphics.DrawGameTexture(texture, source, destination, Color.White);
     }
 }
