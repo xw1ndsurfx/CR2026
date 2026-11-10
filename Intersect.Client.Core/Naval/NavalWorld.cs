@@ -174,6 +174,8 @@ internal static partial class NavalWorld
                         x+=(float)Math.Sin(Environment.TickCount64/75d)*tw*.1f*crushing;
                         y+=th*.3f*crushing;
                     }
+                    var waterReference = atlas.Frame(heading, 0, s.FrameMilliseconds);
+                    DrawShipWater(s, ShipWaterBounds(oceanTexture, waterReference, x, y, scale), heading);
                     DrawShipName(ShipNameplate(s),x,y-(float)(pose.AnchorY*scale)-22);
                     foreach(var part in NavalSpriteGeometry.Parts(pose))
                         Graphics.DrawGameTexture(oceanTexture, new FloatRect(part.X, part.Y, part.Width, part.Height),
@@ -187,29 +189,35 @@ internal static partial class NavalWorld
                 }
                 DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
                 // An ocean atlas is never silently interpreted as the legacy regular grid.
-                DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+                DrawPrototype(s, x, y, heading, (float)s.Width * tw, (float)s.Length * th);
                 continue;
             }
             if (texture != null && s.Frames > 0 && texture.Width % s.Frames == 0 && texture.Height % 8 == 0)
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;
                 var frame = (int)(Environment.TickCount64 / Math.Max(50, s.FrameMilliseconds) % s.Frames);
+                DrawShipWater(s, new FloatRect(x - w * .4f, y, w * .8f, h * .45f), heading);
                 DrawShipName(ShipNameplate(s),x,y-h/2f-22);
                 Graphics.DrawGameTexture(texture, new FloatRect(frame * w, ShipMovement.DirectionRow(heading) * h, w, h),
                     new FloatRect(x - w / 2f, y - h / 2f, w, h), Color.White);
                 continue;
             }
             DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
-            DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+            DrawPrototype(s, x, y, heading, (float)s.Width * tw, (float)s.Length * th);
         }
         DrawMonsters(row,true);
         DrawNavalEffects(row);
     }
 
     // Explicit code-drawn test hull, never presented as the unavailable royal artwork.
-    private static void DrawPrototype(float x, float y, double heading, float width, float length, bool moving)
+    private static void DrawPrototype(ShipSnapshot ship, float x, float y, double heading, float width, float length)
     {
         var angle = ShipMovement.DirectionRow(heading) * Math.PI / 4;
+        var sideX = (float)Math.Abs(Math.Cos(angle)) * width / 2;
+        var foreX = (float)Math.Abs(Math.Sin(angle)) * length / 2;
+        var sideY = (float)Math.Abs(Math.Sin(angle)) * width / 2;
+        var foreY = (float)Math.Abs(Math.Cos(angle)) * length / 2;
+        DrawShipWater(ship, new FloatRect(x - sideX - foreX, y, 2 * (sideX + foreX), sideY + foreY), heading);
         void Pixel(float side, float forward, float size, Color color)
         {
             var px = x + (float)(Math.Cos(angle) * side + Math.Sin(angle) * forward);
@@ -225,8 +233,5 @@ internal static partial class NavalWorld
         }
         for (var side = -width / 2; side <= width / 2; side += 4) Pixel(side, length / 6, 4, new Color(255, 225, 225, 205));
         for (var fore = -length / 4; fore < length / 3; fore += 4) Pixel(0, fore, 4, new Color(255, 195, 155, 55));
-        if (moving)
-            for (var i = 0; i < 3; i++) Pixel((i - 1) * 8, -length / 2 - 8 - Environment.TickCount64 / 150 % 3 * 3,
-                4, new Color(160, 150, 210, 235));
     }
 }

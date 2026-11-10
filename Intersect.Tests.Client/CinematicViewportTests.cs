@@ -19,7 +19,7 @@ public sealed class CinematicViewportTests
     public void CinematicViewportAndGroundPickingUseTheRenderedWorldSize(float zoom)
     {
         var poseField = typeof(CinematicCamera).GetField("_pose", BindingFlags.NonPublic | BindingFlags.Static)!;
-        var scaleField = typeof(Graphics).GetField("_cinematicWorldScale", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var scaleField = typeof(Graphics).GetField("_preparedWorldScale", BindingFlags.NonPublic | BindingFlags.Static)!;
         var oldPose = poseField.GetValue(null);
         var oldScale = scaleField.GetValue(null);
         var oldView = Graphics.CurrentView;

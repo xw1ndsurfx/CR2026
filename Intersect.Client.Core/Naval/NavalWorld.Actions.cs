@@ -19,6 +19,7 @@ internal static partial class NavalWorld
     private sealed record BallView(CannonballSnapshot Previous,CannonballSnapshot Current,long Received);
     private static Dictionary<Guid,BallView> _balls = [];
     internal static ShipSnapshot? OwnShip => Fresh && !OnBoardingDeck ? _ships.Values.FirstOrDefault(v=>HasMember(v.Current,_viewer))?.Current : null;
+    internal static bool IsAtHelm => OwnShip is { Sinking: false, Health: > 0 } ship && Driver(ship) == _viewer;
     private static void ClearActions() {CannonViewOpen=false;CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear();_balls.Clear(); }
 
     private static void ReadActions(bool busy)

@@ -72,18 +72,22 @@ internal static partial class NavalWorld
         var foreground=string.IsNullOrEmpty(atlas.ForegroundGraphics)?null:
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.ForegroundGraphics);
         if(foreground!=null && (foreground.Width!=atlas.ImageWidth || foreground.Height!=atlas.ImageHeight))foreground=null;
+        var cannons = pose.CannonAnchors.OrderBy(a => a.Y).ToArray();
+        foreach (var cannon in cannons.Where(cannon => cannon.BehindCrew)) AddCannon(cannon);
         if(cover!=null && foreground!=null) AddLayer(foreground);
-        foreach(var a in pose.CannonAnchors.OrderBy(a=>a.Y))
+        foreach (var cannon in cannons.Where(cannon => !cannon.BehindCrew)) AddCannon(cannon);
+        if((cover??foreground) is {} top) AddLayer(top);
+
+        void AddCannon(ShipCannonAnchor a)
         {
             var sx=a.Sprite%columns*cell;var sy=a.Sprite/columns*cell;
-            if(sx+cell>texture.Width || sy+cell>texture.Height) continue;
+            if(sx+cell>texture.Width || sy+cell>texture.Height) return;
             var yaw=DeckCannonYaw(view.Previous,view.Current,a,(Environment.TickCount64-view.Received)/100d)*(pose.FlipHorizontal?-1:1);
             var offsetX=(a.X-pose.AnchorX)/atlas.PixelsPerTile*(pose.FlipHorizontal?-1:1);
             var offsetY=(pose.AnchorY-a.Y)/atlas.PixelsPerTile;
             var anchor=CannonPerspectiveAnchor(offsetX,offsetY,size,yaw);
             sprites.Add(new(texture,new FloatRect(sx,sy,cell,cell),new(x,y),size,size,anchor.X,anchor.Y,pose.FlipHorizontal,RotationDegrees:(float)yaw));
         }
-        if((cover??foreground) is {} top) AddLayer(top);
 
         void AddLayer(IGameTexture layer)
         {

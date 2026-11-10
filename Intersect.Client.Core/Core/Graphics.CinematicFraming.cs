@@ -8,34 +8,37 @@ namespace Intersect.Client.Core;
 
 public static partial class Graphics
 {
-    private static float? _cinematicWorldScale;
-    private static FloatRect? _cinematicWorldBounds;
+    private const float HelmZoomFactor = .65f;
+    private static float? _preparedWorldScale;
+    private static FloatRect? _preparedWorldBounds;
 
     private static void ApplyPreparedWorldScale(GameStates gameState)
     {
         if (Renderer is not { } renderer) return;
-        if (gameState != GameStates.InGame || CinematicCamera.Zoom == null)
+        if (gameState != GameStates.InGame || (_preparedWorldScale == null && CinematicCamera.Zoom == null))
         {
             renderer.Scale = gameState == GameStates.InGame ? WorldScale : 1f;
             return;
         }
 
-        var minimum = _cinematicWorldBounds is { } bounds
+        var minimum = _preparedWorldBounds is { } bounds
             ? CinematicMapFraming.MinimumZoom(new(bounds.X, bounds.Y, bounds.Width, bounds.Height),
                 renderer.ScreenWidth, renderer.ScreenHeight)
             : 0;
-        _cinematicWorldScale = CinematicMapFraming.AcceptZoom(WorldScale, minimum,
+        _preparedWorldScale = CinematicMapFraming.AcceptZoom(WorldScale, minimum,
             () => renderer.Scale, value => renderer.Scale = value);
     }
 
     // Prepare the requested backing scale; ApplyPreparedWorldScale records the
     // single accepted value used by rendering, culling and input.
     // The perspective lens continues to use the authored zoom in the camera pose.
-    private static void PrepareCinematicFraming()
+    private static void PrepareWorldFraming()
     {
-        _cinematicWorldScale = null;
-        _cinematicWorldBounds = null;
-        if (CinematicCamera.Zoom is not { } requested || Globals.MapGrid is not { } grid ||
+        _preparedWorldScale = null;
+        _preparedWorldBounds = null;
+        var cinematicZoom = CinematicCamera.Zoom;
+        var helmView = cinematicZoom == null && Naval.NavalWorld.IsAtHelm;
+        if ((!helmView && cinematicZoom == null) || Globals.MapGrid is not { } grid ||
             Globals.Me?.MapInstance is not MapInstance { IsLoaded: true } current || Renderer is not { } renderer)
         {
             return;
@@ -56,13 +59,23 @@ public static partial class Graphics
         }
 
         if (!loaded[4]) return;
-        CinematicCamera.TryPosition(out var centerX, out var centerY);
+        var requested = cinematicZoom ?? PreferredWorldScale * HelmZoomFactor;
+        float centerX, centerY;
+        if (helmView)
+        {
+            if (!Naval.NavalWorld.TryCamera(out centerX, out centerY)) return;
+        }
+        else
+        {
+            CinematicCamera.TryPosition(out centerX, out centerY);
+        }
         var mapOptions = Options.Instance.Map;
         var frame = CinematicMapFraming.Fit(
             new(current.X, current.Y, mapOptions.MapWidth * mapOptions.TileWidth, mapOptions.MapHeight * mapOptions.TileHeight),
             loaded, renderer.ScreenWidth, renderer.ScreenHeight, requested, centerX, centerY
         );
-        _cinematicWorldScale = frame.Zoom;
-        _cinematicWorldBounds = new(frame.Bounds.X, frame.Bounds.Y, frame.Bounds.Width, frame.Bounds.Height);
+        if (helmView && frame.Zoom >= PreferredWorldScale) return;
+        _preparedWorldScale = frame.Zoom;
+        _preparedWorldBounds = new(frame.Bounds.X, frame.Bounds.Y, frame.Bounds.Width, frame.Bounds.Height);
     }
 }

@@ -66,17 +66,13 @@ internal static partial class NavalWorld
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonOcclusionGraphics) is {} cover &&
             cover.Width==atlas.ImageWidth && cover.Height==atlas.ImageHeight)
         {
-            // Rails hide feet, but must not repaint themselves over moving barrels.
-            // Operators on the far broadside stand in front of their own cannon.
-            var people=DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y).ToArray();
-            var npcs=NpcDeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y).ToArray();
-            foreach(var person in people.Where(c=>!BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
-            foreach(var npc in npcs.Where(c=>!BehindDeckCannon(pose,c.Anchor)))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
-            DrawLayer(foreground);
+            // Rigging occludes the far battery; near barrels can sweep across the rail.
             DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
+            foreach (var person in DeckCrew(ship, pose).OrderBy(crew => crew.Anchor.Y)) DrawPerson(person);
+            foreach (var npc in NpcDeckCrew(ship, pose).OrderBy(crew => crew.Anchor.Y))
+                DrawNpcOnDeck(npc.Npc, npc.Anchor, pose, x, y, scale);
+            DrawLayer(foreground);
             DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
-            foreach(var person in people.Where(c=>BehindDeckCannon(pose,c.Anchor))) DrawPerson(person);
-            foreach(var npc in npcs.Where(c=>BehindDeckCannon(pose,c.Anchor)))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
             DrawDeckDamage(ship,pose,x,y,scale,true);
             DrawLayer(cover);
             return;
@@ -112,8 +108,4 @@ internal static partial class NavalWorld
                     NavalSpriteGeometry.Destination(part,x,y,scale),Color.White);
         }
     }
-
-    internal static bool BehindDeckCannon(ShipSpriteFrame pose,ShipCrewAnchor crew)=>
-        (crew.Role is ShipCrewRole.PortCannon or ShipCrewRole.StarboardCannon) &&
-        pose.CannonAnchors.Any(a=>a.Index==crew.Index && a.Starboard==(crew.Role==ShipCrewRole.StarboardCannon) && a.BehindCrew);
 }
