@@ -61,6 +61,8 @@ internal static partial class NavalWorld
         IGameTexture foreground, float x,float y,float scale)
     {
         if(ship.Sinking || ship.Health<=0) return;
+        var deckScale = ShipDeck.Kind(ship.Graphics) is ShipDeckKind.Sloop or ShipDeckKind.Raft ? .5f : ShipDeck.AvatarScale;
+        var playerScale = ship.WalkableDeck ? deckScale : 1f;
         DrawDeckDamage(ship,pose,x,y,scale,false);
         if(!string.IsNullOrEmpty(atlas.CannonOcclusionGraphics) &&
             Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.CannonOcclusionGraphics) is {} cover &&
@@ -70,7 +72,7 @@ internal static partial class NavalWorld
             DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
             foreach (var person in DeckCrew(ship, pose).OrderBy(crew => crew.Anchor.Y)) DrawPerson(person);
             foreach (var npc in NpcDeckCrew(ship, pose).OrderBy(crew => crew.Anchor.Y))
-                DrawNpcOnDeck(npc.Npc, npc.Anchor, pose, x, y, scale);
+                DrawNpcOnDeck(npc.Npc, npc.Anchor, pose, x, y, scale, deckScale);
             DrawLayer(foreground);
             DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
             DrawDeckDamage(ship,pose,x,y,scale,true);
@@ -78,14 +80,8 @@ internal static partial class NavalWorld
             return;
         }
         DrawDeckCannons(ship,atlas,pose,x,y,scale,true);
-        foreach(var npc in NpcDeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale);
-        foreach(var (id,anchor) in DeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))
-            if(Globals.Entities.TryGetValue(id,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
-            {
-                var point=DeckPoint(pose,anchor,x,y,scale);
-                entity.DrawOnShip(point.X,point.Y,point.Facing,ship.WalkableDeck?ShipDeck.AvatarScale:1,
-                    (ship.DeckMembers??[]).Any(p=>p.PlayerId==id && p.Walking));
-            }
+        foreach(var npc in NpcDeckCrew(ship,pose).OrderBy(c=>c.Anchor.Y))DrawNpcOnDeck(npc.Npc,npc.Anchor,pose,x,y,scale,deckScale);
+        foreach (var person in DeckCrew(ship, pose).OrderBy(crew => crew.Anchor.Y)) DrawPerson(person);
         DrawDeckCannons(ship,atlas,pose,x,y,scale,false);
         DrawDeckDamage(ship,pose,x,y,scale,true);
         foreach(var part in NavalSpriteGeometry.Parts(pose))
@@ -97,7 +93,7 @@ internal static partial class NavalWorld
             if(Globals.Entities.TryGetValue(person.PlayerId,out var entity) && entity.MapId==ship.MapId && !entity.IsDisposed)
             {
                 var point=DeckPoint(pose,person.Anchor,x,y,scale);
-                entity.DrawOnShip(point.X,point.Y,point.Facing,ship.WalkableDeck?ShipDeck.AvatarScale:1,
+                entity.DrawOnShip(point.X,point.Y,point.Facing,playerScale,
                     (ship.DeckMembers??[]).Any(p=>p.PlayerId==person.PlayerId && p.Walking));
             }
         }
