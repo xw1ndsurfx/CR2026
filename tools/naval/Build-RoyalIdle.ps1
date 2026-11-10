@@ -26,6 +26,9 @@ for($d=0;$d -lt 8;$d++){foreach($a in $atlas.Directions[$d][0].CannonAnchors){$s
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $footprintCut=if($Stem -like "*_Raft" -and $Palette -in @(3,4)){.28}elseif($Stem -like "*_Fishing" -and $Palette -eq 4){.45}else{0}
 $registration=[ShipFamilyPixels]::Assemble($ArtPath,$MaskPath,$ReferenceGraphicPath,(SourceAsset $atlas.ForegroundGraphics),$pivots,(Join-Path $OutputDirectory $name),(Join-Path $OutputDirectory $fringe),$Palette,!$NoFixedGunRemoval.IsPresent,$footprintCut)
+if($Stem -eq 'Ship_Adventurer_Sloop' -and $State -eq 'Idle'){
+    [ShipFamilyPixels]::RemoveSloopIdleFarRails((Join-Path $OutputDirectory $fringe))
+}
 $gunName=if($atlas.CannonGraphics){$atlas.CannonGraphics}else{(Get-Content -LiteralPath (Join-Path $ocean ($sailing+'.naval.json')) -Raw | ConvertFrom-Json).CannonGraphics}
 $gunAsset=SourceAsset $gunName
 $front=[Drawing.Bitmap]::new((Join-Path $OutputDirectory $fringe));$guns=[Drawing.Bitmap]::new($gunAsset)

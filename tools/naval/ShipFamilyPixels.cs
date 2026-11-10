@@ -154,6 +154,34 @@ public static class ShipFamilyPixels
         CannonLayerPixels.Save(atlas,AW,AH,target);CannonLayerPixels.Save(fringe,AW,AH,fringeTarget);
         return registration;
     }
+    public static void RemoveSloopIdleFarRails(string path)
+    {
+        int[] pixels;
+        using(var bitmap=new Bitmap(path))pixels=CannonLayerPixels.Read(bitmap);
+
+        // The hull already contains these rails. Keep only the near rail and
+        // rigging in front of crew. Bounds are in the canonical idle frame.
+        var regions=new (int Direction,int Left,int Top,int Right,int Bottom)[]
+        {
+            (2,122,150,147,165),
+            (2,195,150,246,165),
+            (4,150,109,173,133),
+            (4,185,109,211,133),
+            (6,111,153,183,168),
+            (6,212,153,247,168),
+        };
+        int[] bob={0,-1,0,1};
+        foreach(var region in regions)
+        {
+            int x=region.Direction%2*1536;
+            int y=region.Direction/2*H;
+            for(int frame=0;frame<4;frame++)
+                for(int row=region.Top;row<region.Bottom;row++)
+                    Array.Clear(pixels,(y+row+bob[frame])*AW+x+frame*W+region.Left,region.Right-region.Left);
+        }
+        CannonLayerPixels.Save(pixels,AW,AH,path);
+    }
+
     public static int[] RegisteredCannonCover(int[] fringe,int[] referenceCover,int[] guns,double[] positions)
     {
         var cover=(int[])fringe.Clone();int[] bob={0,-1,0,1};
