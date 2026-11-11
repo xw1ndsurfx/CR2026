@@ -7,6 +7,8 @@ Cette feuille de route accompagne le développement de **Corps Royaux**, MMORPG 
 
 [Retour au README](README.md) · [État technique et reprise du projet](PROJECT_STATUS.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
 
+Le [suivi de reconnexion et de sauvegarde après redémarrage](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) confirme la conservation des états enregistrés sur la copie isolée. Les changements inattendus apparus pendant la session restent à expliquer avant l’acceptation du playtest.
+
 ## État technique au 11 novembre 2026
 
 La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Référence vérifiée : `main` à `69670d777` (PR #265). La reprise choisie le 11 novembre est **P0 : stabilité et préparation du playtest**. Les contrôles et les validations restantes sont consignés dans le [point de préparation du 11 novembre](Documentation/Playtests/Readiness-2026-11-11.fr.md).

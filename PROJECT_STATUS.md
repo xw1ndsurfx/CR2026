@@ -45,6 +45,8 @@
 
 **Choix confirmé par l’utilisateur le 11 novembre : stabilité et préparation du playtest.** Voir le [rapport de préparation](Documentation/Playtests/Readiness-2026-11-11.fr.md). Les tests locaux utilisent des données isolées ; ils ne prouvent pas une sauvegarde restaurable ni une authentification Steam fonctionnelle sur le serveur déployé.
 
+La recette locale de reconnexion et de redémarrage avec un joueur est [consignée le 11 novembre](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) : persistance des états enregistrés confirmée ; gains et déplacement non expliqués après connexion à diagnostiquer.
+
 ### P0 — sécurité et première boucle de jeu
 
 - [ ] Vérifier la révision exacte du serveur, du client, de l'éditeur et des données ; exécuter compilations et suites CI sur cette révision, puis noter les résultats.
