@@ -28,13 +28,13 @@ internal static partial class NavalSystem
     private sealed record CrewPresence(string Name,long Seen);
     private static bool NearCrewDock(Vessel vessel)=>Math.Abs(vessel.State.Speed)<=.1 && ByCrewDock(vessel);
     private static bool ByCrewDock(Vessel vessel)=>vessel.SunkUntil==0 &&
-        ShipDock.Tiles(MapController.Get(vessel.State.MapId)?.Attributes).Any(t=>Distance(t.X+.5,t.Y+.5,vessel.State.X,vessel.State.Y)<=6);
+        ShipDock.Tiles(MapController.Get(vessel.State.MapId)?.Attributes).Any(t=>Distance(t.X+.5,t.Y+.5,vessel.State.X,vessel.State.Y)<=Math.Max(6,NavalShipAtlas.LaunchClearance(vessel.Definition)+2));
     private static bool BesideCrewDock(Player player)=>OceanMapResolver.Maps().Contains(player.MapId) &&
         ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes,player.X+.5,player.Y+.5,_settings.DockInteractionRange)!=null;
     private static bool EligibleCrewShip(Player player,Vessel vessel)=>vessel.OwnerId!=Guid.Empty && vessel.State.CaptainId!=Guid.Empty &&
         vessel.State.MapId==player.MapId && vessel.Enemy==null && ShipCrewRules.CanBoard(BesideCrewDock(player),player.Party.Any(p=>p.Id==vessel.State.CaptainId),
             vessel.BoardingOpen,NearCrewDock(vessel),vessel.SunkUntil==0,vessel.Crew.Count+1,VesselCapacity(vessel)) &&
-        Distance(player.X+.5,player.Y+.5,vessel.State.X,vessel.State.Y)<=8;
+        Distance(player.X+.5,player.Y+.5,vessel.State.X,vessel.State.Y)<=Math.Max(8,NavalShipAtlas.LaunchClearance(vessel.Definition)+3);
 
     private static ShipCrewState CrewState(Player player)
     {

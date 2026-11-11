@@ -63,6 +63,15 @@ internal static partial class NavalWorld
     internal static double CannonViewRelativeHeading(double heading,double cameraHeading) =>
         ShipMovement.Normalize(heading-cameraHeading);
 
+    // Cancel the diagonal top-down deck slope without tilting vertical masts.
+    internal static float PerspectiveShipShear(ShipSpriteFrame pose)
+    {
+        if(pose.DeckMasts.Length!=3)return 0;
+        var a=pose.DeckMasts[0];var b=pose.DeckMasts[2];var dx=b.X-a.X;
+        if(Math.Abs(dx)<pose.Width*.15)return 0;
+        return (float)Math.Clamp((b.Y-a.Y)/dx*(pose.FlipHorizontal?-1:1),-1,1);
+    }
+
     internal static IEnumerable<MapPerspectiveDecoration> AlignSceneryFragments(IEnumerable<MapPerspectiveDecoration> source)
     {
         foreach(var group in source.GroupBy(d=>d.ObjectKey))
@@ -121,7 +130,7 @@ internal static partial class NavalWorld
                 var atlas=NavalSpriteCatalog.Get(filename,texture.Width,texture.Height,s.Frames);
                 if(atlas==null) continue; // Never treat an unverified atlas as a regular grid.
                 var pose=atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds);
-                Add(texture,pose,atlas.PixelsPerTile,sx,sy);
+                Add(texture,pose,atlas.PixelsPerTile,sx,sy,shear:PerspectiveShipShear(pose));
                 AddDeckCannonsToScene(sprites,vessel,atlas,pose,sx,sy);
             }
             else if(Globals.ContentManager?.GetTexture(TextureType.Entity,s.Graphics) is {} entity &&
@@ -163,12 +172,12 @@ internal static partial class NavalWorld
         }
         return new(camera,forward,tw,th,terrain,sprites,AlignSceneryFragments(decorations).OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
 
-        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0)
+        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0,float shear=0)
         {
             var scale=(float)(1/pixelsPerTile);
             foreach(var part in NavalSpriteGeometry.Parts(frame))
                 sprites.Add(new(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),new(sx,sy),
-                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees));
+                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees,ShearY:shear));
         }
         void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0,NavalPresentation? style=null)
         {

@@ -13,4 +13,4 @@ public sealed record MapPerspectiveDecoration(GameTileBuffer Buffer,Vector2 Anch
     Vector2 ObjectMin=default,Vector2 ObjectMax=default);
 
 public sealed record MapPerspectiveSprite(IGameTexture Texture, FloatRect Source, Vector2 Position,
-    float Width, float Height, float AnchorX, float AnchorY, bool FlipHorizontal,float Elevation=0,float Opacity=1,float RotationDegrees=0,Color? Tint=null);
+    float Width, float Height, float AnchorX, float AnchorY, bool FlipHorizontal,float Elevation=0,float Opacity=1,float RotationDegrees=0,Color? Tint=null,float ShearY=0);

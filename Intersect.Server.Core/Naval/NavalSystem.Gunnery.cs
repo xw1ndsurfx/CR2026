@@ -120,7 +120,8 @@ internal static partial class NavalSystem
                 var s=vessel.State;var beam=CannonBeam(vessel,packet.Starboard);
                 var offset=StationOffset(vessel,current.Key%count,packet.Starboard);
                 var angle=s.Heading*Math.PI/180;var radius=(DeckKind(vessel)==ShipDeckKind.Raft?vessel.Definition.Length:vessel.Definition.Width)/2+.1;
-                var map=s.MapId;var x=s.X+beam.X*radius+Math.Sin(angle)*offset;var y=s.Y+beam.Y*radius-Math.Cos(angle)*offset;
+                var muzzle=NavalShipAtlas.Muzzle(DeckGraphic(vessel),s.Heading,packet.Starboard,current.Key%count,packet.Yaw);
+                var map=s.MapId;var x=s.X+(muzzle?.X??(beam.X*radius+Math.Sin(angle)*offset));var y=s.Y+(muzzle?.Y??(beam.Y*radius-Math.Cos(angle)*offset));
                 if(!OceanMapResolver.Resolve(OceanMapResolver.Maps(),ref map,ref x,ref y) || BlocksCannonball(map,x,y))
                 {player.GunneryMessage="The cannon muzzle is blocked.";SendSnapshot(player);return;}
                 var heading=ShipMovement.Normalize(CannonHeading(vessel,packet.Starboard)+packet.Yaw);var radians=heading*Math.PI/180;

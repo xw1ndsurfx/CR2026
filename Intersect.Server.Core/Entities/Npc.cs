@@ -378,6 +378,8 @@ public partial class Npc : Entity
 
     public override bool CanTarget(Entity entity)
     {
+        // Boarding combat uses its own instance; overworld sailors are not land targets.
+        if (entity is Player { NavalShipId: var ship } && ship != Guid.Empty) return false;
         if (PetOwner is { } owner)
             return entity is Npc { PetOwner: null } enemy && !enemy.IsAllyOf(owner) && base.CanTarget(entity);
 

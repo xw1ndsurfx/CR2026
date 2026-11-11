@@ -921,6 +921,8 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        // Relative land encounters cannot spawn on a player sailing in the overworld.
+        if (command.MapId == Guid.Empty && command.EntityId == Guid.Empty && player.NavalShipId != Guid.Empty) return;
         var npcId = command.NpcId;
         var mapId = command.MapId;
         var tileX = 0;
