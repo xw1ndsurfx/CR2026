@@ -314,7 +314,7 @@ public partial class User
     {
         lock (_lastSaveLock)
         {
-            if (_lastSave < debounceMs + Timing.Global.MillisecondsUtc)
+            if (UserSaveDebounce.ShouldSkip(_lastSave, Timing.Global.MillisecondsUtc, debounceMs))
             {
                 ApplicationContext.Context.Value?.Logger.LogDebug("Skipping save due to debounce");
                 return;

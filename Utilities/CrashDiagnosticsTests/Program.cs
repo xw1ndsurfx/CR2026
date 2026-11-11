@@ -3,6 +3,17 @@ using System.Runtime.CompilerServices;
 using Intersect.Server.Core;
 using Microsoft.Extensions.Logging;
 
+if (args.Contains("--save-debounce-only"))
+{
+    Check(!Intersect.Server.Database.PlayerData.UserSaveDebounce.ShouldSkip(0, 100000, 5000), "First save must run");
+    Check(Intersect.Server.Database.PlayerData.UserSaveDebounce.ShouldSkip(100000, 104999, 5000), "Recent save is debounced");
+    Check(!Intersect.Server.Database.PlayerData.UserSaveDebounce.ShouldSkip(100000, 105000, 5000), "Save runs at debounce boundary");
+    Check(!Intersect.Server.Database.PlayerData.UserSaveDebounce.ShouldSkip(100000, 999999, 5000), "Old save must not suppress all future saves");
+    Check(!Intersect.Server.Database.PlayerData.UserSaveDebounce.ShouldSkip(100000, 100000, 0), "Zero debounce allows immediate save");
+    Console.WriteLine("PASS user save debounce: first save, recent save, boundary, expired interval and zero delay");
+    return 0;
+}
+
 if (args.Length > 0 && args[0] == "child")
 {
     Directory.SetCurrentDirectory(args[2]);
