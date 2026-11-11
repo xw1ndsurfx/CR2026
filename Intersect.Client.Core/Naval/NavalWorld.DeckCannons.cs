@@ -86,7 +86,7 @@ internal static partial class NavalWorld
             var offsetX=(a.X-pose.AnchorX)/atlas.PixelsPerTile*(pose.FlipHorizontal?-1:1);
             var offsetY=(pose.AnchorY-a.Y)/atlas.PixelsPerTile;
             var anchor=CannonPerspectiveAnchor(offsetX,offsetY,size,yaw);
-            sprites.Add(new(texture,new FloatRect(sx,sy,cell,cell),new(x,y),size,size,anchor.X,anchor.Y,pose.FlipHorizontal,RotationDegrees:(float)yaw));
+            sprites.Add(new(texture,new FloatRect(sx,sy,cell,cell),new(x,y),size,size,anchor.X,anchor.Y,pose.FlipHorizontal,RotationDegrees:(float)yaw,ShearY:PerspectiveShipShear(pose)));
         }
 
         void AddLayer(IGameTexture layer)
@@ -94,7 +94,7 @@ internal static partial class NavalWorld
             foreach(var part in NavalSpriteGeometry.Parts(pose))
                 sprites.Add(new(layer,new FloatRect(part.X,part.Y,part.Width,part.Height),new(x,y),
                     (float)(part.Width/atlas.PixelsPerTile),(float)(part.Height/atlas.PixelsPerTile),
-                    (float)(part.AnchorX/atlas.PixelsPerTile),(float)(part.AnchorY/atlas.PixelsPerTile),part.FlipHorizontal));
+                    (float)(part.AnchorX/atlas.PixelsPerTile),(float)(part.AnchorY/atlas.PixelsPerTile),part.FlipHorizontal,ShearY:PerspectiveShipShear(pose)));
         }
     }
 }

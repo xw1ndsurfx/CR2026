@@ -239,6 +239,11 @@ internal sealed class NavalCannonViewWindow : Window
             else
             {
                 DrawCannon(skin);
+                if(_texture!=null)
+                {
+                    var origin=ToCanvas(new Point(0,0));var scale=skin.Renderer.Scale;
+                    Graphics.DrawPerspectiveAtmosphere(new FloatRect(origin.X*scale,origin.Y*scale,Width*scale,Height*scale));
+                }
                 var cx=CrewMode && _aim!=default?_aim.X:Width/2;var cy=CrewMode && _aim!=default?_aim.Y:Height/2;
                 draw.DrawColor=new Color(210,240,220,165);
                 draw.DrawFilledRect(new Rectangle(cx-10,cy,21,1));
