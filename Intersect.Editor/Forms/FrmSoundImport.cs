@@ -161,6 +161,7 @@ public sealed partial class FrmSoundImport : DarkForm
     private readonly TextBox _name = new();
     private readonly ComboBox _category = new();
     private readonly ImportedResourceIndicator _importStatus = new();
+    private readonly Button _declareImportedButton = new() {Name="DeclareImportedResource"};
     private readonly Label _details = new();
     private readonly Label _status = new();
     private readonly Label _pageLabel = new();
@@ -220,6 +221,7 @@ public sealed partial class FrmSoundImport : DarkForm
         Shown += async (_, _) => await ReloadLibraryAsync();
         FormClosed += (_, _) =>
         {
+            ImportedResourceDeclarationControls.CancelBadges(_soundList);
             StopPlayback();
 
             _operationCancellation?.Cancel();
@@ -446,6 +448,8 @@ public sealed partial class FrmSoundImport : DarkForm
         _soundList.Columns.Add("Type", 100);
         _soundList.Columns.Add("Duration", 80);
         _soundList.Columns.Add("Size", 80);
+        var importColumn=_soundList.Columns.Add("ImportDeclarationStatus",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Import status",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),105);
+        importColumn.DisplayIndex=0;
         _soundList.SelectedIndexChanged += async (_, _) =>
             await SelectSoundAsync();
 
@@ -531,6 +535,17 @@ public sealed partial class FrmSoundImport : DarkForm
             }
         };
 
+        previewHost.AutoScroll=true;
+        _declareImportedButton.Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Declare import status...",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        _declareImportedButton.SetBounds(14,370,265,36);_declareImportedButton.Enabled=false;
+        ConfigureDarkButtonStyle(_declareImportedButton);
+        _declareImportedButton.Click+=async (_,_)=>
+        {
+            if(_operationCancellation!=null)return;
+            await ImportedResourceDeclarationControls.DeclareSelected(this,_selectedAsset?.FilePath,ImportStatusCache(TargetKind));
+            if(!IsDisposed && !Disposing){RefreshImportStatus();RefreshDeclarationBadges();}
+        };
+        previewHost.Controls.Add(_declareImportedButton);
         previewHost.Controls.Add(_details);
         previewHost.Controls.Add(_importStatus);
         previewHost.Controls.Add(_playButton);
@@ -961,6 +976,7 @@ public sealed partial class FrmSoundImport : DarkForm
             RefreshImportStatus();
             UpdateFavoriteButton();
         }
+        RefreshDeclarationBadges();
     }
 
     private async Task SelectSoundAsync()
@@ -1538,8 +1554,13 @@ public sealed partial class FrmSoundImport : DarkForm
     }
 
     private string ImportStatusCache(SoundImportKind kind) => Path.Combine(_gameRoot, ".soundimport-cache", "imported", SoundImporter.Folder(kind));
-    private void RefreshImportStatus() => _ = _importStatus.RefreshStatus(_selectedAsset?.FilePath,
-        SoundImporter.GameFolder(_gameRoot, TargetKind), ImportStatusCache(TargetKind));
+    private void RefreshImportStatus()
+    {
+        _declareImportedButton.Enabled=_selectedAsset!=null && _operationCancellation==null;
+        _=_importStatus.RefreshStatus(_selectedAsset?.FilePath,SoundImporter.GameFolder(_gameRoot,TargetKind),ImportStatusCache(TargetKind));
+    }
+    private void RefreshDeclarationBadges()=>ImportedResourceDeclarationControls.RefreshBadges(_soundList,
+        item=>((SoundAsset)item.Tag!).FilePath,_=>ImportStatusCache(TargetKind));
 
     private async Task ImportAssetsToGameAsync(
         IReadOnlyList<(SoundAsset Asset, string FileName)> assets
@@ -1561,6 +1582,7 @@ public sealed partial class FrmSoundImport : DarkForm
         var skipped = 0;
         var renamedDuplicates = 0;
         var errors = new List<string>();
+        var completedImports=new List<(string Source,string Cache)>();
 
         try
         {
@@ -1578,6 +1600,7 @@ public sealed partial class FrmSoundImport : DarkForm
                         {
                             var destination = SoundImporter.Import(asset.FilePath, requestedDestination, cancellationToken);
                             ImportedResourceStatus.Record(asset.FilePath, destination, ImportStatusCache(kind));
+                            completedImports.Add((asset.FilePath,ImportStatusCache(kind)));
                             if (!string.Equals(destination, requestedDestination, StringComparison.OrdinalIgnoreCase)) renamedDuplicates++;
                             imported++;
                         }
@@ -1640,6 +1663,8 @@ public sealed partial class FrmSoundImport : DarkForm
             SetOperationUi(false, string.Empty);
             RefreshImportStatus();
         }
+        await ImportedResourceDeclarationControls.ConfirmAfterImport(this,completedImports);
+        if(!IsDisposed && !Disposing){RefreshImportStatus();RefreshDeclarationBadges();}
     }
 
     private void SetOperationUi(bool running, string status)

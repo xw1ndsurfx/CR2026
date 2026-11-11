@@ -251,6 +251,8 @@ public partial class AdminWindow : Window
 
         #endregion Quick Admin Actions
 
+        AddResourceRefreshControls();
+
         #region Sprite/Face Pickers
 
         _spriteTexturePicker = new TexturePicker(this, nameof(_spriteTexturePicker))

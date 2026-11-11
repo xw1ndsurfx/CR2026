@@ -26,7 +26,7 @@ public sealed partial class FrmSoundImport
         bar.Controls.Add(new Label { Text = "Import as:", AutoSize = true, Margin = new Padding(18, 6, 8, 0) });
         _targetKind.DropDownStyle = ComboBoxStyle.DropDownList; _targetKind.Width = 180;
         _targetKind.Items.AddRange(["Sound (effects)", "Voice Sound (dialogue)"]); _targetKind.SelectedIndex = 0;
-        _targetKind.SelectedIndexChanged += (_, _) => { UpdateDestination(); RefreshImportStatus(); };
+        _targetKind.SelectedIndexChanged += (_, _) => { UpdateDestination(); RefreshImportStatus(); RefreshDeclarationBadges(); };
         bar.Controls.Add(_targetKind);
         _destination.AutoSize = true; _destination.Margin = new Padding(18, 6, 0, 0); bar.Controls.Add(_destination);
         UpdateDestination(); root.Controls.Add(bar, 0, 0);

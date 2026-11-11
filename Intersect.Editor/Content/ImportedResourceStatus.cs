@@ -8,7 +8,7 @@ internal static class ImportedResourceStatus
 {
     private sealed record Receipt(string SourceHash, string DestinationHash, string Destination);
 
-    private static string Hash(string path, CancellationToken token)
+    internal static string Hash(string path, CancellationToken token)
     {
         using var input = File.OpenRead(path);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
