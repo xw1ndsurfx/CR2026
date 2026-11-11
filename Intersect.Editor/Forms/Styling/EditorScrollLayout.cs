@@ -12,6 +12,8 @@ internal static class EditorScrollLayout
     {
         if (Attached.TryGetValue(window, out _)) return;
         Attached.Add(window, new object());
+        // Reward configuration owns docked navigation, scrolling tabs and a fixed action footer.
+        if (window is FrmRewardConfiguration) return;
         // These workspaces already keep their action footer outside scrolling sections.
         if (window.Controls.Find("EditorWorkspaceSplit", true).Length > 0) return;
         // Modern docked split/tab editors already resize their content against the

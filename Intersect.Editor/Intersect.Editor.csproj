@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Shared/RoyalAlchemistAssets.props" />
   <Import Project="../Shared/FishingAssets.props" />
   <Import Project="../Shared/NavalDeckAssets.props" />
   <Import Project="../Shared/ExportationAssets.props" />

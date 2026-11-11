@@ -71,7 +71,7 @@ public sealed partial class FrmRewardConfiguration
         var indexes = game switch
         {
             null => new[] { 0 }, MiniGameType.Poker => [1], MiniGameType.Blackjack => [2],
-            MiniGameType.Potions => [4, 3], MiniGameType.Cooking => [5], _ => Array.Empty<int>()
+            MiniGameType.Potions => [4, 3, 6], MiniGameType.Cooking => [5], _ => Array.Empty<int>()
         };
         foreach (var index in indexes) _tabs.TabPages.Add(_pages[index]);
         if (game != null) { _tabs.TabPages.Add(_eventsPage); RefreshGameEvents(); }

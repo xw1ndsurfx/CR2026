@@ -4815,6 +4815,56 @@
     "IMPORTED": {"en":"IMPORTED","fr":"IMPORTÉ","es":"IMPORTADO"},
     "Not marked": {"en":"Not marked","fr":"Non déclaré","es":"Sin marcar"},
     "Import status": {"en":"Import status","fr":"État d’import","es":"Estado de importación"},
-    "Unable to abandon: no matching active dungeon run was found.": { "en": "Unable to abandon: no matching active dungeon run was found.", "fr": "Abandon impossible : aucune session active correspondante du donjon n’a été trouvée.", "es": "No se puede abandonar: no se ha encontrado una sesión activa del calabozo correspondiente." }
+    "Unable to abandon: no matching active dungeon run was found.": { "en": "Unable to abandon: no matching active dungeon run was found.", "fr": "Abandon impossible : aucune session active correspondante du donjon n’a été trouvée.", "es": "No se puede abandonar: no se ha encontrado una sesión activa del calabozo correspondiente." },
+    "Artwork and sounds": {
+      "en": "Artwork and sounds",
+      "fr": "Images et sons",
+      "es": "Imágenes y sonidos"
+    },
+    "Preview": {
+      "en": "Preview",
+      "fr": "Aperçu",
+      "es": "Vista previa"
+    },
+    "Workshop background": {
+      "en": "Workshop background",
+      "fr": "Décor de l’atelier",
+      "es": "Fondo del taller"
+    },
+    "Ingredient atlas (4 x 4)": {
+      "en": "Ingredient atlas (4 x 4)",
+      "fr": "Planche des ingrédients (4 x 4)",
+      "es": "Atlas de ingredientes (4 x 4)"
+    },
+    "Rotate ingredients": {
+      "en": "Rotate ingredients",
+      "fr": "Rotation des ingrédients",
+      "es": "Girar ingredientes"
+    },
+    "Drop ingredients": {
+      "en": "Drop ingredients",
+      "fr": "Pose des ingrédients",
+      "es": "Colocar ingredientes"
+    },
+    "Ingredient fusion": {
+      "en": "Ingredient fusion",
+      "fr": "Fusion des ingrédients",
+      "es": "Fusión de ingredientes"
+    },
+    "Recipe complete": {
+      "en": "Recipe complete",
+      "fr": "Recette terminée",
+      "es": "Receta completada"
+    },
+    "Board full": {
+      "en": "Board full",
+      "fr": "Plateau rempli",
+      "es": "Tablero lleno"
+    },
+    "Empty selection disables the asset. Atlas: rows = Verdant, Ember, Arcane, Radiant; columns = tiers 1 to 4. Install the files on every client. Missing images use the original drawing.": {
+      "en": "Empty selection disables the asset. Atlas: rows = Verdant, Ember, Arcane, Radiant; columns = tiers 1 to 4. Install the files on every client. Missing images use the original drawing.",
+      "fr": "Une sélection vide désactive la ressource. Planche : lignes = Verdant, Ember, Arcane, Radiant ; colonnes = niveaux 1 à 4. Installer les fichiers sur chaque client. Les images absentes utilisent le dessin original.",
+      "es": "Una selección vacía desactiva el recurso. Atlas: filas = Verdant, Ember, Arcane, Radiant; columnas = niveles 1 a 4. Instala los archivos en cada cliente. Las imágenes ausentes usan el dibujo original."
+    }
   }
 }
