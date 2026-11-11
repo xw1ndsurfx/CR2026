@@ -37,6 +37,10 @@ internal static class EditorTheme
 
     internal static void Apply(Control root)
     {
+        // PropertyGrid drop-downs are private WinForms implementation controls.
+        // Restyling them during WM_PAINT can recreate a live list-box handle.
+        if (root.Disposing || root.IsDisposed || root.GetType().Namespace?.StartsWith(
+                "System.Windows.Forms.PropertyGridInternal", StringComparison.Ordinal) == true) return;
         if (root is DockPanel or MdiClient) return; // Docking chrome owns its own palette and native child layout.
         if (root is ToolStrip warning && warning.BackColor.R > 80 && warning.BackColor.R > warning.BackColor.B * 2) return;
         if (root is Panel or Button && root.Controls.Count == 0 && root.Name.Contains("Color", StringComparison.OrdinalIgnoreCase)) return;

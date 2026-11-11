@@ -493,7 +493,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var anim = AnimationDescriptor.Get(id);
-                    anim.Delete();
+                    anim?.Delete();
                 }
                 else
                 {
@@ -524,7 +524,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var cls = ClassDescriptor.Get(id);
-                    cls.Delete();
+                    cls?.Delete();
                 }
                 else
                 {
@@ -539,7 +539,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var itm = ItemDescriptor.Get(id);
-                    itm.Delete();
+                    itm?.Delete();
                 }
                 else
                 {
@@ -553,7 +553,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var npc = NPCDescriptor.Get(id);
-                    npc.Delete();
+                    npc?.Delete();
                 }
                 else
                 {
@@ -568,7 +568,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var proj = ProjectileDescriptor.Get(id);
-                    proj.Delete();
+                    proj?.Delete();
                 }
                 else
                 {
@@ -583,7 +583,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var qst = QuestDescriptor.Get(id);
-                    qst.Delete();
+                    qst?.Delete();
                 }
                 else
                 {
@@ -603,7 +603,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var res = ResourceDescriptor.Get(id);
-                    res.Delete();
+                    res?.Delete();
                 }
                 else
                 {
@@ -618,7 +618,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var shp = ShopDescriptor.Get(id);
-                    shp.Delete();
+                    shp?.Delete();
                 }
                 else
                 {
@@ -633,7 +633,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var spl = SpellDescriptor.Get(id);
-                    spl.Delete();
+                    spl?.Delete();
                 }
                 else
                 {
@@ -648,7 +648,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var cft = CraftingTableDescriptor.Get(id);
-                    cft.Delete();
+                    cft?.Delete();
                 }
                 else
                 {
@@ -663,7 +663,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var cft = CraftingRecipeDescriptor.Get(id);
-                    cft.Delete();
+                    cft?.Delete();
                 }
                 else
                 {
@@ -684,7 +684,7 @@ internal sealed partial class PacketHandler
                 {
                     var evt = EventDescriptor.Get(id);
                     wasCommon = evt.CommonEvent;
-                    evt.Delete();
+                    evt?.Delete();
                 }
                 else
                 {
@@ -705,7 +705,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var pvar = PlayerVariableDescriptor.Get(id);
-                    pvar.Delete();
+                    pvar?.Delete();
                 }
                 else
                 {
@@ -720,7 +720,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var svar = ServerVariableDescriptor.Get(id);
-                    svar.Delete();
+                    svar?.Delete();
                 }
                 else
                 {
@@ -746,7 +746,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var pvar = GuildVariableDescriptor.Get(id);
-                    pvar.Delete();
+                    pvar?.Delete();
                 }
                 else
                 {
@@ -761,7 +761,7 @@ internal sealed partial class PacketHandler
                 if (deleted)
                 {
                     var pvar = UserVariableDescriptor.Get(id);
-                    pvar.Delete();
+                    pvar?.Delete();
                 }
                 else
                 {

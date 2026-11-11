@@ -129,9 +129,11 @@ public static partial class FileSystemHelper
         }
     }
 
+    private static readonly string TemporarySessionId = Guid.NewGuid().ToString("N");
+
     public static string WriteToTemporaryFolder(string name, Stream stream)
     {
-        var temporaryDirectoryPath = Path.Combine(Path.GetTempPath(), Assembly.GetEntryAssembly().GetName().Name);
+        var temporaryDirectoryPath = Path.Combine(Path.GetTempPath(), Assembly.GetEntryAssembly()?.GetName().Name ?? "Intersect", $"{Environment.ProcessId}-{TemporarySessionId}");
         if (!EnsureDirectoryExists(temporaryDirectoryPath))
         {
             throw new Exception();
@@ -141,7 +143,7 @@ public static partial class FileSystemHelper
 
         var buffer = new byte[4096];
         int read;
-        using (var temporaryFileStream = File.OpenWrite(temporaryFilePath))
+        using (var temporaryFileStream = File.Create(temporaryFilePath))
         {
             while (0 != (read = stream.Read(buffer, 0, buffer.Length)))
             {

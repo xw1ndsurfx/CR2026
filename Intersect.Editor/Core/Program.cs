@@ -91,13 +91,9 @@ public static class Program
         using (var resourceStream = Assembly.GetExecutingAssembly()
                    .GetManifestResourceStream("Intersect.Editor.Resources." + dllname))
         {
-            Debug.Assert(resourceStream != null, "resourceStream != null");
-            using (var fileStream = new FileStream("sqlite3.dll", FileMode.OpenOrCreate, FileAccess.ReadWrite))
-            {
-                var data = new byte[resourceStream.Length];
-                resourceStream.Read(data, 0, (int)resourceStream.Length);
-                fileStream.Write(data, 0, data.Length);
-            }
+            if (resourceStream == null)
+                throw new InvalidOperationException($"Missing embedded native library: {dllname}");
+            EmbeddedLibrary.EnsureExtracted("sqlite3.dll", resourceStream);
         }
 
         ApplicationContext.CurrentContext.Logger.LogTrace("Libraries unpacked.");

@@ -18,6 +18,7 @@ internal static class Program
     }
     private static void Run()
     {
+        if (Environment.GetCommandLineArgs().Contains("--crash-stability-only")) { CrashStabilityTests.Run(); return; }
         // Login constructs the docking windows before server options arrive.
         var optionsProperty = typeof(Options).GetProperty(nameof(Options.Instance))!;
         optionsProperty.SetValue(null, null);
