@@ -20,7 +20,12 @@ on:
       - 'Intersect.Client.Framework/Gwen/Control/ScrollControl.cs'
       - 'Intersect.Editor/Forms/Editors/FrmMenuAnimations.cs'
       - 'Utilities/InterfaceEditorTests/MenuAnimationEditorTests.cs'
-      - 'Intersect.Editor/Forms/ImportedResourceIndicator.cs'
+      - 'Intersect.Editor/Forms/ImportedResource*.cs'
+      - 'Intersect.Editor/Content/ImportedResource*.cs'
+      - 'Intersect.Client.Core/MonoGame/File Management/*Resource*.cs'
+      - 'Intersect.Client.Core/Interface/Game/Admin/AdminWindow*.cs'
+      - 'Intersect.Tests.Client/LocalResourceRefreshTests.cs'
+      - 'Utilities/InterfaceEditorTests/ImportedResourceDeclarationTests.cs'
       - 'Intersect.Editor/Forms/FrmAnimationImport.cs'
       - 'Intersect.Editor/Forms/FrmSoundImport*.cs'
       - 'Utilities/InterfaceEditorTests/ImportedResourceIndicatorTests.cs'
@@ -69,10 +74,11 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests|FullyQualifiedName~InvasionSimulationTests|FullyQualifiedName~Intersect.Tests.Server.Dungeons|FullyQualifiedName~WorldBossCompletionTests" --nologo
-      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests|FullyQualifiedName~ClientNetworkPingTests" --nologo
+      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests|FullyQualifiedName~ClientNetworkPingTests|FullyQualifiedName~LocalResourceRefreshTests" --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --harbour-only
 
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --resource-workflow-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --qol-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --theme-only
 

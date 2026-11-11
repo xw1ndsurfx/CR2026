@@ -92,6 +92,13 @@ internal sealed class DungeonRunHudWindow : Base
     {
         if (_abandonConfirmation != null && (_state?.RunId != state.RunId || state.Status != DungeonRunStatus.Active))
             _abandonConfirmation.Close();
+        if (state.Status is DungeonRunStatus.None or DungeonRunStatus.Abandoned)
+        {
+            _state = null;
+            _resultHideAt = 0;
+            Hide();
+            return;
+        }
         _state = state;
         _resultHideAt = 0;
         var canAbandon = state.Status == DungeonRunStatus.Active && state.RunId != Guid.Empty;

@@ -8,7 +8,7 @@ internal sealed class ImportedResourceIndicator : Label
 {
     private CancellationTokenSource? _pending;
     private readonly object _statusLock = new();
-    private (CancellationToken Token, string Text)? _resolvedStatus;
+    private (CancellationToken Token, string Text, bool Imported)? _resolvedStatus;
     internal ImportedResourceIndicator()
     {
         Dock = DockStyle.Top;
@@ -32,8 +32,15 @@ internal sealed class ImportedResourceIndicator : Label
         Text = T("Checking import status...");
         try
         {
-            var found = await Task.Run(() => ImportedResourceStatus.Find(source, folder, cache, token), token).ConfigureAwait(false);
-            PublishStatus(token, found == null ? T("No matching game copy detected.") : string.Format(T("Already imported: {0}"), found));
+            var status = await Task.Run(() =>
+            {
+                var declared=ImportedResourceDeclarations.Read(source,cache,token);
+                if(declared==true)return (T("Marked as imported."),true);
+                var found=ImportedResourceStatus.Find(source,folder,cache,token);
+                if(declared==false)return (found==null?T("Not marked as imported."):string.Format(T("Not marked; matching game copy: {0}"),found),false);
+                return (found==null?T("No matching game copy detected."):string.Format(T("Already imported: {0}"),found),found!=null);
+            },token).ConfigureAwait(false);
+            PublishStatus(token,status.Item1,status.Item2);
         }
         catch (OperationCanceledException) { }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -42,12 +49,12 @@ internal sealed class ImportedResourceIndicator : Label
         }
     }
 
-    private void PublishStatus(CancellationToken token, string text)
+    private void PublishStatus(CancellationToken token, string text,bool imported=false)
     {
         lock (_statusLock)
         {
             if (token.IsCancellationRequested || IsDisposed || Disposing) return;
-            _resolvedStatus = (token, text);
+            _resolvedStatus = (token, text,imported);
             // A preview may still be hidden and have no HWND. Never create one
             // from the search thread; OnHandleCreated applies the saved result.
             if (!IsHandleCreated) return;
@@ -64,7 +71,10 @@ internal sealed class ImportedResourceIndicator : Label
     {
         lock (_statusLock)
             if (!IsDisposed && !Disposing && _resolvedStatus is { } status && !status.Token.IsCancellationRequested)
+            {
                 Text = status.Text;
+                ForeColor=status.Imported?System.Drawing.Color.LightGreen:System.Drawing.Color.Silver;
+            }
     }
 
     protected override void OnHandleCreated(EventArgs e)

@@ -4802,6 +4802,19 @@
     "Death sound": {"en": "Death sound", "fr": "Son à la mort", "es": "Sonido al morir"},
     "Player proximity sound": {"en": "Player proximity sound", "fr": "Son à proximité du joueur", "es": "Sonido de proximidad al jugador"},
     "Trigger distance (tiles)": {"en": "Trigger distance (tiles)", "fr": "Distance de déclenchement (cases)", "es": "Distancia de activación (casillas)"},
-    "Plays on entering range; resets after leaving. Empty sound disables it.": {"en": "Plays on entering range; resets after leaving. Empty sound disables it.", "fr": "Joué à l’entrée dans la zone, réarmé après en être sorti. Un son vide le désactive.", "es": "Se reproduce al entrar en el radio y se rearma al salir. Un sonido vacío lo desactiva."}
+    "Plays on entering range; resets after leaving. Empty sound disables it.": {"en": "Plays on entering range; resets after leaving. Empty sound disables it.", "fr": "Joué à l’entrée dans la zone, réarmé après en être sorti. Un son vide le désactive.", "es": "Se reproduce al entrar en el radio y se rearma al salir. Un sonido vacío lo desactiva."},
+    "Declare import status...": {"en":"Declare import status...","fr":"Déclarer le statut d’import…","es":"Declarar estado de importación…"},
+    "Has this resource already been imported into the game?": {"en":"Has this resource already been imported into the game?","fr":"Cette ressource a-t-elle déjà été importée dans le jeu ?","es":"¿Este recurso ya se ha importado al juego?"},
+    "Import tracking": {"en":"Import tracking","fr":"Suivi des imports","es":"Seguimiento de importaciones"},
+    "Import completed. Mark the {0} imported resource(s) as already imported?": {"en":"Import completed. Mark the {0} imported resource(s) as already imported?","fr":"Import terminé. Déclarer les {0} ressources importées comme déjà importées ?","es":"Importación completada. ¿Marcar los {0} recursos importados como ya importados?"},
+    "Import tracking could not be saved. Check write access to the game folder.": {"en":"Import tracking could not be saved. Check write access to the game folder.","fr":"Le suivi d’import n’a pas pu être enregistré. Vérifie les droits d’écriture du dossier du jeu.","es":"No se pudo guardar el seguimiento. Comprueba el permiso de escritura en la carpeta del juego."},
+    "Marked as imported.": {"en":"Marked as imported.","fr":"Déclaré déjà importé.","es":"Marcado como importado."},
+    "Not marked as imported.": {"en":"Not marked as imported.","fr":"Non déclaré comme importé.","es":"Sin marcar como importado."},
+    "Not marked; matching game copy: {0}": {"en":"Not marked; matching game copy: {0}","fr":"Non déclaré ; copie identique dans le jeu : {0}","es":"Sin marcar; copia idéntica en el juego: {0}"},
+    "[Imported] ": {"en":"[Imported] ","fr":"[Importé] ","es":"[Importado] "},
+    "IMPORTED": {"en":"IMPORTED","fr":"IMPORTÉ","es":"IMPORTADO"},
+    "Not marked": {"en":"Not marked","fr":"Non déclaré","es":"Sin marcar"},
+    "Import status": {"en":"Import status","fr":"État d’import","es":"Estado de importación"},
+    "Unable to abandon: no matching active dungeon run was found.": { "en": "Unable to abandon: no matching active dungeon run was found.", "fr": "Abandon impossible : aucune session active correspondante du donjon n’a été trouvée.", "es": "No se puede abandonar: no se ha encontrado una sesión activa del calabozo correspondiente." }
   }
 }

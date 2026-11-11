@@ -7359,6 +7359,31 @@
       "en": "Training: combo (E)",
       "fr": "Entraînement : combo (E)",
       "es": "Práctica: combo (E)"
+    },
+    "Refresh local resources": {
+      "en": "Refresh local resources",
+      "fr": "Actualiser les ressources locales",
+      "es": "Actualizar recursos locales"
+    },
+    "Find new PNG images, WAV sounds and OGG music in this client's resources folder.": {
+      "en": "Find new PNG images, WAV sounds and OGG music in this client's resources folder.",
+      "fr": "Détecte les nouvelles images PNG, les sons WAV et les musiques OGG dans le dossier ressources de ce client.",
+      "es": "Busca nuevas imágenes PNG, sonidos WAV y música OGG en la carpeta de recursos de este cliente."
+    },
+    "Added: {0} images, {1} sounds, {2} music tracks. Failed: {3}.": {
+      "en": "Added: {0} images, {1} sounds, {2} music tracks. Failed: {3}.",
+      "fr": "Ajouts : {0} images, {1} sons, {2} musiques. Échecs : {3}.",
+      "es": "Añadidos: {0} imágenes, {1} sonidos, {2} pistas. Errores: {3}."
+    },
+    "Resource refresh failed. Check the client log.": {
+      "en": "Resource refresh failed. Check the client log.",
+      "fr": "Échec de l’actualisation. Consulte le journal du client.",
+      "es": "Error al actualizar. Consulta el registro del cliente."
+    },
+    "Refresh resources ({0} added, {1} failed)": {
+      "en": "Refresh resources ({0} added, {1} failed)",
+      "fr": "Actualiser ressources ({0} ajouts, {1} échecs)",
+      "es": "Actualizar recursos ({0} añadidos, {1} errores)"
     }
   }
 }

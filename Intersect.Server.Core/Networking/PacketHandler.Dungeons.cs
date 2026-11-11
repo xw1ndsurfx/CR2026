@@ -12,7 +12,11 @@ internal sealed partial class PacketHandler
         if (client.IsEditor || client.Entity is not { InGame: true } player)
             return;
 
-        DungeonRunRuntime.TryAbandon(player, packet.RunId);
+        if (!DungeonRunRuntime.TryAbandon(player, packet.RunId))
+            PacketSender.SendChatMsg(player,
+                Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(
+                    "Unable to abandon: no matching active dungeon run was found.", client.LanguageCode ?? "en"),
+                Intersect.Enums.ChatMessageType.Error);
     }
 
     public void HandlePacket(Client client, RequestDungeonConfigurationPacket packet)
