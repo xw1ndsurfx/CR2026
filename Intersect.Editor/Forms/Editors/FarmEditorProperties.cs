@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Intersect.Editor.Content;
 using Intersect.Framework.Core.Housing;
 using Intersect.Framework.Core.QualityOfLife;
 
@@ -14,6 +15,14 @@ internal sealed class FarmEditorProperties(FarmConfiguration value) : CustomType
             .Where(p => p.IsBrowsable && p.Name != nameof(FarmConfiguration.Crops))
             .Select(p => (PropertyDescriptor)new FarmProperty(p, value)).ToArray());
 
+    private sealed class WorkerSpriteConverter : StringConverter
+    {
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => true;
+        public override bool GetStandardValuesExclusive(ITypeDescriptorContext? context) => false;
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext? context) =>
+            new(GameContentManager.GetTextureNames(GameContentManager.TextureType.Entity) ?? []);
+    }
+
     private sealed class FarmProperty(PropertyDescriptor inner, FarmConfiguration owner) : PropertyDescriptor(inner)
     {
         public override string DisplayName => T(inner.Name switch
@@ -23,6 +32,9 @@ internal sealed class FarmEditorProperties(FarmConfiguration value) : CustomType
             "CurrencyItemId" => "Salary currency", "HiringPrice" => "Hiring price", "WagePerCycle" => "Wage per cycle", "WorkerSprite" => "Worker sprite",
             _ => inner.DisplayName,
         });
+        public override TypeConverter Converter => inner.Name == nameof(FarmConfiguration.WorkerSprite)
+            ? new WorkerSpriteConverter()
+            : inner.Converter;
         public override Type ComponentType => inner.ComponentType;
         public override Type PropertyType => inner.PropertyType;
         public override bool IsReadOnly => inner.IsReadOnly;
