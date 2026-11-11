@@ -174,7 +174,7 @@ internal static class Bootstrapper
                 parserSettings.AutoHelp = true;
                 parserSettings.AutoVersion = true;
                 parserSettings.IgnoreUnknownArguments = true;
-                parserSettings.MaximumDisplayWidth = Console.BufferWidth;
+                parserSettings.MaximumDisplayWidth = Console.IsOutputRedirected ? 80 : Math.Max(80, Console.BufferWidth);
             }
         );
 
@@ -334,7 +334,10 @@ internal static class Bootstrapper
 
     private static void PrintIntroduction()
     {
-        Console.Clear();
+        if (!Console.IsOutputRedirected)
+        {
+            Console.Clear();
+        }
         Console.WriteLine();
         Console.WriteLine(@"  _____       _                          _   ");
         Console.WriteLine(@" |_   _|     | |                        | |  ");
