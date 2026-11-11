@@ -33,3 +33,7 @@ La persistance des états effectivement enregistrés est validée dans les scén
 Restent à tester : abandon/reconnexion dans un donjon partagé, deux comptes simultanés, banque et transactions pendant coupure, arrêt forcé du serveur distinct de l’arrêt propre, ferme après absence/redémarrage et authentification Steam/Logiklik dans un environnement dédié. La méthode de création de l’archive et sa cohérence temporelle entre fichiers restent inconnues.
 
 La session est arrêtée proprement. Le résultat ne donne pas encore un accord général d’ouverture du playtest, notamment tant que les changements inattendus ci-dessus ne sont pas expliqués.
+
+## Enquête complémentaire
+
+Le [suivi instrumenté au repos](Repos-2026-11-11.fr.md) documente deux nouvelles sessions : aucun gain initial reproduit, mais une réapparition après mort identifiée dans les traces. L’anomalie initiale n’est pas déclarée corrigée.

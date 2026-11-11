@@ -1147,6 +1147,8 @@ public abstract partial class Entity : IEntity
             {
                 X = tile.GetX();
                 Y = tile.GetY();
+                if (this is Player tracedMover)
+                    if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("move-applied", tracedMover, new { direction = moveDir });
 
                 var currentMap = MapController.Get(tile.GetMapId());
                 if (MapId != tile.GetMapId())

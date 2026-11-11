@@ -16,3 +16,7 @@ Le serveur LiteNetLib accepte INTERSECT_LOCAL_TEST_ONLY=1 comme variable de proc
 Le démarrage avec une sortie redirigée sous Windows évite désormais de lire la taille ou d’effacer un tampon de console absent. La console interactive conserve son comportement habituel.
 
 La recette Steam/Logiklik nécessite son propre environnement d’intégration. Une copie privée avec les identifiants de production neutralisés ne valide pas cette intégration.
+
+## Tracer les actions du serveur local
+
+Ajouter INTERSECT_LOCAL_TEST_TRACE=1 au processus déjà limité par INTERSECT_LOCAL_TEST_ONLY=1 pour activer logs/local-playtest-trace.jsonl. Ce journal privé suit uniquement les états et traitements de jeu explicitement instrumentés, avec les méthodes appelantes ; il ne sérialise aucun paquet de connexion ou de chat. Le plafonnement est de 50 000 lignes par processus. Protéger ces journaux comme les autres données de recette. Sans le double opt-in, la capture est désactivée.

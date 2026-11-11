@@ -500,6 +500,7 @@ public partial class Player : Entity
 
     public void TryLogout(bool force = false, bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("logout-request", this, new { force, softLogout, BoardedShipId, CaptainedShipId });
         Intersect.Server.Naval.NavalSystem.Release(this, returnToHarbour: true);
         LastOnline = DateTime.Now;
         Client = default;
@@ -1255,6 +1256,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("player-death", this, new { dropItems, killer = killer?.Id, type = killer?.GetType().Name, npc = (killer as Npc)?.Descriptor?.Name });
         EndFishing("Fishing interrupted.");
         Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
@@ -1678,6 +1680,7 @@ public partial class Player : Entity
         try
         {
             Exp = (long)Math.Min(long.MaxValue, (decimal)Exp + totalAward);
+            if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("experience-awarded", this, new { amount, totalAward, fromNpcKill });
             // CheckLevelUp sends an ExperiencePacket even when the XP crosses
             // a level boundary; that packet carries the unconsumed award.
             CheckLevelUp();
@@ -1758,6 +1761,7 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("entity-killed", this, new { entity = entity.Id, type = entity.GetType().Name, npc = (entity as Npc)?.Descriptor.Name });
         if(entity is Player victim)Intersect.Server.Pvp.PvpRuntime.RecordKill(this,victim);
         var rolledNpcExperience=entity is Npc killedNpc ? killedNpc.Descriptor.RollExperience() : 0L;
         if (entity is Npc { PetOwner: null })
@@ -2417,6 +2421,7 @@ public partial class Player : Entity
         bool fromLogin = false,
         bool forceInstanceChange = false)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("warp-request", this, new { newMapId, newX, newY, fromLogin });
         if (!NavalWarpInProgress) Intersect.Server.Naval.NavalSystem.Release(this);
         #region shortcircuit exits
         // First, deny the warp entirely if we CAN'T, for some reason, warp to the requested instance type. ONly do this if we're not forcing a change
@@ -3269,6 +3274,7 @@ public partial class Player : Entity
     /// <returns>Whether the player received the item or not.</returns>
     public bool TryGiveItem(Item item, ItemHandling handler = ItemHandling.Normal, bool bankOverflow = false, int slot = -1, bool sendUpdate = true, int overflowTileX = -1, int overflowTileY = -1)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("item-grant-request", this, new { item = item.ItemId, item.Quantity });
         // Is this a valid item?
         if (item.Descriptor == null)
         {

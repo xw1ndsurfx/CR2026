@@ -449,6 +449,8 @@ internal sealed partial class PacketHandler
 
     private bool ProcessPacketCore(IPacket packet, Client client)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled && client.Entity is { } tracePlayer && packet is MovePacket or AttackPacket or PickupItemPacket or UseItemPacket or UseSpellPacket or ActivateEventPacket)
+            Intersect.Server.Core.LocalPlaytestTrace.Record("gameplay-packet", tracePlayer, new { type = packet.GetType().Name });
         // Correlate an administrator's interaction trace with the server before
         // activity filters or event-page checks can decline the activation.
         if (packet is ActivateEventPacket activation && client.User?.Power.IsAdmin == true)

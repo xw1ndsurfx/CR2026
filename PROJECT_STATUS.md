@@ -47,6 +47,8 @@
 
 La recette locale de reconnexion et de redémarrage avec un joueur est [consignée le 11 novembre](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) : persistance des états enregistrés confirmée ; gains et déplacement non expliqués après connexion à diagnostiquer.
 
+L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.fr.md) observe une réapparition après mort sans entrée de déplacement ; le gain initial de 20 EXP reste non reproduit et non expliqué.
+
 ### P0 — sécurité et première boucle de jeu
 
 - [ ] Vérifier la révision exacte du serveur, du client, de l'éditeur et des données ; exécuter compilations et suites CI sur cette révision, puis noter les résultats.
