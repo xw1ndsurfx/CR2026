@@ -35,6 +35,9 @@ public partial class NetworkConfiguration
 
     public int Port { get; set; }
 
+    // Explicitly opt in for an isolated local server; production keeps its existing binding.
+    public bool LoopbackOnly { get; set; }
+
     public bool IsServer { get; }
 
     public int MaximumConnections { get; set; }
