@@ -44,6 +44,10 @@ Une archive existante du 11 novembre à 06:38:57 UTC a été téléchargée sans
 
 La méthode de création de l’archive et sa cohérence temporelle entre fichiers restent inconnues. Aucun compte joueur n’a encore été utilisé pour vérifier une action persistée après reconnexion. Les archives, clés, journaux et bases demeurent hors du dépôt. Voir le [guide de reproduction locale](../../docs/local-playtest-server.fr.md) et le [questionnaire EN/FR/ES](Questionnaire.en-fr-es.md).
 
+## Suite de la recette du 11 novembre
+
+Les essais avec un joueur connecté sont consignés dans le [rapport de reconnexion et de persistance](Reconnexion-2026-11-11.fr.md). Sauvegarde périodique, coupure/reconnexion, arrêt propre et redémarrage ont été exercés ; les états enregistrés restent conservés. Une progression et un déplacement non expliqués pendant la session doivent encore être reproduits et diagnostiqués. Ces résultats complètent le présent état initial sans valider tous les scénarios multijoueurs ou l’ouverture du playtest.
+
 ## Portes de validation encore ouvertes
 
 - [ ] Relever les révisions effectives du serveur, du client normal et de l’éditeur installés, ainsi que les versions de leurs configurations et migrations. Une PR fusionnée ne prouve pas que ses binaires sont déployés.
