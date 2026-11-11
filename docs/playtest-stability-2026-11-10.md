@@ -36,4 +36,4 @@ dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTes
 dotnet run --project Utilities/CrashDiagnosticsTests/Intersect.CrashDiagnosticsTests.csproj --no-restore -- --save-debounce-only
 ```
 
-Les deux séries passent. Les avertissements existants du dépôt subsistent. Les tests ne remplacent pas une session multijoueur sur l'hébergement et la machine Intel HD 3000. Les exécutables de production et les clés de distribution ne sont pas remplacés.
+Les deux séries passent. Compilation de l'éditeur via les tests, du cœur client et de l'exécutable serveur : réussie, zéro erreur. L'exécutable client complet reste non validé : son fichier NuGet `project.assets.json` est absent. Les avertissements existants du dépôt subsistent. Les tests ne remplacent pas une session multijoueur sur l'hébergement et la machine Intel HD 3000. Les exécutables de production et les clés de distribution ne sont pas remplacés.
