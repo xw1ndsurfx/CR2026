@@ -222,6 +222,13 @@ public partial class InventoryItem : SlotItem
 
     private void Icon_DoubleClicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        if (Globals.GameShop == null && !Globals.InBank && !Globals.InBag && !Globals.InTrade)
+        {
+            DescriptionWindows.MobileDescriptionActions.ShowInventory(SlotIndex, this);
+            return;
+        }
+#endif
         if (Globals.Me == default)
         {
             return;
@@ -267,6 +274,13 @@ public partial class InventoryItem : SlotItem
 
     private void Icon_Clicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        if (arguments.MouseButton == MouseButton.Left)
+        {
+            DescriptionWindows.MobileDescriptionActions.ShowInventory(SlotIndex, this);
+            return;
+        }
+#endif
         if (arguments.MouseButton is not MouseButton.Right)
         {
             return;

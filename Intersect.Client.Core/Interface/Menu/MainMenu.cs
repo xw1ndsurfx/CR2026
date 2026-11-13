@@ -442,6 +442,9 @@ public partial class MainMenu : MutableInterface
     {
         if (ActiveNetworkStatus != networkStatus)
         {
+#if ANDROID
+            global::Android.Util.Log.Info("CR2026", $"Server status: {networkStatus}");
+#endif
             ActiveNetworkStatus = networkStatus;
             NetworkStatusChanged?.Invoke();
         }

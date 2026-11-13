@@ -1,0 +1,21 @@
+<Project>
+  <!-- The dispatcher restores each actual project/RID. Do not restore desktop
+       projects with Android or the synthetic all-x64 RID. -->
+  <Target Name="Restore" />
+  <Target Name="_CheckForSolutionLevelRuntimeIdentifier" />
+  <Target Name="CR2026MobilePublish" BeforeTargets="Publish">
+    <ItemGroup>
+      <ProjectReference Remove="@(ProjectReference)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_CRConfiguration Condition="'$(Configuration)' == ''">Release</_CRConfiguration>
+      <_CRConfiguration Condition="'$(Configuration)' != ''">$(Configuration)</_CRConfiguration>
+      <_CRVersion Condition="'$(Version)' == ''">0.8.0</_CRVersion>
+      <_CRVersion Condition="'$(Version)' != ''">$(Version)</_CRVersion>
+      <_CRPackageVersion Condition="'$(PackageVersion)' == ''">0.8.0-beta</_CRPackageVersion>
+      <_CRPackageVersion Condition="'$(PackageVersion)' != ''">$(PackageVersion)</_CRPackageVersion>
+      <_CRPlanArgument Condition="'$(CRPublishPlanOnly)' == 'true'">-PlanOnly</_CRPlanArgument>
+    </PropertyGroup>
+    <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)publish-cr2026.ps1&quot; -Runtime &quot;$(RuntimeIdentifier)&quot; -Configuration &quot;$(_CRConfiguration)&quot; -PackageVersion &quot;$(_CRPackageVersion)&quot; -Version &quot;$(_CRVersion)&quot; $(_CRPlanArgument)" />
+  </Target>
+</Project>

@@ -8,6 +8,14 @@ on:
       - 'Intersect*/**'
       - '.github/bundles/**'
       - '.github/workflows/build.yml'
+      - 'scripts/build-android-client.ps1'
+      - 'scripts/*android*.ps1'
+      - 'Shared/**'
+      - 'resources/**'
+      - 'assets/branding/**'
+      - 'after.Intersect.sln.targets'
+      - 'scripts/CR2026.Publish.targets'
+      - 'scripts/publish-cr2026.ps1'
       - '!Intersect.Tests*/**'
       - '!launchSettings.json'
       - '!*.md'
@@ -47,6 +55,37 @@ env:
   VERSION_SUFFIX: -beta
 
 jobs:
+  build-android:
+    name: Compile Android client
+    needs: [generate-keys]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android workload and SDK
+        shell: pwsh
+        run: |
+          dotnet workload install android
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: keys
+          path: Intersect.Network/bin/Release/keys
+      - name: Compile shared game client for Android
+        shell: pwsh
+        run: ./scripts/build-android-client.ps1 -CompileOnly -Configuration Release -VersionCode ${{ github.run_number }}
+
   check-tokens:
     name: Check the access tokens used for publishing
     runs-on: ubuntu-latest

@@ -207,6 +207,10 @@ public static partial class Interface
         {
             Scale = 1f, //(GameGraphics.Renderer.GetScreenWidth()/1920f);
         };
+#if ANDROID
+        _canvasMainMenu.Scale = MobileUiScale;
+        UpdateMobileCanvasBounds(_canvasMainMenu);
+#endif
 
         _canvasMainMenu.SetSize(
             (int)(Graphics.Renderer.ScreenWidth / _canvasMainMenu.Scale),
@@ -219,6 +223,10 @@ public static partial class Interface
 
         // Create the game Canvas (it's root, on which all other GWEN controls are created)
         _canvasInGame = new Canvas(Skin, "InGame");
+#if ANDROID
+        _canvasInGame.Scale = MobileUiScale;
+        UpdateMobileCanvasBounds(_canvasInGame);
+#endif
 
         //_gameCanvas.Scale = (GameGraphics.Renderer.GetScreenWidth() / 1920f);
         _canvasInGame.SetSize(
@@ -229,6 +237,10 @@ public static partial class Interface
         _canvasInGame.ShouldDrawBackground = false;
         _canvasInGame.BackgroundColor = Color.FromArgb(255, 150, 170, 170);
         _canvasInGame.KeyboardInputEnabled = true;
+#if ANDROID
+        UpdateMobileCanvasBounds(_canvasMainMenu);
+        UpdateMobileCanvasBounds(_canvasInGame);
+#endif
 
         // Create GWEN input processor
         if (Globals.GameState == GameStates.Intro || Globals.GameState == GameStates.Menu)
@@ -338,6 +350,10 @@ public static partial class Interface
             ClientLoopDiagnostics.Mark("UI/initialize GWEN");
             InitGwen();
         }
+#if ANDROID
+        UpdateMobileCanvasBounds(_canvasMainMenu);
+        UpdateMobileCanvasBounds(_canvasInGame);
+#endif
 
         if (Globals.GameState == GameStates.Menu)
         {
@@ -347,6 +363,15 @@ public static partial class Interface
         else if (Globals.GameState == GameStates.InGame)
         {
             GameUi.Update(elapsed, total);
+#if ANDROID
+            foreach (var window in MobileWindows.Where(window => window is not Window && window.IsVisibleInTree && MobilePanelIsEligible(window)).ToArray())
+            {
+                window.PresentFullscreen(MobileWindowBounds, Localization.ClientLanguages.Text("Close"));
+                window.TitleLabel.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? window.Skin.DefaultFont;
+            }
+            var mobilePeers = MobileWindows.Where(window => window.IsVisibleInTree && MobilePanelIsEligible(window)).ToArray();
+            foreach (var window in mobilePeers) window.SetFullscreenPeers(mobilePeers);
+#endif
         }
 
         Shared.UiDesignerRuntime.Update(Globals.GameState==GameStates.InGame?_canvasInGame:_canvasMainMenu);
@@ -402,8 +427,83 @@ public static partial class Interface
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsInBounds(int x, int y)
     {
+#if ANDROID
+        var scale = Globals.GameState == GameStates.InGame ? _canvasInGame?.Scale : _canvasMainMenu?.Scale;
+        x = (int)(x / (scale ?? 1f));
+        y = (int)(y / (scale ?? 1f));
+#endif
         return HasCurrentInterface && CurrentInterface.Root.Bounds.Contains(x, y);
     }
+
+#if ANDROID
+    // Keep UI coordinates independent from world zoom and the physical display resolution.
+    private static float MobileUiScale => Math.Clamp(Graphics.Renderer.ScreenHeight / 540f, 1f, 3f);
+
+    private static void UpdateMobileCanvasBounds(Canvas? canvas)
+    {
+        if (canvas == null) return;
+        var safe = Intersect.Client.Android.MobileLayout.SafeBounds(Graphics.Renderer.ScreenWidth, Graphics.Renderer.ScreenHeight);
+        var scale = Math.Clamp(safe.Height / 540f, 1f, 3f);
+        canvas.Scale = scale;
+        // Gwen hit-testing expects a canvas-local origin at (0,0). Moving the
+        // canvas to a cutout inset shifts drawing without shifting its hit test.
+        // Menu artwork/weather is full bleed; game HUDs reserve the right/bottom
+        // system bars, while individual touch controls use the complete safe area.
+        var menu = ReferenceEquals(canvas, _canvasMainMenu);
+        canvas.SetBounds(0, 0,
+            (int)((menu ? Graphics.Renderer.ScreenWidth : safe.Right) / scale),
+            (int)((menu ? Graphics.Renderer.ScreenHeight : safe.Bottom) / scale));
+    }
+
+    internal static bool MobileTouchHitsInterface(int x, int y) =>
+        _canvasInGame is { } canvas && DoesComponentOrChildrenContainMousePoint(canvas,
+            new Point((int)(x / canvas.Scale), (int)(y / canvas.Scale)));
+
+    internal static Framework.GenericClasses.Rectangle MobileWindowBounds
+    {
+        get
+        {
+            var safe = Intersect.Client.Android.MobileLayout.SafeBounds(Graphics.Renderer.ScreenWidth, Graphics.Renderer.ScreenHeight);
+            var scale = _canvasInGame?.Scale ?? 1f;
+            var left = (int)Math.Ceiling(safe.X / scale);
+            var top = (int)Math.Ceiling(safe.Y / scale);
+            return new(left, top, (int)(safe.Right / scale) - left, (int)(safe.Bottom / scale) - top);
+        }
+    }
+
+    internal static float MobileInputScale => _canvasInGame?.Scale ?? 1f;
+    internal static ScrollControl? MobileScrollTarget(int x, int y) => _canvasInGame is { } canvas
+        ? Framework.Gwen.Input.TouchScrollGesture.FindTarget(canvas, new Point((int)(x / canvas.Scale), (int)(y / canvas.Scale)))
+        : null;
+
+    private static IEnumerable<WindowControl> MobileWindows
+    {
+        get
+        {
+            if (_canvasInGame == null) yield break;
+            foreach (var node in _canvasInGame.Children)
+            {
+                if (node is WindowControl window) yield return window;
+                else if (node is Framework.Gwen.ControlInternal.Modal)
+                    foreach (var modalWindow in node.Children.OfType<WindowControl>()) yield return modalWindow;
+            }
+        }
+    }
+
+    // Inventory intentionally cannot close during banking/trading, but must remain
+    // available in the fullscreen window selector throughout those transactions.
+    internal static bool MobilePanelIsEligible(WindowControl window) =>
+        window.IsClosable || window is Game.Inventory.InventoryWindow;
+
+    internal static bool MobileWindowOpen => MobileWindows
+        .Any(window => window.IsVisibleInTree && MobilePanelIsEligible(window)) || HasInputFocus() ||
+        _canvasInGame?.Children.OfType<Game.DescriptionWindows.DescriptionWindowBase>()
+            .Any(window => window.MobilePinned && window.IsVisibleInTree) == true ||
+        InGameUiOrNull?.GameMenu.IsHidden == false;
+
+    internal static bool MobileFullscreenOpen => MobileWindows
+        .Any(window => window.IsVisibleInTree && MobilePanelIsEligible(window));
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsInBounds(Point point)

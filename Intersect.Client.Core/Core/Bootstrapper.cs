@@ -45,7 +45,11 @@ internal static partial class Bootstrapper
         LoggingLevelSwitch loggingLevelSwitch =
             new(Debugger.IsAttached ? LogEventLevel.Debug : LogEventLevel.Information);
 
-        var (loggerFactory, logger) = new LoggerConfiguration().CreateLoggerForIntersect(
+        var loggerConfiguration = new LoggerConfiguration();
+#if ANDROID
+        loggerConfiguration.WriteTo.Sink(new global::Intersect.Client.Android.AndroidLogSink());
+#endif
+        var (loggerFactory, logger) = loggerConfiguration.CreateLoggerForIntersect(
             entryAssembly,
             "Client",
             loggingLevelSwitch

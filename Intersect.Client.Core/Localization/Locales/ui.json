@@ -1,5 +1,14 @@
 {
   "Entries": {
+    "Equip": {"en": "Equip", "fr": "Équiper", "es": "Equipar"},
+    "Unequip": {"en": "Unequip", "fr": "Déséquiper", "es": "Desequipar"},
+    "Cast spell": {"en": "Cast spell", "fr": "Lancer le sort", "es": "Lanzar hechizo"},
+    "Learn spell": {"en": "Learn spell", "fr": "Apprendre", "es": "Aprender hechizo"},
+    "Open": {"en": "Open", "fr": "Ouvrir", "es": "Abrir"},
+    "Anchor": { "en": "Anchor", "fr": "Ancre", "es": "Ancla" },
+    "Pick up": {"en": "Pick up", "fr": "Ramasser", "es": "Recoger"},
+    "Block": {"en": "Block", "fr": "Bloquer", "es": "Bloquear"},
+    "Interact": {"en": "Interact", "fr": "Interagir", "es": "Interactuar"},
     "30": {
       "en": "30",
       "fr": "30",

@@ -155,6 +155,13 @@ public partial class HotbarItem : SlotItem
 
     private void Icon_Clicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        if (arguments.MouseButton == MouseButton.Left)
+        {
+            Activate();
+            return;
+        }
+#endif
         if (Globals.Me != null && Naval.NavalWorld.IsAboard(Globals.Me.Id)) return;
         if (arguments.MouseButton is MouseButton.Right)
         {
@@ -164,10 +171,12 @@ public partial class HotbarItem : SlotItem
 
     private void Icon_DoubleClicked(Base sender, MouseButtonState arguments)
     {
+#if !ANDROID
         if (arguments.MouseButton is MouseButton.Left)
         {
             Activate();
         }
+#endif
     }
 
     private void Icon_HoverLeave(Base sender, EventArgs arguments)

@@ -36,6 +36,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         string valueLabel = ""
     )
     {
+        if (MobilePinned) return;
         _itemDescriptor = item;
         _amount = amount;
         _itemProperties = itemProperties;
@@ -100,6 +101,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
     public override void Hide()
     {
+        if (MobilePinned) return;
         if (Interface.GameUi.ItemDescriptionWindow == this)
         {
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.ItemDescriptionWindow, true);

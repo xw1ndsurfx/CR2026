@@ -8,7 +8,11 @@ namespace Intersect.Client.Interface.Game;
 
 public partial class MenuContainer
 {
+#if ANDROID
+    private const int RowHeight = 44, FrameInset = 4, FooterHeight = 40;
+#else
     private const int RowHeight = 27, FrameInset = 4, FooterHeight = 40;
+#endif
     private ScrollControl? _compactMenuList;
     private bool _menuExpanded = true;
     private MenuRow? _houseMenuRow;
@@ -69,8 +73,22 @@ public partial class MenuContainer
         _menuToggleButtonContainer.AlignmentPadding = new Padding { Left = 0, Bottom = 0 };
         _menuToggleButtonContainer.Margin = Margin.Zero;
         _menuToggleButton.SetToolTipText(ClientLanguages.Text("Hide menu"));
+#if ANDROID
+        _menuToggleButtonContainer.IsHidden = true; // The mobile overlay provides the larger toggle.
+        Alignment = [Alignments.Top, Alignments.Left];
+        AlignmentPadding = new Padding { Left = 12, Top = 72 };
+        SetMenuExpanded(false);
+#endif
         UpdateCompactMenuLayout();
     }
+
+#if ANDROID
+    internal void ToggleMobileMenu()
+    {
+        SetMenuExpanded(!_menuExpanded);
+        if (_menuExpanded) BringToFront();
+    }
+#endif
 
     internal void CollapseForWorldClick() => SetMenuExpanded(false);
 
@@ -85,21 +103,40 @@ public partial class MenuContainer
     private void UpdateCompactMenuLayout()
     {
         if (_compactMenuList == null || Parent == null) return;
+#if ANDROID
+        var renderer = Core.Graphics.Renderer;
+        var safe = Intersect.Client.Android.MobileLayout.SafeBounds(renderer.ScreenWidth, renderer.ScreenHeight);
+        var uiScale = Math.Clamp(safe.Height / 540f, 1f, 3f);
+        AlignmentPadding = new Padding { Left = 12 + (int)(safe.Left / uiScale), Top = 72 + (int)(safe.Top / uiScale) };
+#endif
         foreach (var row in _compactRows) row.RefreshCaption();
         if (_houseMenuRow != null) _houseMenuRow.IsDisabled = Interface.InGameUiOrNull?.CanOpenHouse != true;
         if (_compactCanvasHeight == Parent.Height && _compactCanvasWidth == Parent.Width && _compactLanguage == ClientLanguages.Current) return;
         _compactCanvasHeight = Parent.Height; _compactCanvasWidth = Parent.Width; _compactLanguage = ClientLanguages.Current;
+#if ANDROID
+        var naturalHeight = ((_compactRows.Count + 1) / 2) * RowHeight + FrameInset * 2;
+#else
         var naturalHeight = _compactRows.Count * RowHeight + FrameInset * 2;
+#endif
         var height = Math.Min(naturalHeight, Math.Max(RowHeight + FrameInset * 2, Parent.Height - FooterHeight - 84));
         var scrollbarWidth = height < naturalHeight ? 16 : 0;
         var captionWidth = _compactRows.Max(row => row.CaptionWidth);
+#if ANDROID
+        var width = Math.Min(Parent.Width - 24, Math.Max(320, (captionWidth + 48) * 2 + FrameInset * 2));
+#else
         var width = Math.Min(Math.Max(80, Parent.Width - 8), Math.Max(110, captionWidth + 33 + 8 + FrameInset * 2 + scrollbarWidth));
+#endif
         SetSize(width, height);
         _compactMenuList.SetBounds(FrameInset, FrameInset, width - FrameInset * 2, height - FrameInset * 2);
         for (var i = 0; i < _compactRows.Count; i++)
         {
             var rowWidth = width - FrameInset * 2 - scrollbarWidth;
+#if ANDROID
+            rowWidth /= 2;
+            _compactRows[i].Parent!.SetBounds((i % 2) * rowWidth, (i / 2) * RowHeight, rowWidth, RowHeight);
+#else
             _compactRows[i].Parent!.SetBounds(0, i * RowHeight, rowWidth, RowHeight);
+#endif
             _compactRows[i].SetSize(rowWidth, RowHeight);
         }
     }

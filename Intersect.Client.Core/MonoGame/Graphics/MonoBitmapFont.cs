@@ -60,7 +60,7 @@ internal sealed class MonoBitmapFont : Font<SpriteFont>, IFont, IFontInkMetrics
             try
             {
                 var pixels = new Microsoft.Xna.Framework.Color[metrics.CellWidth * metrics.CellHeight];
-                texture.GetData(0, new XNARectangle(referenceIndex % columns * metrics.CellWidth,
+                TextureReadback.GetData(texture, 0, new XNARectangle(referenceIndex % columns * metrics.CellWidth,
                     referenceIndex / columns * metrics.CellHeight, metrics.CellWidth, metrics.CellHeight), pixels, 0, pixels.Length);
                 var ink = Intersect.Framework.Core.GameObjects.Events.GraphicBounds.Read(metrics.CellWidth, metrics.CellHeight,
                     (x, y) => pixels[y * metrics.CellWidth + x].A > 0);
