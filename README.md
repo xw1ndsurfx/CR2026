@@ -40,6 +40,15 @@ Le **Logiklik 2D Engine** s'appuie sur les fondations du moteur Intersect, tout 
 
 ### Systèmes de jeu présents dans le code
 
+Dans l’éditeur d’événements, **Dialogue → Protéger le joueur pendant les dialogues**
+se place avant **Afficher un texte** ou **Afficher des choix**. Pour cette exécution
+de l’événement, les PNJ ne peuvent pas cibler ni blesser le joueur pendant les
+dialogues, y compris avec une attaque déjà lancée. La protection cesse dès la
+fermeture du dialogue; elle ne s’applique pas aux boutiques et ne modifie pas le
+combat entre joueurs. Chaque nouvel événement doit activer explicitement sa
+protection. Cette commande nécessite les nouveaux exécutables de l’éditeur et du
+serveur.
+
 Ces systèmes sont représentés dans les sources client/serveur; leur niveau de maturité et leur disponibilité en jeu diffèrent :
 
 - **Progression et combat :** expérience, professions, artisanat, maîtrises d'armes, PvE/PvP, récompenses, succès, quêtes et boutiques de quêtes.
@@ -180,13 +189,16 @@ Serveur/
   Windows-x64/      Binaires à copier sur l'installation serveur existante
   Linux-x64/        Binaires à copier sur l'installation serveur existante
   LIRE-MOI.txt
+Editeur/
+  Windows-x64/      Éditeur complet et Ouvrir-editeur.cmd (administration)
+  LIRE-MOI.txt
 LIRE-MOI.txt
 manifest.json
 SHA256SUMS.txt
 ```
 
 Distribuer uniquement `Joueurs` ou les téléchargements de `Archives-joueurs`.
-Le sous-dossier **Serveur est réservé à l'administration**. Il ne contient ni
+Les sous-dossiers **Serveur et Editeur sont réservés à l'administration**. Le serveur ne contient ni
 bases de comptes ni données du monde. Les configurations fournies à titre d'exemple
 sont rangées dans `Configuration-exemples` : conserver les ressources, bases et
 configurations de l'installation serveur lors de l'application des binaires.

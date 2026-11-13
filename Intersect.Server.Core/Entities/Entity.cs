@@ -1798,6 +1798,9 @@ public abstract partial class Entity : IEntity
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
         var aliveAnimations = new List<KeyValuePair<Guid, Direction>>();
 
+        if (this is Npc && target is Player { IsDialogueProtected: true } && !spellDescriptor.Combat.Friendly)
+            return;
+
         //Only count safe zones and friendly fire if its a dangerous spell! (If one has been used)
         if (!spellDescriptor.Combat.Friendly &&
             (spellDescriptor.Combat.TargetType != (int)SpellTargetType.Self || onHitTrigger))
@@ -2090,6 +2093,10 @@ public abstract partial class Entity : IEntity
     {
         var damagingAttack = baseDamage > 0;
         var secondaryDamagingAttack = secondaryDamage > 0;
+
+        // Includes projectiles and delayed/telegraphed NPC hits whose target was selected before dialogue opened.
+        if (this is Npc && enemy is Player { IsDialogueProtected: true } && (damagingAttack || secondaryDamagingAttack))
+            return;
 
         if (enemy == null)
         {

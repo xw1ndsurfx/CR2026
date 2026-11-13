@@ -318,11 +318,14 @@ public static partial class CommandProcessing
             // CommandListId. Unwind by the actual page/root list instead so a
             // polling common Event cannot accumulate copies or discard its caller.
             var rootCommands = stackInfo.Page.CommandLists.Values.First();
+            var protectDialogue = false;
             while (callStack.Count > 0 && ReferenceEquals(callStack.Peek().Page, stackInfo.Page))
             {
                 var frame = callStack.Pop();
+                protectDialogue |= frame.ProtectDialogue;
                 if (ReferenceEquals(frame.CommandList, rootCommands)) break;
             }
+            newCallStack.Last().ProtectDialogue |= protectDialogue;
             foreach (var itm in newCallStack.Reverse())
             {
                 callStack.Push(itm);

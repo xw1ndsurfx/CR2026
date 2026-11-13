@@ -1,5 +1,15 @@
 {
   "Entries": {
+    "Protect player during dialogue": {
+      "en": "Protect player during dialogue",
+      "fr": "Protéger le joueur pendant les dialogues",
+      "es": "Proteger al jugador durante los diálogos"
+    },
+    "Place before dialogue. NPC protection ends automatically when dialogue closes.": {
+      "en": "Place before dialogue. NPC protection ends automatically when dialogue closes.",
+      "fr": "À placer avant le dialogue. La protection contre les PNJ cesse automatiquement à sa fermeture.",
+      "es": "Colocar antes del diálogo. La protección contra los PNJ termina automáticamente al cerrarlo."
+    },
     "Save protection": {
       "en": "Save protection",
       "fr": "Protection des sauvegardes",
