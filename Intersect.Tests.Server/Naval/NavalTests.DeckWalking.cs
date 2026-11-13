@@ -86,7 +86,7 @@ public sealed partial class NavalTests
             foreach(var next in new[]{i-1,i+1,i-width,i+width})
             {
                 if(next<0 || next>=nodes.Length || before[next]!=-2 || !free[next] || ShipDeck.Distance(nodes[i],nodes[next])>.101)continue;
-                var a=nodes[i];var b=nodes[next];var reached=ShipDeck.Move(a,(b.X-a.X)/.165,(b.Y-a.Y)/.165,.1,p=>others.Any(o=>ShipDeck.Distance(p,o)<ShipDeck.Radius*2),kind);
+                var a=nodes[i];var b=nodes[next];var reached=ShipDeck.Move(a,(b.X-a.X)/(ShipDeck.Speed*.1),(b.Y-a.Y)/(ShipDeck.Speed*.1),.1,p=>others.Any(o=>ShipDeck.Distance(p,o)<ShipDeck.Radius*2),kind);
                 if(ShipDeck.Distance(reached,b)>.001)continue;
                 before[next]=i;queue.Enqueue(next);
             }

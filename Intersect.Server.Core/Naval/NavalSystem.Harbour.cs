@@ -222,13 +222,20 @@ internal static partial class NavalSystem
         var vessel = new Vessel(d) { OwnerId = player.Id, Name=owned.Name??"", SinkingGraphics = offer.SinkingGraphics };
         var ocean = OceanMapResolver.Maps();
         if (Ships.ContainsKey(owned.Id)) return null;
-        var candidates = from dy in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1) from dx in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1)
-                         let distance = dx*dx+dy*dy where distance > 0 && distance <= _settings.LaunchSearchRadius * _settings.LaunchSearchRadius orderby distance, dy, dx select (dx,dy);
+        var clearance=NavalShipAtlas.LaunchClearance(d);
+        var search=Math.Min(20,Math.Max(_settings.LaunchSearchRadius,(int)Math.Ceiling(clearance)+2));
+        var candidates = from dy in Enumerable.Range(-search, search * 2 + 1) from dx in Enumerable.Range(-search, search * 2 + 1)
+                         let distance = dx*dx+dy*dy where distance >= clearance*clearance && distance <= search*search orderby distance, dy, dx select (dx,dy);
         foreach (var (dx,dy) in candidates)
         {
             var x = dock.X + dx + .5; var y = dock.Y + dy + .5;
             if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight ||
-                !ClearHull(player, vessel, ocean, player.MapId, x, y)) continue;
+                !ClearHull(player, vessel, ocean, player.MapId, x, y) ||
+                NavalShipAtlas.LaunchFootprint(d,x,y).Any(tile=>
+                {
+                    var map=player.MapId;double tx=tile.X+.5,ty=tile.Y+.5;
+                    return !OceanMapResolver.Resolve(ocean,ref map,ref tx,ref ty) || !ClearTile(player,map,(int)Math.Floor(tx),(int)Math.Floor(ty));
+                })) continue;
             d.X = vessel.State.X = x; d.Y = vessel.State.Y = y;
             vessel.Health = owned.Health;vessel.SinkingSerial=owned.SinkingSerial;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;

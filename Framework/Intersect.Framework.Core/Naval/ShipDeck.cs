@@ -7,16 +7,16 @@ public enum DeckAction { Walk, Interact }
 public static class ShipDeck
 {
     public const float AvatarScale=.75f;
-    public const double Radius=.12,Speed=1.65,UseDistance=.48;
+    public const double Radius=.12,Speed=3.0,UseDistance=.48;
     public static bool Supports(string graphics)=>NavalShipModels.Find(graphics)!=null;
     public static ShipDeckKind Kind(string graphics)=>NavalShipModels.Find(graphics)?.DeckKind??ShipDeckKind.ThreeMast;
     public static ShipDeckActivity Activity(ShipDefinition ship)=>NavalShipModels.Find(ship.Graphics)?.Activity==ShipDeckActivity.Fishing?ShipDeckActivity.Fishing:ship.DeckActivity;
     public static readonly DeckPoint Helm=new(0,-3.4);
     private static readonly DeckPoint[] Edge=[new(-.85,-3.7),new(.85,-3.7),new(1.12,-2.7),new(1.12,2.3),new(.55,3.6),new(-.55,3.6),new(-1.12,2.3),new(-1.12,-2.7)];
-    private static readonly (DeckPoint Point,double Radius)[] Obstacles=[(new(0,-3.1),.13),(new(0,-2.5),.20),(new(0,0),.23),(new(0,2.5),.20),(new(-.5,3.0),.19),(new(.5,3.0),.19)];
+    private static readonly (DeckPoint Point,double Radius)[] Obstacles=[(new(0,-3.1),.08),(new(0,-2.5),.20),(new(0,0),.23),(new(0,2.5),.20),(new(-.5,3.0),.19),(new(.5,3.0),.19)];
     private static readonly DeckPoint[] RaftEdge=[new(-1.12,-3.7),new(1.12,-3.7),new(1.12,3.3),new(-1.12,3.3)];
-    private static readonly (DeckPoint Point,double Radius)[] SloopObstacles=[(new(0,-3.1),.13),(new(0,0),.23)];
-    private static readonly (DeckPoint Point,double Radius)[] RaftObstacles=[(new(0,-3.1),.13),(new(0,2.5),.28)];
+    private static readonly (DeckPoint Point,double Radius)[] SloopObstacles=[(new(0,-3.1),.08),(new(0,0),.23)];
+    private static readonly (DeckPoint Point,double Radius)[] RaftObstacles=[(new(0,-3.1),.08),(new(0,2.5),.28)];
     public static bool LowerGunDeck(ShipDeckKind kind,int index)=>kind==ShipDeckKind.ShipOfLine && index>=3;
     public static DeckPoint Station(bool starboard,int index,ShipDeckKind kind=ShipDeckKind.ThreeMast)=>kind==ShipDeckKind.Raft?new(0,1.8):
         new((starboard?1:-1)*(kind==ShipDeckKind.ShipOfLine?(index>=3?.7:1.15):.78),kind==ShipDeckKind.Sloop?0:((index%3)-1)*2);
@@ -36,7 +36,7 @@ public static class ShipDeck
         var obstacles=kind==ShipDeckKind.Raft?RaftObstacles:kind==ShipDeckKind.Sloop?SloopObstacles:Obstacles;
         if(obstacles.Any(o=>Distance(p,o.Point)<o.Radius+Radius))return false;
         if(kind!=ShipDeckKind.Raft)for(int side=0;side<2;side++)for(int i=0;i<(kind==ShipDeckKind.Sloop?1:3);i++)
-            if(Distance(p,new((side==0?-1:1)*(kind==ShipDeckKind.ShipOfLine?1.5:1.07),kind==ShipDeckKind.Sloop?0:(i-1)*2))<.16+Radius)return false;
+            if(Distance(p,new((side==0?-1:1)*(kind==ShipDeckKind.ShipOfLine?1.5:1.07),kind==ShipDeckKind.Sloop?0:(i-1)*2))<.10+Radius)return false;
         return true;
     }
     public static DeckPoint Move(DeckPoint p,double x,double y,double seconds,Func<DeckPoint,bool>? occupied=null,ShipDeckKind kind=ShipDeckKind.ThreeMast)

@@ -16,7 +16,9 @@ internal static partial class DungeonRunRuntime
             lock (Gate)
             {
                 if (runId == Guid.Empty || !RunsByInstance.TryGetValue(player.MapInstanceId, out run!) ||
-                    run.Id != runId || run.Finished || !IsDungeonMap(run, player.MapId) ||
+                    // Membership in this exact run/instance authorizes leaving, including linked maps
+                    // omitted from the dungeon configuration. Never trap an enrolled participant.
+                    run.Id != runId || run.Finished ||
                     !run.Participants.TryRemove(player.Id, out _))
                     return false;
 

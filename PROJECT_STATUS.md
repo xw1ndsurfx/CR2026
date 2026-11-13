@@ -1,13 +1,13 @@
 # Corps Royaux — état du développement et reprise de contexte
 
-> **Instantané GitHub du 7 novembre 2026**, établi depuis la branche `main` et les PR consultées. Ce document n'est ni une certification de jouabilité, ni une promesse de lancement. Les PR, branches et états CI peuvent changer après cette date.
+> **Suivi actualisé le 11 novembre 2026**, à partir de `main`, des PR vérifiées et des retours utilisateur. Ce document n'est ni une certification de jouabilité, ni une promesse de lancement. Les PR, branches et états CI peuvent changer après cette date.
 
 **Sources principales :** [README](README.md) · [ROADMAP](ROADMAP.md) · [règles de contribution et de traduction](AGENTS.md) · [diagnostic serveur](docs/server-crash-diagnostics.md).
 
 ## Référence et architecture
 
 - **Projet :** MMORPG 2D médiéval-fantastique Corps Royaux (Polonya / Herbonia), Studio Logiklik.
-- **Dépôt de travail :** `xw1ndsurfx/CR2026` ; **branche de référence :** `main`. Dernier commit de fusion observé pour cet état : [PR #246](https://github.com/xw1ndsurfx/CR2026/pull/246), `f1cf75d`.
+- **Dépôt de travail :** `xw1ndsurfx/CR2026` ; **branche de référence :** `main`. Dernier commit de fusion observé pour cet état : [PR #265](https://github.com/xw1ndsurfx/CR2026/pull/265), `69670d777`. Le client Intel HD 3000 reste sur une branche locale séparée et ne doit pas être fusionné dans `main`.
 - **Moteur :** Logiklik 2D Engine, personnalisation d'Intersect ; solution `Intersect.sln`, C# et .NET 8.
 - **Applications :** client, serveur, éditeur Windows et bibliothèques partagées. Les modifications du protocole exigent des versions compatibles.
 - **Localisation :** EN/FR/ES obligatoire pour tout nouveau texte joueur selon [AGENTS.md](AGENTS.md).
@@ -15,8 +15,11 @@
 
 ## État des fonctionnalités — distinction code / validation
 
-| Chantier | État observé au 7 novembre | Validation encore nécessaire |
+| Chantier | État observé au 11 novembre | Validation encore nécessaire |
 | --- | --- | --- |
+| **Agriculture de la maison** | Première implémentation intégrée ([#195](https://github.com/xw1ndsurfx/CR2026/pull/195)), métier Agriculteur, cultures et ouvriers. Fonctionnement confirmé par l’utilisateur le 11 novembre. [Guide](Documentation/features/farming.md). | Consigner une recette couvrant absence, redémarrage, réservations de graines/salaires, capacité du grenier et droits du propriétaire ; le retour fonctionnel ne précise pas ces scénarios. |
+| **Client Intel HD 3000** | Correctif audio local installé ; client testé selon le retour utilisateur du 11 novembre. La bibliothèque native mise à jour est embarquée dans le client privé. Le client normal et l’éditeur sont préservés. | Essai prolongé en jeu sur ce laptop ; distribution privée à conserver séparée des builds normaux. |
+| **Ressources et imports ; abandon de donjon** | Correctifs [#264](https://github.com/xw1ndsurfx/CR2026/pull/264) et sélecteur des ouvriers [#265](https://github.com/xw1ndsurfx/CR2026/pull/265) fusionnés. Les quatre workflows de #265 sont réussis. | Vérifier les binaires réellement déployés et la recette en jeu ; le sélecteur modifie seulement l’éditeur. |
 | **Combat PvE avancé** (esquive, parade, riposte, télégraphes, endurance, rage de boss, sorts annoncés, combos, exercices) | Phases intégrées dans `main` : [#238](https://github.com/xw1ndsurfx/CR2026/pull/238) et [#241–246](https://github.com/xw1ndsurfx/CR2026/pull/246). Le système reste **désactivé par défaut** via `Combat.EnableAdvancedCombat`. [Guide](Documentation/AdvancedCombat.md). | Activer uniquement en staging après compilation/migrations, vérifier latence, instances, protections serveur, tutoriel et ressources. L'intégration Git n'est pas une validation manuelle en jeu. |
 | **Tutoriel de première connexion et exercices de combat** | Guide configurable intégré par [#203](https://github.com/xw1ndsurfx/CR2026/pull/203), exercices d'esquive/parade/riposte/combos par [#246](https://github.com/xw1ndsurfx/CR2026/pull/246). [Guide actuel](docs/tutorial-guide.md). | Reconnexion, progression persistante, reprise, langues et exercices avec combat activé/désactivé. |
 | **Royal Guide visuel** (halo, flèches, PNJ, marqueurs au sol, interactions d'événements) | **Pas dans `main` à cette date.** [#247](https://github.com/xw1ndsurfx/CR2026/pull/247), [#248](https://github.com/xw1ndsurfx/CR2026/pull/248), [#249](https://github.com/xw1ndsurfx/CR2026/pull/249) ouvertes en brouillon, empilées. | Compiler client/serveur/éditeur, valider interface et étapes en jeu, puis intégrer dans l'ordre des dépendances. |
@@ -29,7 +32,7 @@
 
 **Légende :** « fusionné dans `main` » = code présent dans l'historique de cette branche ; cela ne prouve ni déploiement, ni compilation du build de production, ni acceptation QA. Les PR ouvertes ne doivent pas être comptées comme livrées.
 
-## Pull requests ouvertes suivies au 7 novembre
+## Pull requests ouvertes vérifiées le 11 novembre
 
 1. [#240 — Exportation : nouvelle interface](https://github.com/xw1ndsurfx/CR2026/pull/240), **draft**, cible `main` ; vérifier builds + rendu réel.
 2. [#247 — Royal Guide phase 1](https://github.com/xw1ndsurfx/CR2026/pull/247), **draft**, cible `main` ; halo et contrôles HUD.
@@ -39,6 +42,12 @@
 **Ordre d'intégration du guide :** #247 puis #248 puis #249, en tenant compte des tests, des mises à jour de branches et des conflits éventuels. Ne pas fusionner directement des branches historiques dont le travail est déjà sur `main`.
 
 ## Reprise prioritaire et critères avant playtest
+
+**Choix confirmé par l’utilisateur le 11 novembre : stabilité et préparation du playtest.** Voir le [rapport de préparation](Documentation/Playtests/Readiness-2026-11-11.fr.md). Les tests locaux utilisent des données isolées ; ils ne prouvent pas une sauvegarde restaurable ni une authentification Steam fonctionnelle sur le serveur déployé.
+
+La recette locale de reconnexion et de redémarrage avec un joueur est [consignée le 11 novembre](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) : persistance des états enregistrés confirmée ; gains et déplacement non expliqués après connexion à diagnostiquer.
+
+L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.fr.md) observe une réapparition après mort sans entrée de déplacement ; le gain initial de 20 EXP reste non reproduit et non expliqué.
 
 ### P0 — sécurité et première boucle de jeu
 

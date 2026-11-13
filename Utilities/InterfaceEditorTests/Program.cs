@@ -43,7 +43,8 @@ internal static class Program
         optionsProperty.SetValue(null, new Options());
         if (Environment.GetCommandLineArgs().Contains("--import-status-only")) { ImportedResourceIndicatorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-crew-only")) { NavalCrewDamageEditorTests.Run(); return; }
-        if (Environment.GetCommandLineArgs().Contains("--ui-fixes-only")) { ImportedResourceIndicatorTests.Run(); ImportStatusAndNavalScrollTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--resource-workflow-only")) { ImportedResourceIndicatorTests.Run(); ImportedResourceDeclarationTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--ui-fixes-only")) { ImportedResourceIndicatorTests.Run(); ImportedResourceDeclarationTests.Run(); ImportStatusAndNavalScrollTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--promotions-only")) { ShopPromotionTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--invasion-only")) { InvasionEditorTests.Run(); InvasionConditionEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--fishing-only")) { FishingEditorTests.Run(); return; }
@@ -81,6 +82,7 @@ internal static class Program
         ShopPromotionTests.Run();
         SoundImportTests.Run();
         ImportedResourceIndicatorTests.Run();
+        ImportedResourceDeclarationTests.Run();
         NavalMapListTests.Run();
         NavalCrewDamageEditorTests.Run();
         HarbourDockEditorTests.Run();

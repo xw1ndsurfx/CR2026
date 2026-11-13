@@ -10,7 +10,7 @@ public partial class FrmMain
         var item = new ToolStripMenuItem(FrmNavalConfiguration.T("Naval System Editor")) { Name = "navalSystemEditor" };
         item.Click += (_, _) =>
         {
-            if (_navalEditor is { IsDisposed: false }) { _navalEditor.BringToFront(); return; }
+            if (_navalEditor is { IsDisposed: false }) { Styling.EditorWindows.Show(_navalEditor, this); return; }
             Intersect.Editor.Networking.Network.SendPacket(new NavalConfigurationRequestPacket());
         };
         system.DropDownItems.Add(item);

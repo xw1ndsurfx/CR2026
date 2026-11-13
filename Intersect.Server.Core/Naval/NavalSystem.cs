@@ -214,7 +214,7 @@ internal static partial class NavalSystem
                         (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= _settings.DockInteractionRange ||
                         v.Definition.MapId == player.MapId &&
                         Distance(player.X + .5, player.Y + .5, v.Definition.DockX + .5, v.Definition.DockY + .5) <= _settings.DockInteractionRange &&
-                        Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 5));
+                        Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= Math.Max(5,NavalShipAtlas.LaunchClearance(v.Definition)+2)));
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
                     vessel.BoardingMap=player.MapId; vessel.BoardingX=player.X; vessel.BoardingY=player.Y;

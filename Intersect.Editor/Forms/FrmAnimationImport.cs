@@ -306,6 +306,7 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly NumericUpDown _frameCount = new();
     private readonly NumericUpDown _frameDuration = new();
     private readonly ImportedResourceIndicator _importStatus = new();
+    private readonly Button _declareImportedButton = new() {Name="DeclareImportedResource"};
     private readonly Label _assetInfo = new();
     private readonly Label _status = new();
     private readonly Button _importZipButton = new();
@@ -379,6 +380,7 @@ public sealed class FrmAnimationImport : DarkForm
 
         FormClosed += (_, _) =>
         {
+            ImportedResourceDeclarationControls.CancelBadges(_assetList);
             _importCancellation?.Cancel();
             _libraryLoadCancellation?.Cancel();
             _thumbnailCancellation?.Cancel();
@@ -755,8 +757,18 @@ public sealed class FrmAnimationImport : DarkForm
         animationNavigation.Controls.Add(_previousAnimationButton, 0, 0);
         animationNavigation.Controls.Add(_nextAnimationButton, 1, 0);
 
+        _declareImportedButton.Text=QualityOfLifeText.Get("Declare import status...",CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        _declareImportedButton.FlatStyle=FlatStyle.Flat;_declareImportedButton.BackColor=System.Drawing.Color.FromArgb(55,47,49);_declareImportedButton.ForeColor=System.Drawing.Color.Gainsboro;
+        _declareImportedButton.Dock=DockStyle.Bottom;_declareImportedButton.Height=36;_declareImportedButton.Enabled=false;
+        _declareImportedButton.Click+=async (_,_)=>
+        {
+            if(_importCancellation!=null)return;
+            await ImportedResourceDeclarationControls.DeclareSelected(this,_selectedAsset?.FilePath,ImportStatusCache);
+            if(!IsDisposed && !Disposing){RefreshImportStatus();RefreshDeclarationBadges();}
+        };
         previewHost.Controls.Add(_preview);
         previewHost.Controls.Add(animationNavigation);
+        previewHost.Controls.Add(_declareImportedButton);
         previewHost.Controls.Add(_assetInfo);
         previewHost.Controls.Add(_importStatus);
         _assetInfo.BringToFront();
@@ -2463,6 +2475,7 @@ public sealed class FrmAnimationImport : DarkForm
         }
 
         UpdateAnimationNavigation();
+        RefreshDeclarationBadges();
         _ = LoadPageThumbnailsAsync(cancellationToken);
     }
 
@@ -2517,6 +2530,7 @@ public sealed class FrmAnimationImport : DarkForm
                     }
 
                     item.ImageKey = asset.FilePath;
+                    ImportedResourceDeclarationControls.RefreshThumbnailBadge(item);
                     item.ToolTipText =
                         $"{asset.FileName}\n{asset.Category}\n" +
                         $"Grid: {asset.XFrames}x{asset.YFrames} " +
@@ -2959,9 +2973,15 @@ public sealed class FrmAnimationImport : DarkForm
     }
 
     private string ImportStatusCache => Path.Combine(_gameRoot, ".animationimport-cache", "imported");
-    private void RefreshImportStatus() => _ = _importStatus.RefreshStatus(_selectedAsset?.FilePath, _animationsRoot, ImportStatusCache);
+    private void RefreshImportStatus()
+    {
+        _declareImportedButton.Enabled=_selectedAsset!=null && _importCancellation==null;
+        _=_importStatus.RefreshStatus(_selectedAsset?.FilePath,_animationsRoot,ImportStatusCache);
+    }
+    private void RefreshDeclarationBadges()=>ImportedResourceDeclarationControls.RefreshBadges(_assetList,
+        item=>((AnimationAsset)item.Tag!).FilePath,_=>ImportStatusCache);
 
-    private void ImportSelectedAsset()
+    private async void ImportSelectedAsset()
     {
         if (_selectedAsset == null || !File.Exists(_selectedAsset.FilePath))
         {
@@ -2975,6 +2995,7 @@ public sealed class FrmAnimationImport : DarkForm
             return;
         }
 
+        var source = _selectedAsset.FilePath;
         var animationName = _name.Text.Trim();
         var folder = _category.Text.Trim();
         if (string.IsNullOrWhiteSpace(animationName))
@@ -3024,11 +3045,11 @@ public sealed class FrmAnimationImport : DarkForm
 
         try
         {
-            File.Copy(_selectedAsset.FilePath, temporary, false);
+            File.Copy(source, temporary, false);
             File.Move(temporary, destination, false);
 
             GameContentManager.ReloadAnimationTextures();
-            ImportedResourceStatus.Record(_selectedAsset.FilePath, destination, ImportStatusCache);
+            ImportedResourceStatus.Record(source, destination, ImportStatusCache);
             RefreshImportStatus();
 
             _afterImport?.Invoke(
@@ -3049,22 +3070,8 @@ public sealed class FrmAnimationImport : DarkForm
                 $"{(int)_xFrames.Value}x{(int)_yFrames.Value}, {(int)_frameCount.Value} frames." +
                 (wasRenamed ? " Existing filename preserved; duplicate was renamed." : string.Empty);
 
-            MessageBox.Show(
-                this,
-                $"Animation imported.\n\n" +
-                $"Name: {animationName}\n" +
-                $"Folder: {folder}\n" +
-                $"Grid: {(int)_xFrames.Value}x{(int)_yFrames.Value}\n" +
-                $"Frames: {(int)_frameCount.Value}\n" +
-                $"Sprite: resources\\animations\\{spriteFile}\n" +
-                (wasRenamed
-                    ? "A file with the requested name already existed, so this copy was renamed and the existing file was kept.\n"
-                    : string.Empty) +
-                "\nThe Animation Editor will open and prefill the detected settings.",
-                "Animations Import",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+            await ImportedResourceDeclarationControls.ConfirmAfterImport(this,[(source,ImportStatusCache)]);
+            if(!IsDisposed && !Disposing){RefreshImportStatus();RefreshDeclarationBadges();}
         }
         catch (Exception ex)
         {

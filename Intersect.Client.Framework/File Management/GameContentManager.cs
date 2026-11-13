@@ -114,6 +114,9 @@ public abstract partial class GameContentManager : IContentManager
         Current = this;
     }
 
+    // Rescan loose local assets while the game is running. Platform managers opt in.
+    public virtual ResourceRefreshResult RefreshLocalResources() => throw new NotSupportedException();
+
     //Content Loading
     public void LoadAll()
     {

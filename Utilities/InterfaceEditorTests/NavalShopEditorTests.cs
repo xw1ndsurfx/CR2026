@@ -23,6 +23,16 @@ internal static class NavalShopEditorTests
             var restored=new ShopDescriptor {JsonBuyingItems=shop.JsonBuyingItems};
             if(restored.NavalCatalogue.Offers.Single().Id!="existing-model" || restored.NavalCatalogue.Offers.Single().Price!=1200 || restored.NavalSkills.Single(s=>s.Kind==NavalSkillKind.FullSail).Price!=350)throw new Exception("Per-shop boat and skill prices must round-trip without replacing model identities.");
             using var editor=new FrmShop();
+            var staticFlags=BindingFlags.NonPublic|BindingFlags.Static;
+            var pending=typeof(FrmShop).GetField("_navalPending",staticFlags)!;
+            var pendingRequest=typeof(FrmShop).GetField("_navalPendingRequest",staticFlags)!;
+            var requestId=Guid.NewGuid();pending.SetValue(null,editor);pendingRequest.SetValue(null,requestId);
+            try
+            {
+                if(FrmShop.ReceiveNavalShopConfiguration(new(){RequestId=Guid.NewGuid()}) || pending.GetValue(null)!=editor || (Guid)pendingRequest.GetValue(null)!!=requestId)
+                    throw new Exception("A pending shop must not consume or clear a naval-system editor response.");
+            }
+            finally{pending.SetValue(null,null);pendingRequest.SetValue(null,Guid.Empty);}
             var flags=BindingFlags.NonPublic|BindingFlags.Instance;
             var panel=(Control)typeof(FrmShop).GetField("pnlContainer",flags)!.GetValue(editor)!;
             var general=(Control)typeof(FrmShop).GetField("grpGeneral",flags)!.GetValue(editor)!;

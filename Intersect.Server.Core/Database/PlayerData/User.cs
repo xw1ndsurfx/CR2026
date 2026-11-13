@@ -437,6 +437,8 @@ public partial class User
 
             if (playerContext.SaveChanges() > -1)
             {
+                if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) foreach (var tracedPlayer in Players)
+                    Intersect.Server.Core.LocalPlaytestTrace.Record("save-completed", tracedPlayer);
                 return UserSaveResult.Completed;
             }
 

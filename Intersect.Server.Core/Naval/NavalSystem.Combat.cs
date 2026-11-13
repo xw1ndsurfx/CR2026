@@ -109,8 +109,9 @@ internal static partial class NavalSystem
         for (var index=0;index<gunCount;index++)
         {
             var offset=StationOffset(vessel,index,starboard);
-            var map=s.MapId; var x=s.X+direction.X*radius+forwardX*offset;
-            var y=s.Y+direction.Y*radius+forwardY*offset;
+            var muzzle=NavalShipAtlas.Muzzle(DeckGraphic(vessel),s.Heading,starboard,index);
+            var map=s.MapId; var x=s.X+(muzzle?.X??(direction.X*radius+forwardX*offset));
+            var y=s.Y+(muzzle?.Y??(direction.Y*radius+forwardY*offset));
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             if(planned==null)Emit(NavalEffectKind.Fire,map,x,y,heading,now,!sounded);sounded=true;
             (planned??Cannonballs).Add(new() { Ammo=ammo,ImpactAnimationId=ammo?.ImpactAnimationId??_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=heading,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,

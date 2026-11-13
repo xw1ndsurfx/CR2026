@@ -1453,6 +1453,7 @@ public static partial class Graphics
             return;
         }
 
+        if(CollectAtmosphere(texture,source,screenTarget,color,blendMode,0,true))return;
         var view = renderer.CurrentView;
         var target = Cinematics.CinematicScreenGeometry.ToWorld(
             new(screenTarget.X, screenTarget.Y, screenTarget.Width, screenTarget.Height),
@@ -1589,6 +1590,7 @@ public static partial class Graphics
             return;
         }
 
+        if(CollectAtmosphere(tex,srcRectangle,targetRect,renderColor,blendMode,rotationDegrees,false))return;
         targetRect=ScaledSpriteRectangle(targetRect);
         if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 

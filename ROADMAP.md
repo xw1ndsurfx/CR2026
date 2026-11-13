@@ -1,18 +1,23 @@
 # Corps Royaux — Roadmap 2026–2027
 
-> **Statut : planification interne — revue technique le 7 novembre 2026 (calendrier établi le 2 novembre).**
+> **Statut : planification interne — suivi actualisé le 11 novembre 2026 (calendrier établi le 2 novembre).**
 > Les dates de playtest et de bêta sont des **objectifs**, et non des ouvertures déjà configurées dans Steamworks. Leur maintien dépend des validations techniques. Les volumes indiquent des **joueurs ciblés / invités**, pas un nombre de connexions simultanées garanti.
 
 Cette feuille de route accompagne le développement de **Corps Royaux**, MMORPG 2D de Studio Logiklik, et son moteur personnalisé **Logiklik 2D Engine**, basé sur Intersect. Elle sépare les tests fermés (Steam Playtest), la démo destinée au Steam Next Fest et la bêta ouverte du jeu principal.
 
 [Retour au README](README.md) · [État technique et reprise du projet](PROJECT_STATUS.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
 
-## État technique au 7 novembre 2026
+Le [suivi de reconnexion et de sauvegarde après redémarrage](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) confirme la conservation des états enregistrés sur la copie isolée. Les changements inattendus apparus pendant la session restent à expliquer avant l’acceptation du playtest.
 
-La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Cet état est un instantané : recontrôler `main`, la CI et les PR avant une fusion ou un playtest.
+## État technique au 11 novembre 2026
+
+La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Référence vérifiée : `main` à `69670d777` (PR #265). La reprise choisie le 11 novembre est **P0 : stabilité et préparation du playtest**. Les contrôles et les validations restantes sont consignés dans le [point de préparation du 11 novembre](Documentation/Playtests/Readiness-2026-11-11.fr.md).
 
 | Statut GitHub | Travail récent | Suite nécessaire |
 | --- | --- | --- |
+| **Fonctionnement confirmé par l’utilisateur le 11 novembre** | Agriculture de la maison : cultures et ouvriers, reliés au métier Agriculteur. [Documentation](Documentation/features/farming.md). | Recette détaillée hors connexion, après redémarrage, inventaire plein et protections de propriété à consigner. |
+| **Correctif local séparé ; client testé par l’utilisateur** | Client Intel HD 3000 : correctif audio privé installé ; le profil reste séparé de `main` et du client normal. | Confirmer la stabilité prolongée sur le laptop ; ne pas assimiler ce retour à une validation des autres clients. |
+| **Fusionné ; contrôles automatisés réussis** | [#264](https://github.com/xw1ndsurfx/CR2026/pull/264) : actualisation des ressources, suivi visible des imports et abandon de donjon ; [#265](https://github.com/xw1ndsurfx/CR2026/pull/265) : choix du sprite des ouvriers. | Attester les versions réellement déployées et rejouer le parcours en jeu. |
 | **Fusionné dans `main`, mais désactivé par défaut** | Combat PvE avancé, phases 1 à 7 ([#238](https://github.com/xw1ndsurfx/CR2026/pull/238), [#241–246](https://github.com/xw1ndsurfx/CR2026/pull/246)) : esquive, parade, riposte, télégraphes, endurance, combos et exercices. | Tests en jeu sur staging, migrations et activation contrôlée de `Combat.EnableAdvancedCombat`. |
 | **Fusionné dans `main`, validation à compléter** | Pêche, profession/éditeur et mode auto rééquilibré ([#218](https://github.com/xw1ndsurfx/CR2026/pull/218), [#227](https://github.com/xw1ndsurfx/CR2026/pull/227)). | Régression sessions réelles, prises, EXP et équipement. |
 | **Fusionné en partie ; PR ouverte** | Exportation, éditeur unifié, métier et ajustements UI ([#228](https://github.com/xw1ndsurfx/CR2026/pull/228), [#239](https://github.com/xw1ndsurfx/CR2026/pull/239)); nouvelle interface [#240](https://github.com/xw1ndsurfx/CR2026/pull/240) **non fusionnée**. | Tester livraison/naufrage et rendu visuel ; examiner #240. |
