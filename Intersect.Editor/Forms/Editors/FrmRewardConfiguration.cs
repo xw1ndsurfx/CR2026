@@ -80,7 +80,7 @@ public sealed partial class FrmRewardConfiguration : DarkForm
 
         _pages = [BuildDailyTab(), BuildLevelTab("Level rewards", _poker, _pokerList),
             BuildLevelTab("Level rewards", _blackjack, _blackjackList),
-            BuildLevelTab("Alchemy rewards", _potionLevels, _potionLevelList), BuildPotionTab(), BuildCookingTab()];
+            BuildLevelTab("Alchemy rewards", _potionLevels, _potionLevelList), BuildPotionTab(), BuildCookingTab(), BuildPotionAssetsTab()];
         InitializeNavigation();
 
         var buttons = new FlowLayoutPanel
@@ -100,6 +100,7 @@ public sealed partial class FrmRewardConfiguration : DarkForm
         Controls.Add(_workspace);
         Controls.Add(buttons);
         MiniGameEditorTheme.Apply(this);
+        AutoScroll = false;
         NavigateGame(null);
         RefreshDaily();
         RefreshLevels(_poker, _pokerList);

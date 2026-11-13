@@ -1,4 +1,5 @@
-﻿using Intersect.Client.Framework.Gwen;
+﻿using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.Framework.File_Management;
@@ -117,6 +118,8 @@ internal sealed class PotionWindow : Base
             renderer.DrawFilledRect(new Rectangle(RenderBounds.X + RenderBounds.Width - 2, RenderBounds.Y, 2, RenderBounds.Height));
         }
     }
+
+    private static readonly PotionPresentationAssets DefaultAssets = new();
 
     private const int BoardX = 430;
     private const int BoardY = 140;
@@ -490,6 +493,14 @@ internal sealed class PotionWindow : Base
         var renderer = skin.Renderer;
         var now = Environment.TickCount64;
 
+        var background = GameContentManager.Current.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).Background);
+        if (background is { IsMissingOrCorrupt: false })
+        {
+            var bounds = _layout.Rect(0, 0, PokerSceneLayout.DesignWidth, PokerSceneLayout.DesignHeight);
+            renderer.DrawColor = Color.White;
+            renderer.DrawTexturedRect(background, new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height), Color.White);
+        }
+
         // Keep the alchemy UI readable while letting the game world remain visible.
         // Alpha 26 = roughly 10% opacity / 90% transparent.
         renderer.DrawColor = new Color(26, 18, 11, 7);
@@ -787,6 +798,17 @@ internal sealed class PotionWindow : Base
 
     private void DrawPiece(RendererBase renderer, PokerSceneRect cell, PotionPiece piece, byte alpha = 255)
     {
+        var atlas = GameContentManager.Current.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).PieceAtlas);
+        if (atlas is { IsMissingOrCorrupt: false } && atlas.Width >= 4 && atlas.Height >= 4)
+        {
+            var tier = Math.Clamp(piece.Level - 1, 0, 3);
+            var familyRow = (int)piece.Family;
+            var target = new Rectangle(cell.X + 1, cell.Y + 1, Math.Max(1, cell.Width - 2), Math.Max(1, cell.Height - 2));
+            renderer.DrawColor = new Color(alpha, 255, 255, 255);
+            renderer.DrawTexturedRect(atlas, target, renderer.DrawColor, tier / 4f, familyRow / 4f, (tier + 1) / 4f, (familyRow + 1) / 4f);
+            return;
+        }
+
         var family = piece.Family switch
         {
             PotionFamily.Verdant => new Color(alpha, 64, 145, 67),
@@ -931,6 +953,7 @@ internal sealed class PotionWindow : Base
         var now = Environment.TickCount64;
         if (_lastRevision >= 0)
         {
+            PlayPotionSound(PotionResultSound.Select(_state, next));
             var xpGain = Math.Max(0, next.Experience - _lastExperience);
             if (next.LastScoreGain > 0 || xpGain > 0)
             {
@@ -945,6 +968,11 @@ internal sealed class PotionWindow : Base
         }
         _lastRevision = next.Revision;
         _lastExperience = next.Experience;
+    }
+
+    private static void PlayPotionSound(string file)
+    {
+        if (!string.IsNullOrWhiteSpace(file)) Intersect.Client.Core.Audio.AddGameSound(file, false);
     }
 
     private void UpdateFx()
@@ -979,6 +1007,7 @@ internal sealed class PotionWindow : Base
         SelectColumn(column);
         if (!CanPlace(_hoverColumn, _localOrientation)) return;
         if (!_presentation.BeginDrop(state, _hoverColumn, _localOrientation, Environment.TickCount64)) return;
+        PlayPotionSound((_state?.Assets ?? DefaultAssets).DropSound);
         Send(PotionRequestKind.Drop, _hoverColumn, Guid.Empty, (int)_localOrientation);
     }
 
@@ -1030,6 +1059,7 @@ internal sealed class PotionWindow : Base
             return;
 
         _localOrientation = (PotionPairOrientation)(((int)_localOrientation + 1) % 4);
+        PlayPotionSound((_state?.Assets ?? DefaultAssets).RotateSound);
 
         // A horizontal pair occupies two columns. If the player rotates while
         // parked at the far-right edge, shift it left one column instead of

@@ -13,6 +13,10 @@
 - **Localisation :** EN/FR/ES obligatoire pour tout nouveau texte joueur selon [AGENTS.md](AGENTS.md).
 - **Document maître des échéances :** [ROADMAP.md](ROADMAP.md) ; toutes les dates de playtest y sont **prévisionnelles**.
 
+## Priorité de travail après les essais du 11 novembre
+
+À la demande de Nicolas, l’optimisation est en attente. La priorité devient Royal Alchemist : pack graphique et sonore configurable depuis son éditeur ([guide](Documentation/RoyalAlchemist/Assets.fr.md)). Ce travail reste sur une branche de revue ; il n’est pas encore déployé dans les clients installés. Le client Intel HD 3000 conserve son profil séparé. L’origine des entrées reconnues sans action volontaire et du gain initial de 20 EXP reste ouverte ; le correctif indépendant de traitement des erreurs de sauvegarde est proposé dans la PR #269.
+
 ## État des fonctionnalités — distinction code / validation
 
 | Chantier | État observé au 11 novembre | Validation encore nécessaire |

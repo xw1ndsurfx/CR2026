@@ -84,9 +84,11 @@ public sealed partial class PotionSessionState
     [Key(24)] public bool RecipeSelectionRequired { get; set; }
     [Key(25)] public PotionRecipeChoiceState[] RecipeChoices { get; set; } = [];
     [Key(26)] public Guid OutputItemId { get; set; }
+    [Key(27)] public PotionPresentationAssets Assets { get; set; } = new();
 
     [IgnoreMember]
     public bool IsValid =>
+        Assets is { IsValid: true } &&
         Revision >= 0 &&
         RecipeRound >= 1 &&
         Board is { Length: PotionPuzzle.Columns * PotionPuzzle.Rows } &&
