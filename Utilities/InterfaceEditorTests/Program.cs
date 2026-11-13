@@ -18,6 +18,12 @@ internal static class Program
     }
     private static void Run()
     {
+        if (Environment.GetCommandLineArgs().Contains("--dialogue-protection-only"))
+        {
+            typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+            DialogueProtectionEditorTests.Run();
+            return;
+        }
         if (Environment.GetCommandLineArgs().Contains("--crash-stability-only")) { CrashStabilityTests.Run(); return; }
         // Login constructs the docking windows before server options arrive.
         var optionsProperty = typeof(Options).GetProperty(nameof(Options.Instance))!;

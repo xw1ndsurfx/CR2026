@@ -182,4 +182,5 @@ public enum EventCommandType
     OpenFishing = 1100,
     OpenExportation = 1101,
     OpenCraftingOrders = 1102,
+    ProtectDialogue = 1110,
 }

@@ -2,6 +2,14 @@ name: Naval phase 1 tests
 on:
   pull_request:
     paths:
+      - 'Framework/Intersect.Framework.Core/GameObjects/Events/EventCommandType.cs'
+      - 'Framework/Intersect.Framework.Core/GameObjects/Events/Commands/ProtectDialogueCommand.cs'
+      - 'Intersect.Server.Core/Entities/Events/**'
+      - 'Intersect.Server.Core/Entities/Player.DialogueProtection.cs'
+      - 'Intersect.Tests.Server/DialogueProtectionTests.cs'
+      - 'Intersect.Editor/Forms/Editors/Events/**'
+      - 'Intersect.Editor/Localization/EditorSafetyText.json'
+      - 'Utilities/InterfaceEditorTests/DialogueProtectionEditorTests.cs'
       - 'Framework/Intersect.Framework.Core/Naval/**'
       - 'Framework/Intersect.Framework.Core/Configuration/**'
       - 'Framework/Intersect.Framework.Core/GameObjects/Maps/**'
@@ -73,12 +81,13 @@ jobs:
       - uses: actions/setup-dotnet@v4.1.0
         with:
           dotnet-version: 8.0.x
-      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests|FullyQualifiedName~InvasionSimulationTests|FullyQualifiedName~Intersect.Tests.Server.Dungeons|FullyQualifiedName~WorldBossCompletionTests" --nologo
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests|FullyQualifiedName~InvasionSimulationTests|FullyQualifiedName~Intersect.Tests.Server.Dungeons|FullyQualifiedName~WorldBossCompletionTests|FullyQualifiedName~DialogueProtectionTests|FullyQualifiedName~CinematicInteractionTests" --nologo
       - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests|FullyQualifiedName~ClientNetworkPingTests|FullyQualifiedName~LocalResourceRefreshTests" --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --harbour-only
 
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --resource-workflow-only
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --dialogue-protection-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --qol-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --theme-only
 

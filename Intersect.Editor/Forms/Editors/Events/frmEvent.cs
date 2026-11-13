@@ -660,6 +660,9 @@ public partial class FrmEvent : Form
                 tmpCommand = new HoldPlayerCommand();
 
                 break;
+            case EventCommandType.ProtectDialogue:
+                tmpCommand = new ProtectDialogueCommand();
+                break;
             case EventCommandType.ReleasePlayer:
                 tmpCommand = new ReleasePlayerCommand();
 
@@ -884,6 +887,11 @@ public partial class FrmEvent : Form
     public FrmEvent(MapDescriptor currentMap)
     {
         InitializeComponent();
+        lstCommands.Nodes["dialogue"].Nodes.Add(new TreeNode(EditorSafetyText.Get("Protect player during dialogue"))
+        {
+            Name = "protectdialogue", Tag = (int)EventCommandType.ProtectDialogue,
+            ToolTipText = EditorSafetyText.Get("Place before dialogue. NPC protection ends automatically when dialogue closes.")
+        });
         AddMarketplaceCommand();
         AddQuestShopCommand();
         AddCinematicCommands();
@@ -1670,6 +1678,8 @@ public partial class FrmEvent : Form
 
                 break;
             case EventCommandType.HoldPlayer:
+                break;
+            case EventCommandType.ProtectDialogue:
                 break;
             case EventCommandType.ReleasePlayer:
                 break;

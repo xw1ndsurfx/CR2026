@@ -142,6 +142,28 @@ def main():
                 else:
                     copy_file(source, target)
             print(f"Prepared {label}: complete client and matching server binaries", flush=True)
+    editor_source = ROOT / "Intersect.Editor/bin/Release/net8.0-windows/win-x64/publish"
+    if not (editor_source / "Logiklik 2D Engine.exe").is_file():
+        raise RuntimeError("Publish the Windows editor first: dotnet publish -r all-x64")
+    editor = output / "Editeur/Windows-x64"
+    for source in files(editor_source):
+        if source.suffix.lower() in (".xml", ".pdb"):
+            continue
+        if not public_file(source):
+            raise RuntimeError(f"Private file detected in editor publication: {source.name}")
+        copy_file(source, editor / source.relative_to(editor_source))
+    # The editor needs the complete player graphics/fonts as well as its own UI overlay.
+    for source in resource_files:
+        relative = source.relative_to(stage)
+        if not (editor_source / "resources" / relative).is_file():
+            copy_file(source, editor / "resources" / relative)
+    (editor / "Ouvrir-editeur.cmd").write_text('@echo off\ncd /d "%~dp0"\nstart "" "%~dp0Logiklik 2D Engine.exe"\n', encoding="utf-8")
+    (output / "Editeur/LIRE-MOI.txt").write_text(
+        "FR : Editeur Windows pour l'administration. Lancer Windows-x64/Ouvrir-editeur.cmd. "
+        "Connexion au serveur correspondant avec un compte autorise. Ne pas distribuer aux joueurs.\n"
+        "EN: Administrator-only Windows editor. Run Windows-x64/Ouvrir-editeur.cmd and connect to the matching server with an authorized account.\n"
+        "ES: Editor Windows exclusivo para administradores. Ejecutar Windows-x64/Ouvrir-editeur.cmd y conectar al servidor correspondiente con una cuenta autorizada.\n", encoding="utf-8")
+    print("Prepared Windows editor: complete resources and matching executable", flush=True)
     android = output / "Joueurs/Android-arm64"
     android.mkdir(parents=True, exist_ok=True)
     copy_file(apk, android / meta["Apk"])
@@ -177,7 +199,10 @@ def main():
     archive_hashes = {p.relative_to(output).as_posix(): digest(p) for p in files(archives)}
     manifest = dict(version=meta["Version"], androidVersionCode=meta["VersionCode"],
                     resourceFiles=len(resource_files), networkPublicKeySha256=digest(key),
-                    clients=hashes, archives=archive_hashes, serverDataIncluded=False,
+                    clients=hashes, archives=archive_hashes,
+                    editor={p.relative_to(output).as_posix(): digest(p) for p in files(output / "Editeur")},
+                    sourceCommit=subprocess.check_output(["git", "-c", f"safe.directory={ROOT.as_posix()}", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+                    serverDataIncluded=False,
                     steamNativeVersion=STEAM_VERSION, steamNativeSource=STEAM_URL)
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     (output / "SHA256SUMS.txt").write_text("".join(f"{sha}  {name}\n" for name, sha in {**archive_hashes, **{p: h for p, h in hashes.items() if p.endswith('.apk')}}.items()), encoding="ascii")
@@ -220,12 +245,15 @@ ROOT_README = """CR2026 — DOSSIER DE DISTRIBUTION
 FR : Joueurs contient les clients complets Windows, Linux et l’APK Android.
 Archives-joueurs contient les téléchargements de bureau et le chemin de l’APK.
 Serveur contient les binaires correspondants réservés à l’administration.
+Editeur contient l'editeur Windows complet reserve a l'administration.
 Ne partager avec les joueurs que Joueurs ou Archives-joueurs, pas le dossier complet.
 Les clients visent le nouveau serveur compilé, à déployer sur l’installation existante.
 EN: Share only Joueurs or Archives-joueurs. Serveur is administrator-only and
 contains matching server binaries; existing world databases/configuration are excluded.
+Editeur contains the complete Windows editor for administrators.
 ES: Compartir solo Joueurs o Archives-joueurs. Serveur es exclusivo del administrador;
 contiene los servidores correspondientes, sin datos del mundo ni cuentas de jugadores.
+Editeur contiene el editor Windows completo para administradores.
 """
 
 if __name__ == "__main__":
