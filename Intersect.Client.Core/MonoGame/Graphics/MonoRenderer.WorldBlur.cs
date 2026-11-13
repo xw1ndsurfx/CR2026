@@ -14,8 +14,8 @@ internal partial class MonoRenderer
     {
         _drunkStrength=Math.Clamp(strength,0,1);
         if(_drunkStrength<=0)return;
-        var width=_screenshotRenderTarget?.Width??_graphicsDevice.PresentationParameters.BackBufferWidth;
-        var height=_screenshotRenderTarget?.Height??_graphicsDevice.PresentationParameters.BackBufferHeight;
+        var width=ScreenRenderTarget?.Width??_graphicsDevice.PresentationParameters.BackBufferWidth;
+        var height=ScreenRenderTarget?.Height??_graphicsDevice.PresentationParameters.BackBufferHeight;
         if(width<=0 || height<=0){_drunkStrength=0;return;}
         EndSpriteBatch();
         if(_drunkScene==null || _drunkScene.Width!=width || _drunkScene.Height!=height)
@@ -40,7 +40,7 @@ internal partial class MonoRenderer
             _spriteBatch.Begin(SpriteSortMode.Deferred,BlendState.Opaque,SamplerState.LinearClamp,DepthStencilState.None,RasterizerState.CullNone);
             _spriteBatch.Draw(_drunkScene,new Rectangle(0,0,_drunkReduced.Width,_drunkReduced.Height),Microsoft.Xna.Framework.Color.White);
             _spriteBatch.End();
-            _graphicsDevice.SetRenderTarget(_drunkDestination);_graphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
+            _graphicsDevice.SetRenderTarget(ScreenRenderTarget);_graphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
             var width=_drunkScene.Width;var height=_drunkScene.Height;
             _spriteBatch.Begin(SpriteSortMode.Deferred,_blurAccumulate,SamplerState.LinearClamp,DepthStencilState.None,RasterizerState.CullNone);
             if(_drunkStrength<1)_spriteBatch.Draw(_drunkScene,new Rectangle(0,0,width,height),Microsoft.Xna.Framework.Color.White*(1-_drunkStrength));

@@ -234,6 +234,12 @@ Custom*.props
 
 # Local per-executable build counters
 /.build-versions/
+/artifacts/android/
+/artifacts/distribution/
+__pycache__/
+/android-build.log
+/android-restore.log
+/android-library-build.log
 
 # Locally imported mount spritesheets
 /resources/images/mounts/

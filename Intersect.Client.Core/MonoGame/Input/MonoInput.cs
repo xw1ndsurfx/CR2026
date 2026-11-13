@@ -52,7 +52,9 @@ public partial class MonoInput : GameInput
 
     public MonoInput(Game myGame)
     {
+#if !ANDROID
         myGame.Window.TextInput += Window_TextInput;
+#endif
         mMyGame = myGame;
 
         _intersectToMonoGameKeyMap = [];
@@ -332,11 +334,21 @@ public partial class MonoInput : GameInput
             Core.ClientLoopDiagnostics.Mark("input/keyboard and mouse");
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
+#if ANDROID
+            Intersect.Client.Android.TouchControls.Poll(ref keyboardState, ref mouseState);
+#endif
 
             if (mouseState.X != mMouseX || mouseState.Y != mMouseY)
             {
+#if ANDROID
+                // TouchPanel already reports backbuffer coordinates. Applying the
+                // desktop window/backbuffer ratio again moves taps away from buttons.
+                mMouseX = mouseState.X;
+                mMouseY = mouseState.Y;
+#else
                 mMouseX = (int)(mouseState.X * ((MonoRenderer)Core.Graphics.Renderer).GetMouseOffset().X);
                 mMouseY = (int)(mouseState.Y * ((MonoRenderer)Core.Graphics.Renderer).GetMouseOffset().Y);
+#endif
 
                 CursorMovementDevice = InputDeviceType.Mouse;
 
@@ -529,6 +541,10 @@ public partial class MonoInput : GameInput
         Rectangle? inputBounds = default
     )
     {
+#if ANDROID
+        Intersect.Client.Android.MobileKeyboard.Show(keyboardType, inputHandler, description, text, multiline, maxLength);
+        return;
+#endif
         if (!Steam.SteamDeck)
         {
             return;

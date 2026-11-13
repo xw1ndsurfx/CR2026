@@ -93,7 +93,176 @@ Exemple de publication du projet serveur pour Linux x64 :
 dotnet publish "Intersect.Server/Intersect.Server.csproj" -c Release -r linux-x64 -p:PackageVersion=0.8.0-beta -p:Version=0.8.0
 ~~~
 
-Ces commandes décrivent une procédure, **pas une compilation validée pour la dernière révision**. Les clés réseau, ressources et configurations de l'environnement sont nécessaires; les builds non Windows peuvent nécessiter [disable-windows-only.patch](disable-windows-only.patch). Le dépôt dispose également des scripts [build-steam-client.cmd](scripts/build-steam-client.cmd), [prepare-steam-runtime.ps1](scripts/prepare-steam-runtime.ps1) et [start-server-diagnostics.sh](scripts/start-server-diagnostics.sh).
+La publication locale complète avec `-r all-x64` a été exécutée avec succès le 2026-11-12 : serveur/client Linux, serveur/client/éditeur Windows et APK Android ARM64 signé. Cette validation de compilation et de publication ne constitue pas un test d’exécution de tous les programmes. Les clés réseau, ressources et configurations de l'environnement sont nécessaires; les builds non Windows peuvent nécessiter [disable-windows-only.patch](disable-windows-only.patch). Le dépôt dispose également des scripts [build-steam-client.cmd](scripts/build-steam-client.cmd), [prepare-steam-runtime.ps1](scripts/prepare-steam-runtime.ps1) et [start-server-diagnostics.sh](scripts/start-server-diagnostics.sh).
+
+### Publications Windows, Linux et Android
+
+Exécuter ces commandes depuis la racine du dépôt. Les sorties de bureau ciblent
+.NET 8. Android et `all-x64` nécessitent **.NET 10**, le workload Android, le SDK
+Android API 36, Java 21 et **PowerShell 7**. La préparation des dossiers de
+distribution utilise **Python 3.10 ou plus récent** (bibliothèque standard).
+
+```powershell
+# Windows x64 : client, serveur et éditeur
+ dotnet publish Intersect.Client/Intersect.Client.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r win-x64
+ dotnet publish Intersect.Server/Intersect.Server.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r win-x64
+ dotnet publish Intersect.Editor/Intersect.Editor.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r win-x64
+
+# Linux x64 : client et serveur
+ dotnet publish Intersect.Client/Intersect.Client.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r linux-x64
+ dotnet publish Intersect.Server/Intersect.Server.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r linux-x64
+
+# Android ARM64 : téléphones, dont le Pixel 10
+ dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r android-arm64
+
+# Android x64 : émulateurs et appareils Intel
+ dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r android-x64
+
+# Tout compiler : Linux x64 + Windows x64 + Android ARM64
+ dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r all-x64
+
+# Vérifier le parcours sans compiler
+ dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r all-x64 -p:CRPublishPlanOnly=true
+
+# Regrouper les clients complets et les serveurs correspondants
+ python scripts/package-cr2026-distribution.py
+```
+
+`all-x64` est un parcours de publication : il produit le serveur/client Linux,
+le serveur/client/éditeur Windows et un **APK ARM64 pour les téléphones**.
+L'éditeur reste réservé à Windows. Les dossiers natifs restent sous
+`Intersect.Client/bin/Release/.../publish`, `Intersect.Server/bin/Release/.../publish`
+et `Intersect.Editor/bin/Release/.../publish`. Les APK signés sont également
+conservés sous `artifacts/android/distribution/`.
+
+### Signature et ressources Android
+
+Pour configurer une nouvelle machine de compilation :
+
+```powershell
+# Une seule fois, si aucune clé de distribution n'existe déjà
+ ./scripts/initialize-android-signing.ps1
+
+# APK visant un serveur existant : fournir SA clé publique réseau
+ ./scripts/build-android-client.ps1 -Distribution -Resources 'C:/client/resources' -NetworkPublicKey 'C:/serveur/network.handshake.bkey.pub'
+```
+
+Sur la machine actuelle, les chemins locaux sont enregistrés dans
+`.local/android-client.json`. Sauvegarder **le dossier privé `.local/android-signing`**,
+avec le keystore et son mot de passe : la même clé doit signer toutes les mises à
+jour Android. Ce dossier n'entre jamais dans les paquets joueurs. `versionCode`
+augmente automatiquement, séparément du numéro visible `0.8.0`.
+Voir le [guide Android complet](Documentation/Android.md).
+Pour garder une sortie de test séparée, le script accepte aussi
+`-OutputDirectory 'C:/chemin/apk-test'`, notamment avec la clé publique du serveur
+encore en ligne. Cela ne modifie pas le paquet regroupé destiné au nouveau serveur.
+
+### Dossier regroupé et distribution
+
+Le script de regroupement part du dernier APK de distribution et des publications
+Windows/Linux. Il complète les ressources, vérifie leur cohérence et reconstruit
+l'APK si les ressources graphiques ou la clé du serveur doivent être synchronisées.
+Les bibliothèques natives Steamworks.NET **2024.8.0** correspondantes sont ajoutées
+aux clients de bureau. La première récupération demande une connexion Internet.
+
+Le résultat est créé dans `artifacts/distribution/CR2026-0.8.0-pack<versionCode>/` :
+
+```text
+Joueurs/
+  Windows-x64/      Client complet, resources, bibliothèques et Jouer.cmd
+  Linux-x64/        Client complet, resources, bibliothèques et jouer.sh
+  Android-arm64/    APK signé et instructions d'installation
+Archives-joueurs/
+  CR2026-Windows-x64.zip
+  CR2026-Linux-x64.tar.gz
+  Android.txt      Chemin de l'APK prêt à envoyer
+Serveur/
+  Windows-x64/      Binaires à copier sur l'installation serveur existante
+  Linux-x64/        Binaires à copier sur l'installation serveur existante
+  LIRE-MOI.txt
+LIRE-MOI.txt
+manifest.json
+SHA256SUMS.txt
+```
+
+Distribuer uniquement `Joueurs` ou les téléchargements de `Archives-joueurs`.
+Le sous-dossier **Serveur est réservé à l'administration**. Il ne contient ni
+bases de comptes ni données du monde. Les configurations fournies à titre d'exemple
+sont rangées dans `Configuration-exemples` : conserver les ressources, bases et
+configurations de l'installation serveur lors de l'application des binaires.
+L'archive Linux conserve les permissions des lanceurs et exécutables.
+
+Options utiles : `--output 'C:/chemin/du/paquet'` pour choisir le dossier,
+`--android-apk 'C:/chemin/client.apk'` pour sélectionner l'APK, et `--resume`
+pour reprendre un regroupement interrompu. Par défaut, un dossier existant n'est
+pas écrasé. Les instructions joueurs sont livrées en français, anglais et espagnol.
+
+**Compatibilité réseau :** les nouveaux clients issus de `all-x64` ciblent la clé
+du serveur nouvellement compilé. Déployer cet ensemble avec les serveurs fournis.
+L'APK 16 précédemment validé sur Pixel reste conservé pour l'ancien serveur encore
+en ligne; la préparation du dossier ne déploie aucun serveur et ne remplace pas
+l'application du téléphone.
+
+### Dernières informations mobiles
+
+La version Android dispose du joystick, du pilotage des bateaux par cap, du menu
+et des contrôles adaptés à l'écran tactile, des noms agrandis et de l'icône du jeu.
+Les corrections de gel/flash du rendu et de visibilité des vaisseaux de ligne ont
+été validées sur Pixel 10 avec l'APK de distribution 16.
+
+Les nouvelles fiches tactiles proposent, selon le contenu, **Utiliser**, **Équiper**,
+**Déséquiper**, **Ouvrir**, **Apprendre** ou **Lancer le sort**, avec un bouton
+**Fermer**. Elles restent ouvertes après un toucher; les raccourcis de la barre
+s'activent d'un seul toucher sur Android. Les libellés sont disponibles en
+français, anglais et espagnol. Les boutons utilisent explicitement Source Sans
+Pro Black en taille 14, du texte blanc et un fond sombre bordé pour leur lisibilité.
+Les contrôles de disponibilité/cooldown et
+l'autorité du serveur restent appliqués. Le paquet regroupé synchronise aussi
+les ressources graphiques entre les clients.
+
+Sur Android, les fenêtres de jeu (boutiques, naval, personnage, quêtes, inventaire,
+etc.) utilisent désormais un cadre plein écran limité à la zone sûre du téléphone.
+Le contenu conserve sa taille lisible et défile au doigt lorsqu'il dépasse, avec
+une fermeture fixe dans l'en-tête. Quand plusieurs fenêtres sont ouvertes, le
+sélecteur de l'en-tête permet de passer entre elles, notamment banque/inventaire.
+Le bouton mobile **Fermer** reste visible même si la croix du thème PC est masquée.
+Depuis l'inventaire lié à une transaction, il termine la session avant de fermer
+l'inventaire. La boutique Android utilise sa colonne de vente et n'ouvre plus
+automatiquement une seconde fenêtre d'inventaire devant elle.
+Un balayage ne déclenche pas l'action de la ligne touchée. Les tests d'interface
+couvrent les clics après défilement, les écrans étroits et la navigation entre
+fenêtres. L'ouverture directe de la boutique et le retour au jeu avec **Fermer**
+ont été confirmés sur Pixel 10 avec l'APK 27. Le défilement des autres fenêtres
+et le sélecteur entre fenêtres restent à vérifier séparément sur téléphone.
+
+Le menu des émotes Android utilise une cible tactile agrandie et évite les zones
+du joystick et des boutons d'action. La fermeture explicite déconnecte le client,
+retire la tâche Android et termine ce runtime après nettoyage; Home et la mise
+en arrière-plan conservent leur comportement habituel. Le menu des émotes dégagé,
+la fermeture complète et la relance normale ont été confirmés sur Pixel 10 avec
+l'APK 29. Le dossier regroupé `artifacts/distribution/CR2026-0.8.0-pack36` contient
+les correctifs dans l'APK 36, compatible avec ses exécutables serveur.
+
+Le rafraîchissement des émotes conserve désormais la liste ouverte dès le premier
+clic sur PC et Android; ce comportement a été confirmé sur Pixel avec l'APK 31.
+Les clients Windows/Linux ont été republiés et leurs archives mises à jour.
+Sur Android, toucher le champ de clavardage appelle le clavier natif. Son ouverture
+a été confirmée sur Pixel avec l'APK 33. Le bouton de cette saisie devient
+**Envoyer** et transmet directement par le chemin normal du chat; **Annuler**
+n'envoie rien et conserve le brouillon initial. Le focus de chat est relâché à
+la fermeture pour rendre les commandes tactiles accessibles. Cet ajustement est
+inclus dans les APK 35 (serveur actuel) / 36 (serveur compilé). L'APK 35 est
+installé sur le Pixel; l'envoi direct et l'absence d'envoi avec **Annuler** ont
+été confirmés par le joueur sur cette version.
+
+La compilation complète `all-x64` a réussi avec les cinq publications de bureau
+et l'APK signé; les formats ELF/PE x86-64, la signature Android et les archives ont
+été vérifiés. Les exécutables de bureau n'ont pas été lancés pendant ce contrôle.
+Les nouvelles actions mobiles font l'objet de tests de clics d'interface.
+L'action d'inventaire a été confirmée sur Pixel 10 avec l'APK 21, puis la
+lisibilité de tous les boutons d'objet, de sort et de fermeture avec l'APK 23.
+Le lancement effectif d'un sort reste à confirmer séparément.
+
 
 ## Roadmap de tests et lancement 2026–2027
 

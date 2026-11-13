@@ -1,4 +1,6 @@
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Framework.Gwen.ControlInternal;
+using Intersect.Client.General;
 using Base = Intersect.Client.Framework.Gwen.Control.Base;
 
 namespace Intersect.Client.Interface;
@@ -36,6 +38,16 @@ public abstract class Window : WindowControl
             _initializer = null;
             initializer(skin);
         }
+#if ANDROID
+        if (General.Globals.GameState == GameStates.InGame && Interface.MobilePanelIsEligible(this) &&
+            Parent is Framework.Gwen.Control.Canvas or Modal)
+        {
+            PresentFullscreen(Interface.MobileWindowBounds, Localization.ClientLanguages.Text("Close"),
+                this is Game.Inventory.InventoryWindow ? Interface.GameUi.CloseMobileInventorySession : null);
+            TitleLabel.Font = Framework.File_Management.GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
+            DoLayoutIfNeeded(skin);
+        }
+#endif
     }
 
     private void Initialize(Intersect.Client.Framework.Gwen.Skin.Base skin)

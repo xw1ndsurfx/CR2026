@@ -1,4 +1,9 @@
 <Project>
+  <!-- Android's per-ABI packaging must reuse portable net8.0 libraries. The desktop
+       RuntimeIdentifiers list otherwise makes the SDK rebuild them as Android apps. -->
+  <PropertyGroup Condition="'$(CRAndroidBuild)' == 'true' And '$(TargetFramework)' == 'net8.0'">
+    <IsRidAgnostic>true</IsRidAgnostic>
+  </PropertyGroup>
   <UsingTask TaskName="NextLogiklikBuild" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <CounterFile ParameterType="System.String" Required="true" />
@@ -28,7 +33,7 @@
       ]]></Code>
     </Task>
   </UsingTask>
-  <Target Name="StampLogiklikBuild" BeforeTargets="GetAssemblyAttributes" Condition="('$(MSBuildProjectName)' == 'Intersect.Client' Or '$(MSBuildProjectName)' == 'Intersect.Server' Or '$(MSBuildProjectName)' == 'Intersect.Editor') And '$(DesignTimeBuild)' != 'true'">
+  <Target Name="StampLogiklikBuild" BeforeTargets="GetAssemblyAttributes" Condition="('$(MSBuildProjectName)' == 'Intersect.Client' Or '$(MSBuildProjectName)' == 'Intersect.Client.Android' Or '$(MSBuildProjectName)' == 'Intersect.Server' Or '$(MSBuildProjectName)' == 'Intersect.Editor') And '$(DesignTimeBuild)' != 'true'">
     <NextLogiklikBuild CounterFile="$(MSBuildThisFileDirectory).build-versions/$(MSBuildProjectName).txt" Condition="'$(LogiklikBuildNumber)' == '' And '$(GITHUB_RUN_NUMBER)' == ''">
       <Output TaskParameter="Number" PropertyName="LogiklikBuildNumber" />
     </NextLogiklikBuild>

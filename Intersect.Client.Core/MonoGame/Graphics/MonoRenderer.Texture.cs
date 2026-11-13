@@ -190,7 +190,7 @@ internal partial class MonoRenderer
 
             var buffer = new Microsoft.Xna.Framework.Color[1];
             var pixelBounds = new Rectangle(x, y, 1, 1);
-            platformTexture.GetData(level: 0, rect: pixelBounds, data: buffer, startIndex: 0, elementCount: 1);
+            TextureReadback.GetData(platformTexture, 0, pixelBounds, buffer, 0, 1);
             var pixelColor = buffer[0];
             return new Color(pixelColor.A, pixelColor.R, pixelColor.G, pixelColor.B);
         }

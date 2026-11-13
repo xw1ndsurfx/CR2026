@@ -1,0 +1,6 @@
+<Project>
+  <!-- Imported after the solution's generated targets so Publish/Restore can
+       be dispatched. Ordinary desktop publish is unchanged. -->
+  <Import Project="scripts/CR2026.Publish.targets"
+          Condition="'$(RuntimeIdentifier)' == 'android-arm64' Or '$(RuntimeIdentifier)' == 'android-x64' Or '$(RuntimeIdentifier)' == 'all-x64'" />
+</Project>

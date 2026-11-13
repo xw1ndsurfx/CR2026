@@ -509,6 +509,9 @@ public partial class Chatbox
             {
                 ShowChatLog();
             }
+#if ANDROID
+            OpenMobileChatKeyboard();
+#endif
         }
     }
 
@@ -536,6 +539,9 @@ public partial class Chatbox
         {
             mChatboxInput.Text = string.Empty;
         }
+#if ANDROID
+        OpenMobileChatKeyboard();
+#endif
     }
 
     void ChatboxInput_SubmitPressed(Base sender, EventArgs arguments)

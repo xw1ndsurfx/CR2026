@@ -148,26 +148,33 @@ internal static class WorldMapTests
             Check((float)zoom.GetValue(map)! == 0.30f, "Far zoom limit"); CheckCentered();
             zoom.SetValue(map, 0.78f); type.GetMethod("CenterOnPlayer")!.Invoke(map, null);
             var render = type.GetMethod("Render", flags)!;
-            render.Invoke(map, [skin]);
+            void Render(ControlBase target)
+            {
+                // Interactive rendering lowers the refresh throttle to 250 ms.
+                // Reset before each draw so slow test machines never need a socket.
+                throttle.SetValue(null, long.MaxValue);
+                render.Invoke(target, [skin]);
+            }
+            Render(map);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 75, 185, 255)), "Party marker missing");
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 95, 225, 125)), "Friend marker missing");
             var social = Globals.WorldMapSocialMarkers;
             Globals.WorldMapSocialMarkers = [..social, new() { PlayerId = strangerId, MapId = mapId, X = player.X + 1, Y = player.Y, Guild = true }];
-            renderer.Calls.Clear(); render.Invoke(map, [skin]);
+            renderer.Calls.Clear(); Render(map);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "World Map guild marker missing");
             Globals.WorldMapSocialMarkers = social;
             Check(!renderer.Calls.Any(call => SameRgb(call.Color, 86, 96, 104) || SameRgb(call.Color, 255, 214, 92)),
                 "Map grid lines / yellow selection square must not be rendered");
             renderer.Calls.Clear();
             Globals.WorldMapStateReceivedAt = Environment.TickCount64 - 6000;
-            render.Invoke(map, [skin]);
+            Render(map);
             Check(!renderer.Calls.Any(call => SameRgb(call.Color, 75, 185, 255) || SameRgb(call.Color, 95, 225, 125)),
                 "Stale social positions must expire");
 
             Globals.WorldMapStateReceivedAt = Environment.TickCount64;
             var mini = (ControlBase)Activator.CreateInstance(type, [canvas, "TestMinimap", false, false, true, true, false, 1.55f, true])!;
             mini.SetSize(212, 178);
-            renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            renderer.Calls.Clear(); Render(mini);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 75, 185, 255)) &&
                 renderer.Calls.Any(call => SameRgb(call.Color, 95, 225, 125)), "Minimap must also show friends and party");
             type.GetMethod("ZoomBy")!.Invoke(mini, [0.15f]);
@@ -190,18 +197,18 @@ internal static class WorldMapTests
             }
             finally{clearShips.Invoke(null,null);}
             var beforePan = (float)panX.GetValue(mini)!;
-            player.X++; render.Invoke(mini, [skin]);
+            player.X++; Render(mini);
             Check((float)panX.GetValue(mini)! < beforePan, "Minimap must follow player movement");
             var nearby = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)); GC.SuppressFinalize(nearby);
             nearby.Id = strangerId; nearby.MapId = mapId; nearby.X = (byte)(player.X + 1); nearby.Y = player.Y;
             typeof(Intersect.Client.Entities.Entity).GetProperty("Status")!.SetValue(nearby, new List<Intersect.Client.Framework.Entities.IStatus>());
             Globals.Entities[strangerId] = nearby;
-            renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            renderer.Calls.Clear(); Render(mini);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 210, 210, 215)), "Minimap must display visible nearby players outside social groups");
             player.Guild = "Test guild"; nearby.Guild = "Test guild";
-            renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            renderer.Calls.Clear(); Render(mini);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "Minimap must distinguish guild members");
-            nearby.IsHidden = true; renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            nearby.IsHidden = true; renderer.Calls.Clear(); Render(mini);
             Check(!renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "Hidden players must not leak onto the minimap");
             Globals.Entities.Remove(strangerId); player.Guild = null;
 

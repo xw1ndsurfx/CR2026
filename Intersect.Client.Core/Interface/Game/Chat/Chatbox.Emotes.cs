@@ -30,15 +30,27 @@ public partial class Chatbox
             };
             Intersect.Client.Networking.Network.SendPacket(new ChatEmoteRequestPacket());
         }
+#if ANDROID
+        var top = mChatboxMessages.IsHidden ? mChatboxWindow.Y + mChatboxInput.Y : mChatboxWindow.Y;
+        var bounds = Android.TouchControls.FitHudControl(new Framework.GenericClasses.Rectangle(mChatboxWindow.X, top - 44, 136, 36));
+        _emotes.FontSize = 12;
+        _emotes.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+#else
         _emotes.SetBounds(mChatboxWindow.X + mChatboxWindow.Width - 100, Math.Max(0, mChatboxMessages.IsHidden?mChatboxWindow.Y+mChatboxInput.Y-26:mChatboxWindow.Y-26), 96, 23);
+#endif
         _emotes.IsHidden = !mChatboxWindow.IsVisibleInTree;
     }
     public void ApplyEmotes(ChatEmoteMenuPacket packet)
     {
         UpdateEmotePicker();
+        var wasOpen = _emotes!.IsOpen;
         _emotes!.ClearItems();
         foreach (var entry in packet.Entries) _emotes.AddItem(ClientLanguages.ContentText(entry.Name), userData: entry.Id);
         if (packet.Entries.Length == 0) _emotes.AddItem(ClientLanguages.Text("No emotes configured"), userData: Guid.Empty);
         _emotes.Text = ClientLanguages.Text("Emotes");
+        // Adding the first entry selects it automatically, which closes Gwen's
+        // menu. Preserve the state at packet arrival, never reopening a picker
+        // the player has already dismissed while waiting for the response.
+        if (wasOpen) _emotes.Open();
     }
 }

@@ -88,10 +88,13 @@ internal static partial class NavalWorld
         if(own?.WalkableDeck==true && InputDeck(own,busy))return;
         if (own == null || Driver(own)!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
-        bool Down(Keys key) => !busy && Globals.InputManager.IsKeyDown(key);
+        var steering = ShipSteeringInput.Read(Globals.InputManager.IsKeyDown, busy);
+#if ANDROID
+        if (Intersect.Client.Android.TouchControls.TryGetSteeringDirection(out var direction))
+            steering = ShipSteeringInput.ReadJoystick(direction, own.Heading, busy, steering.Anchor);
+#endif
         Intersect.Client.Networking.Network.SendPacket(new ShipInputPacket { ShipId = own.Id,
-            Thrust = (sbyte)((Down(Keys.W) ? 1 : 0) - (Down(Keys.S) ? 1 : 0)),
-            Turn = (sbyte)((Down(Keys.D) ? 1 : 0) - (Down(Keys.A) ? 1 : 0)), Anchor = busy || Down(Keys.Space) });
+            Thrust = steering.Thrust, Turn = steering.Turn, Anchor = steering.Anchor });
     }
 
     private static bool Position(View view, out float x, out float y, out double heading)

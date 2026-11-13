@@ -36,6 +36,9 @@ namespace Intersect.Client.MonoGame;
 internal partial class IntersectGame : Game
 {
     private bool mInitialized;
+#if ANDROID
+    private bool _androidExitCleanupStarted;
+#endif
     private ClientLoopDiagnostics? _loopDiagnostics;
 
     private double mLastUpdateTime = 0;
@@ -88,22 +91,44 @@ internal partial class IntersectGame : Game
             PreferredBackBufferWidth = 800,
             PreferredBackBufferHeight = 480,
             PreferHalfPixelOffset = true,
+#if ANDROID
+            // Render the pixel-art scene directly to the Android backbuffer.
+            // Offscreen lighting/minimap targets must not depend on an MSAA
+            // backbuffer resolve surviving surface/keyboard transitions.
+            PreferMultiSampling = false,
+#else
             PreferMultiSampling = true,
+#endif
         };
 
         mGraphics.PreparingDeviceSettings += (_, args) =>
         {
+#if ANDROID
+            args.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
+                RenderTargetUsage.DiscardContents;
+            args.GraphicsDeviceInformation.PresentationParameters.MultiSampleCount = 0;
+#else
             args.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
                 RenderTargetUsage.PreserveContents;
             args.GraphicsDeviceInformation.PresentationParameters.MultiSampleCount = 8;
+#endif
         };
 
+#if ANDROID
+        Content = new Intersect.Client.Android.FileContentManager(Services);
+        mGraphics.IsFullScreen = true;
+#endif
         var workingDirectory = context.StartupOptions.WorkingDirectory ?? string.Empty;
         var resolvedWorkingDirectory = Path.GetFullPath(workingDirectory, Environment.CurrentDirectory);
         Content.RootDirectory = resolvedWorkingDirectory;
         IsMouseVisible = true;
         Globals.ContentManager = new MonoContentManager();
+#if ANDROID
+        var database = new JsonDatabase(Path.Combine(Environment.CurrentDirectory, "preferences",
+            $"{ClientConfiguration.Instance.Host}.{ClientConfiguration.Instance.Port}.json"));
+#else
         var database = new JsonDatabase();
+#endif
         var cloudDirectory = Steam.SupportedAttribute.IsPresent() ? Steam.GetCloudPreferencesDirectory() : null;
         if (cloudDirectory != null)
             database.EnableCloudPreferences(Path.Combine(cloudDirectory,
@@ -142,7 +167,9 @@ internal partial class IntersectGame : Game
 
         // (ne pas SavePreferences ici)
 
+#if !ANDROID
         Window.IsBorderless = Context.StartupOptions.BorderlessWindow;
+#endif
 
         _gameRenderer = new MonoRenderer(mGraphics, Content, this)
         {
@@ -157,20 +184,24 @@ internal partial class IntersectGame : Game
         Interface.Interface.GwenRenderer = new IntersectRenderer(null, Core.Graphics.Renderer);
         Interface.Interface.GwenInput = new IntersectInput();
 
-        // Windows
+        // Desktop window placement is managed by the OS on Android.
+#if !ANDROID
         Window.Position = new Microsoft.Xna.Framework.Point(
             _gameRenderer.ScreenWidth - _gameRenderer.ActiveResolution.X,
             _gameRenderer.ScreenHeight - _gameRenderer.ActiveResolution.Y
         ) / new Microsoft.Xna.Framework.Point(2);
         Window.AllowAltF4 = false;
+#endif
 
         // Reuse Updater object instead of creating a new one each time.
+#if !ANDROID
         string? updateUrl = ClientConfiguration.Instance.UpdateUrl;
         if (!string.IsNullOrWhiteSpace(updateUrl))
         {
             _updater ??= new Updater(updateUrl, "client/update.json", "version.client.json", 7);
             _updater.Start();
         }
+#endif
     }
 
     /// <summary>
@@ -185,6 +216,7 @@ internal partial class IntersectGame : Game
         base.Initialize();
         ClientLoopDiagnostics.Mark("startup/graphics statistics provider");
 
+#if !ANDROID
         PlatformStatistics.GPUStatisticsProvider = GL.CreateGPUStatisticsProvider();
         // Query the active context on its owning graphics thread, never on the diagnostic watcher.
         try
@@ -195,6 +227,7 @@ internal partial class IntersectGame : Game
         {
             ClientLoopDiagnostics.Note($"Graphics identification unavailable: {exception.GetType().Name}");
         }
+#endif
 
         if (_updater != null)
         {
@@ -270,6 +303,10 @@ internal partial class IntersectGame : Game
 
     private TimeSpan _elapsedSincePlatformStatisticsRefresh;
     private bool _restartFailed;
+#if ANDROID
+    private long _nextAndroidFrameDiagnostic;
+    private int _androidMainUpdates;
+#endif
 
     /// <summary>
     ///     Allows the game to run logic such as updating the world,
@@ -278,6 +315,9 @@ internal partial class IntersectGame : Game
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Update(GameTime gameTime)
     {
+#if ANDROID
+        Intersect.Client.Android.MobileKeyboard.Drain();
+#endif
         // Steam callbacks (including GetTicketForWebApiResponse_t) are only delivered
         // while RunCallbacks is pumped. Keep this in the main client update loop.
         ClientLoopDiagnostics.Mark("update/Steam callbacks");
@@ -308,6 +348,9 @@ internal partial class IntersectGame : Game
                         lock (Globals.GameLock)
                         {
                             Main.Update(gameTime.ElapsedGameTime);
+#if ANDROID
+                            _androidMainUpdates++;
+#endif
                         }
 
                         ///mLastUpdateTime = gameTime.TotalGameTime.TotalMilliseconds + (1000/60f);
@@ -315,7 +358,9 @@ internal partial class IntersectGame : Game
                 }
                 else
                 {
+#if !ANDROID
                     Main.DestroyGame();
+#endif
                     Exit();
                 }
             }
@@ -358,6 +403,17 @@ internal partial class IntersectGame : Game
             }
         }
 
+#if ANDROID
+        if (global::Intersect.Client.Android.GameActivity.FrameDiagnosticsEnabled &&
+            Environment.TickCount64 >= _nextAndroidFrameDiagnostic)
+        {
+            _nextAndroidFrameDiagnostic = Environment.TickCount64 + 2000;
+            var player = Globals.Me;
+            ClientLoopDiagnostics.Note(FormattableString.Invariant(
+                $"android-frame: state={Globals.GameState}; updates={_androidMainUpdates}; totalMs={gameTime.TotalGameTime.TotalMilliseconds:F1}; dtMs={gameTime.ElapsedGameTime.TotalMilliseconds:F1}; clockMs={Timing.Global.Milliseconds}; needsMaps={Globals.NeedsMaps}; entities={Globals.Entities.Count}; playerTile={player?.X},{player?.Y}; offset={player?.OffsetX:F2},{player?.OffsetY:F2}; origin={player?.Origin}; moving={player?.IsMoving}; mapInView={player?.MapInstance?.InView()}; fps={Core.Graphics.Renderer?.FPS}; samples={GraphicsDevice.PresentationParameters.MultiSampleCount}"));
+            _androidMainUpdates = 0;
+        }
+#endif
         base.Update(gameTime);
     }
 
@@ -418,6 +474,11 @@ internal partial class IntersectGame : Game
         }
 
         base.Draw(gameTime);
+#if ANDROID
+        if (_updater == null && Core.Graphics.Renderer is MonoRenderer androidRenderer)
+            androidRenderer.PresentAndroidFrame();
+        Intersect.Client.Android.TouchControls.Draw(GraphicsDevice);
+#endif
         ClientLoopDiagnostics.Mark("between frames/present or event pump");
     }
 
@@ -474,6 +535,10 @@ internal partial class IntersectGame : Game
 
     private void TryExit(object sender, ExitingEventArgs args)
     {
+#if ANDROID
+        if (_androidExitCleanupStarted) return;
+        _androidExitCleanupStarted = true;
+#endif
         try
         {
             _updater?.Stop();
@@ -488,7 +553,11 @@ internal partial class IntersectGame : Game
 
         try
         {
-            Interface.Interface.DestroyGwen();
+            Interface.Interface.DestroyGwen(
+#if ANDROID
+                exiting: true
+#endif
+            );
         }
         catch (Exception exception)
         {
@@ -510,7 +579,14 @@ internal partial class IntersectGame : Game
             );
         }
 
+#if ANDROID
+        try { Core.Graphics.Renderer?.Close(); }
+        catch (Exception exception) { ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Renderer cleanup during Android quit failed"); }
+#endif
         base.OnExiting(sender, args);
+#if ANDROID
+        if (!args.Cancel) Intersect.Client.Android.GameActivity.Current?.FinishForQuit();
+#endif
     }
 
     private void DrawUpdater(Updater updater)
@@ -684,6 +760,14 @@ internal partial class IntersectGame : Game
         /// <inheritdoc />
         public void Start(IClientContext context, Action postStartupAction)
         {
+#if ANDROID
+            var activity = Intersect.Client.Android.GameActivity.Current
+                ?? throw new InvalidOperationException("Android activity is unavailable.");
+            var androidGame = new IntersectGame(context, postStartupAction);
+            activity.RunningGame = androidGame;
+            activity.SetContentView((global::Android.Views.View)androidGame.Services.GetService(typeof(global::Android.Views.View))!);
+            androidGame.Run();
+#else
             try
             {
                 DoSdlInit(12832);
@@ -706,6 +790,7 @@ internal partial class IntersectGame : Game
                 context.Logger.LogCritical(exception, "Game is crashing due to an exception");
                 throw;
             }
+#endif
         }
 
         private delegate void SdlInit(int flags);

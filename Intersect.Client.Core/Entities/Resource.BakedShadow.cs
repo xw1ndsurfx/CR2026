@@ -35,7 +35,7 @@ public partial class Resource
         var platform = texture.GetTexture<Microsoft.Xna.Framework.Graphics.Texture2D>();
         if (platform == null || (long)platform.Width * platform.Height > 16_777_216) return null;
         var pixels = new Microsoft.Xna.Framework.Color[platform.Width * platform.Height];
-        platform.GetData(pixels);
+        Intersect.Client.MonoGame.Graphics.TextureReadback.GetData(platform, 0, null, pixels, 0, pixels.Length);
         Color Pixel(int x, int y)
         {
             x += (int)source.X; y += (int)source.Y;

@@ -22,6 +22,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
     public void Show(Guid spellId, ItemDescriptionWindow? itemDecriptionContainer = default)
     {
+        if (MobilePinned) return;
         _spellDescriptor = SpellDescriptor.Get(spellId);
         SetupDescriptionWindow();
 
@@ -40,6 +41,7 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 
     public override void Hide()
     {
+        if (MobilePinned) return;
         if (Interface.GameUi.SpellDescriptionWindow == this)
         {
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.SpellDescriptionWindow, true);

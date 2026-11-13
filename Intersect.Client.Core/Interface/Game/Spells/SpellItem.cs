@@ -131,6 +131,13 @@ public partial class SpellItem : SlotItem
 
     private void Icon_Clicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        if (arguments.MouseButton == MouseButton.Left)
+        {
+            DescriptionWindows.MobileDescriptionActions.ShowSpell(SlotIndex, this);
+            return;
+        }
+#endif
         if (arguments.MouseButton is MouseButton.Right)
         {
             if (ClientConfiguration.Instance.EnableContextMenus)
@@ -146,7 +153,11 @@ public partial class SpellItem : SlotItem
 
     private void Icon_DoubleClicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        DescriptionWindows.MobileDescriptionActions.ShowSpell(SlotIndex, this);
+#else
         Globals.Me?.TryUseSpell(SlotIndex);
+#endif
     }
 
     #endregion
