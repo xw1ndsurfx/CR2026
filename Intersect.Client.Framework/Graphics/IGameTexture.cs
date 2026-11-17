@@ -30,5 +30,7 @@ public interface IGameTexture : IAsset, IComparable<IGameTexture>, IDisposable
     TPlatformTexture? GetTexture<TPlatformTexture>() where TPlatformTexture : class;
     void Reload();
     Color GetPixel(int x, int y);
+    /// <summary>Optional bulk alpha read for content layout; null when unavailable.</summary>
+    byte[]? ReadAlpha() => null;
     string ToString();
 }

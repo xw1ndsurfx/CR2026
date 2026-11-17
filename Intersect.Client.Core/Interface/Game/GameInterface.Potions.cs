@@ -67,6 +67,7 @@ public partial class GameInterface
             SendPotionRequest(PotionRequestKind.Refresh, 0, Guid.Empty);
 
         _potionWindow.Update(_potionModel);
+        _potionWindow.BringToFront();
     }
 
     private void SendPotionRequest(PotionRequestKind kind, int column, Guid recipeId, int orientation = 0)

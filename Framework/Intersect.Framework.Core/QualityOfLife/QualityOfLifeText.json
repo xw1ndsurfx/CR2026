@@ -4865,6 +4865,91 @@
       "en": "Empty selection disables the asset. Atlas: rows = Verdant, Ember, Arcane, Radiant; columns = tiers 1 to 4. Install the files on every client. Missing images use the original drawing.",
       "fr": "Une sélection vide désactive la ressource. Planche : lignes = Verdant, Ember, Arcane, Radiant ; colonnes = niveaux 1 à 4. Installer les fichiers sur chaque client. Les images absentes utilisent le dessin original.",
       "es": "Una selección vacía desactiva el recurso. Atlas: filas = Verdant, Ember, Arcane, Radiant; columnas = niveles 1 a 4. Instala los archivos en cada cliente. Las imágenes ausentes usan el dibujo original."
+    },
+    "EXPORT CLASS BASES (MALE + FEMALE)": {
+      "en": "EXPORT CLASS BASES (MALE + FEMALE)",
+      "fr": "EXPORTER LES BASES (MASCULIN + FÉMININ)",
+      "es": "EXPORTAR BASES (MASCULINA + FEMENINA)"
+    },
+    "Class base sprites": {
+      "en": "Class base sprites",
+      "fr": "Sprites de base des classes",
+      "es": "Sprites base de las clases"
+    },
+    "Import a male base and a female base into Base or Body first.": {
+      "en": "Import a male base and a female base into Base or Body first.",
+      "fr": "Importe d’abord une base masculine et une base féminine dans Base ou Body.",
+      "es": "Primero importa una base masculina y una femenina en Base o Body."
+    },
+    "Export name": {
+      "en": "Export name",
+      "fr": "Nom de l’export",
+      "es": "Nombre de exportación"
+    },
+    "Male base": {
+      "en": "Male base",
+      "fr": "Base masculine",
+      "es": "Base masculina"
+    },
+    "Female base": {
+      "en": "Female base",
+      "fr": "Base féminine",
+      "es": "Base femenina"
+    },
+    "Export both bases": {
+      "en": "Export both bases",
+      "fr": "Exporter les deux bases",
+      "es": "Exportar ambas bases"
+    },
+    "Exports only the two bodies and their six animations to resources/entities. Clothing, hair and equipment stay separate. Choose the male and female sprites in Class Editor afterwards.": {
+      "en": "Exports only the two bodies and their six animations to resources/entities. Clothing, hair and equipment stay separate. Choose the male and female sprites in Class Editor afterwards.",
+      "fr": "Exporte uniquement les deux corps et leurs six animations dans resources/entities. Les vêtements, cheveux et équipements restent séparés. Choisis ensuite les sprites masculin et féminin dans l’éditeur de classes.",
+      "es": "Exporta solo los dos cuerpos y sus seis animaciones a resources/entities. La ropa, el pelo y el equipo permanecen separados. Después elige los sprites masculino y femenino en el editor de clases."
+    },
+    "Enter a valid filename and select distinct male and female bases.": {
+      "en": "Enter a valid filename and select distinct male and female bases.",
+      "fr": "Saisis un nom de fichier valide et sélectionne deux bases distinctes, masculine et féminine.",
+      "es": "Introduce un nombre de archivo válido y selecciona bases masculina y femenina distintas."
+    },
+    "Some class base files already exist. Replace this male/female export?": {
+      "en": "Some class base files already exist. Replace this male/female export?",
+      "fr": "Certains fichiers de base existent déjà. Remplacer cet export masculin/féminin ?",
+      "es": "Ya existen algunos archivos base. ¿Reemplazar esta exportación masculina/femenina?"
+    },
+    "Exported class bases: {0}_male.png and {0}_female.png (+ animation variants).": {
+      "en": "Exported class bases: {0}_male.png and {0}_female.png (+ animation variants).",
+      "fr": "Bases exportées : {0}_male.png et {0}_female.png (+ variantes d’animation).",
+      "es": "Bases exportadas: {0}_male.png y {0}_female.png (+ variantes de animación)."
+    },
+    "Choose these two sprites for the male and female appearances in Class Editor.": {
+      "en": "Choose these two sprites for the male and female appearances in Class Editor.",
+      "fr": "Choisis ces deux sprites pour les apparences masculine et féminine dans l’éditeur de classes.",
+      "es": "Elige estos dos sprites para las apariencias masculina y femenina en el editor de clases."
+    },
+    "Class base export failed: {0}": {
+      "en": "Class base export failed: {0}",
+      "fr": "Échec de l’export des bases de classe : {0}",
+      "es": "Error al exportar las bases de clase: {0}"
+    },
+    "Character Creation accepts clothing and hair. For class body sprites, use Export class bases (male + female).": {
+      "en": "Character Creation accepts clothing and hair. For class body sprites, use Export class bases (male + female).",
+      "fr": "La création de personnage accepte les vêtements et les cheveux. Pour les corps des classes, utilise Exporter les bases (masculin + féminin).",
+      "es": "La creación de personajes acepta ropa y pelo. Para los cuerpos de las clases, usa Exportar bases (masculina + femenina)."
+    },
+    "Invalid class base export.": {
+      "en": "Invalid class base export.",
+      "fr": "Export de bases de classe invalide.",
+      "es": "Exportación de bases de clase no válida."
+    },
+    "Missing body animation: {0}": {
+      "en": "Missing body animation: {0}",
+      "fr": "Animation de corps manquante : {0}",
+      "es": "Falta la animación del cuerpo: {0}"
+    },
+    "Class base export already exists.": {
+      "en": "Class base export already exists.",
+      "fr": "Cet export de bases de classe existe déjà.",
+      "es": "Esta exportación de bases de clase ya existe."
     }
   }
 }
