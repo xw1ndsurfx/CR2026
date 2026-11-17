@@ -11,7 +11,7 @@ La configuration globale est enregistrée dans resources/reward-configuration.js
 ## Fichiers du pack
 
 - resources/gui/royal_alchemist_background_v1.png
-- resources/gui/royal_alchemist_pieces_v3.png
+- resources/gui/royal_alchemist_pieces_v4.png
 - resources/sounds/royal_alchemist_rotate_v1.wav
 - resources/sounds/royal_alchemist_drop_v1.wav
 - resources/sounds/royal_alchemist_merge_v1.wav
@@ -35,3 +35,7 @@ Tests : compatibilité de l’ancienne configuration, sélections personnalisée
 ## Révision des ingrédients — 16 novembre 2026
 
 La planche v3 remplace les fioles par des composants bruts originaux : végétaux, poudre, pierre volcanique, corail, écailles, cristaux, coquillages, perle, hippocampe, pollen, plume, scarabée et ambre. La disposition 4 × 4 et les familles de couleurs restent identiques. Aucun changement des recettes ou des règles. La planche v2 est conservée comme ressource antérieure ; v3 devient la valeur par défaut des nouvelles configurations. Pour une configuration déjà enregistrée avec v2, choisir royal_alchemist_pieces_v3.png dans Images et sons puis enregistrer. Prompt : [ingredients-v3.prompt.json](ingredients-v3.prompt.json).
+
+## Progression cohérente — planche v4
+
+Chaque famille conserve le même ingrédient du niveau 1 au niveau 4. Les colonnes augmentent progressivement la taille et la complexité : feuille puis plante fleurie ; branche puis éventail de corail rouge ; éclat puis grappe de cristaux bleus ; petite plume puis grande plume dorée. Les silhouettes, matières et couleurs concordent au sein de chaque ligne. La planche v4 devient la valeur par défaut des nouvelles configurations. Pour une configuration existante, sélectionner royal_alchemist_pieces_v4.png dans Images et sons et enregistrer. Aucune modification des recettes, des sons ou des règles de fusion. Prompt : [ingredients-v4.prompt.json](ingredients-v4.prompt.json).

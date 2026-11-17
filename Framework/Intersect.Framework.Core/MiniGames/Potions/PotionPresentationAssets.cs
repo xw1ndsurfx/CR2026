@@ -7,7 +7,7 @@ namespace Intersect.Framework.Core.MiniGames.Potions;
 public sealed record PotionPresentationAssets
 {
     [Key(0)] public string Background { get; init; } = "royal_alchemist_background_v1.png";
-    [Key(1)] public string PieceAtlas { get; init; } = "royal_alchemist_pieces_v3.png";
+    [Key(1)] public string PieceAtlas { get; init; } = "royal_alchemist_pieces_v4.png";
     [Key(2)] public string RotateSound { get; init; } = "royal_alchemist_rotate_v1.wav";
     [Key(3)] public string DropSound { get; init; } = "royal_alchemist_drop_v1.wav";
     [Key(4)] public string MergeSound { get; init; } = "royal_alchemist_merge_v1.wav";
