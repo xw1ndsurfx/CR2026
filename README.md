@@ -104,7 +104,7 @@ dotnet publish "Intersect.Server/Intersect.Server.csproj" -c Release -r linux-x6
 
 La publication locale complète avec `-r all-x64` a été exécutée avec succès le 2026-11-12 : serveur/client Linux, serveur/client/éditeur Windows et APK Android ARM64 signé. Cette validation de compilation et de publication ne constitue pas un test d’exécution de tous les programmes. Les clés réseau, ressources et configurations de l'environnement sont nécessaires; les builds non Windows peuvent nécessiter [disable-windows-only.patch](disable-windows-only.patch). Le dépôt dispose également des scripts [build-steam-client.cmd](scripts/build-steam-client.cmd), [prepare-steam-runtime.ps1](scripts/prepare-steam-runtime.ps1) et [start-server-diagnostics.sh](scripts/start-server-diagnostics.sh).
 
-### Publications Windows, Linux et Android
+### Publications Windows, Linux, macOS et Android
 
 Exécuter ces commandes depuis la racine du dépôt. Les sorties de bureau ciblent
 .NET 8. Android et `all-x64` nécessitent **.NET 10**, le workload Android, le SDK
@@ -121,13 +121,16 @@ distribution utilise **Python 3.10 ou plus récent** (bibliothèque standard).
  dotnet publish Intersect.Client/Intersect.Client.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r linux-x64
  dotnet publish Intersect.Server/Intersect.Server.csproj -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r linux-x64
 
+# macOS x64 : client et serveur (sans éditeur Windows)
+ dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r osx-x64
+
 # Android ARM64 : téléphones, dont le Pixel 10
  dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r android-arm64
 
 # Android x64 : émulateurs et appareils Intel
  dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r android-x64
 
-# Tout compiler : Linux x64 + Windows x64 + Android ARM64
+# Tout compiler : Linux x64 + Windows x64 + macOS x64 + Android ARM64
  dotnet publish -p:Configuration=Release -p:PackageVersion=0.8.0-beta -p:Version=0.8.0 -r all-x64
 
 # Vérifier le parcours sans compiler
@@ -138,11 +141,19 @@ distribution utilise **Python 3.10 ou plus récent** (bibliothèque standard).
 ```
 
 `all-x64` est un parcours de publication : il produit le serveur/client Linux,
-le serveur/client/éditeur Windows et un **APK ARM64 pour les téléphones**.
+le serveur/client/éditeur Windows, le serveur/client macOS x64 et un **APK ARM64 pour les téléphones**.
 L'éditeur reste réservé à Windows. Les dossiers natifs restent sous
 `Intersect.Client/bin/Release/.../publish`, `Intersect.Server/bin/Release/.../publish`
 et `Intersect.Editor/bin/Release/.../publish`. Les APK signés sont également
 conservés sous `artifacts/android/distribution/`.
+
+La distribution comprend aussi `Joueurs/macOS-x64`, `Serveur/macOS-x64` et
+`Archives-joueurs/CR2026-macOS-x64.tar.gz`. Extraire cette archive sur un Mac puis
+lancer `Jouer.command`; conserver les bibliothèques et les ressources à côté du
+programme. La cible `osx-x64` correspond aux Mac Intel; sur Apple Silicon,
+cette version nécessite Rosetta 2. La publication depuis Windows ne signe ni
+ne notarise les exécutables pour macOS; la validation en jeu reste à effectuer
+sur un Mac.
 
 ### Signature et ressources Android
 

@@ -75,16 +75,21 @@ def main():
                 shutil.copyfileobj(src, dst)
     overlay = ROOT / "Intersect.Client/bin/Release/net8.0/win-x64/publish/resources"
     linux_overlay = ROOT / "Intersect.Client/bin/Release/net8.0/linux-x64/publish/resources"
+    mac_overlay = ROOT / "Intersect.Client/bin/Release/net8.0/osx-x64/publish/resources"
     if not overlay.is_dir() or not linux_overlay.is_dir():
         raise RuntimeError("Publish the Windows and Linux clients first: dotnet publish -r all-x64")
     if {p.relative_to(overlay).as_posix() for p in files(overlay)} != {p.relative_to(linux_overlay).as_posix() for p in files(linux_overlay)}:
         raise RuntimeError("Windows and Linux resource sets differ; rerun all-x64")
+    if not mac_overlay.is_dir() or {p.relative_to(overlay).as_posix() for p in files(overlay)} != {p.relative_to(mac_overlay).as_posix() for p in files(mac_overlay)}:
+        raise RuntimeError("Publish matching macOS resources first: dotnet publish -r all-x64")
     changed = 0
     for source in files(overlay):
         relative = source.relative_to(overlay)
         linux = linux_overlay / relative
         if not linux.is_file() or digest(linux) != digest(source):
             raise RuntimeError(f"Desktop resource versions differ: {relative}; rerun all-x64")
+        if digest(mac_overlay / relative) != digest(source):
+            raise RuntimeError(f"macOS resource versions differ: {relative}; rerun all-x64")
         target = stage / relative
         if not target.exists() or digest(target) != digest(source):
             changed += 1
@@ -108,7 +113,7 @@ def main():
     if not steam_path.exists():
         urllib.request.urlretrieve(STEAM_URL, steam_path)
     with zipfile.ZipFile(steam_path) as steam:
-        for rid, label in (("win-x64", "Windows-x64"), ("linux-x64", "Linux-x64")):
+        for rid, label in (("win-x64", "Windows-x64"), ("linux-x64", "Linux-x64"), ("osx-x64", "macOS-x64")):
             client = output / "Joueurs" / label
             client.mkdir(parents=True, exist_ok=True)
             published = ROOT / f"Intersect.Client/bin/Release/net8.0/{rid}/publish"
@@ -120,12 +125,18 @@ def main():
                 else:
                     copy_file(source, client / source.name)
             shutil.copytree(stage, client / "resources", dirs_exist_ok=True, copy_function=copy_file)
-            native = "Windows-x64/steam_api64.dll" if rid == "win-x64" else "OSX-Linux-x64/libsteam_api.so"
+            native = {
+                "win-x64": "Windows-x64/steam_api64.dll",
+                "linux-x64": "OSX-Linux-x64/libsteam_api.so",
+                "osx-x64": "OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib",
+            }[rid]
             (client / Path(native).name).write_bytes(steam.read(native))
             (client / "licenses/Steamworks.NET-Standalone-LICENSE.txt").write_bytes(steam.read("LICENSE.txt"))
             copy_file(ROOT / "Intersect.Client/LICENSE.md", client / "LICENSE.md")
             if rid == "win-x64":
                 (client / "Jouer.cmd").write_text('@echo off\ncd /d "%~dp0"\nstart "" "%~dp0Corps Royaux.exe"\n', encoding="utf-8")
+            elif rid == "osx-x64":
+                (client / "Jouer.command").write_text('#!/bin/sh\nset -eu\nAPP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\ncd "$APP_DIR"\nexport DYLD_LIBRARY_PATH="$APP_DIR${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"\nexec "$APP_DIR/Corps Royaux" "$@"\n', encoding="utf-8", newline="\n")
             else:
                 (client / "jouer.sh").write_text('#!/bin/sh\nset -eu\nAPP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\ncd "$APP_DIR"\nexport LD_LIBRARY_PATH="$APP_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\nexec "$APP_DIR/Corps Royaux" "$@"\n', encoding="utf-8", newline="\n")
             (client / "LIRE-MOI.txt").write_text(PLAYER_README, encoding="utf-8")
@@ -179,18 +190,19 @@ def main():
         base = output / "Joueurs/Windows-x64"
         for source in files(base):
             z.write(source, "CR2026-Windows-x64/" + source.relative_to(base).as_posix())
-    base = output / "Joueurs/Linux-x64"
-    with tarfile.open(archives / "CR2026-Linux-x64.tar.gz", "w:gz", compresslevel=2) as tar:
-        for source in files(base):
-            relative = "CR2026-Linux-x64/" + source.relative_to(base).as_posix()
-            info = tar.gettarinfo(str(source), arcname=relative)
-            with source.open("rb") as f:
-                magic = f.read(4)
-            info.mode = 0o755 if magic == b"\x7fELF" or source.name.endswith(".sh") else 0o644
-            info.uid = info.gid = 0
-            info.uname = info.gname = ""
-            with source.open("rb") as f:
-                tar.addfile(info, f)
+    for label in ("Linux-x64", "macOS-x64"):
+        base = output / "Joueurs" / label
+        with tarfile.open(archives / f"CR2026-{label}.tar.gz", "w:gz", compresslevel=2) as tar:
+            for source in files(base):
+                relative = f"CR2026-{label}/" + source.relative_to(base).as_posix()
+                info = tar.gettarinfo(str(source), arcname=relative)
+                with source.open("rb") as f:
+                    magic = f.read(4)
+                info.mode = 0o755 if magic == b"\x7fELF" or source.suffix in (".sh", ".command") or magic in (b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xca\xfe\xba\xbe") else 0o644
+                info.uid = info.gid = 0
+                info.uname = info.gname = ""
+                with source.open("rb") as f:
+                    tar.addfile(info, f)
     # Android already is an installable archive: do not duplicate its 700 MB here.
     (archives / "Android.txt").write_text("FR: APK dans ../Joueurs/Android-arm64\nEN: APK in ../Joueurs/Android-arm64\nES: APK en ../Joueurs/Android-arm64\n", encoding="utf-8")
     hashes = {p.relative_to(output).as_posix(): digest(p) for p in files(output / "Joueurs")}
@@ -210,20 +222,23 @@ def main():
 
 
 PLAYER_README = """CORPS ROYAUX 0.8.0
-FR : Windows : lancer Jouer.cmd. Linux : extraire le .tar.gz puis lancer ./jouer.sh
+FR : macOS x64 : extraire le .tar.gz puis lancer Jouer.command.
+Windows : lancer Jouer.cmd. Linux : extraire le .tar.gz puis lancer ./jouer.sh
 (ou chmod +x jouer.sh 'Corps Royaux' si les permissions ont été perdues).
 Conserver tout le dossier resources et les bibliothèques livrées. Connexion Internet
 et compte de jeu habituel requis. Les ressources sont incluses.
 Android : toucher un objet/sort pour ouvrir sa fiche, puis utiliser son bouton
 d’action; un toucher active les raccourcis. Voir INSTALLATION.txt près de l’APK.
 
-EN: Windows: run Jouer.cmd. Linux: extract the .tar.gz and run ./jouer.sh
+EN: macOS x64: extract the .tar.gz and run Jouer.command.
+Windows: run Jouer.cmd. Linux: extract the .tar.gz and run ./jouer.sh
 (or chmod +x jouer.sh 'Corps Royaux' if permissions were lost).
 Keep all resources and supplied libraries. Internet and a regular game account
 are required. Resources are included. On Android, tap an item/spell to open its
 description and action button; tap hotbar shortcuts once. See INSTALLATION.txt.
 
-ES: Windows: ejecutar Jouer.cmd. Linux: extraer el .tar.gz y ejecutar ./jouer.sh
+ES: macOS x64: extraer el .tar.gz y ejecutar Jouer.command.
+Windows: ejecutar Jouer.cmd. Linux: extraer el .tar.gz y ejecutar ./jouer.sh
 (o chmod +x jouer.sh 'Corps Royaux' si se perdieron los permisos).
 Conservar resources y las bibliotecas incluidas. Se necesita Internet y una cuenta
 del juego. Android: tocar un objeto/hechizo para abrir su ficha y botón de acción;
@@ -231,7 +246,7 @@ un toque activa los accesos rápidos. Ver INSTALLATION.txt junto al APK.
 """
 
 SERVER_README = """ADMINISTRATION — SERVEURS CORRESPONDANTS
-Exécutables Windows-x64 et Linux-x64 à appliquer à votre serveur existant.
+Exécutables Windows-x64, Linux-x64 et macOS-x64 à appliquer à votre serveur existant.
 Arrêter le serveur avant de remplacer les binaires. Conserver resources, bases de
 données et configurations existantes. Les appsettings fournis sont uniquement
 des modèles dans Configuration-exemples. Aucune donnée du monde ni base de comptes
@@ -242,7 +257,7 @@ Ne pas distribuer ce dossier Serveur aux joueurs. Aucun déploiement n’a été
 """
 
 ROOT_README = """CR2026 — DOSSIER DE DISTRIBUTION
-FR : Joueurs contient les clients complets Windows, Linux et l’APK Android.
+FR : Joueurs contient les clients complets Windows, Linux, macOS x64 et l’APK Android.
 Archives-joueurs contient les téléchargements de bureau et le chemin de l’APK.
 Serveur contient les binaires correspondants réservés à l’administration.
 Editeur contient l'editeur Windows complet reserve a l'administration.

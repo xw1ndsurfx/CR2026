@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('android-arm64','android-x64','all-x64')][string]$Runtime,
+    [Parameter(Mandatory)][ValidateSet('android-arm64','android-x64','osx-x64','all-x64')][string]$Runtime,
     [ValidateSet('Release')][string]$Configuration = 'Release',
     [string]$PackageVersion = '0.8.0-beta',
     [string]$Version = '0.8.0',
@@ -11,7 +11,8 @@ $repo = Split-Path $PSScriptRoot -Parent
 $commit = & git -c "safe.directory=$repo" -C $repo rev-parse --verify HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-fA-F]{40}$') { throw 'Cannot determine the repository revision.' }
 $desktopRuntimes = @()
-if ($Runtime -eq 'all-x64') { $desktopRuntimes = @('linux-x64','win-x64') }
+if ($Runtime -eq 'all-x64') { $desktopRuntimes = @('linux-x64','win-x64','osx-x64') }
+elseif ($Runtime -eq 'osx-x64') { $desktopRuntimes = @('osx-x64') }
 $androidRuntime = if ($Runtime -eq 'all-x64') { 'android-arm64' } else { $Runtime }
 Push-Location $repo
 try {
@@ -26,6 +27,7 @@ try {
             }
         }
     }
+    if ($Runtime -eq 'osx-x64') { return }
     Write-Host "CR2026 publish: Android player APK / $androidRuntime / $Configuration / $Version"
     if ($PlanOnly) { return }
     $androidArgs = @{ Distribution = $true; Runtime = $androidRuntime; Configuration = $Configuration; PackageVersion = $PackageVersion; Version = $Version }
