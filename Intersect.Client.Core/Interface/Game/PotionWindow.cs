@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
@@ -493,7 +493,7 @@ internal sealed class PotionWindow : Base
         var renderer = skin.Renderer;
         var now = Environment.TickCount64;
 
-        var background = GameContentManager.Current.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).Background);
+        var background = Globals.ContentManager?.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).Background);
         if (background is { IsMissingOrCorrupt: false })
         {
             var bounds = _layout.Rect(0, 0, PokerSceneLayout.DesignWidth, PokerSceneLayout.DesignHeight);
@@ -798,7 +798,7 @@ internal sealed class PotionWindow : Base
 
     private void DrawPiece(RendererBase renderer, PokerSceneRect cell, PotionPiece piece, byte alpha = 255)
     {
-        var atlas = GameContentManager.Current.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).PieceAtlas);
+        var atlas = Globals.ContentManager?.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).PieceAtlas);
         if (atlas is { IsMissingOrCorrupt: false } && atlas.Width >= 4 && atlas.Height >= 4)
         {
             var tier = Math.Clamp(piece.Level - 1, 0, 3);
@@ -972,7 +972,7 @@ internal sealed class PotionWindow : Base
 
     private static void PlayPotionSound(string file)
     {
-        if (!string.IsNullOrWhiteSpace(file)) Intersect.Client.Core.Audio.AddGameSound(file, false);
+        if (Globals.ContentManager != null && !string.IsNullOrWhiteSpace(file)) Intersect.Client.Core.Audio.AddGameSound(file, false);
     }
 
     private void UpdateFx()

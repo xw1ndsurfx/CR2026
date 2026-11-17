@@ -12,6 +12,8 @@
     <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerMoneyLedger.cs" Link="PokerMoneyLedger.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerFundedTable.cs" Link="PokerFundedTable.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionPresentationAssets.cs" Link="Shared/Potions/PotionPresentationAssets.cs" />
+    <PackageReference Include="MessagePack.Annotations" Version="3.1.3" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionPuzzle.cs" Link="Shared/Potions/PotionPuzzle.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionRecipeDefinition.cs" Link="Shared/Potions/PotionRecipeDefinition.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Cooking/CookingRecipeDefinition.cs" Link="Shared/Cooking/CookingRecipeDefinition.cs" />
