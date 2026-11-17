@@ -87,6 +87,10 @@ internal static class PotionMouseInputTests
             Check(requests.SequenceEqual(new[] { (PotionRequestKind.Drop, 0, 1) }),
                 "Real window sent a wrong column/orientation or extra action");
 
+            var presentation = sceneType.GetField("_presentation", flags)!.GetValue(scene)!;
+            var dropEndsAt = (long)presentation.GetType().GetProperty("EndsAt")!.GetValue(presentation)!;
+            Check(dropEndsAt > 0, "Drop did not create an animation timeline");
+
             state = new PotionSessionState
             {
                 RecipeId = recipe, RecipeName = "Test brew", RecipeRound = 1, RequiredLevel = 1, Revision = 1,
@@ -97,8 +101,10 @@ internal static class PotionMouseInputTests
             packet.State = state; packet.Sequence = 2;
             modelType.GetMethod("Apply")!.Invoke(model, [packet, player, Environment.TickCount64]);
             sceneType.GetMethod("Update")!.Invoke(scene, [model]);
-            var presentation = sceneType.GetField("_presentation", flags)!.GetValue(scene)!;
-            Check((bool)presentation.GetType().GetMethod("IsAnimating")!.Invoke(presentation, [Environment.TickCount64])!,
+
+            Check((long)presentation.GetType().GetProperty("EndsAt")!.GetValue(presentation)! == dropEndsAt,
+                "Server acknowledgement changed the drop timeline");
+            Check((bool)presentation.GetType().GetMethod("IsAnimating")!.Invoke(presentation, [dropEndsAt - 1])!,
                 "Real window erased the drop when the server returned an empty board");
             System.Console.WriteLine("PASS potions scene: right rotation, left drop packet, empty server response preserves falling pair");
         }
