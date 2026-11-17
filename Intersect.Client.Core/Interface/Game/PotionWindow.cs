@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
@@ -158,7 +159,9 @@ internal sealed class PotionWindow : Base
     private readonly Button _rotate;
     private readonly Button _restart;
 
-    private PokerSceneLayout _layout;
+    private PotionSceneLayout _layout;
+    private IGameTexture? _ingredientAtlas;
+    private PotionAtlasCell[] _ingredientCells = [];
     private PotionSessionState? _state;
     private Guid _sessionId;
     private long _lastRevision = -1;
@@ -182,7 +185,7 @@ internal sealed class PotionWindow : Base
     {
         _canvas = canvas;
         _send = send;
-        _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
+        _layout = new PotionSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
         _hoverColumn = Math.Max(0, PotionPuzzle.Columns / 2 - 1);
         _previewColumn = _hoverColumn;
 
@@ -198,7 +201,7 @@ internal sealed class PotionWindow : Base
 
         // Keep the title entirely inside the brown board header. The upcoming
         // pair is intentionally not rendered so only the live pair is visible.
-        _title = Label("PotionTitle", BoardX, BoardY - 58, PotionPuzzle.Columns * CellW, 42, 19);
+        _title = Label("PotionTitle", BoardX, 8, PotionPuzzle.Columns * CellW, 32, 19);
         _title.Text = Intersect.Client.Localization.ClientLanguages.Text("ROYAL ALCHEMY");
         _title.TextAlign = Pos.Center;
         _title.TextColorOverride = Color.White;
@@ -448,7 +451,7 @@ internal sealed class PotionWindow : Base
 
         SetBounds(0, 0, Math.Max(1, _canvas.Width), Math.Max(1, _canvas.Height));
         _content.SetBounds(0, 0, Width, Height);
-        _layout = new PokerSceneLayout(Width, Height);
+        _layout = new PotionSceneLayout(Width, Height);
 
         foreach (var placement in _placements)
         {
@@ -496,30 +499,44 @@ internal sealed class PotionWindow : Base
         var background = Globals.ContentManager?.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).Background);
         if (background is { IsMissingOrCorrupt: false })
         {
-            var bounds = _layout.Rect(0, 0, PokerSceneLayout.DesignWidth, PokerSceneLayout.DesignHeight);
+            var bounds = new PokerSceneRect(0, 0, Width, Height);
             renderer.DrawColor = Color.White;
-            renderer.DrawTexturedRect(background, new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height), Color.White);
+            var imageAspect = background.Width / (float)Math.Max(1, background.Height);
+            var viewAspect = Width / (float)Math.Max(1, Height);
+            var visibleWidth = Math.Min(1f, viewAspect / Math.Max(.001f, imageAspect));
+            var visibleHeight = Math.Min(1f, imageAspect / Math.Max(.001f, viewAspect));
+            renderer.DrawTexturedRect(background, new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height), Color.White,
+                (1 - visibleWidth) / 2, (1 - visibleHeight) / 2, (1 + visibleWidth) / 2, (1 + visibleHeight) / 2);
         }
 
-        // Keep the alchemy UI readable while letting the game world remain visible.
-        // Alpha 26 = roughly 10% opacity / 90% transparent.
-        renderer.DrawColor = new Color(26, 18, 11, 7);
-        renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
+        if (background is not { IsMissingOrCorrupt: false })
+        {
+            renderer.DrawColor = new Color(255, 30, 19, 13);
+            renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
+        }
 
         DrawPanel(renderer, 45, 90, 355, 675, new Color(255, 214, 196, 146), new Color(255, 94, 58, 31));
+        var originalWorkshop = (_state?.Assets ?? DefaultAssets).Background.Equals("royal_alchemist_background_v1.png", StringComparison.OrdinalIgnoreCase);
+        if (originalWorkshop && background is { IsMissingOrCorrupt: false })
+            DrawArtworkPanel(renderer, background, _layout.Rect(45, 90, 355, 675), .06f, .32f, .28f, .64f);
         DrawParchmentDetails(renderer);
         DrawPanel(
             renderer,
             BoardX - 22,
-            BoardY - 58,
+            BoardY - 100,
             PotionPuzzle.Columns * CellW + 44,
-            PotionPuzzle.Rows * CellH + 126,
+            PotionPuzzle.Rows * CellH + 168,
             new Color(255, 67, 40, 24),
             new Color(255, 128, 78, 39)
         );
 
+        if (originalWorkshop && background is { IsMissingOrCorrupt: false })
+            DrawArtworkPanel(renderer, background, _layout.Rect(BoardX - 22, BoardY - 100,
+                PotionPuzzle.Columns * CellW + 44, PotionPuzzle.Rows * CellH + 168), .38f, .24f, .82f, .64f);
+        DrawPanel(renderer, BoardX - 22, 8, PotionPuzzle.Columns * CellW + 44, 32,
+            new Color(245, 43, 25, 14), new Color(255, 149, 107, 48));
         var board = _layout.Rect(BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
-        renderer.DrawColor = new Color(255, 101, 59, 32);
+        renderer.DrawColor = new Color(185, 67, 39, 23);
         renderer.DrawFilledRect(new Rectangle(board.X, board.Y, board.Width, board.Height));
         DrawWoodGrain(renderer, board);
         DrawAlchemyRune(renderer, board);
@@ -670,6 +687,20 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(bounds.X - 2, bounds.Y - 2, bounds.Width + 4, bounds.Height + 4));
         renderer.DrawColor = fill;
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        renderer.DrawColor = new Color(255, 191, 143, 65);
+        var trim = Math.Max(1, Math.Min(bounds.Width, bounds.Height) / 180);
+        renderer.DrawFilledRect(new Rectangle(bounds.X + 3, bounds.Y + 3, bounds.Width - 6, trim));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + 3, bounds.Y + bounds.Height - 4, bounds.Width - 6, trim));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + 3, bounds.Y + 3, trim, bounds.Height - 6));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width - 4, bounds.Y + 3, trim, bounds.Height - 6));
+    }
+
+    private static void DrawArtworkPanel(RendererBase renderer, IGameTexture texture, PokerSceneRect bounds,
+        float u1, float v1, float u2, float v2)
+    {
+        renderer.DrawColor = Color.White;
+        renderer.DrawTexturedRect(texture, new Rectangle(bounds.X + 5, bounds.Y + 5,
+            Math.Max(1, bounds.Width - 10), Math.Max(1, bounds.Height - 10)), Color.White, u1, v1, u2, v2);
     }
 
     private void DrawParchmentDetails(RendererBase renderer)
@@ -733,7 +764,7 @@ internal sealed class PotionWindow : Base
         {
             var requirement = _state.Requirements[i];
             var piece = new PotionPiece((PotionFamily)requirement.Family, requirement.Level);
-            var icon = _layout.Rect(70, 221 + i * 34, 32, 28);
+            var icon = _layout.Rect(68, 219 + i * 34, 36, 32);
             DrawPiece(renderer, icon, piece);
 
             if (requirement.Progress < requirement.Needed) continue;
@@ -796,16 +827,35 @@ internal sealed class PotionWindow : Base
         }
     }
 
+    private void InvalidateIngredientCells(IAsset _) => _ingredientCells = [];
+
     private void DrawPiece(RendererBase renderer, PokerSceneRect cell, PotionPiece piece, byte alpha = 255)
     {
         var atlas = Globals.ContentManager?.GetTexture(TextureType.Gui, (_state?.Assets ?? DefaultAssets).PieceAtlas);
         if (atlas is { IsMissingOrCorrupt: false } && atlas.Width >= 4 && atlas.Height >= 4)
         {
-            var tier = Math.Clamp(piece.Level - 1, 0, 3);
-            var familyRow = (int)piece.Family;
-            var target = new Rectangle(cell.X + 1, cell.Y + 1, Math.Max(1, cell.Width - 2), Math.Max(1, cell.Height - 2));
+            if (!ReferenceEquals(_ingredientAtlas, atlas) || _ingredientCells.Length != 16)
+            {
+                byte[]? pixels;
+                try { pixels = atlas.ReadAlpha(); }
+                catch (Exception error) when (error is InvalidOperationException or NotSupportedException or ArgumentException) { pixels = null; }
+                if (_ingredientAtlas != null)
+                {
+                    _ingredientAtlas.Loaded -= InvalidateIngredientCells;
+                    _ingredientAtlas.Unloaded -= InvalidateIngredientCells;
+                }
+                atlas.Loaded += InvalidateIngredientCells;
+                atlas.Unloaded += InvalidateIngredientCells;
+                _ingredientCells = PotionAtlasLayout.FindCells(atlas.Width, atlas.Height, pixels);
+                _ingredientAtlas = atlas;
+            }
+            var source = _ingredientCells[(int)piece.Family * 4 + Math.Clamp(piece.Level - 1, 0, 3)];
+            var fitted = PotionAtlasLayout.Fit(source, cell, piece.Level);
+            var target = new Rectangle(fitted.X, fitted.Y, fitted.Width, fitted.Height);
             renderer.DrawColor = new Color(alpha, 255, 255, 255);
-            renderer.DrawTexturedRect(atlas, target, renderer.DrawColor, tier / 4f, familyRow / 4f, (tier + 1) / 4f, (familyRow + 1) / 4f);
+            renderer.DrawTexturedRect(atlas, target, renderer.DrawColor,
+                source.X / (float)atlas.Width, source.Y / (float)atlas.Height,
+                (source.X + source.Width) / (float)atlas.Width, (source.Y + source.Height) / (float)atlas.Height);
             return;
         }
 
@@ -1172,10 +1222,10 @@ internal sealed class PotionWindow : Base
 
     private static string OrientationName(PotionPairOrientation orientation) => orientation switch
     {
-        PotionPairOrientation.Horizontal => "→",
-        PotionPairOrientation.VerticalReversed => "↑",
-        PotionPairOrientation.HorizontalReversed => "←",
-        _ => "↓",
+        PotionPairOrientation.Horizontal => ">",
+        PotionPairOrientation.VerticalReversed => "^",
+        PotionPairOrientation.HorizontalReversed => "<",
+        _ => "v",
     };
 
     private static string PieceName(PotionPiece piece) => $"{FamilyName(piece.Family)} {LevelName(piece.Level)}";
@@ -1234,6 +1284,12 @@ internal sealed class PotionWindow : Base
     {
         if (_destroyed) return;
         _destroyed = true;
+        if (_ingredientAtlas != null)
+        {
+            _ingredientAtlas.Loaded -= InvalidateIngredientCells;
+            _ingredientAtlas.Unloaded -= InvalidateIngredientCells;
+            _ingredientAtlas = null;
+        }
         Hide();
         Parent?.RemoveChild(this, false);
         Dispose();

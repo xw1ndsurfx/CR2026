@@ -1,5 +1,13 @@
 # Royal Alchemist — images et sons
 
+## Présentation plein écran
+
+La scène remplit toute la zone de jeu, y compris en 16:9 et sur un écran large. Le décor couvre le fond sans bandes laissant voir la carte et conserve ses proportions ; l’interface dispose de coordonnées propres à l’alchimie. Le décor d’atelier fourni sert aussi aux panneaux de parchemin et de bois, entourés d’une bordure dorée. Les arrière-plans personnalisés conservent les panneaux de repli.
+
+Les ingrédients sont ajustés sur leurs pixels visibles, et non sur les grandes marges transparentes de chaque case de la planche. Leur proportion est conservée et ils occupent environ 84 à 94 % de la case selon leur niveau. Les icônes de la recette sont également agrandies. Les limites visibles sont calculées une fois par texture et invalidées lors du rechargement des ressources ; aucune lecture de texture n’est effectuée pour chaque ingrédient à chaque image.
+
+Ces corrections nécessitent une nouvelle version du client. Elles ne changent pas les règles de fusion, la progression, les recettes ou les sons.
+
 Le pack comprend le décor de l’atelier, une planche transparente de 16 ingrédients bruts et cinq effets sonores originaux : rotation, pose, fusion, recette terminée, plateau rempli.
 
 ## Configuration

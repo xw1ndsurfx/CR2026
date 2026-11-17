@@ -688,7 +688,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 98));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 126));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 166));
         Controls.Add(rootLayout);
 
         var topTools = new TableLayoutPanel
@@ -945,8 +945,15 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         exportCreationButton.Click += (_, _) => ExportSelectedPaperdollToCharacterCreation();
         footer.Controls.Add(exportCreationButton);
 
+        var classBases = CreateAccentButton(BaseExportText("EXPORT CLASS BASES (MALE + FEMALE)"));
+        classBases.Name = "ExportClassBases";
+        classBases.Location = new System.Drawing.Point(18, 92);
+        classBases.Size = new Size(340, 34);
+        classBases.Click += (_, _) => ExportClassBases();
+        footer.Controls.Add(classBases);
+
         _status.AutoSize = false;
-        _status.Location = new System.Drawing.Point(18, 94);
+        _status.Location = new System.Drawing.Point(18, 134);
         _status.Size = new Size(1180, 22);
         _status.ForeColor = System.Drawing.Color.Silver;
         footer.Controls.Add(_status);
@@ -3443,12 +3450,19 @@ public sealed partial class FrmCharacterGenerator : DarkForm
             return;
         }
 
+        if (string.Equals(category, "Base", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Body", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(category, "Female", StringComparison.OrdinalIgnoreCase) && IsLegacyBodyName(partName))
+        {
+            ExportClassBases();
+            return;
+        }
+
         var categoryPrefix = GetCharacterCreationPrefix(category);
         if (string.IsNullOrWhiteSpace(categoryPrefix))
         {
             MessageBox.Show(
                 this,
-                "Character Creation only accepts Hair, Top/Chest/Overall, Pants/Skirt, or Feet paperdolls.",
+                BaseExportText("Character Creation accepts clothing and hair. For class body sprites, use Export class bases (male + female)."),
                 "Character Generator",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information

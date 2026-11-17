@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Core;
@@ -164,6 +164,21 @@ internal partial class MonoRenderer
                 platformTexture.Disposing += (_, _) => PlatformTexture = null;
             }
             return platformTexture;
+        }
+
+        public override byte[]? ReadAlpha()
+        {
+            if (AtlasReference?.IsRotated == true || PlatformTexture is not { } texture) return null;
+            var count = (long)Width * Height;
+            if (count <= 0 || count > 4_194_304) return null;
+            var bounds = AtlasReference is { } atlas
+                ? new Rectangle(atlas.Bounds.X, atlas.Bounds.Y, atlas.Bounds.Width, atlas.Bounds.Height)
+                : new Rectangle(0, 0, Width, Height);
+            var pixels = new Microsoft.Xna.Framework.Color[(int)count];
+            TextureReadback.GetData(texture, 0, bounds, pixels, 0, pixels.Length);
+            var alpha = new byte[pixels.Length];
+            for (var i = 0; i < alpha.Length; i++) alpha[i] = pixels[i].A;
+            return alpha;
         }
 
         public override Color GetPixel(int x, int y)
