@@ -1,6 +1,6 @@
 # Royal Alchemist — images et sons
 
-Le pack comprend le décor de l’atelier, une planche transparente de 16 ingrédients/fioles et cinq effets sonores originaux : rotation, pose, fusion, recette terminée, plateau rempli.
+Le pack comprend le décor de l’atelier, une planche transparente de 16 ingrédients bruts et cinq effets sonores originaux : rotation, pose, fusion, recette terminée, plateau rempli.
 
 ## Configuration
 
@@ -11,7 +11,7 @@ La configuration globale est enregistrée dans resources/reward-configuration.js
 ## Fichiers du pack
 
 - resources/gui/royal_alchemist_background_v1.png
-- resources/gui/royal_alchemist_pieces_v2.png
+- resources/gui/royal_alchemist_pieces_v3.png
 - resources/sounds/royal_alchemist_rotate_v1.wav
 - resources/sounds/royal_alchemist_drop_v1.wav
 - resources/sounds/royal_alchemist_merge_v1.wav
@@ -31,3 +31,7 @@ Images créées avec l’outil intégré image_gen ; prompts et correction des m
 Validation locale : 13 tests de configuration, de protocole, de localisation et de sons réussis ; 7 groupes de scénarios de gameplay réussis. Compilations client normal, serveur et éditeur réussies. Les sept fichiers copiés dans la sortie du client sont identiques aux sources. Les deux exécutables installés restent inchangés (SHA-256 vérifiés).
 
 Tests : compatibilité de l’ancienne configuration, sélections personnalisées et vides, refus des chemins invalides, transmission MessagePack, paquet antérieur sans champ ajouté et traductions EN/FR/ES. Le test de présentation Windows vérifie les aperçus, les cinq sons, la conservation du brouillon lors de la navigation, l’absence de modification globale avant validation et les références manquantes et l’accès aux boutons de sauvegarde à taille normale et minimale. La recette manuelle dans le client de jeu reste à réaliser après déploiement.
+
+## Révision des ingrédients — 16 novembre 2026
+
+La planche v3 remplace les fioles par des composants bruts originaux : végétaux, poudre, pierre volcanique, corail, écailles, cristaux, coquillages, perle, hippocampe, pollen, plume, scarabée et ambre. La disposition 4 × 4 et les familles de couleurs restent identiques. Aucun changement des recettes ou des règles. La planche v2 est conservée comme ressource antérieure ; v3 devient la valeur par défaut des nouvelles configurations. Pour une configuration déjà enregistrée avec v2, choisir royal_alchemist_pieces_v3.png dans Images et sons puis enregistrer. Prompt : [ingredients-v3.prompt.json](ingredients-v3.prompt.json).
