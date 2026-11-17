@@ -4,7 +4,7 @@ using Intersect.Framework.Core.QualityOfLife;
 using Intersect.GameObjects;
 namespace Intersect.Editor.Forms.Editors;
 
-public sealed class FrmMasteryTalents : Form
+public sealed partial class FrmMasteryTalents : Form
 {
     private sealed record SpellChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MasteryCategory Result { get; }
@@ -67,7 +67,9 @@ public sealed class FrmMasteryTalents : Form
                 if(index==0)talent.Skill.AnimationId=id;else talent.Skill.HitAnimationId=id;
             };
         }
-        split.Panel2.Controls.Add(_skillAnimations);split.Panel2.Controls.Add(ranks); Controls.Add(split); Controls.Add(tools); Controls.Add(_status);
+        split.Panel2.Controls.Add(_skillAnimations);split.Panel2.Controls.Add(ranks);
+        split.Panel2.Controls.Add(BuildWeaponSkillIconPicker());
+        Controls.Add(split); Controls.Add(tools); Controls.Add(_status);
         _status.Text = T("Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.");
         _nodes.SelectedIndexChanged += (_, _) => SelectNode();
         _properties.PropertyValueChanged += (_, _) => { SelectNode(); _nodes.Refresh(); };
@@ -80,6 +82,7 @@ public sealed class FrmMasteryTalents : Form
         var selected=_nodes.SelectedItem as MasteryTalent;
         _rankPanel.Visible=selected?.RankSpellIds.Length>0;
         _skillAnimations.Visible=selected?.Skill.Enabled==true;
+        SelectWeaponSkillIcon(selected);
         _status.Text=T(selected?.Skill.Enabled==true?"Weapon skills use animations and their own cooldowns, without learning a spell.":
             selected?.RankSpellIds.Length>0?"Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.":
             "Passive talent bonuses apply while its weapon is equipped.");

@@ -21,6 +21,7 @@ internal sealed class WeaponSkillBar : Base
 {
     private readonly Label _message;
     private readonly Func<bool> _canShow;
+    private readonly Func<Rect>? _hotbarBounds;
     private readonly Dictionary<Label, (string Text, int Width, IFont Font, string Family, int Size, float Scale, int Ink)> _textFits = [];
     private string _messageSource = "Weapon skills";
     private long _noticeUntil;
@@ -33,12 +34,13 @@ internal sealed class WeaponSkillBar : Base
     private long _pendingUntil;
     internal bool HasMasteryState { get; private set; }
 
-    internal WeaponSkillBar(Canvas canvas, Func<bool> canShow):base(canvas,nameof(WeaponSkillBar))
+    internal WeaponSkillBar(Canvas canvas, Func<bool> canShow, Func<Rect>? hotbarBounds = null):base(canvas,nameof(WeaponSkillBar))
     {
         _canShow = canShow;
+        _hotbarBounds = hotbarBounds;
         ShouldDrawBackground = false;
         _message = new InkAlignedLabel(this, "WeaponSkillMessage") { Font = Skin.DefaultFont,
-            Text = ClientLanguages.Text("Weapon skills"), AutoSizeToContents = false,
+            Text = ClientLanguages.Text("Weapon skills"), AutoSizeToContents = false, IsHidden = true,
             MouseInputEnabled = false, KeyboardInputEnabled = false, TextAlign = Pos.Left | Pos.CenterV };
         _message.TextColorOverride = new Color(255, 255, 222, 134);
         _message.FontSize = 14;
@@ -88,7 +90,7 @@ internal sealed class WeaponSkillBar : Base
                 var button = new InkAlignedButton(this, "WeaponSkill_" + talent.Key)
                 { Font = Skin.DefaultFont, ShouldDrawBackground = false, TextAlign = Pos.Center };
                 button.Clicked += (_, _) => Use(category, talent);
-                button.SetToolTipText(ClientLanguages.Format("Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+                button.SetToolTipText(ClientLanguages.ContentText(talent.Name) + "\n" + ClientLanguages.Format("Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
                     talent.Skill.Power(ranks.GetValueOrDefault(talent.Key)),talent.Skill.Range,talent.Skill.CooldownMilliseconds/1000f));
                 _buttons.Add((button,category,talent));
             }
@@ -108,20 +110,28 @@ internal sealed class WeaponSkillBar : Base
     internal void Update()
     {
         var weapon=EquippedWeapon();if(weapon!=_weapon)Rebuild(weapon);
-        IsHidden = _buttons.Count == 0 || !_canShow();
+        IsHidden = _buttons.Count == 0 || !_canShow() || !_config.WeaponSkillBar.Enabled;
         if (IsHidden) return;
-        var layout = LayoutFor(Parent?.Width ?? 800, Parent?.Height ?? 600, _buttons.Count);
+        var settings = _config.WeaponSkillBar;
+        var layout = LayoutFor(Parent?.Width ?? 800, Parent?.Height ?? 600, _buttons.Count, settings, _hotbarBounds?.Invoke());
         SetBounds(layout.Frame.X, layout.Frame.Y, layout.Frame.Width, layout.Frame.Height);
-        _message.SetBounds(40, 7, Math.Max(1, Width - 48), 24);
+        _message.SetBounds(0, 0, Width, 20);
         if (Environment.TickCount64 >= _noticeUntil) _messageSource = "Weapon skills";
-        FitHudText(_message, ClientLanguages.Text(_messageSource), 12);
+        // Status belongs in a tooltip, so combat feedback never creates another panel.
+        TooltipText = ClientLanguages.Text(_messageSource);
         for(var i=0;i<_buttons.Count;i++)
         {
             var (button,category,talent)=_buttons[i];
-            button.SetBounds(8 + i % layout.Columns * 190, 36 + i / layout.Columns * 40, 182, 34);
+            var slot = Math.Min(settings.SlotSize, Math.Max(24, (Parent?.Width ?? 800) - 8));
+            button.SetBounds(2 + i % layout.Columns * (slot + settings.Gap),
+                2 + i / layout.Columns * (slot + settings.Gap), slot, slot);
             var remaining=Math.Max(0,_cooldowns.GetValueOrDefault(category.Key+"/"+talent.Key)-Environment.TickCount64);
-            var name=ClientLanguages.ContentText(ClientLanguages.Text(talent.Name));
-            FitHudText(button, remaining > 0 ? ClientLanguages.Format("{0} ({1}s)", name, (remaining + 999) / 1000) : name, 11);
+            FitHudText(button, remaining > 0 ? ((remaining + 999) / 1000).ToString() : "", 12);
+            button.TooltipText = ClientLanguages.ContentText(talent.Name) + "\n" +
+                ClientLanguages.Format("Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+                    talent.Skill.Power((_ranks.GetValueOrDefault(category.Key) ?? []).GetValueOrDefault(talent.Key)),
+                    talent.Skill.Range, talent.Skill.CooldownMilliseconds / 1000f) +
+                (_messageSource == "Weapon skills" ? "" : "\n" + ClientLanguages.Text(_messageSource));
             button.IsDisabled=remaining>0 || Environment.TickCount64<_pendingUntil;
             button.TextColorOverride = button.IsDisabled ? new Color(255, 169, 158, 140) : new Color(255, 255, 231, 183);
         }
@@ -145,12 +155,19 @@ internal sealed class WeaponSkillBar : Base
                 ? (int)Math.Round(natural * scale * (.5f - metrics.TopFraction - metrics.HeightFraction / 2)) : 0;
     }
 
-    internal static (Rect Frame, int Columns) LayoutFor(int canvasWidth, int canvasHeight, int count)
+    internal static (Rect Frame, int Columns) LayoutFor(int canvasWidth, int canvasHeight, int count,
+        WeaponSkillBarSettings? settings = null, Rect? hotbar = null)
     {
-        var columns = Math.Min(Math.Max(1, count), Math.Min(3, Math.Max(1, (canvasWidth - 40) / 190)));
-        var width = columns * 190 + 16;
-        var height = 42 + (Math.Max(1, count) + columns - 1) / columns * 40;
-        return (new Rect(Math.Max(8, (canvasWidth - width) / 2), Math.Max(8, canvasHeight - height - 108), width, height), columns);
+        settings ??= new();
+        var columns = Math.Min(Math.Max(1, count), Math.Min(settings.MaximumColumns,
+            Math.Max(1, (canvasWidth - 8 + settings.Gap) / (settings.SlotSize + settings.Gap))));
+        var width = columns * (settings.SlotSize + settings.Gap) - settings.Gap + 4;
+        var rows = (Math.Max(1, count) + columns - 1) / columns;
+        var height = rows * (settings.SlotSize + settings.Gap) - settings.Gap + 4;
+        var center = hotbar is { Width: > 0 } bar ? bar.X + bar.Width / 2 : canvasWidth / 2;
+        var bottom = hotbar is { Height: > 0 } anchor ? anchor.Y - settings.HotbarSpacing : canvasHeight - 100;
+        return (new Rect(Math.Clamp(center - width / 2, 0, Math.Max(0, canvasWidth - width)),
+            Math.Max(0, bottom - height), width, height), columns);
     }
 
     protected override void Render(SkinBase skin)
@@ -160,21 +177,27 @@ internal sealed class WeaponSkillBar : Base
             skin.Renderer.DrawColor = color;
             skin.Renderer.DrawFilledRect(new Rect(x, y, Math.Max(1, width), Math.Max(1, height)));
         }
-        Fill(0, 0, Width, Height, new Color(230, 174, 127, 61));
-        Fill(2, 2, Width - 4, Height - 4, new Color(240, 35, 24, 18));
-        Fill(8, 31, Width - 16, 1, new Color(255, 107, 77, 40));
-        if (ItemDescriptor.TryGet(_weapon, out var weapon) && GameContentManager.Current.GetTexture(TextureType.Item, weapon.Icon) is { } icon)
-        {
-            skin.Renderer.DrawColor = Color.White;
-            skin.Renderer.DrawTexturedRect(icon, new Rect(10, 6, 24, 24), Color.White);
-        }
         foreach (var (button, category, talent) in _buttons)
         {
             Fill(button.X, button.Y, button.Width, button.Height, button.IsHovered
                 ? new Color(255, 193, 147, 77) : new Color(255, 115, 81, 42));
             Fill(button.X + 2, button.Y + 2, button.Width - 4, button.Height - 4,
                 button.IsDisabled ? new Color(255, 38, 35, 31) : new Color(255, 68, 43, 25));
+            var icon = string.IsNullOrEmpty(talent.Skill.Icon) ? null
+                : GameContentManager.Current.GetTexture(TextureType.Spell, talent.Skill.Icon);
+            if (icon is not { IsMissingOrCorrupt: false } && ItemDescriptor.TryGet(_weapon, out var weapon))
+                icon = GameContentManager.Current.GetTexture(TextureType.Item, weapon.Icon);
+            if (icon is { IsMissingOrCorrupt: false })
+            {
+                skin.Renderer.DrawColor = Color.White;
+                var scale = Math.Min((button.Width - 6f) / Math.Max(1, icon.Width), (button.Height - 6f) / Math.Max(1, icon.Height));
+                var w = Math.Max(1, (int)(icon.Width * scale)); var h = Math.Max(1, (int)(icon.Height * scale));
+                skin.Renderer.DrawTexturedRect(icon, new Rect(button.X + (button.Width - w) / 2,
+                    button.Y + (button.Height - h) / 2, w, h), Color.White);
+            }
             var remaining = Math.Max(0, _cooldowns.GetValueOrDefault(category.Key + "/" + talent.Key) - Environment.TickCount64);
+            if (remaining > 0)
+                Fill(button.X + 2, button.Y + 2, button.Width - 4, button.Height - 4, new Color(150, 0, 0, 0));
             var ready = 1 - Math.Clamp(remaining / (double)Math.Max(1, talent.Skill.CooldownMilliseconds), 0, 1);
             if (ready > 0) Fill(button.X + 3, button.Bottom - 4, (int)((button.Width - 6) * ready), 2,
                 new Color(255, 182, 151, 81));

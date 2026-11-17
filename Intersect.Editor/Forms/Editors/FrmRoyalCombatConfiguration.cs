@@ -60,6 +60,11 @@ public sealed class FrmRoyalCombatConfiguration : Form
             Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
             if (dialog.ShowDialog(this) == DialogResult.OK) { category.Talents = dialog.Result.Talents; _properties.Refresh(); }
         });
+        Button("Weapon skill quickbar", () => {
+            using var dialog = new FrmWeaponSkillBarSettings(_config.WeaponSkillBar) { StartPosition = FormStartPosition.CenterParent };
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
+            if (dialog.ShowDialog(this) == DialogResult.OK) _config.WeaponSkillBar = dialog.Result;
+        });
         Button("Mastery reset settings", () => {
             using var dialog = new FrmMasteryRespec(_config) { StartPosition = FormStartPosition.CenterParent };
             Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);

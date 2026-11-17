@@ -28,7 +28,11 @@ public partial class GameInterface
         General.Globals.Me != null,
         General.Globals.Me is { } player && (Naval.NavalWorld.IsAboard(player.Id) || Naval.NavalWorld.OnBoardingDeck),
         HasActiveMiniGame,
-        SuppressStatusHuds || Interface.InputBlockingComponents.Any(control => control.IsVisibleInTree && control.IsBlockingInput));
+        SuppressStatusHuds || WeaponSkillHudVisibility.HasOpenWindow(GameCanvas) ||
+        Interface.InputBlockingComponents.Any(control => control.IsVisibleInTree && control.IsBlockingInput));
+
+    private WeaponSkillBar CreateWeaponSkillBar() => new(GameCanvas, () => CanShowWeaponSkills,
+        () => new Framework.GenericClasses.Rectangle(Hotbar.X, Hotbar.Y, Hotbar.Width, Hotbar.Height));
 
     private void UpdateWeaponSkills()
     {
@@ -44,7 +48,7 @@ public partial class GameInterface
     {
         if(packet.WeaponSkillCooldownsJson.Length>0)
         {
-            _weaponSkills??=new WeaponSkillBar(GameCanvas, () => CanShowWeaponSkills);_weaponSkills.Apply(packet);return;
+            _weaponSkills??=CreateWeaponSkillBar();_weaponSkills.Apply(packet);return;
         }
         if (packet.AmmunitionJson.Length > 0)
         {
@@ -55,7 +59,7 @@ public partial class GameInterface
         {
             if(!packet.MasteriesReadOnly)
             {
-                _weaponSkills??=new WeaponSkillBar(GameCanvas, () => CanShowWeaponSkills);_weaponSkills.Apply(packet);
+                _weaponSkills??=CreateWeaponSkillBar();_weaponSkills.Apply(packet);
             }
             if (_masteriesWindow == null && !packet.Open) return;
             _masteriesWindow ??= new WeaponMasteriesWindow(GameCanvas); _masteriesWindow.Apply(packet); return;

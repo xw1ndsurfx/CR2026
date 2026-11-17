@@ -4950,6 +4950,71 @@
       "en": "Class base export already exists.",
       "fr": "Cet export de bases de classe existe déjà.",
       "es": "Esta exportación de bases de clase ya existe."
+    },
+    "Generate NPC profile": {
+      "en": "Generate NPC profile",
+      "fr": "Générer le profil du PNJ",
+      "es": "Generar el perfil del PNJ"
+    },
+    "Keep NPC changes": {
+      "en": "Keep NPC changes",
+      "fr": "Conserver les modifications du PNJ",
+      "es": "Conservar los cambios del PNJ"
+    },
+    "Generate and review": {
+      "en": "Generate and review",
+      "fr": "Générer et vérifier",
+      "es": "Generar y revisar"
+    },
+    "Generate the combat preset, then review all NPC parameters in the other tabs. Changes are kept only when you confirm; save the NPC editor to send them to the server.": {
+      "en": "Generate the combat preset, then review all NPC parameters in the other tabs. Changes are kept only when you confirm; save the NPC editor to send them to the server.",
+      "fr": "Générez le profil de combat, puis vérifiez tous les paramètres du PNJ dans les autres onglets. Confirmez pour conserver les modifications, puis enregistrez dans l’éditeur de PNJ pour les envoyer au serveur.",
+      "es": "Genera el perfil de combate y revisa todos los parámetros del PNJ en las otras pestañas. Confirma para conservar los cambios y guarda en el editor de PNJ para enviarlos al servidor."
+    },
+    "Weapon skill quickbar": {
+      "en": "Weapon skill quickbar",
+      "fr": "Barre rapide des compétences d’arme",
+      "es": "Barra rápida de habilidades de arma"
+    },
+    "Show weapon skill quickbar": {
+      "en": "Show weapon skill quickbar",
+      "fr": "Afficher la barre des compétences d’arme",
+      "es": "Mostrar la barra de habilidades de arma"
+    },
+    "Slot size (pixels)": {
+      "en": "Slot size (pixels)",
+      "fr": "Taille des cases (pixels)",
+      "es": "Tamaño de las casillas (píxeles)"
+    },
+    "Slot spacing (pixels)": {
+      "en": "Slot spacing (pixels)",
+      "fr": "Espacement des cases (pixels)",
+      "es": "Separación entre casillas (píxeles)"
+    },
+    "Maximum columns": {
+      "en": "Maximum columns",
+      "fr": "Nombre maximal de colonnes",
+      "es": "Número máximo de columnas"
+    },
+    "Space above hotbar (pixels)": {
+      "en": "Space above hotbar (pixels)",
+      "fr": "Espace au-dessus de la barre rapide (pixels)",
+      "es": "Espacio sobre la barra rápida (píxeles)"
+    },
+    "Choose each skill icon in the mastery talent tree. The bar is hidden aboard ships, in mini-games and while a window is open.": {
+      "en": "Choose each skill icon in the mastery talent tree. The bar is hidden aboard ships, in mini-games and while a window is open.",
+      "fr": "Choisissez l’icône de chaque compétence dans l’arbre de maîtrise. La barre est masquée en bateau, dans les mini-jeux et lorsqu’une fenêtre est ouverte.",
+      "es": "Elige el icono de cada habilidad en el árbol de maestría. La barra se oculta en barcos, minijuegos y cuando hay una ventana abierta."
+    },
+    "Skill icon (resources/spells)": {
+      "en": "Skill icon (resources/spells)",
+      "fr": "Icône de compétence (resources/spells)",
+      "es": "Icono de habilidad (resources/spells)"
+    },
+    "Disable pet mode before generating a combat preset.": {
+      "en": "Disable pet mode before generating a combat preset.",
+      "fr": "Désactivez le mode familier avant de générer un profil de combat.",
+      "es": "Desactiva el modo mascota antes de generar un perfil de combate."
     }
   }
 }
