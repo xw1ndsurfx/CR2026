@@ -39,3 +39,7 @@ La planche v3 remplace les fioles par des composants bruts originaux : végétau
 ## Progression cohérente — planche v4
 
 Chaque famille conserve le même ingrédient du niveau 1 au niveau 4. Les colonnes augmentent progressivement la taille et la complexité : feuille puis plante fleurie ; branche puis éventail de corail rouge ; éclat puis grappe de cristaux bleus ; petite plume puis grande plume dorée. Les silhouettes, matières et couleurs concordent au sein de chaque ligne. La planche v4 devient la valeur par défaut des nouvelles configurations. Pour une configuration existante, sélectionner royal_alchemist_pieces_v4.png dans Images et sons et enregistrer. Aucune modification des recettes, des sons ou des règles de fusion. Prompt : [ingredients-v4.prompt.json](ingredients-v4.prompt.json).
+
+## Variante facultative : racines, champignons, coquillages et ambre
+
+La planche royal_alchemist_ingredients_variant_roots_shells_v1.png propose quatre autres familles : racines médicinales vertes, champignons rouges, coquillages bleus et ambre doré. Chaque famille dispose de quatre formes cohérentes et progressives, avec des détails distincts à chaque niveau. Elle utilise la même disposition 4 × 4. La sélectionner dans Images et sons pour changer de thème. La planche v4 reste la valeur par défaut ; aucun changement de recettes ou de règles. Prompt et raffinement : [ingredients-variant-roots-shells.prompt.json](ingredients-variant-roots-shells.prompt.json).
