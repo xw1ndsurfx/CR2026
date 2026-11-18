@@ -49,6 +49,7 @@ public sealed class ArcheryRange
 
 public sealed class RoyalCombatConfiguration
 {
+    public WeaponSkillBarSettings WeaponSkillBar { get; set; } = new();
     // Missing in older saved configurations: add the new category once, preserving mappings.
     public int BuiltInMasteriesVersion { get; set; }
     public MasteryCategory[] Masteries { get; set; } = [new() { Talents = MasteryTalent.ArcheryDefaults() },
@@ -62,7 +63,7 @@ public sealed class RoyalCombatConfiguration
     public bool RespecEnabled { get; set; }
     public Guid RespecCurrencyId { get; set; }
     public int RespecCost { get; set; } = 1000;
-    public bool IsValid => RespecCost is >= 1 and <= 100000000 && (!RespecEnabled || RespecCurrencyId != Guid.Empty) &&
+    public bool IsValid => WeaponSkillBar is { IsValid: true } && RespecCost is >= 1 and <= 100000000 && (!RespecEnabled || RespecCurrencyId != Guid.Empty) &&
         Masteries is { Length: > 0 and <= 32 } && Ranges is { Length: <= 64 } &&
         Masteries.All(m => m != null && m.Key is { Length: > 0 and <= 32 } && m.Key.All(c => c is >= 'a' and <= 'z' or '-') &&
             m.Name is { Length: > 0 and <= 80 } && m.Cap is >= 2 and <= 100 && m.BaseExperience is >= 1 and <= 100000 &&

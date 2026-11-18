@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -369,96 +369,104 @@ public partial class FrmNpc
             return false;
         }
 
+        void ApplyGeneratedProfile()
+        {
+            var result = CalculatePreset();
+            static void Assign(NumericUpDown field, decimal value)
+            {
+                field.Value = Math.Clamp(value, field.Minimum, field.Maximum);
+            }
+
+            txtName.Text = name.Text;
+            spritePicker.ApplyTo(cmbSprite);
+            Assign(nudLevel, level.Value);
+            Assign(nudHp, calibration!.Health);
+            Assign(nudMana, result.mana);
+            Assign(nudStr, result.attack);
+            Assign(nudMag, result.magic);
+            Assign(nudDef, result.defense);
+            Assign(nudMR, result.resist);
+            Assign(nudSpd, result.speed);
+            Assign(nudDamage, Math.Max(calibration.Damage,
+                Math.Max(2, result.damage / 3)));
+            Assign(nudExp, Math.Max(0,(long)Math.Round(result.exp*0.8)));
+            Assign(_experienceMaximum, Math.Max(0,(long)Math.Round(result.exp*1.2)));
+            Assign(nudSpawnDuration,NpcPresetRespawnMilliseconds(difficulty.SelectedIndex,level.Value));
+            chkIndividualLoot.Checked=true;
+            // Handcrafted crit, scaling, speed and animation remain unchanged
+            // when Auto Combat is disabled.
+            cmbDamageType.SelectedIndex = role.SelectedIndex == 2
+                ? (int)DamageType.Magic : (int)DamageType.Physical;
+            cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
+                ? (int)Stat.AbilityPower : (int)Stat.Attack;
+
+            // Use existing tested NPC combat movement modes. Merely selecting
+            // Ranged/Caster does NOT create attacks or spells; see dialog warning.
+            _chkSmartCombatMovement.Checked = true;
+            _cmbCombatMovementMode.SelectedIndex = role.SelectedIndex switch
+            {
+                1 => 2, // Ranged
+                2 => 3, // Caster
+                4 => 4, // Kite
+                _ => 1, // Melee (including Tank)
+            };
+            Assign(_nudPreferredCombatRange, role.SelectedIndex switch
+            {
+                1 => 5, 2 => 5, 4 => 3, _ => 1
+            });
+            _chkIsBoss.Checked = difficulty.SelectedIndex == 3;
+            chkAggressive.Checked = true;
+
+            var selectedIds = SelectedSpells();
+            for (var index = 0; index < selectedIds.Count; index++)
+            {
+                var spellId = selectedIds[index];
+                // Existing spells and their configured intervals are preserved.
+                if (mEditorItem.Spells.Contains(spellId)) continue;
+                mEditorItem.EnsureSpellCastIntervalSlots();
+                mEditorItem.Spells.Add(spellId);
+                var slot = mEditorItem.Spells.Count - 1;
+                mEditorItem.SetSpellCastIntervalMs(slot, index switch
+                {
+                    0 => 4000, 1 => 8000, _ => 15000
+                });
+            }
+            RefreshNpcSpellList(Math.Max(0, mEditorItem.Spells.Count - 1));
+            ApplyNpcAutoAdvancedOptions(advanced, role.SelectedIndex,
+                difficulty.SelectedIndex, (int)level.Value);
+        }
+
+        // Reuse the actual NPC pages: no second, incomplete set of parameters.
+        using var draft = new NpcAutoCreatorDraft(mEditorItem);
+        using var workspace = new NpcAutoCreatorWorkspace(dialog, _npcTabs,
+            _npcTabPanels.Select(entry => entry.Page.Parent).OfType<TabPage>(), cancel,
+            TelegraphText("Generate NPC profile"), TelegraphText("Keep NPC changes"));
+        apply.Text = TelegraphText("Generate and review");
+        warning.Text = TelegraphText("Generate the combat preset, then review all NPC parameters in the other tabs. Changes are kept only when you confirm; save the NPC editor to send them to the server.");
+        workspace.Tabs.SelectedIndexChanged += (_, _) => InvalidatePreview();
         simulate.Click += (_, _) => EnsureCalibrated();
         apply.Click += (_, _) =>
         {
-            if (EnsureCalibrated())
+            if (mEditorItem.IsPet)
             {
-                dialog.DialogResult = DialogResult.OK;
-                dialog.Close();
+                MessageBox.Show(dialog, TelegraphText("Disable pet mode before generating a combat preset."),
+                    dialog.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
+            if (!EnsureCalibrated()) return;
+            ApplyGeneratedProfile();
+            workspace.ReviewGeneratedProfile();
         };
         RefreshPreview();
-
-        if (dialog.ShowDialog(this) != DialogResult.OK)
+        try
         {
-            return;
+            if (dialog.ShowDialog(this) == DialogResult.OK) draft.Keep();
         }
-
-        // The Apply button cannot close the dialog without a valid simulation.
-        if (calibration?.Calibrated != true)
+        finally
         {
-            return;
+            // Cancel restores the current unsaved draft, not its older disk backup.
+            draft.Dispose();
+            UpdateEditor();
         }
-
-        var result = CalculatePreset();
-        static void Assign(NumericUpDown field, decimal value)
-        {
-            field.Value = Math.Clamp(value, field.Minimum, field.Maximum);
-        }
-
-        txtName.Text = name.Text;
-        spritePicker.ApplyTo(cmbSprite);
-        Assign(nudLevel, level.Value);
-        Assign(nudHp, calibration!.Health);
-        Assign(nudMana, result.mana);
-        Assign(nudStr, result.attack);
-        Assign(nudMag, result.magic);
-        Assign(nudDef, result.defense);
-        Assign(nudMR, result.resist);
-        Assign(nudSpd, result.speed);
-        Assign(nudDamage, Math.Max(calibration.Damage,
-            Math.Max(2, result.damage / 3)));
-        Assign(nudExp, Math.Max(0,(long)Math.Round(result.exp*0.8)));
-        Assign(_experienceMaximum, Math.Max(0,(long)Math.Round(result.exp*1.2)));
-        Assign(nudSpawnDuration,NpcPresetRespawnMilliseconds(difficulty.SelectedIndex,level.Value));
-        chkIndividualLoot.Checked=true;
-        // Handcrafted crit, scaling, speed and animation remain unchanged
-        // when Auto Combat is disabled.
-        cmbDamageType.SelectedIndex = role.SelectedIndex == 2
-            ? (int)DamageType.Magic : (int)DamageType.Physical;
-        cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
-            ? (int)Stat.AbilityPower : (int)Stat.Attack;
-
-        // Use existing tested NPC combat movement modes. Merely selecting
-        // Ranged/Caster does NOT create attacks or spells; see dialog warning.
-        _chkSmartCombatMovement.Checked = true;
-        _cmbCombatMovementMode.SelectedIndex = role.SelectedIndex switch
-        {
-            1 => 2, // Ranged
-            2 => 3, // Caster
-            4 => 4, // Kite
-            _ => 1, // Melee (including Tank)
-        };
-        Assign(_nudPreferredCombatRange, role.SelectedIndex switch
-        {
-            1 => 5, 2 => 5, 4 => 3, _ => 1
-        });
-        _chkIsBoss.Checked = difficulty.SelectedIndex == 3;
-        chkAggressive.Checked = true;
-
-        var selectedIds = SelectedSpells();
-        for (var index = 0; index < selectedIds.Count; index++)
-        {
-            var spellId = selectedIds[index];
-            // Existing spells and their configured intervals are preserved.
-            if (mEditorItem.Spells.Contains(spellId)) continue;
-            mEditorItem.EnsureSpellCastIntervalSlots();
-            mEditorItem.Spells.Add(spellId);
-            var slot = mEditorItem.Spells.Count - 1;
-            mEditorItem.SetSpellCastIntervalMs(slot, index switch
-            {
-                0 => 4000, 1 => 8000, _ => 15000
-            });
-        }
-        RefreshNpcSpellList(Math.Max(0, mEditorItem.Spells.Count - 1));
-        ApplyNpcAutoAdvancedOptions(advanced, role.SelectedIndex,
-            difficulty.SelectedIndex, (int)level.Value);
-
-        MessageBox.Show(this,
-            $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
-            $"{calibration.HpLossPercent:0.0}% HP loss. Review and click Save to persist. " +
-            "NPC spell damage is estimated. Review combat spells and scripted encounters in-game.",
-            "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }

@@ -66,6 +66,8 @@ internal static partial class RoyalCombatRuntime
                     Score INTEGER NOT NULL CHECK(Score>=0 AND Score<=MaximumScore), MaximumScore INTEGER NOT NULL CHECK(MaximumScore BETWEEN 10 AND 600),
                     CompletedUtc INTEGER NOT NULL, PRIMARY KEY(CompetitionId,CharacterId));
                 CREATE INDEX IF NOT EXISTS IX_ArcheryResults_Board ON ArcheryResults(RangeId,SeasonKey,RulesKey,CompletedUtc,CharacterId);
+                CREATE TABLE IF NOT EXISTS WeaponSkillLoadouts(CharacterId TEXT NOT NULL, Category TEXT NOT NULL,
+                    SlotsJson TEXT NOT NULL, PRIMARY KEY(CharacterId,Category));
                 """;
             schema.ExecuteNonQuery(); return connection;
         }

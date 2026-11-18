@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -1486,6 +1486,8 @@ public partial class Player : Entity, IPlayer
         {
             DirectionMoving = inputDirection;
         }
+
+        if (Interface.Interface.InGameUiOrNull?.TryHandleWeaponSkillHotkey() == true) return;
 
         var castInput = -1;
 

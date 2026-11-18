@@ -103,6 +103,16 @@ internal sealed class BuiltinControlsProvider : IControlsProvider
             { Control.ToggleMount, new ControlMapping(new ControlBinding(Keys.None, Keys.H), ControlBinding.Default) },
             { Control.Dodge, new ControlMapping(new ControlBinding(Keys.None, Keys.LShiftKey), ControlBinding.Default) },
             { Control.CounterAttack, new ControlMapping(new ControlBinding(Keys.None, Keys.R), ControlBinding.Default) },
+            { Control.WeaponSkill1, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D1), ControlBinding.Default) },
+            { Control.WeaponSkill2, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D2), ControlBinding.Default) },
+            { Control.WeaponSkill3, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D3), ControlBinding.Default) },
+            { Control.WeaponSkill4, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D4), ControlBinding.Default) },
+            { Control.WeaponSkill5, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D5), ControlBinding.Default) },
+            { Control.WeaponSkill6, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D6), ControlBinding.Default) },
+            { Control.WeaponSkill7, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D7), ControlBinding.Default) },
+            { Control.WeaponSkill8, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D8), ControlBinding.Default) },
+            { Control.WeaponSkill9, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D9), ControlBinding.Default) },
+            { Control.WeaponSkill10, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D0), ControlBinding.Default) },
 
             // Hotkeys should be at the end of the list
             { Control.Hotkey1, new ControlMapping(new ControlBinding(Keys.None, Keys.D1), ControlBinding.Default) },
