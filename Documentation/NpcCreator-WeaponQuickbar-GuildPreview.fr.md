@@ -16,6 +16,10 @@ Le bouton **Barre rapide des compétences d’arme** règle l’activation de la
 
 La barre reste masquée en bateau, dans les mini-jeux et lorsqu’une fenêtre de jeu est ouverte, notamment Daily Rewards.
 
+Le joueur dispose de dix cases. Dans **Weapon Masteries**, il choisit une case puis **Ajouter à la case** auprès d’une compétence active apprise, ou **Vider la case sélectionnée**. Le serveur conserve cette disposition par personnage et catégorie d’arme ; changer d’arme ou se reconnecter retrouve la disposition correspondante. Une compétence déplacée libère son ancienne case et une case vidée reste vide.
+
+Dans **Settings → Controls**, les dix entrées de compétences d’arme permettent de personnaliser deux raccourcis par case, selon le fonctionnement habituel des réglages. Les valeurs initiales sont `Alt+1` à `Alt+0`. Ces combinaisons n’activent pas simultanément la barre principale et ne déclenchent pas une compétence pendant la saisie de texte. La touche configurée apparaît dans la case.
+
 ## Guilde à la sélection du personnage
 
 Le serveur résout les noms depuis les identifiants de guilde enregistrés, avant l’entrée en jeu. Cette lecture ne dépend plus du chargement de l’objet de guilde du personnage et ne modifie pas son appartenance. Un personnage sans guilde, ou dont la guilde n’existe plus, conserve l’affichage vide habituel.

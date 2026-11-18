@@ -5015,6 +5015,56 @@
       "en": "Disable pet mode before generating a combat preset.",
       "fr": "Désactivez le mode familier avant de générer un profil de combat.",
       "es": "Desactiva el modo mascota antes de generar un perfil de combate."
+    },
+    "Weapon skill slot {0}": {
+      "en": "Weapon skill slot {0}",
+      "fr": "Compétence d’arme — case {0}",
+      "es": "Habilidad de arma — casilla {0}"
+    },
+    "Choose a skill in Weapon Masteries.": {
+      "en": "Choose a skill in Weapon Masteries.",
+      "fr": "Choisissez une compétence dans Maîtrises des armes.",
+      "es": "Elige una habilidad en Maestrías de armas."
+    },
+    "Choose a slot, then add a learned skill.": {
+      "en": "Choose a slot, then add a learned skill.",
+      "fr": "Choisissez une case, puis ajoutez une compétence apprise.",
+      "es": "Elige una casilla y añade una habilidad aprendida."
+    },
+    "Clear selected slot": {
+      "en": "Clear selected slot",
+      "fr": "Vider la case sélectionnée",
+      "es": "Vaciar la casilla seleccionada"
+    },
+    "Empty slot": {
+      "en": "Empty slot",
+      "fr": "Case vide",
+      "es": "Casilla vacía"
+    },
+    "Add to slot {0}": {
+      "en": "Add to slot {0}",
+      "fr": "Ajouter à la case {0}",
+      "es": "Añadir a la casilla {0}"
+    },
+    "Learn this weapon skill before adding it to the quickbar.": {
+      "en": "Learn this weapon skill before adding it to the quickbar.",
+      "fr": "Apprenez cette compétence d’arme avant de l’ajouter à la barre rapide.",
+      "es": "Aprende esta habilidad de arma antes de añadirla a la barra rápida."
+    },
+    "Weapon skill quickbar saved.": {
+      "en": "Weapon skill quickbar saved.",
+      "fr": "Barre des compétences d’arme enregistrée.",
+      "es": "Barra de habilidades de arma guardada."
+    },
+    "Weapon skill quickbar could not be saved. Try again.": {
+      "en": "Weapon skill quickbar could not be saved. Try again.",
+      "fr": "Impossible d’enregistrer la barre des compétences d’arme. Réessayez.",
+      "es": "No se pudo guardar la barra de habilidades de arma. Inténtalo de nuevo."
+    },
+    "Please wait before updating the quickbar.": {
+      "en": "Please wait before updating the quickbar.",
+      "fr": "Patientez avant de modifier à nouveau la barre rapide.",
+      "es": "Espera antes de volver a modificar la barra rápida."
     }
   }
 }

@@ -34,6 +34,8 @@ public partial class GameInterface
     private WeaponSkillBar CreateWeaponSkillBar() => new(GameCanvas, () => CanShowWeaponSkills,
         () => new Framework.GenericClasses.Rectangle(Hotbar.X, Hotbar.Y, Hotbar.Width, Hotbar.Height));
 
+    internal bool TryHandleWeaponSkillHotkey() => CanShowWeaponSkills && _weaponSkills?.TryHandleHotkey() == true;
+
     private void UpdateWeaponSkills()
     {
         if (!CanShowWeaponSkills) { _weaponSkills?.Hide(); return; }
@@ -46,6 +48,7 @@ public partial class GameInterface
     }
     internal void ApplyArcheryState(ArcheryStatePacket packet)
     {
+        if (_masteriesWindow?.ApplyQuickbarError(packet) == true) return;
         if(packet.WeaponSkillCooldownsJson.Length>0)
         {
             _weaponSkills??=CreateWeaponSkillBar();_weaponSkills.Apply(packet);return;
