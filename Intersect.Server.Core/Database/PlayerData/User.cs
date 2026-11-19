@@ -201,7 +201,7 @@ public partial class User
             return true;
         }
 
-        var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+        var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
         client?.LogAndDisconnect(default, nameof(TrySetPassword));
         return false;
     }
@@ -326,7 +326,7 @@ public partial class User
             return;
         }
 
-        var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+        var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
         client?.LogAndDisconnect(default, nameof(SaveWithDebounce));
     }
 
@@ -446,7 +446,7 @@ public partial class User
             ApplicationContext.Context.Value?.Logger.LogDebug($"DBOP-B Save({playerContext}, {force}, {create}) #{currentExecutionId} {Name} ({Id})");
 #endif
 
-            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
             client?.LogAndDisconnect(default, "User.Save");
 
             return UserSaveResult.DatabaseFailure;
@@ -488,7 +488,7 @@ public partial class User
             ApplicationContext.Context.Value?.Logger.LogDebug($"DBOP-C Save({playerContext}, {force}, {create}) #{currentExecutionId} {Name} ({Id})");
 #endif
 
-            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
             client?.LogAndDisconnect(default, "User.Save");
 
             if (Options.Instance.PlayerDatabase.KillServerOnConcurrencyException)
@@ -508,7 +508,7 @@ public partial class User
             ApplicationContext.Context.Value?.Logger.LogDebug($"DBOP-C Save({playerContext}, {force}, {create}) #{currentExecutionId} {Name} ({Id})");
 #endif
 
-            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+            var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
             client?.LogAndDisconnect(default, "User.Save");
 
             if (Options.Instance.PlayerDatabase.KillServerOnConcurrencyException)
@@ -1056,7 +1056,7 @@ public partial class User
         {
             if (Save() == UserSaveResult.DatabaseFailure)
             {
-                var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c.User.Id == Id);
+                var client = Client.LookupByConnectionId.Values.FirstOrDefault(c => c?.User?.Id == Id);
                 client?.LogAndDisconnect(default, "User.Save");
             }
 
