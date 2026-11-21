@@ -19,7 +19,8 @@ existants.
   à la prochaine étape quand le serveur autorise déjà `Next`.
 - Le guide respecte le déplacement, le repli et le redimensionnement du menu.
 - Les anciens tutoriels sauvegardés gardent leur progression et leurs identifiants.
-  Les titres intégrés connus obtiennent automatiquement une cible visuelle.
+  Sans réglage de surbrillance, ils restent sans cible jusqu'au choix explicite
+  dans l'éditeur. Le choix `None` et le style sélectionné sont toujours respectés.
 
 ## Tutoriel Editor
 
@@ -35,7 +36,7 @@ Pour le guide initial, les cibles suggérées sont menu, inventaire, quêtes
 et mini-carte.
 
 **Limite de cette phase** : l'ouverture des fenêtres Inventaire/Quêtes est
-reconnue depuis les boutons du menu; les autres étapes restent validées par les
+reconnue depuis les boutons du menu ou leurs raccourcis clavier; les autres étapes restent validées par les
 objectifs serveur existants ou par `Suivant`. Les cibles mondiales (PNJ,
 sol, flèche au-dessus d'un objet) demandent une seconde phase avec coordonnées
 de monde et sélection de PNJ/événements dans l'éditeur.
@@ -54,5 +55,40 @@ de monde et sélection de PNJ/événements dans l'éditeur.
    ouvrir une nouvelle session et vérifier leur persistance.
 10. FR/EN/ES : titre Guide royal / Royal Guide / Guía real et contenus existants.
 
-Aucune compilation du client .NET ni test de jeu n'a été exécuté dans
-l'environnement de création de cette PR.
+## Reprise de validation du 20 novembre 2026
+
+Branche remise à jour avec `main` après #276, sans les modifications privées
+Intel HD 3000. Aucun binaire installé ni serveur en ligne n'est modifié.
+
+Corrections : boutons redistribués et guide redimensionné à la résolution courante,
+positionnement limitant le recouvrement de la cible, halo limité à la partie
+réellement visible du contrôle dans ses parents, disparition pendant les fenêtres
+modales, absence de remontée forcée à chaque image, suppression du halo à la
+destruction du guide et nouveaux choix de l'éditeur traduits en EN/FR/ES.
+Une action peut être retentée après reprise ou rejeu : le client ne bloque plus
+définitivement un identifiant d'étape déjà soumis. Le serveur reste seul maître
+de `CanAdvance`, de l'étape courante et de la révision.
+
+Les vérifications automatisées utilisent les véritables contrôles Gwen avec
+des métriques de polices synthétiques. Elles ne constituent pas une recette
+graphique en jeu. Les dix scénarios manuels ci-dessus restent à exécuter sur
+un serveur de test avec un personnage, avant de considérer le parcours publié
+comme validé. La PR reste en brouillon pendant cette recette.
+
+Commandes de vérification locale (Release, .NET 8 ; éditeur sous Windows) :
+
+```text
+dotnet test Intersect.Tests/Intersect.Tests.csproj -c Release --filter "FullyQualifiedName~TutorialTests|FullyQualifiedName~TutorialCombatLessonsTests"
+dotnet run --project Utilities/TutorialUiTests/TutorialUiTests.csproj -c Release
+dotnet run --project Utilities/TutorialEditorTests/TutorialEditorTests.csproj -c Release
+```
+
+Résultats : les 10 tests tutoriel/combat et les 17 groupes d'interface réussissent.
+Les essais d'interface couvrent cinq résolutions (320×480 à 1920×1080) dans les
+trois langues, les reprises, les commandes conditionnées par le serveur, le
+combat, les fenêtres modales, le recadrage du halo et les deux chemins de
+destruction (guide seul ou interface entière). Client, serveur et éditeur
+compilent sans erreur ; les avertissements du dépôt restent présents.
+Les trois essais de l'éditeur (EN/FR/ES) réussissent également : choix traduits,
+modification de l'étape réelle, conservation des identifiants d'énumération et
+aller-retour JSON avec les réglages de surbrillance.

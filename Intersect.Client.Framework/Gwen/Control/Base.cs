@@ -50,6 +50,8 @@ public partial class Base : IDisposable
     }
 
     private bool _disposed;
+    /// <summary>True once disposal starts, including while owned children are being released.</summary>
+    public bool IsDisposed => _disposed;
     private bool _disposeCompleted;
     private StackTrace? _disposeStack;
 

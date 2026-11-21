@@ -1,6 +1,7 @@
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Framework.Gwen.ControlInternal;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Network.Packets.Tutorials;
@@ -22,7 +23,8 @@ internal sealed class TutorialWindow : Window
     private readonly Label _heading;
     private readonly Label _progress;
     private readonly Panel _progressTrack, _progressFill;
-    private Guid _lastSubmittedUiStep;
+    private double _progressFraction;
+    private readonly Action<TutorialRequestPacket> _send;
     private readonly Label _body;
     private readonly ScrollControl _scroll;
     private readonly Button _next, _scene, _restart, _pause;
@@ -31,9 +33,10 @@ internal sealed class TutorialWindow : Window
     private bool _combatGuideExplicitlyOpened;
     internal static string T(string source) => TutorialText.Get(source, ClientLanguages.Current);
 
-    internal TutorialWindow(Canvas canvas) : base(canvas, T("Tutorial"), false, nameof(TutorialWindow))
+    internal TutorialWindow(Canvas canvas, Action<TutorialRequestPacket>? send = null) : base(canvas, T("Tutorial"), false, nameof(TutorialWindow))
     {
         _canvas = canvas;
+        _send = send ?? (packet => Networking.Network.SendPacket(packet));
         _spotlight = new TutorialSpotlight(canvas);
         var width = Math.Min(460, Math.Max(240, canvas.Width - 20));
         var height = Math.Min(315, Math.Max(225, canvas.Height - 20));
@@ -85,6 +88,7 @@ internal sealed class TutorialWindow : Window
         };
         Hide();
         _spotlight.Hide();
+        ResizeGuide();
     }
 
     private Button Add(string text, int x, int y, Action action)
@@ -97,7 +101,7 @@ internal sealed class TutorialWindow : Window
     protected override void EnsureInitialized() { }
 
     private void Send(TutorialAction action) =>
-        Networking.Network.SendPacket(new TutorialRequestPacket
+        _send(new TutorialRequestPacket
         {
             Action = action,
             StepId = _state.StepId,
@@ -122,7 +126,7 @@ internal sealed class TutorialWindow : Window
         string Content(string source) => ClientLanguages.ContentText(config.Translations.Get(source, ClientLanguages.Current));
         var number = step == null ? config.Steps.Count : config.Steps.IndexOf(step) + 1;
         _progress.Text = $"{T("Royal Guide")}  •  {number}/{config.Steps.Count}";
-        _progressFill.SetSize((int)((long)_progressTrack.Width * number / Math.Max(1, config.Steps.Count)), 5);
+        _progressFraction = (double)number / Math.Max(1, config.Steps.Count);
         _heading.Text = step == null ? T("Tutorial complete") : Content(step.Title);
         _body.Text = step == null ? T("You can replay this guide at any time.") : Content(step.Text);
         _next.IsDisabled = !state.CanAdvance;
@@ -133,31 +137,15 @@ internal sealed class TutorialWindow : Window
 
         _target = step?.HighlightTarget ?? TutorialHighlightTarget.None;
         _style = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
-        // Old saved guides predate spotlight settings. Preserve their step IDs
-        // and progression while applying context to known built-in lessons.
-        if (step != null && _target == TutorialHighlightTarget.None)
-            _target = step.Title switch
-            {
-                "Your interface" => TutorialHighlightTarget.Menu,
-                "Inventory and equipment" => TutorialHighlightTarget.Inventory,
-                "Combat and quests" => TutorialHighlightTarget.Quests,
-                "Naval adventures" => TutorialHighlightTarget.Minimap,
-                _ => TutorialHighlightTarget.None,
-            };
-        if (_target == TutorialHighlightTarget.Minimap)
-            _style = TutorialHighlightStyle.Circle;
-
         RequestedOpen = state.Open;
         RefreshVisibility();
     }
 
     internal void CompleteOnHudAction(TutorialHighlightTarget action)
     {
-        if (!RequestedOpen || _combatDrill || !_state.CanAdvance || _target != action ||
-            _lastSubmittedUiStep == _state.StepId)
+        if (!IsVisibleInTree || !RequestedOpen || _combatDrill || !_state.CanAdvance || _target != action)
             return;
 
-        _lastSubmittedUiStep = _state.StepId;
         Send(TutorialAction.Next);
     }
 
@@ -171,8 +159,8 @@ internal sealed class TutorialWindow : Window
             TutorialHighlightTarget.Menu or TutorialHighlightTarget.Inventory or
                 TutorialHighlightTarget.Quests or TutorialHighlightTarget.Character =>
                 ui.GameMenu?.TutorialMenuTarget(_target),
-            TutorialHighlightTarget.Minimap or TutorialHighlightTarget.WorldMap =>
-                ui.MinimapHud,
+            TutorialHighlightTarget.Minimap => ui.MinimapHud,
+            TutorialHighlightTarget.WorldMap => ui.MinimapHud?.TutorialWorldMapTarget,
             TutorialHighlightTarget.Hotbar => ui.Hotbar,
             _ => null,
         };
@@ -180,9 +168,10 @@ internal sealed class TutorialWindow : Window
 
     internal void RefreshVisibility()
     {
+        ResizeGuide();
         _body.SetSize(_body.Width, Math.Max(50, _body.TextHeight + 12));
         var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) &&
-            !Cinematics.CinematicControls.Active;
+            !Cinematics.CinematicControls.Active && !_canvas.Children.OfType<Modal>().Any(modal => modal.IsVisibleInTree);
 
         if (!display)
         {
@@ -196,10 +185,40 @@ internal sealed class TutorialWindow : Window
         _spotlight.Highlight(highlighted, _style);
         PositionGuide(_spotlight.GetTargetBounds());
         if (IsHidden)
+        {
             Show();
-        // Keep the card above the translucent spotlight, which must never
-        // intercept clicking the highlighted underlying menu item.
-        BringToFront();
+            _spotlight.BringToFront();
+            BringToFront();
+        }
+        // Do not raise the card every frame over windows opened by the player.
+    }
+
+    private void ResizeGuide()
+    {
+        var width = Math.Min(460, Math.Max(240, _canvas.Width - 24));
+        var height = Math.Min(340, Math.Max(280, _canvas.Height - 24));
+        SetSize(width, height);
+        _progress.SetBounds(20, 36, width - 40, 24);
+        _progressTrack.SetBounds(20, 62, width - 40, 5);
+        _heading.SetBounds(20, 77, width - 40, 36);
+        _scroll.SetBounds(20, 113, width - 40, height - 225);
+        _body.SetSize(width - 66, _body.Height);
+        _scene.SetBounds(20, height - 102, width - 40, 28);
+        var buttonWidth = (width - 48) / 2;
+        _restart.SetBounds(20, height - 66, buttonWidth, 30);
+        _pause.SetBounds(20, height - 66, buttonWidth, 30);
+        _next.SetBounds(28 + buttonWidth, height - 66, buttonWidth, 30);
+        _progressFill.SetSize((int)(_progressTrack.Width * _progressFraction), 5);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !_canvas.IsDisposed && !_spotlight.IsDisposed)
+        {
+            _spotlight.Parent = null;
+            _spotlight.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
     private void PositionGuide(Rectangle? highlighted)
@@ -219,6 +238,16 @@ internal sealed class TutorialWindow : Window
                 x = Math.Min(maxX, target.X + target.Width + 55);
 
             y = Math.Clamp(target.Y + target.Height / 2 - Height / 2, 8, Math.Max(8, maxY));
+        }
+        if (highlighted is { } focus)
+        {
+            var choices = new[] { new Point(x,y), new Point(focus.X-Width-14,y),
+                new Point(x,focus.Y-Height-14),new Point(x,focus.Y+focus.Height+14) };
+            int Overlap(Point point) => Math.Max(0,Math.Min(point.X+Width,focus.Right)-Math.Max(point.X,focus.X)) *
+                Math.Max(0,Math.Min(point.Y+Height,focus.Bottom)-Math.Max(point.Y,focus.Y));
+            var best = choices.Select(point=>new Point(Math.Clamp(point.X,8,Math.Max(8,maxX)),
+                Math.Clamp(point.Y,8,Math.Max(8,maxY)))).OrderBy(Overlap).First();
+            x=best.X;y=best.Y;
         }
         SetPosition(x, y);
     }
