@@ -111,6 +111,11 @@ internal sealed class FrmTutorial : Form
             Text = T(title), Width = 258, Height = 28,
             Padding = new Padding(0, 7, 0, 0),
         };
+        _highlightTarget.FormattingEnabled = _highlightStyle.FormattingEnabled = true;
+        _highlightTarget.Format += (_, e) => e.Value = TutorialStepProperties.EnumCaption(e.ListItem!);
+        _highlightStyle.Format += (_, e) => e.Value = TutorialStepProperties.EnumCaption(e.ListItem!);
+        _worldX.Maximum = Math.Clamp(Options.Instance.Map.MapWidth - 1, 0, 255);
+        _worldY.Maximum = Math.Clamp(Options.Instance.Map.MapHeight - 1, 0, 255);
         controls.Controls.Add(Caption("Highlight target"));
         foreach (var value in Enum.GetValues<TutorialHighlightTarget>())
             _highlightTarget.Items.Add(value);
@@ -179,7 +184,7 @@ internal sealed class FrmTutorial : Form
         change(_selected);
         _dirty = true;
         _properties.Refresh();
-        _preview.ShowStep(_selected, _titles[0].Text);
+        RefreshWorldControls();
     }
 
     private void RefreshWorldControls()
@@ -193,9 +198,13 @@ internal sealed class FrmTutorial : Form
             _highlightStyle.SelectedItem = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
             SelectChoice(_worldMap, step?.MapId ?? Guid.Empty);
             SelectChoice(_worldNpc, step?.TargetNpcId ?? Guid.Empty);
-            _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, 255);
-            _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, 255);
+            _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, _worldX.Maximum);
+            _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, _worldY.Maximum);
             _worldRadius.Value = Math.Clamp(step?.TargetRadius ?? 1, 0, 6);
+            _worldNpc.Enabled = step?.HighlightTarget == TutorialHighlightTarget.WorldNpc;
+            _worldX.Enabled = _worldY.Enabled = step?.HighlightTarget == TutorialHighlightTarget.WorldTile || step?.Objective == TutorialObjective.ReachTile;
+            _worldRadius.Enabled = step?.Objective == TutorialObjective.ReachTile;
+            _highlightStyle.Enabled = step?.HighlightTarget is not (TutorialHighlightTarget.Player or TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc);
             _preview.ShowStep(step, _titles[0].Text);
         }
         finally { _loading = oldLoading; }
@@ -245,7 +254,7 @@ internal sealed class FrmTutorial : Form
     internal void Receive(TutorialEditorPacket packet)
     {
         _saveTimeout.Stop(); SetPending(false);
-        if (packet.Error.Length > 0) { MessageBox.Show(this, packet.Error); return; }
+        if (packet.Error.Length > 0) { MessageBox.Show(this, T(packet.Error)); return; }
         _revision = packet.Revision; if (packet.Saved) { _dirty = false; MessageBox.Show(this, T("Saved")); }
     }
 }

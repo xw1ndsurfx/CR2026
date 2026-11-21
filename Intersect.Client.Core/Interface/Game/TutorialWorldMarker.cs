@@ -2,6 +2,7 @@ using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
@@ -23,6 +24,7 @@ internal sealed class TutorialWorldMarker : Base
 {
     private readonly Canvas _canvas;
     private TutorialStep? _step;
+    private Vector2 _headAnchor;
     internal bool HasGuide => _step != null;
 
     internal TutorialWorldMarker(Canvas canvas) : base(canvas, nameof(TutorialWorldMarker))
@@ -34,6 +36,7 @@ internal sealed class TutorialWorldMarker : Base
         ClipContents = false;
         SetBounds(0, 0, canvas.Width, canvas.Height);
         Hide();
+        SendToBack();
     }
 
     internal void SetStep(TutorialStep? step)
@@ -59,7 +62,8 @@ internal sealed class TutorialWorldMarker : Base
         var screen = Project(world);
         if (!InView(screen, 12))
             return null;
-        return new Rectangle((int)screen.X - 22, (int)screen.Y - 25, 44, 50);
+        var head = Project(_headAnchor);
+        return new Rectangle((int)screen.X - 36, (int)head.Y - 56, 72, Math.Max(72, (int)(screen.Y-head.Y)+80));
     }
 
     private bool TryGetWorldAnchor(out Vector2 anchor)
@@ -71,7 +75,8 @@ internal sealed class TutorialWorldMarker : Base
 
         if (_step.HighlightTarget == TutorialHighlightTarget.Player)
         {
-            anchor = player.Center;
+            anchor = player.Origin;
+            _headAnchor = player.AnimationAnchor(true);
             return true;
         }
 
@@ -83,10 +88,14 @@ internal sealed class TutorialWorldMarker : Base
 
         if (_step.HighlightTarget == TutorialHighlightTarget.WorldTile)
         {
+            if (_step.TargetX < 0 || _step.TargetY < 0 ||
+                _step.TargetX >= Options.Instance.Map.MapWidth || _step.TargetY >= Options.Instance.Map.MapHeight)
+                return false;
             anchor = new Vector2(
                 map.X + (_step.TargetX + 0.5f) * Options.Instance.Map.TileWidth,
                 map.Y + (_step.TargetY + 0.5f) * Options.Instance.Map.TileHeight
             );
+            _headAnchor = anchor;
             return true;
         }
 
@@ -97,7 +106,7 @@ internal sealed class TutorialWorldMarker : Base
         var distance = float.MaxValue;
         foreach (var entity in Globals.Entities.Values)
         {
-            if (entity.IsDisposed || entity.Type != EntityType.GlobalEntity ||
+            if (entity.IsDisposed || entity.IsHidden || entity.IsStealthed || entity.Type != EntityType.GlobalEntity ||
                 entity.MapId != _step.MapId || entity.NpcDescriptorId != _step.TargetNpcId)
                 continue;
 
@@ -112,16 +121,20 @@ internal sealed class TutorialWorldMarker : Base
         if (candidate == null)
             return false;
 
-        anchor = candidate.Center;
+        anchor = candidate.Origin;
+        _headAnchor = candidate.AnimationAnchor(true);
         return true;
     }
 
-    private static Vector2 Project(Vector2 world)
+    private Vector2 Project(Vector2 world)
     {
         var zoom = Math.Max(0.01f, Graphics.WorldScale);
         var view = Graphics.CurrentView;
-        return new Vector2((world.X - view.Left) * zoom, (world.Y - view.Top) * zoom);
+        return ProjectPoint(world, new Vector2(view.Left, view.Top), zoom, _canvas.Scale);
     }
+
+    internal static Vector2 ProjectPoint(Vector2 world, Vector2 origin, float zoom, float uiScale) =>
+        (world - origin) * Math.Max(.01f, zoom) / Math.Max(.01f, uiScale);
 
     private bool InView(Vector2 point, int margin) =>
         point.X >= margin && point.Y >= margin &&
@@ -159,8 +172,12 @@ internal sealed class TutorialWorldMarker : Base
         var x = (int)Math.Round(point.X);
         var y = (int)Math.Round(point.Y);
         var radius = 20 + (int)Math.Round(pulse * 5);
-        Ring(renderer, x, y, radius + 3, halo);
-        Ring(renderer, x, y, radius, gold);
+        if (!DrawAsset(renderer, "royal-guide/guide_ground_v1.png",
+                new Rectangle(x-radius-14, y-radius-14, (radius+14)*2, (radius+14)*2), halo))
+        {
+            Ring(renderer, x, y, radius + 3, halo);
+            Ring(renderer, x, y, radius, gold);
+        }
         if (_step?.HighlightTarget == TutorialHighlightTarget.Player)
         {
             // Four quick directional cues around the player's feet.
@@ -171,9 +188,21 @@ internal sealed class TutorialWorldMarker : Base
         }
         else
         {
-            var arrowY = y - radius - 19 - (int)(pulse * 7);
-            DrawArrow(renderer, new Vector2(x, arrowY), Vector2.UnitY, gold, 3);
+            var head = Project(_headAnchor);
+            var arrowY = (int)head.Y - 10 - (int)(pulse * 5);
+            if (_step?.HighlightTarget != TutorialHighlightTarget.WorldNpc ||
+                !DrawAsset(renderer, "royal-guide/guide_npc_v1.png", new Rectangle(x-24, arrowY-48, 48, 48), Color.White))
+                DrawArrow(renderer, new Vector2(x, arrowY), Vector2.UnitY, gold, 3);
         }
+    }
+
+    private static bool DrawAsset(RendererBase renderer, string file, Rectangle bounds, Color tint)
+    {
+        var texture = Globals.ContentManager?.GetTexture(TextureType.Gui, file);
+        if (texture is not { IsMissingOrCorrupt: false, IsLoaded: true }) return false;
+        renderer.DrawColor = tint;
+        renderer.DrawTexturedRect(texture, bounds, tint);
+        return true;
     }
 
     private static void DrawArrow(RendererBase renderer, Vector2 tip, Vector2 direction, Color color, int thickness)

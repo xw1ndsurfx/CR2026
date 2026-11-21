@@ -18,6 +18,8 @@ internal sealed class TutorialWindow : Window
     private readonly Canvas _canvas;
     private readonly TutorialSpotlight _spotlight;
     private readonly TutorialWorldMarker _worldMarker;
+    private readonly TutorialAudioCue _audioCue = new();
+    private string _pendingSound = "";
     private TutorialStatePacket _state = new();
     private TutorialHighlightTarget _target = TutorialHighlightTarget.None;
     private TutorialHighlightStyle _style = TutorialHighlightStyle.Outline;
@@ -119,7 +121,11 @@ internal sealed class TutorialWindow : Window
         if (config == null)
             return;
         var step = config.Steps.FirstOrDefault(s => s.Id == state.StepId);
+        var sound = _audioCue.Observe(state, config);
+        if (sound.Length > 0) _pendingSound = sound;
+        if (!state.Open && !state.Finished) _pendingSound = "";
         _combatDrill = step != null && AdvancedCombatTutorialLessons.IsCombatObjective(step.Objective);
+        if (_combatDrill) _pendingSound = "";
         if (changedStep)
         {
             _combatGuideExplicitlyOpened = false;
@@ -140,7 +146,7 @@ internal sealed class TutorialWindow : Window
 
         _target = step?.HighlightTarget ?? TutorialHighlightTarget.None;
         _style = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
-_worldMarker.SetStep(step);
+        _worldMarker.SetStep(step);
         RequestedOpen = state.Open;
         RefreshVisibility();
     }
@@ -174,8 +180,13 @@ _worldMarker.SetStep(step);
     {
         ResizeGuide();
         _body.SetSize(_body.Width, Math.Max(50, _body.TextHeight + 12));
-        var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) &&
-            !Cinematics.CinematicControls.Active && !_canvas.Children.OfType<Modal>().Any(modal => modal.IsVisibleInTree);
+        var suspended = Cinematics.CinematicControls.Active || _canvas.Children.OfType<Modal>().Any(modal => modal.IsVisibleInTree);
+        var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) && !suspended;
+        if (!suspended && (display || _state.Finished) && _pendingSound.Length > 0)
+        {
+            if (General.Globals.ContentManager != null) Core.Audio.AddGameSound(_pendingSound, false);
+            _pendingSound = "";
+        }
 
         if (!display)
         {
@@ -204,7 +215,7 @@ _worldMarker.SetStep(step);
         if (IsHidden)
         {
             Show();
-            if (worldTarget) _worldMarker.BringToFront();
+            if (worldTarget) _worldMarker.SendToBack();
             else _spotlight.BringToFront();
             BringToFront();
         }

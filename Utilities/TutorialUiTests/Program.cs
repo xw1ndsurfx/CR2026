@@ -57,7 +57,7 @@ foreach(var sample in from size in new[]{new Point(320,480),new Point(640,480),n
  using(var other=new Panel(canvas,"OtherPlayerWindow")){other.BringToFront();Call(guide,"RefreshVisibility");Check(canvas.Children.Last()==other,"Guide steals foreground every frame");other.Parent=null;}
  var modal=new Panel(canvas,"ModalContents");var modalHost=modal.MakeModal();Call(guide,"RefreshVisibility");Check(guide.IsHidden,"Modal does not suspend tutorial");modalHost.Parent=null;modalHost.Dispose();Call(guide,"RefreshVisibility");Check(!guide.IsHidden,"Guide fails to resume after modal");
  canvas.Size=new Point(640,480);Call(guide,"RefreshVisibility");Check(guide.Right<=640&&guide.Bottom<=480,"Resize leaves guide offscreen");
- var spotlight=Field<Base>(guide,"_spotlight");guide.Parent=null;guide.Dispose();Check(!canvas.Children.Contains(spotlight),"Spotlight leaked after guide disposal");
+ var spotlight=Field<Base>(guide,"_spotlight");var worldMarker=Field<Base>(guide,"_worldMarker");guide.Parent=null;guide.Dispose();Check(!canvas.Children.Contains(spotlight)&&!canvas.Children.Contains(worldMarker),"Overlay leaked after guide disposal");
  Console.WriteLine("PASS tutorial UI: bounds, retry, authored targets/style, combat, modality and disposal at "+size+" / "+sample.Language);groups++;
 }
 {
@@ -78,10 +78,12 @@ foreach(var sample in from size in new[]{new Point(320,480),new Point(640,480),n
  using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
  var canvas=new Canvas(skin){Size=new Point(640,480)};
  var guide=(Base)Activator.CreateInstance(windowType,hidden,null,[canvas,new Action<TutorialRequestPacket>(_=>{})],null)!;
- var spotlight=Field<Base>(guide,"_spotlight");var disposed=0;
+ var spotlight=Field<Base>(guide,"_spotlight");var disposed=0;var worldDisposed=0;
+ Field<Base>(guide,"_worldMarker").Disposed+=(_,_)=>worldDisposed++;
  spotlight.Disposed+=(_,_)=>disposed++;
- canvas.Dispose();Check(disposed==1,"Canvas teardown did not dispose spotlight exactly once");groups++;
+ canvas.Dispose();Check(disposed==1&&worldDisposed==1,"Canvas teardown did not dispose overlays exactly once");groups++;
 }
+groups+=WorldGuidanceChecks.Run();
 Console.WriteLine($"PASS: {groups} tutorial UI groups (synthetic metrics; no live gameplay claim).");
 
 sealed class TestSkin:SkinBase

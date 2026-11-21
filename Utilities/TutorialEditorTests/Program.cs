@@ -9,6 +9,7 @@ internal static class Program
 {
  [STAThread] private static void Main()
  {
+  typeof(Intersect.Options).GetMethod("EnsureCreated",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,null);
   var assembly=typeof(Intersect.Editor.Forms.Editors.FrmDeathConfiguration).Assembly;
   var adapterType=assembly.GetType("Intersect.Editor.Forms.Tutorials.TutorialStepProperties",true)!;
   var formType=assembly.GetType("Intersect.Editor.Forms.Tutorials.FrmTutorial",true)!;
@@ -36,9 +37,35 @@ internal static class Program
     using var form=(Form)Activator.CreateInstance(formType,BindingFlags.Instance|BindingFlags.NonPublic,null,[new TutorialEditorPacket{Json=JsonConvert.SerializeObject(config),Revision="test"}],null)!;
     var grid=(PropertyGrid)formType.GetField("_properties",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(form)!;
     if(grid.SelectedObject is not ICustomTypeDescriptor)throw new Exception("Editor did not bind localized property adapter");
+    object Field(string name)=>formType.GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(form)!;
+    var targets=(ComboBox)Field("_highlightTarget");var x=(NumericUpDown)Field("_worldX");var y=(NumericUpDown)Field("_worldY");
+    var actual=(TutorialStep)Field("_selected");
+    targets.SelectedItem=TutorialHighlightTarget.WorldTile;
+    if(actual.HighlightTarget!=TutorialHighlightTarget.WorldTile||!x.Enabled||!y.Enabled)throw new Exception("World picker did not edit the actual step");
+    var tileCaption=targets.GetItemText(TutorialHighlightTarget.WorldTile);
+    if(tileCaption!=(language=="fr"?"Destination sur la carte":language=="es"?"Destino en el mapa":"World tile"))throw new Exception("Untranslated visual target picker");
+    x.Value=8;y.Value=9;
+    if(actual.TargetX!=8||actual.TargetY!=9)throw new Exception("Coordinate controls lost edits");
+    if(x.Maximum!=Math.Min(255,Intersect.Options.Instance.Map.MapWidth-1))throw new Exception("Editor permits tiles outside map");
+    targets.SelectedItem=TutorialHighlightTarget.WorldNpc;
+    if(!((ComboBox)Field("_worldNpc")).Enabled||x.Enabled)throw new Exception("Wrong controls enabled for NPC target");
+    var preview=(Control)Field("_preview");preview.Size=new System.Drawing.Size(800,465);preview.CreateControl();
+    using(var bitmap=new System.Drawing.Bitmap(800,465))preview.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,800,465));
     Console.WriteLine("PASS tutorial editor: translated property/choices, editable values and persistence ("+language+")");
    }
   }
   finally{CultureInfo.CurrentUICulture=original;}
+  foreach(var name in new[]{"guide_npc_v1.png","guide_ground_v1.png"})
+  {
+   using var image=new System.Drawing.Bitmap(Path.Combine("resources","gui","royal-guide",name));
+   // Generated soft edges can retain one alpha quantum (1/255); reject a visible backing.
+   if(image.GetPixel(0,0).A>1||image.GetPixel(image.Width-1,image.Height-1).A>1)throw new Exception("Marker background is not transparent");
+   if(name.Contains("ground")&&image.GetPixel(image.Width/2,image.Height/2).A!=0)throw new Exception("Ground marker hides terrain");
+   var visible=0;var red=0;
+   for(var row=0;row<image.Height;row+=2)for(var column=0;column<image.Width;column+=2)
+   {var pixel=image.GetPixel(column,row);if(pixel.A>100){visible++;if(pixel.R>pixel.G*2&&pixel.R>pixel.B*2)red++;}}
+   if(visible<100)throw new Exception("Empty marker image");
+   Console.WriteLine($"PASS marker alpha: {name} {image.Width}x{image.Height}; visible samples {visible}; red samples {red}");
+  }
  }
 }

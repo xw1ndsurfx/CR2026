@@ -2,26 +2,30 @@
 
 ## Dépendance
 
-Cette branche commence à la tête de `feat/royal-guide-interactive-tutorial`
-(PR #247). **Fusionner et tester la phase 1 avant la phase 2.**
+La PR #247 est fusionnée. Cette branche intègre `main` après cette fusion
+(`f369442bf67b49d24d3c170fe78e4d46162a3785`) et préserve ses correctifs de
+disposition, modalités, reprise et nettoyage des contrôles.
 Aucun changement de schéma SQL ou de protocole réseau n'est requis :
 les nouveaux champs sont ajoutés au JSON de configuration existant.
 
 ## Nouveaux repères en jeu
 
 - **Player** : un cercle animé et des flèches directionnelles encadrent le
-  personnage. Les tutoriels de mouvement existants en bénéficient sans
-  réinitialiser la progression.
+  personnage. Les nouveaux guides par défaut l'activent pour le mouvement.
+  Une étape existante réglée sur `None` reste sans repère ; ses identifiants
+  et sa progression sont préservés.
 - **WorldTile** : sélection d'une carte et d'une case X/Y ; marqueur au sol
   avec flèche lorsque la destination est visible.
 - **WorldNpc** : sélection d'une carte et d'un NPC descriptor ; l'entité
   correspondante la plus proche est ciblée **par identifiant** et non par
   correspondance approximative du nom.
 - Si le repère est hors écran, la direction est indiquée sur la bordure.
-  Si la carte n'est pas chargée ou si le PNJ n'existe plus, le repère est
+  Si la carte n'est pas chargée ou si le PNJ n'existe plus, est masqué ou
+  furtif, le repère est
   masqué (pas de faux objectif).
 - Les marqueurs se recalent sur `Graphics.CurrentView` et `Graphics.WorldScale`
-  : zoom, déplacement de caméra et cartes adjacentes sont pris en compte.
+  : zoom, échelle d'interface, déplacement de caméra et cartes adjacentes
+  sont pris en compte. Le sol suit les pieds, le médaillon suit la tête.
 - Ces repères n'interceptent ni souris, ni clavier, ni déplacements. Les
   cinématiques et exercices de combat les désactivent.
 
@@ -46,7 +50,7 @@ les interactions NPC automatiquement.
 L'onglet **Guide visuel** permet :
 
 - choisir la cible HUD, joueur, case ou PNJ ;
-- choisir une bordure ou un cercle ;
+- choisir une bordure ou un cercle pour une cible d'interface ;
 - choisir une vraie carte dans la liste ;
 - choisir un vrai PNJ par son identifiant ;
 - saisir les coordonnées X/Y et le rayon de détection ;
@@ -80,10 +84,31 @@ désérialisent avec leurs valeurs par défaut.
 12. **Régression** : quêtes et invocations d'interface de la phase 1
     restent fonctionnelles.
 
-## État de validation
+## Images et sons
 
-Des tests NUnit de configuration ont été ajoutés dans
-`Intersect.Tests/TutorialTests.cs`. L'environnement GitHub utilisé
-pour créer les commits **n'a pas accès à un SDK .NET, à l'éditeur Windows
-ni à un serveur de jeu** : aucune compilation ou validation en jeu n'a été
-effectuée ici. Ne pas fusionner comme « testé » sans faire cette vérification.
+Les PNG transparents se trouvent dans `resources/gui/royal-guide/` :
+`guide_npc_v1.png` (médaillon royal) et `guide_ground_v1.png` (anneau au sol).
+Les images originales sont conservées sans retouche ; les prompts de génération
+intégrée et empreintes sont dans `RoyalGuideAssets.json`. Le rendu garde un repère
+géométrique de secours lorsque l'image n'est pas installée.
+
+Les trois sons originaux sont dans `resources/sounds/` :
+
+- `royal_guide_objective_v1.wav` : nouvel objectif, 0,65 seconde ;
+- `royal_guide_step_v1.wav` : progression validée, 0,95 seconde ;
+- `royal_guide_complete_v1.wav` : fin du guide, 1,50 seconde.
+
+Ils sont synthétisés par `tools/generate_royal_guide_sounds.py`, sans échantillons
+externes, en PCM16 mono à 44,1 kHz, avec marge avant saturation. Ils utilisent le
+volume des effets du jeu. Les paquets répétés et pause/reprise ne rejouent pas le
+son ; les cinématiques et fenêtres modales diffèrent le signal. Les exercices
+de combat conservent leur présentation existante. Aucun moteur audio spécifique
+au client Intel n'est ajouté à cette branche.
+
+## Validation locale
+
+Les contrôles automatisés et les commandes reproductibles sont consignés dans
+`RoyalGuidePhase2-validation.fr.md`. L'essai réel avec un personnage connecté
+reste à effectuer : l'aperçu de l'éditeur et les tests sans GPU ne le remplacent pas.
+Les cartes et PNJ choisis dans le contenu du serveur doivent être configurés
+avant cette recette. Le guidage ne calcule pas d'itinéraire entre cartes non chargées.

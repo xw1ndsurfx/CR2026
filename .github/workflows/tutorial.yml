@@ -4,6 +4,10 @@ on:
     paths:
       - '**/*Tutorial*'
       - '**/Tutorials/**'
+      - 'Utilities/Tutorial*/**'
+      - 'resources/gui/royal-guide/**'
+      - 'resources/sounds/royal_guide_*'
+      - 'tools/generate_royal_guide_sounds.py'
       - 'Intersect.Editor/Resources/EditorHub/Catalog.json'
       - '.github/workflows/tutorial.yml'
   workflow_dispatch:
@@ -22,10 +26,16 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Tutorial configuration, localization, progress and protocol tests
-        run: dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter FullyQualifiedName~TutorialTests
+        run: dotnet test Intersect.Tests/Intersect.Tests.csproj -c Release --filter "FullyQualifiedName~TutorialTests|FullyQualifiedName~TutorialCombatLessonsTests"
       - name: Compile server integration
         run: dotnet build Intersect.Server.Core/Intersect.Server.Core.csproj -c Debug
       - name: Compile client integration
         run: dotnet build Intersect.Client.Core/Intersect.Client.Core.csproj -c Debug
       - name: Compile editor integration
         run: dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug
+      - name: World guidance server validation
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter FullyQualifiedName~TutorialWorldGuidanceTests
+      - name: Guide layout, markers and sound transitions
+        run: dotnet run --project Utilities/TutorialUiTests/TutorialUiTests.csproj -c Release
+      - name: Visual editor and transparent assets
+        run: dotnet run --project Utilities/TutorialEditorTests/TutorialEditorTests.csproj -c Release
