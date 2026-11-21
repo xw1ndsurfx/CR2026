@@ -12,6 +12,29 @@ namespace Intersect.Tests;
 public sealed class TutorialTests
 {
     [Test]
+    public void HighlightSettingsRoundTripAndOldGuidesKeepTheirProgress()
+    {
+        var config=TutorialConfiguration.CreateDefault();
+        var progress=new TutorialProgress{Completed=[config.Steps[0].Id]};
+        var json=Newtonsoft.Json.Linq.JObject.FromObject(config);
+        foreach(var step in json["Steps"]!.Children<Newtonsoft.Json.Linq.JObject>())
+        {step.Remove("HighlightTarget");step.Remove("HighlightStyle");}
+        var legacy=json.ToObject<TutorialConfiguration>()!;
+        Assert.That(legacy.IsValid,Is.True);
+        Assert.That(progress.Current(legacy)!.Id,Is.EqualTo(config.Steps[1].Id));
+        Assert.That(legacy.Steps.All(step=>step.HighlightTarget==TutorialHighlightTarget.None),Is.True);
+        legacy.Steps[0].HighlightTarget=TutorialHighlightTarget.WorldMap;
+        legacy.Steps[0].HighlightStyle=TutorialHighlightStyle.Circle;
+        var loaded=JsonConvert.DeserializeObject<TutorialConfiguration>(JsonConvert.SerializeObject(legacy))!;
+        Assert.That(loaded.Steps[0].HighlightTarget,Is.EqualTo(TutorialHighlightTarget.WorldMap));
+        Assert.That(loaded.Steps[0].HighlightStyle,Is.EqualTo(TutorialHighlightStyle.Circle));
+        loaded.Steps[0].HighlightTarget=(TutorialHighlightTarget)999;
+        Assert.That(loaded.IsValid,Is.False);
+        loaded.Steps[0].HighlightTarget=TutorialHighlightTarget.None;
+        loaded.Steps[0].HighlightStyle=(TutorialHighlightStyle)999;
+        Assert.That(loaded.IsValid,Is.False);
+    }
+    [Test]
     public void DefaultIsUsableWithoutGameSpecificIdsAndFullyTranslated()
     {
         var config = TutorialConfiguration.CreateDefault();

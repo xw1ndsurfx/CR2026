@@ -74,7 +74,7 @@ internal sealed class FrmTutorial : Form
     { _loading = true; _steps.DataSource = null; _steps.DataSource = _config.Steps.ToArray(); _steps.SelectedItem = step; _loading = false; LoadStep(step); }
     private void LoadStep(TutorialStep? step)
     {
-        _selected = step; _loading = true; _properties.SelectedObject = step;
+        _selected = step; _loading = true; _properties.SelectedObject = step == null ? null : new TutorialStepProperties(step);
         if (step != null) for (var i = 0; i < 3; i++) { var lang = new[] { "en", "fr", "es" }[i]; _titles[i].Text = _config.Translations.Get(step.Title, lang); _texts[i].Text = _config.Translations.Get(step.Text, lang); }
         var choices = new List<SceneChoice> { new(Guid.Empty, T("None")) };
         choices.AddRange(EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new SceneChoice(e.Id, e.Name)));

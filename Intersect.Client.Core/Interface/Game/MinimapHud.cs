@@ -47,6 +47,7 @@ internal sealed class MinimapHud : Base
     private readonly Label _south;
     private readonly Label _west;
     private readonly Button _worldMapButton;
+    internal Base TutorialWorldMapTarget => _worldMapButton;
     private readonly WorldMapWindow.WorldMapCanvas _mapCanvas;
 
     public MinimapHud(Base parent, Action openWorldMap) : base(parent, "MinimapHud")

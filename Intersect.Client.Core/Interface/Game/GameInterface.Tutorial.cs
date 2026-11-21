@@ -23,5 +23,7 @@ public partial class GameInterface
                 ? step.Objective : null;
         _advancedCombatHud?.SetTrainingHint(_combatTrainingHint);
     }
+    internal void NotifyTutorialHudAction(TutorialHighlightTarget target) =>
+        _tutorialWindow?.CompleteOnHudAction(target);
     private void UpdateTutorialGuide() => _tutorialWindow?.RefreshVisibility();
 }

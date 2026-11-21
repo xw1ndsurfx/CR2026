@@ -13,12 +13,33 @@ public enum TutorialObjective
     CombatCounterattack = 6,
     CombatFinisher = 7,
 }
+/// <summary>HUD target for a nonblocking tutorial spotlight.</summary>
+public enum TutorialHighlightTarget
+{
+    None = 0,
+    Menu = 1,
+    Inventory = 2,
+    Quests = 3,
+    Minimap = 4,
+    Character = 5,
+    WorldMap = 6,
+    Hotbar = 7,
+}
+
+public enum TutorialHighlightStyle
+{
+    Outline = 0,
+    Circle = 1,
+}
+
 public sealed class TutorialStep
 {
     [System.ComponentModel.Browsable(false)] public Guid Id { get; set; } = Guid.NewGuid();
     [System.ComponentModel.Browsable(false)] public string Title { get; set; } = "";
     [System.ComponentModel.Browsable(false)] public string Text { get; set; } = "";
     public TutorialObjective Objective { get; set; }
+    public TutorialHighlightTarget HighlightTarget { get; set; }
+    public TutorialHighlightStyle HighlightStyle { get; set; } = TutorialHighlightStyle.Outline;
     public Guid MapId { get; set; }
     public Guid VariableId { get; set; }
     public long VariableValue { get; set; } = 1;
@@ -34,7 +55,7 @@ public sealed class TutorialConfiguration
     public bool IsValid => Steps is { Count: > 0 and <= 100 } && Translations?.Entries != null &&
         Steps.All(s => s != null && s.Id != Guid.Empty && !string.IsNullOrWhiteSpace(s.Title) &&
             !string.IsNullOrWhiteSpace(s.Text) && s.Title.Length <= 200 && s.Text.Length <= 6000 &&
-            Enum.IsDefined(s.Objective) && (s.Objective != TutorialObjective.ReachMap || s.MapId != Guid.Empty) &&
+            Enum.IsDefined(s.Objective) && Enum.IsDefined(s.HighlightTarget) && Enum.IsDefined(s.HighlightStyle) && (s.Objective != TutorialObjective.ReachMap || s.MapId != Guid.Empty) &&
             (s.Objective != TutorialObjective.Variable || s.VariableId != Guid.Empty) &&
             new[] { s.Title, s.Text }.All(source => GameTextCatalog.Languages.All(lang =>
                 Translations.Entries.TryGetValue(GameTextCatalog.NormalizeText(source), out var versions) && versions != null &&
@@ -53,7 +74,16 @@ public sealed class TutorialConfiguration
             "Discover activities such as cards, cooking, potion brewing, lockpicking, archery and jousting. Each activity introduces its own rules when opened.",
             "Visit a harbour to discover ships, crews, cannons and ammunition. Prepare your ship before sailing and learn navigation with your crew.",
             "You are ready to explore. You can replay this guide at any time. Enjoy Corps Royaux!" };
-        for (var i = 0; i < titles.Length; i++) result.Steps.Add(new() { Id = Guid.Parse($"c1026029-0000-4000-8000-{i+1:000000000000}"), Title = titles[i], Text = texts[i], Objective = i == 1 ? TutorialObjective.Move : TutorialObjective.Read });
+        for (var i = 0; i < titles.Length; i++) result.Steps.Add(new() { Id = Guid.Parse($"c1026029-0000-4000-8000-{i+1:000000000000}"), Title = titles[i], Text = texts[i], Objective = i == 1 ? TutorialObjective.Move : TutorialObjective.Read,
+            HighlightTarget = i switch
+            {
+                2 => TutorialHighlightTarget.Menu,
+                3 => TutorialHighlightTarget.Inventory,
+                4 => TutorialHighlightTarget.Quests,
+                7 => TutorialHighlightTarget.Minimap,
+                _ => TutorialHighlightTarget.None,
+            },
+            HighlightStyle = i == 7 ? TutorialHighlightStyle.Circle : TutorialHighlightStyle.Outline });
         return result;
     }
 }
