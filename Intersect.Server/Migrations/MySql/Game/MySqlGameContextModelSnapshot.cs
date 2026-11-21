@@ -729,6 +729,17 @@ namespace Intersect.Server.Migrations.MySql.Game
                         .HasColumnName("DeathAnimation")
                         .UseCollation("ascii_general_ci");
 
+                    b.Property<string>("DeathSound")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ProximitySound")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ProximitySoundRadius")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("EventId")
                         .HasColumnType("char(36)")
                         .HasColumnName("Event")

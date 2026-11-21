@@ -38,8 +38,9 @@ public sealed class DungeonAbandonTests
         }
     }
 
-    [Test]
-    public void AbandonRemovesOnlyTheRequesterAndLastDepartureCleansTheRun()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void AbandonRemovesOnlyTheRequesterAndLastDepartureCleansTheRun(bool completionStarted)
     {
         Options.EnsureCreated();
         var dungeon = new DungeonDefinition { ExitMapId = Guid.NewGuid(), MapIds = [Guid.NewGuid()] };
@@ -69,17 +70,19 @@ public sealed class DungeonAbandonTests
         try
         {
             Assert.That(DungeonRunRuntime.TryAbandon(first, Guid.NewGuid()), Is.False, "Reject a stale confirmation.");
-            first.MapId = Guid.NewGuid();
-            Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.False, "Require the player to be in this dungeon.");
-            first.MapId = dungeon.MapIds[0];
+            first.MapInstanceId = Guid.NewGuid();
+            Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.False, "Require the participant to be in the matching instance.");
+            first.MapInstanceId = instance;
             participants.TryRemove(first.Id, out _);
             Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.False, "An outsider cannot leave another player's run.");
             participants[first.Id] = 0;
             RunType.GetProperty("Finished")!.SetValue(run, true);
             Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.False, "A completed run cannot be abandoned.");
             RunType.GetProperty("Finished")!.SetValue(run, false);
-            RunType.GetField("CompletionStarted")!.SetValue(run, true);
-            Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.True);
+            RunType.GetField("CompletionStarted")!.SetValue(run, completionStarted);
+            first.MapId = Guid.NewGuid(); // A linked room missing from the configured map list.
+            Assert.That(DungeonRunRuntime.TryAbandon(first, runId), Is.True,
+                "An enrolled participant can abandon from any room of the same run instance.");
             Assert.That(loot.Contains(first.Id), Is.False, "Unclaimed rewards are discarded for the departing player.");
             Assert.That(first.MapId, Is.EqualTo(dungeon.ExitMapId));
             Assert.That(first.ExitWarps, Is.EqualTo(1));
@@ -112,6 +115,7 @@ public sealed class DungeonAbandonTests
         Assert.That(state.RunId, Is.EqualTo(id));
         Assert.That(state.Status, Is.EqualTo(DungeonRunStatus.Abandoned));
         foreach (var text in new[] { "Abandon dungeon", "DUNGEON ABANDONED", "You abandoned the dungeon.",
+            "Unable to abandon: no matching active dungeon run was found.",
             "Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue." })
         {
             foreach (var language in GameTextCatalog.Languages)

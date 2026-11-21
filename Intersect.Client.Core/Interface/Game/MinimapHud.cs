@@ -22,12 +22,21 @@ namespace Intersect.Client.Interface.Game;
 /// </summary>
 internal sealed class MinimapHud : Base
 {
+#if ANDROID
+    private const int CompactWidth = 180;
+    private const int CompactHeight = 210;
+    private const int MapViewportX = 24;
+    private const int MapViewportY = 40;
+    private const int MapViewportWidth = 132;
+    private const int MapViewportHeight = 110;
+#else
     private const int CompactWidth = 280;
     private const int CompactHeight = 315;
     private const int MapViewportX = 34;
     private const int MapViewportY = 58;
     private const int MapViewportWidth = 212;
     private const int MapViewportHeight = 178;
+#endif
 
     private readonly HudDisclosure _disclosure;
     private readonly Label _mapName;
@@ -132,6 +141,12 @@ internal sealed class MinimapHud : Base
         // Keep the map canvas inside the compass rails and above the footer controls.
         // Child canvases render over earlier siblings, so never overlap labels or buttons.
         _mapCanvas.SetBounds(MapViewportX, MapViewportY, MapViewportWidth, MapViewportHeight);
+#if ANDROID
+        _mapName.SetBounds(8, 4, Width - 42, 24);
+        _coords.SetBounds(8, Height - 26, Width - 16, 20);
+        _worldMapButton.SetBounds(12, Height - 57, Width - 24, 30);
+        _north.IsHidden = _east.IsHidden = _south.IsHidden = _west.IsHidden = true;
+#endif
     }
 
     public void Update()
@@ -152,6 +167,10 @@ internal sealed class MinimapHud : Base
 
     private void UpdatePremiumBadge()
     {
+#if ANDROID
+        _premium.IsHidden = true;
+        return;
+#endif
         var remaining=Intersect.Client.WorldEvents.PremiumState.Remaining;
         _premium.IsHidden=remaining<=0 || remaining>=7L*86400000 || Globals.Database?.ShowPremiumHud==false || _disclosure.Collapsed;
         if(!_premium.IsHidden)_premium.Text=Client.Localization.ClientLanguages.Format("Premium: {0}",Client.Localization.ClientLanguages.Format("{0}d {1}",remaining/86400000,$"{remaining/3600000%24:00}:{remaining/60000%60:00}"));

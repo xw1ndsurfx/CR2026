@@ -7,6 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../Intersect.Server.Core/Database/PlayerData/UserSaveDebounce.cs" Link="UserSaveDebounce.cs" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../../Intersect.Server.Core/Core/ServerCrashLog.cs" Link="ServerCrashLog.cs" />
     <Compile Include="../../Intersect.Server.Core/Core/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />

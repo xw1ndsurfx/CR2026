@@ -60,7 +60,8 @@ internal partial class MonoRenderer
         public override Color GetPixel(int x, int y)
         {
             var pixel = new Microsoft.Xna.Framework.Color[1];
-            PlatformTexture?.GetData(0, new Rectangle(x, y, 1, 1), pixel, 0, 1);
+            if (PlatformTexture is { } texture)
+                TextureReadback.GetData(texture, 0, new Rectangle(x, y, 1, 1), pixel, 0, 1);
             return new Color(pixel[0].A, pixel[0].R, pixel[0].G, pixel[0].B);
         }
 
@@ -78,9 +79,23 @@ internal partial class MonoRenderer
         public override void Clear(Color color)
         {
             Renderer.EndSpriteBatch();
+#if ANDROID
+            var device = Renderer._graphicsDevice;
+            var previousTargets = device.GetRenderTargets();
+            try
+            {
+                device.SetRenderTarget(PlatformTexture);
+                device.Clear(ConvertColor(color));
+            }
+            finally
+            {
+                device.SetRenderTargets(previousTargets);
+            }
+#else
             Renderer._graphicsDevice.SetRenderTarget(PlatformTexture);
             Renderer._graphicsDevice.Clear(ConvertColor(color));
             Renderer._graphicsDevice.SetRenderTarget(default);
+#endif
         }
     }
 }

@@ -103,12 +103,14 @@ public partial class Player
         if (PetCollection.MasteryRespec != null) message = "Your paid mastery reset is awaiting recovery. No further payment was taken.";
         SendPacket(new ArcheryStatePacket { Open = open, Message = message,
             ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(MasteryExperience),
-            MasteryRanksJson = JsonSerializer.Serialize(MasteryRanks) });
+            MasteryRanksJson = JsonSerializer.Serialize(MasteryRanks),
+            WeaponSkillSlotsJson = JsonSerializer.Serialize(RoyalCombatRuntime.LoadWeaponSkillSlots(Id)) });
         SendWeaponSkillCooldowns();
     }
 
     internal void HandleArcheryRequest(ArcheryRequestPacket packet)
     {
+        if (packet.Action == ArcheryAction.SetWeaponSkillSlot) { HandleWeaponSkillSlot(packet); return; }
         if (packet.Action == ArcheryAction.UseWeaponSkill)
         {
             if(!HandleWeaponSkill(packet))SendWeaponSkillCooldowns("Skill unavailable: check your weapon, target and cooldown.");

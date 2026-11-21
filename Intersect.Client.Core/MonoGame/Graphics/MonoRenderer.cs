@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Intersect.Client.Classes.MonoGame.Graphics;
@@ -116,7 +116,17 @@ internal partial class MonoRenderer : GameRenderer
     private int _screenWidth;
 
     private RenderTarget2D? _screenshotRenderTarget;
-
+    private RenderTarget2D? ScreenRenderTarget
+    {
+        get
+        {
+#if ANDROID
+            return _screenshotRenderTarget ?? _androidFrameTarget;
+#else
+            return _screenshotRenderTarget;
+#endif
+        }
+    }
     private SpriteBatch? _spriteBatch;
 
     private bool _spriteBatchBegan;
@@ -159,6 +169,19 @@ internal partial class MonoRenderer : GameRenderer
 
     public void UpdateGraphicsState(int width, int height, bool initial = false)
     {
+#if ANDROID
+        var display = _graphicsDeviceManager.GraphicsDevice.DisplayMode;
+        _screenWidth = _displayWidth = display.Width;
+        _screenHeight = _displayHeight = display.Height;
+        _graphicsDeviceManager.IsFullScreen = true;
+        _graphicsDeviceManager.PreferredBackBufferWidth = _screenWidth;
+        _graphicsDeviceManager.PreferredBackBufferHeight = _screenHeight;
+        _graphicsDeviceManager.SynchronizeWithVerticalRetrace = true;
+        _game.IsFixedTimeStep = true;
+        _game.TargetElapsedTime = TimeSpan.FromSeconds(1.0 / 60);
+        _graphicsDeviceManager.ApplyChanges();
+        return;
+#else
         var currentDisplayMode = _graphicsDeviceManager.GraphicsDevice.Adapter.CurrentDisplayMode;
 
         if (Globals.Database.FullScreen)
@@ -251,10 +274,14 @@ internal partial class MonoRenderer : GameRenderer
         {
             _displayModeChanged = true;
         }
+#endif
     }
 
     public override bool Begin()
     {
+#if ANDROID
+        PrepareAndroidFrame();
+#endif
         if (_fullscreenChangedTimer > -1 && _fullscreenChangedTimer < Timing.Global.MillisecondsUtc)
         {
             _graphicsDeviceManager.PreferredBackBufferWidth--;
@@ -340,7 +367,7 @@ internal partial class MonoRenderer : GameRenderer
             }
             else
             {
-                _graphicsDevice?.SetRenderTarget(_screenshotRenderTarget);
+                _graphicsDevice?.SetRenderTarget(ScreenRenderTarget);
             }
 
             var blend = _normalState;
@@ -439,7 +466,7 @@ internal partial class MonoRenderer : GameRenderer
         EndSpriteBatch();
 
         var graphicsDevice = GraphicsDevice;
-        graphicsDevice.SetRenderTarget(_screenshotRenderTarget);
+        graphicsDevice.SetRenderTarget(ScreenRenderTarget);
         graphicsDevice.BlendState = _normalState;
         graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         graphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
@@ -448,6 +475,9 @@ internal partial class MonoRenderer : GameRenderer
 
     public override void Close()
     {
+#if ANDROID
+        DisposeAndroidPresentation();
+#endif
         DisposeWorldBlur();
     }
 
@@ -899,6 +929,9 @@ internal partial class MonoRenderer : GameRenderer
 
     public Resolution[] GetAllowedResolutions()
     {
+#if ANDROID
+        return [new Resolution(_graphicsDevice!.DisplayMode.Width, _graphicsDevice.DisplayMode.Height)];
+#else
         var allowedResolutions = new[]
             {
                 //new Resolution(800),
@@ -932,6 +965,7 @@ internal partial class MonoRenderer : GameRenderer
         }
 
         return allowedResolutions;
+#endif
     }
 
     public override List<string> ValidVideoModes
@@ -1096,7 +1130,7 @@ internal partial class MonoRenderer : GameRenderer
         );
     }
 
-    private readonly Dictionary<SpriteFont, char> _defaultCharacterForSpriteFont = [];
+    private readonly Dictionary<SpriteFont, FontGlyphFallback> _textFallbackForSpriteFont = [];
     private GameShader _basicShader;
 
     protected override void OnCursorChanged(IGameTexture? newCursor)
@@ -1106,19 +1140,16 @@ internal partial class MonoRenderer : GameRenderer
 
     private string SanitizeText(string text, SpriteFont spriteFont)
     {
-        if (!_defaultCharacterForSpriteFont.TryGetValue(spriteFont, out var defaultCharacter))
+        if (!_textFallbackForSpriteFont.TryGetValue(spriteFont, out var fallback))
         {
-            defaultCharacter = spriteFont.DefaultCharacter ??
+            var defaultCharacter = spriteFont.DefaultCharacter ??
                                (spriteFont.Characters.Contains(' ') ? ' ' : spriteFont.Characters.FirstOrDefault());
-            _defaultCharacterForSpriteFont[spriteFont] = defaultCharacter;
+            fallback = new FontGlyphFallback(spriteFont.Characters, defaultCharacter);
+            _textFallbackForSpriteFont[spriteFont] = fallback;
         }
-
-        var invalidCharacters = text.Where(@char => !spriteFont.Characters.Contains(@char)).Distinct().ToArray();
-        text = invalidCharacters.Aggregate(
-            text,
-            (current, invalidCharacter) => current.Replace(invalidCharacter, defaultCharacter)
-        );
-        return text;
+        // Measurement and both drawing paths call this same conversion, so a
+        // multi-glyph fallback (such as ... or ->) gets its actual display width.
+        return fallback.Prepare(text);
     }
 
     private Matrix CreateViewMatrix(FloatRect view)
@@ -1207,14 +1238,18 @@ internal partial class MonoRenderer : GameRenderer
 
         var skippedFrame = _screenshotRenderTarget;
         _screenshotRenderTarget = null;
-        graphicsDevice.SetRenderTarget(null);
+        graphicsDevice.SetRenderTarget(ScreenRenderTarget);
 
         if (!Begin())
         {
             return;
         }
 
+#if ANDROID
+        _spriteBatch?.Draw(skippedFrame, new XNARectangle(0, 0, _screenWidth, _screenHeight), XNAColor.White);
+#else
         _spriteBatch?.Draw(skippedFrame, new XNARectangle(), XNAColor.White);
+#endif
         End();
     }
 }

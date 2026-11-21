@@ -23,7 +23,7 @@ public partial class Entity
         }
         catch (Exception) { }
     }
-    private MountDefinition? RenderedMount => this is Player player ? player.ActiveMount : _arenaMount;
+    private MountDefinition? RenderedMount => _navalDeckOrigin.HasValue ? null : this is Player player ? player.ActiveMount : _arenaMount;
     internal bool MountMovementActive => IsMoving || ServerMovementMilliseconds > 0;
     private bool _integratedMountRider;
     private MountRiderTransform? _riderTransform;

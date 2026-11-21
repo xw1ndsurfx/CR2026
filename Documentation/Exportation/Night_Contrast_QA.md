@@ -39,3 +39,11 @@ Certains textes étaient également brun foncé sur les zones sombres.
 Le test NUnit de contraste garde l’opacité du voile sous 100/255 et
 protège la présence des couches de fond. Il ne remplace pas une
 validation visuelle avec les vrais PNG ni un test in-game de nuit.
+
+## Artwork alignment and Empire 7 at global size 10
+
+The approved 1672x941 background (manifest SHA-256 unchanged) is the layout reference. The help control is on its original upper-right red plaque. Cargo counts, shelf cells, progress bar, recipient panel and bottom actions are anchored to their matching artwork. Single-page pagination is hidden. Item icons keep their aspect ratio.
+
+Texture drawing now honors the explicit tint argument, rather than inheriting the preceding backing fill. This prevents brown/low-alpha fills from darkening the parchment and inventory icons. Tests cover explicit white and translucent tints, including horizontal mirroring and clipping.
+
+Empire 7 stores small visible glyphs inside 16px cells. Exportation now fits text to measured visible capital-letter ink and compensates vertical centering, while preserving the selected font and global font size. Fitting results are cached until text, layout or font settings change. Validate preparing, sealed, lost and delivered states at 1280x720 and 800x600, in en/fr/es. The help question mark is an intentional help control, not a missing glyph.

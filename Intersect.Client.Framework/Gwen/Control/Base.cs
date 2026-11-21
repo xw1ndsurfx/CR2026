@@ -4355,8 +4355,9 @@ public partial class Base : IDisposable
         // ReSharper disable once InvertIf
         if (parent._innerPanel is { } innerPanel && innerPanel.IsChild(this))
         {
-            x += innerPanel.X;
-            y += innerPanel.Y;
+            // The logical owner's content may itself be hosted in a viewport.
+            // Follow that physical chain, including its scroll offsets.
+            return innerPanel.ToCanvas(x, y);
         }
 
         return _host.ToCanvas(x, y);

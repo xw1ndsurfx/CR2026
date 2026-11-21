@@ -1,3 +1,4 @@
+﻿using Intersect.Network.Packets.Server;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -15,34 +16,45 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
-    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt;}
+    private sealed class GunSeat {internal Guid Owner,Lease,Reservation;internal long Until,ReadyAt,AimAt;internal double Yaw;internal bool FishingStarted;}
     private sealed record GunReward(long Experience,long RetryAt=0);
     private static readonly Dictionary<Guid,GunReward> PendingGunnery=[];
     private static int PendingCrewShots;
-    private static bool GunnerEligible(Player player,Vessel vessel)=>!player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
+    private static bool GunnerEligible(Player player,Vessel vessel)=>vessel.EnemyBoardingEncounter==Guid.Empty && ShipDeck.Activity(vessel.Definition)==ShipDeckActivity.Cannons && !player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
         vessel.State.CaptainId!=Guid.Empty && (player.Id==vessel.State.CaptainId || player.Party.Any(m=>m.Id==vessel.State.CaptainId)) && vessel.Enemy==null && vessel.SunkUntil==0 && vessel.Health>0 && !Repairs.ContainsKey(player.Id) &&
         (vessel.State.CaptainId==player.Id || vessel.Crew.TryGetValue(player.Id,out var crew) && Timing.Global.Milliseconds-crew.Seen<=1500);
     private static void PruneGuns(Vessel vessel,long now)
     {
         foreach(var entry in vessel.Guns)
-            if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
+            if(!ValidGunKey(vessel,entry.Key) || entry.Value.Until<=now || vessel.SunkUntil>0 ||
                 vessel.State.CaptainId==Guid.Empty || entry.Value.Owner==Driver(vessel) || Repairs.ContainsKey(entry.Value.Owner) ||
                 entry.Value.Owner!=vessel.State.CaptainId && (!vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500))
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
     }
+    private static NavalCrewStation[] CrewStationSnapshot(Vessel vessel,long now) => vessel.Guns
+        .Where(g => ShipDeck.Activity(vessel.Definition)==ShipDeckActivity.Cannons && ValidGunKey(vessel,g.Key) && g.Value.Owner!=Guid.Empty &&
+            g.Value.Until>now && g.Value.Owner!=Driver(vessel) && vessel.SunkUntil==0 && vessel.Health>0 &&
+            !Repairs.ContainsKey(g.Value.Owner) && (g.Value.Owner==vessel.State.CaptainId ||
+            vessel.Crew.TryGetValue(g.Value.Owner,out var crew) && now-crew.Seen<=1500))
+        .Select(g => new NavalCrewStation {PlayerId=g.Value.Owner,Starboard=g.Key>=GunStride(vessel),
+            Index=g.Key%GunStride(vessel),Yaw=g.Value.Yaw}).ToArray();
+
     private static GunneryState GunnerState(Player player,long now)
     {
         var settings=_settings.Gunnery;var progress=settings.Curve().Progress(player.GunneryExperience);
         var result=new GunneryState {Level=progress.Level,Experience=progress.Experience,Required=progress.Required,
             CannonsPerSide=settings.CannonsPerSide,AimArcDegrees=settings.AimArcDegrees,Message=player.GunneryMessage??"",
             Enabled=_settings.CannonsEnabled && settings.Enabled};
-        if(!Ships.TryGetValue(player.NavalShipId,out var vessel) || !GunnerEligible(player,vessel)) return result;
+        if(!Ships.TryGetValue(player.NavalShipId,out var vessel))return result;
+        result.CannonsPerSide=Math.Max(1,MountedCannons(vessel,false));
+        if(ShipDeck.Activity(vessel.Definition)==ShipDeckActivity.Fishing){result.Enabled=false;return result;}
+        if(!GunnerEligible(player,vessel))return result;
         PruneGuns(vessel,now);result.ShipId=vessel.State.Id;
         var occupied=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
         if(occupied.Value!=null)
         {
-            result.LeaseId=occupied.Value.Lease;result.Station=occupied.Key%settings.CannonsPerSide;
-            result.Starboard=occupied.Key>=settings.CannonsPerSide;
+            result.LeaseId=occupied.Value.Lease;result.Station=occupied.Key%GunStride(vessel);
+            result.Starboard=occupied.Key>=GunStride(vessel);
             result.ReloadMilliseconds=(int)Math.Clamp(occupied.Value.ReadyAt-now,0,180000);
         }
         result.Ammunition=_settings.Ammunition.Select(a=>new CannonAmmoView {Icon=a.Icon,Kind=a.Kind,RequiredLevel=a.RequiredLevel,
@@ -62,30 +74,40 @@ internal static partial class NavalSystem
                 if(!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z!=0 ||
                     player.InstanceType!=MapInstanceType.Overworld || !Enum.IsDefined(packet.Action) ||
                     !Ships.TryGetValue(packet.ShipId,out var vessel) || player.MapId!=vessel.State.MapId || !GunnerEligible(player,vessel)) return;
-                if(now-player.LastGunneryRequest<100) return;
-                player.LastGunneryRequest=now;PruneGuns(vessel,now);
-                var count=_settings.Gunnery.CannonsPerSide;
+                if(packet.Action!=CannonStationAction.Renew && packet.Action!=CannonStationAction.Release)
+                {
+                    if(now-player.LastGunneryRequest<100) return;
+                    player.LastGunneryRequest=now;
+                }
+                PruneGuns(vessel,now);
+                var count=GunStride(vessel);
                 var current=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
                 if(packet.Action==CannonStationAction.Release)
                 {
-                    if(current.Value!=null && current.Value.Lease==packet.LeaseId) current.Value.Owner=current.Value.Lease=Guid.Empty;
+                    if(current.Value==null || current.Value.Lease!=packet.LeaseId)return;
+                    current.Value.Owner=current.Value.Lease=Guid.Empty;
                     SendSnapshot(player);return;
                 }
                 if(!_settings.Gunnery.Enabled || !_settings.CannonsEnabled) {player.GunneryMessage="Crew cannons are disabled.";SendSnapshot(player);return;}
                 if(packet.Action==CannonStationAction.Acquire)
                 {
                     var start=packet.Starboard?count:0;
-                    var index=Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
-                    if(index<0) player.GunneryMessage="All cannons on this side are occupied.";
+                    var index=DeckEnabled(vessel)?NearestDeckGun(vessel,player.Id,packet.Starboard,now):
+                        Enumerable.Range(start,count).FirstOrDefault(i=>!vessel.Guns.TryGetValue(i,out var gun) || gun.Owner==Guid.Empty || gun.Owner==player.Id,-1);
+                    if(index<0) player.GunneryMessage=DeckEnabled(vessel)?"Move closer to a free cannon or the helm.":"All cannons on this side are occupied.";
                     else
                     {
                         if(current.Value!=null) current.Value.Owner=current.Value.Lease=Guid.Empty;
                         if(!vessel.Guns.TryGetValue(index,out var gun)) vessel.Guns[index]=gun=new();
-                        gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;player.GunneryMessage="";
+                        gun.Owner=player.Id;gun.Lease=Guid.NewGuid();gun.Until=now+3500;gun.Yaw=0;gun.AimAt=now-100;player.GunneryMessage="";
                     }
                     SendSnapshot(player);return;
                 }
                 if(current.Value==null || current.Value.Lease!=packet.LeaseId || ((current.Key>=count)!=packet.Starboard)) return;
+                if(!GunneryAim.Valid(packet.Yaw,packet.Elevation,_settings.Gunnery.AimArcDegrees)) return;
+                if(packet.Action==CannonStationAction.Renew && now-current.Value.AimAt<100) return;
+                current.Value.AimAt=now;
+                current.Value.Yaw=packet.Yaw;
                 current.Value.Until=now+3500;
                 if(packet.Action==CannonStationAction.Renew) return;
                 if(packet.Action!=CannonStationAction.Fire || !GunneryAim.Valid(packet.Yaw,packet.Elevation,_settings.Gunnery.AimArcDegrees) ||
@@ -95,13 +117,14 @@ internal static partial class NavalSystem
                 {player.GunneryMessage="This ammunition requires a higher Gunnery level.";SendSnapshot(player);return;}
                 if(ammo.RequiresItem && (ammo.ItemId==Guid.Empty || ItemDescriptor.Get(ammo.ItemId)?.IsStackable!=true || AmmoCount(player,ammo.ItemId)<ammo.UnitsPerShot))
                 {player.GunneryMessage="Not enough ammunition for this cannonball.";SendSnapshot(player);return;}
-                var s=vessel.State;var beam=ShipActions.Direction(s.Heading,packet.Starboard);
-                var offset=GunneryAim.StationOffset(current.Key%count,count,vessel.Definition.Length);
-                var angle=s.Heading*Math.PI/180;var radius=vessel.Definition.Width/2+.1;
-                var map=s.MapId;var x=s.X+beam.X*radius+Math.Sin(angle)*offset;var y=s.Y+beam.Y*radius-Math.Cos(angle)*offset;
+                var s=vessel.State;var beam=CannonBeam(vessel,packet.Starboard);
+                var offset=StationOffset(vessel,current.Key%count,packet.Starboard);
+                var angle=s.Heading*Math.PI/180;var radius=(DeckKind(vessel)==ShipDeckKind.Raft?vessel.Definition.Length:vessel.Definition.Width)/2+.1;
+                var muzzle=NavalShipAtlas.Muzzle(DeckGraphic(vessel),s.Heading,packet.Starboard,current.Key%count,packet.Yaw);
+                var map=s.MapId;var x=s.X+(muzzle?.X??(beam.X*radius+Math.Sin(angle)*offset));var y=s.Y+(muzzle?.Y??(beam.Y*radius-Math.Cos(angle)*offset));
                 if(!OceanMapResolver.Resolve(OceanMapResolver.Maps(),ref map,ref x,ref y) || BlocksCannonball(map,x,y))
                 {player.GunneryMessage="The cannon muzzle is blocked.";SendSnapshot(player);return;}
-                var heading=ShipMovement.Normalize(s.Heading+(packet.Starboard?90:-90)+packet.Yaw);var radians=heading*Math.PI/180;
+                var heading=ShipMovement.Normalize(CannonHeading(vessel,packet.Starboard)+packet.Yaw);var radians=heading*Math.PI/180;
                 var flight=CannonFlight.Plan(packet.Elevation,_settings.CannonSpeed,NavalSkillDefinition.Range(_settings.CannonRange,ammo.RangePercent,SkillPower(vessel,NavalSkillKind.LongRange,now)));
                 shot=new() {Ammo=ammo,ImpactAnimationId=ammo.ImpactAnimationId,Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                     DirectionX=Math.Sin(radians),DirectionY=-Math.Cos(radians),Heading=heading,Born=now,Speed=flight.HorizontalSpeed,

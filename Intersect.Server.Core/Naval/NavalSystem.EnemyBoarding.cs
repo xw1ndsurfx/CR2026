@@ -22,6 +22,8 @@ internal static partial class NavalSystem
         internal readonly HashSet<Guid> Members=[],DefeatedCrew=[];
         internal bool Starting=true,Finished,Won;
         internal long Started;
+        internal NavalMonsterDefinition? Monster;
+        internal NavalMonsterBattle? MonsterBattle;
     }
     private static readonly Dictionary<Guid,EnemyBoardingRun> EnemyBoardings=[];
     private static readonly Dictionary<Guid,Guid> BoardingPlayers=[];
@@ -35,21 +37,21 @@ internal static partial class NavalSystem
         if(!Ships.TryGetValue(player.CaptainedShipId,out var ship) || ship.State.CaptainId!=player.Id)return Guid.Empty;
         return Ships.Values.Where(enemy=>CanBoardEnemy(ship,enemy)).OrderBy(enemy=>Distance(ship.State.X,ship.State.Y,enemy.State.X,enemy.State.Y)).Select(enemy=>enemy.State.Id).FirstOrDefault();
     }
-    private static void StartEnemyBoarding(Player captain,Guid targetId,long now)
+    private static void StartEnemyBoarding(Player captain,Guid targetId,long now,bool enemyInitiated=false)
     {
         if(!ApplyPendingExperience(captain,now,force:true) || !ApplyPendingDamage(captain,now,force:true))return;
         Vessel ship,enemy;HerboniaPatrol patrol;
         lock(Gate)
         {
             if(EnemyBoardings.Count>=128 || !Ships.TryGetValue(captain.CaptainedShipId,out ship) || ship.State.CaptainId!=captain.Id ||
-                !Ships.TryGetValue(targetId,out enemy) || !CanBoardEnemy(ship,enemy))return;
+                !Ships.TryGetValue(targetId,out enemy) || !(enemyInitiated?CanEnemyBoardPlayer(enemy,ship):CanBoardEnemy(ship,enemy)))return;
             patrol=enemy.Enemy;
         }
         var authored=DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d=>d.Id==patrol.BoardingDungeonId);
         var map=MapController.Get(patrol.BoardingEntryMapId);var entryX=patrol.BoardingEntryX;var entryY=patrol.BoardingEntryY;var generatedMap=Guid.Empty;
         if(patrol.BoardingDungeonId==Guid.Empty && patrol.AutomaticBoardingDeck)
         {
-            var generated=CreateBoardingDeck(patrol,now);
+            var generated=CreateBoardingDeckOnShips(patrol,ship.Definition,now);
             if(generated==null){lock(Gate)SendManagement(captain,NavalManageAction.Skills,now,"Choose a crew NPC with a sprite for the automatic boarding deck.");return;}
             authored=generated.Value.Dungeon;map=generated.Value.Map;entryX=generated.Value.X;entryY=generated.Value.Y;generatedMap=map.Id;
         }
@@ -65,7 +67,7 @@ internal static partial class NavalSystem
         EnemyBoardingRun run;
         lock(Gate)
         {
-            if(generatedMap!=Guid.Empty && !GeneratedDecks.ContainsKey(generatedMap) || !CanBoardEnemy(ship,enemy) || candidates.Any(p=>BoardingPlayers.ContainsKey(p.Id)) || !candidates.Contains(captain))return;
+            if(generatedMap!=Guid.Empty && !GeneratedDecks.ContainsKey(generatedMap) || !(enemyInitiated?CanEnemyBoardPlayer(enemy,ship):CanBoardEnemy(ship,enemy)) || candidates.Any(p=>BoardingPlayers.ContainsKey(p.Id)) || !candidates.Contains(captain))return;
             // No passengers are silently left behind during the transfer.
             if(ship.Crew.Keys.Any(id=>!candidates.Any(p=>p.Id==id)))return;
             run=new(){Ship=ship.State.Id,Enemy=enemy.State.Id,Captain=captain.Id,Started=now,GeneratedMap=generatedMap};
@@ -126,6 +128,7 @@ internal static partial class NavalSystem
             if(!run.Members.Contains(run.Captain) || Player.FindOnline(run.Captain) is {NavalPartyExitRequested:true})won=false;
             if(Ships.TryGetValue(run.Ship,out var source))
                 foreach(var id in source.Crew.Keys.ToArray())if(Player.FindOnline(id) is {} member && !CanReceiveBoardingReward(member,encounter))source.Crew.Remove(id);
+            if(run.Monster!=null){FinishMonsterAssault(run,won,Timing.Global.Milliseconds);return;}
             run.Finished=true;run.Won=won;
             if (won)
                 foreach (var id in run.Members)
@@ -236,7 +239,11 @@ internal static partial class NavalSystem
             DungeonRunRuntime.LeaveNavalBoarding(player,run.Id);
             ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;
         }
-        if(run.Finished){ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;}
+        if(run.Finished)
+        {
+            if(run.Monster!=null && !run.Won)DungeonRunRuntime.LeaveNavalBoarding(player,run.Id);
+            ReturnFromEnemyBoarding(player,run.Id,player.IsDead);return true;
+        }
         if(!DungeonRunRuntime.IsPlayerInActiveRun(player))
         {
             // Also handles a run that expired while this player was disconnected.

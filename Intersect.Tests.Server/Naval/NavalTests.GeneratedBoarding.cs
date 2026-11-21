@@ -12,6 +12,78 @@ namespace Intersect.Tests.Server.Naval;
 
 public sealed partial class NavalTests
 {
+    [TestCase("adventurer-three-mast")]
+    [TestCase("adventurer-raft")]
+    [TestCase("adventurer-line")]
+    public void NavalMonsterSpawnsAttackableLimbsOnTheActualReachableDeck(string modelId)
+    {
+        using var world=new EnemyTestWorld();
+        var model=NavalShipModels.All.Single(m=>m.Id==modelId);
+        var appearance=new NPCDescriptor(Guid.NewGuid()){Name="Tentacle",Sprite="NPC_Naval_KrakenTentacle_v1.png",Level=2};
+        NPCDescriptor.Lookup.Set(appearance.Id,appearance);
+        try
+        {
+            var settings=new NavalMonsterDefinition{TentacleNpcId=appearance.Id,TentacleCount=8,TentacleHealth=310,TentacleDamage=23,Level=25};
+            var result=NavalSystem.CreateMonsterDeck(settings,new(){Graphics=model.Graphics},1000);
+            Assert.That(result.HasValue,Is.True,modelId);
+            var generated=result!.Value;var scene=generated.Map.BoardingScene!;
+            Assert.That(scene.Ships,Has.Length.EqualTo(1));Assert.That(scene.Ships[0].Graphics,Is.EqualTo(model.IdleGraphics));
+            Assert.That(scene.BridgeY,Is.EqualTo(-1));
+            if(model.DeckKind==ShipDeckKind.Raft)Assert.That(generated.Map.Spawns.Count,Is.InRange(1,7));
+            else Assert.That(generated.Map.Spawns,Has.Count.EqualTo(8));
+            var queue=new Queue<(int X,int Y)>();var reached=new HashSet<(int X,int Y)>();queue.Enqueue((generated.X,generated.Y));
+            while(queue.TryDequeue(out var p))
+            {
+                if(!scene.Walkable(p.X,p.Y) || !reached.Add(p))continue;
+                foreach(var next in new[]{(p.X+1,p.Y),(p.X-1,p.Y),(p.X,p.Y+1),(p.X,p.Y-1)})queue.Enqueue(next);
+            }
+            foreach(var spawn in generated.Map.Spawns)
+            {
+                Assert.That(reached.Contains((spawn.X,spawn.Y)),Is.True,$"Limb at {spawn.X},{spawn.Y}");
+                var limb=NPCDescriptor.Get(spawn.NpcId)!;
+                Assert.That(limb.Id,Is.Not.EqualTo(appearance.Id));Assert.That(limb.Sprite,Is.EqualTo(appearance.Sprite));
+                Assert.That(limb.MaxVitals[(int)Vital.Health],Is.EqualTo(310));Assert.That(limb.Damage,Is.EqualTo(23));
+                Assert.That(limb.Aggressive,Is.True);
+            }
+            Assert.That(appearance.Level,Is.EqualTo(2));Assert.That(generated.Dungeon.NpcRespawnEnabled,Is.False);
+        }
+        finally{world.Invoke("PruneGeneratedBoardingDecks",long.MaxValue);NPCDescriptor.Lookup.DeleteAt(appearance.Id);}
+    }
+    [Test]
+    public void BoardingOnRealShipsUsesAllSevenAuthoredAppearancesAndCleansUpOnlyTheirClones()
+    {
+        using var world=new EnemyTestWorld();
+        var sources=Enumerable.Range(0,7).Select(i=>new NPCDescriptor(Guid.NewGuid()){Name="Deck crew "+i,Sprite="crew-"+i+".png",Level=2}).ToArray();
+        MapController? deck=null;
+        try
+        {
+            foreach(var source in sources)NPCDescriptor.Lookup.Set(source.Id,source);
+            var patrol=new HerboniaPatrol {Level=12,DeckCaptainNpcId=sources[0].Id,
+                PortGunner1NpcId=sources[1].Id,PortGunner2NpcId=sources[2].Id,PortGunner3NpcId=sources[3].Id,
+                StarboardGunner1NpcId=sources[4].Id,StarboardGunner2NpcId=sources[5].Id,StarboardGunner3NpcId=sources[6].Id};
+            var generated=NavalSystem.CreateBoardingDeckOnShips(patrol,new(){Graphics=NavalShipModels.ThreeMasts[0].Graphics},1000);
+            Assert.That(generated.HasValue,Is.True);deck=generated!.Value.Map;
+            Assert.That(deck.BoardingScene,Is.Not.Null);Assert.That(deck.Spawns,Has.Count.EqualTo(7));
+            var cloneIds=deck.Spawns.Select(s=>s.NpcId).ToArray();
+            Assert.That(cloneIds.Distinct().Count(),Is.EqualTo(7));
+            for(var i=0;i<7;i++)
+            {
+                var clone=NPCDescriptor.Get(cloneIds[i])!;
+                Assert.That(clone.Sprite,Is.EqualTo(sources[i].Sprite));Assert.That(clone.Level,Is.EqualTo(12));
+                Assert.That(clone.Id,Is.Not.EqualTo(sources[i].Id));Assert.That(sources[i].Level,Is.EqualTo(2));
+                Assert.That(deck.BoardingScene!.Walkable(deck.Spawns[i].X,deck.Spawns[i].Y),Is.True);
+            }
+            world.Invoke("PruneGeneratedBoardingDecks",31001L);
+            Assert.That(MapController.Get(deck.Id),Is.Null);
+            foreach(var clone in cloneIds)Assert.That(NPCDescriptor.Get(clone),Is.Null);
+            foreach(var source in sources)Assert.That(NPCDescriptor.Get(source.Id),Is.SameAs(source));
+        }
+        finally
+        {
+            world.Invoke("PruneGeneratedBoardingDecks",long.MaxValue);
+            foreach(var source in sources)NPCDescriptor.Lookup.DeleteAt(source.Id);
+        }
+    }
     private sealed class BoardingTestPlayer : Intersect.Server.Entities.Player
     {
         public override long GetMaxVital(int vital) => vital == (int)Vital.Health ? 100000 : base.GetMaxVital(vital);

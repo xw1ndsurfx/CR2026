@@ -23,7 +23,7 @@ internal static class NavalSpriteCatalog
             try
             {
                 var path = Path.Combine(ClientConfiguration.ResourcesDirectory, "ocean", "ships.sinking.json");
-                if (File.Exists(path) && new FileInfo(path).Length <= 65536)
+                if (File.Exists(path) && new FileInfo(path).Length <= ShipSpriteAtlas.MaximumMetadataBytes)
                 {
                     var entries = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path),
                         new JsonSerializerSettings { MaxDepth = 4, TypeNameHandling = TypeNameHandling.None });

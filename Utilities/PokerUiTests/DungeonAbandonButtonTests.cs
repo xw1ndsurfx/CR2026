@@ -9,6 +9,19 @@ using ControlBase = Intersect.Client.Framework.Gwen.Control.Base;
 
 internal static class DungeonAbandonButtonTests
 {
+    private sealed class RecordingSocket : Intersect.Client.Framework.Network.GameSocket
+    {
+        internal readonly List<object> Sent = [];
+        public override void SendPacket(object packet) => Sent.Add(packet);
+        public override void Connect(string host, int port) { }
+        public override void Update() { }
+        public override void Disconnect(string reason) { }
+        public override void Dispose() { }
+        public override bool IsConnected => true;
+        public override int Ping => 0;
+        public override Intersect.Network.INetwork Network => null!;
+    }
+
     [ModuleInitializer] internal static void Run()
     {
         try { Verify(); } catch (Exception error) { System.Console.Error.WriteLine(error); Environment.Exit(1); }
@@ -52,6 +65,22 @@ internal static class DungeonAbandonButtonTests
             var cancel = All(confirmation).OfType<Button>().Single(c => c.Name == "CancelDungeonAbandon");
             Check(cancel.Font != null && cancel.FontSize >= 12, "Confirmation actions have explicit readable fonts.");
             typeof(Button).GetMethod("OnKeyReturn", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(cancel, [false]);
+            var network = type.Assembly.GetType("Intersect.Client.Networking.Network", true)!;
+            var socketField = network.GetField("_socket", BindingFlags.Static | BindingFlags.NonPublic)!;
+            var previousSocket = socketField.GetValue(null);
+            var socket = new RecordingSocket();
+            socketField.SetValue(null, socket);
+            try
+            {
+                type.GetMethod("ConfirmAbandon", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(hud, null);
+                var next = All(canvas).Single(c => c.Name == "DungeonAbandonConfirmationWindow" && !c.IsHidden);
+                var yes = All(next).OfType<Button>().Single(c => c.Name == "ConfirmDungeonAbandon");
+                typeof(Button).GetMethod("OnKeyReturn", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(yes, [false]);
+                Check(socket.Sent.Count == 1 && socket.Sent[0] is Intersect.Network.Packets.Client.AbandonDungeonPacket request &&
+                    request.RunId == state.RunId && next.IsHidden,
+                    "Yes closes the confirmation and sends exactly one request for the current run.");
+            }
+            finally { socketField.SetValue(null, previousSocket); }
         }
         finally { uiField.SetValue(null, oldUi); Intersect.Core.ApplicationContext.Context.Value = oldContext; }
         foreach (var locale in new[] { "en", "fr", "es" })
@@ -69,10 +98,17 @@ internal static class DungeonAbandonButtonTests
         render.Invoke(button, [skin]);
         Check(renderer.Rectangles >= rectangles + 2 && !button.ShouldDrawBackground,
             "The button draws an opaque fill and border independently of external skin textures.");
-        foreach (var status in new[] { DungeonRunStatus.Completed, DungeonRunStatus.Failed, DungeonRunStatus.Abandoned })
+        foreach (var status in new[] { DungeonRunStatus.Completed, DungeonRunStatus.Failed })
         {
             state.Status = status; apply.Invoke(hud, [state]);
             Check(button.IsHidden && hud.Height == 126, "Results cannot offer an abandon action.");
+        }
+        foreach (var status in new[] { DungeonRunStatus.Abandoned, DungeonRunStatus.None })
+        {
+            state.Status = DungeonRunStatus.Active; apply.Invoke(hud, [state]);
+            state.Status = status; apply.Invoke(hud, [state]);
+            type.GetMethod("Update")!.Invoke(hud, null);
+            Check(hud.IsHidden, "The server-confirmed exit clears the dungeon HUD permanently.");
         }
         state.Status = DungeonRunStatus.Active; state.RunId = Guid.Empty; apply.Invoke(hud, [state]);
         Check(button.IsHidden, "A missing run identifier never exposes abandon.");

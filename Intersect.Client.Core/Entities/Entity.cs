@@ -337,8 +337,8 @@ public partial class Entity : IEntity
 
     IReadOnlyList<IStatus> IEntity.Status => Status;
 
-    public Vector2 Origin => Naval.NavalWorld.TryCaptainCenter(Id,out var navalX,out var navalY) ?
-        new Vector2(navalX,navalY) : LatestMap == default ? Vector2.Zero : mOrigin;
+    public Vector2 Origin => _navalDeckOrigin ?? (Naval.NavalWorld.TryCaptainCenter(Id,out var navalX,out var navalY) ?
+        new Vector2(navalX,navalY) : LatestMap == default ? Vector2.Zero : mOrigin);
 
     protected virtual Vector2 CenterOffset
     {
@@ -687,6 +687,7 @@ public partial class Entity : IEntity
             return false;
         }
 
+        UpdateNpcSounds();
         RenderList = DetermineRenderOrder(RenderList, LatestMap);
         if (mLastUpdate == 0)
         {
@@ -1272,7 +1273,7 @@ public partial class Entity : IEntity
     public virtual void Draw()
     {
         using var cinematicCapture = Graphics.CaptureCinematicEntity(this);
-        if (Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
+        if (_navalDeckOrigin == null && Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
             return; //Don't draw if the entity is hidden
@@ -1287,6 +1288,7 @@ public partial class Entity : IEntity
         }
 
         var sprite = string.Empty;
+        using var boardingScale=map.BoardingScene!=null?Graphics.ScaleSprites(Origin.X,Origin.Y,Intersect.Framework.Core.Naval.ShipDeck.AvatarScale):null;
         // Copy the actual render color, because we'll be editing it later and don't want to overwrite it.
         var renderColor = new Color(Color.A, Color.R, Color.G, Color.B);
 
@@ -1438,6 +1440,7 @@ public partial class Entity : IEntity
     {
         get
         {
+            if(_navalDeckOrigin.HasValue)return _deckWalking?(int)(Environment.TickCount64/140%Math.Max(1,SpriteFrames)):0;
             var frame = this is Player { ActiveMount: not null } && string.IsNullOrEmpty(TransformedSprite) ? Math.Min(1, SpriteFrames - 1) : WalkFrame;
 
             if (IsBlocking)
@@ -1851,7 +1854,12 @@ public partial class Entity : IEntity
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
             ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
 
-    protected float NameplateScale => 1f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
+    protected float NameplateScale =>
+#if ANDROID
+        1.25f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
+#else
+        1f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
+#endif
 
     public float GetLabelLocation(LabelType type)
     {

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Intersect.Client.Android</RootNamespace>
+    <AssemblyName>CorpsRoyaux.Android</AssemblyName>
+    <ApplicationId>com.logiklik.corpsroyaux</ApplicationId>
+    <ApplicationTitle>Corps Royaux</ApplicationTitle>
+    <ApplicationDisplayVersion>0.8.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <AndroidResgenClass>AndroidResources</AndroidResgenClass>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidUseAssemblyStore>true</AndroidUseAssemblyStore>
+    <!-- Standalone device APKs use JIT without the managed debugger. The current
+         Android toolchain stalls worker callbacks with debug symbols enabled
+         on the Pixel test device, including in an isolated runtime probe. -->
+    <AndroidUseInterpreter>false</AndroidUseInterpreter>
+    <!-- Use runtime JNI registration; the generated marshal-method cache can
+         omit activity exports after an incremental rebuild in this workload. -->
+    <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <!-- Reflection discovers packets, plugins and game data types. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <INTERSECT_STEAMWORKS />
+    <AndroidGameResources Condition="'$(AndroidGameResources)' == ''">$(MSBuildProjectDirectory)/../resources</AndroidGameResources>
+  </PropertyGroup>
+  <!-- Compile the shared client against MonoGame Android, never DesktopGL/SDL/Steam. -->
+  <ItemGroup>
+    <Using Remove="Android.App;Android.Widget" />
+    <Compile Include="../Intersect.Client.Core/**/*.cs"
+             Exclude="../Intersect.Client.Core/obj/**;../Intersect.Client.Core/bin/**;../Intersect.Client.Core/Program.cs;../Intersect.Client.Core/ThirdParty/Steam*.cs;../Intersect.Client.Core/MonoGame/Input/MonoClipboard.cs" />
+    <Compile Include="../Intersect.Client.Core/ThirdParty/Steam.Attributes.cs" />
+    <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs;../Shared/Rendering/ShipAtlasResources.cs" />
+    <ProjectReference Include="../Intersect (Core)/Intersect.Core.csproj" AdditionalProperties="CRAndroidBuild=true" />
+    <ProjectReference Include="../Intersect.Client.Framework/Intersect.Client.Framework.csproj" AdditionalProperties="CRAndroidBuild=true" />
+    <ProjectReference Include="../Intersect.Network/Intersect.Network.csproj" AdditionalProperties="CRAndroidBuild=true" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" />
+    <PackageReference Include="NVorbis" Version="0.10.4" />
+    <EmbeddedResource Include="$(NetworkHandshakePublicKey)" LogicalName="Intersect.Client.network.handshake.bkey.pub" />
+    <EmbeddedResource Include="../Intersect.Client.Core/Resources/Shaders/radialgradient.xnb" LogicalName="Intersect.Client.Resources.Shaders.radialgradient.xnb" />
+    <EmbeddedResource Include="../Intersect.Client.Core/Localization/Locales/ui.json" LogicalName="Intersect.Client.Localization.Locales.ui.json" />
+    <AndroidAsset Include="$(AndroidGameResources)/**/*" Exclude="$(AndroidGameResources)/**/*.db*;$(AndroidGameResources)/**/translation-service.private.json*;$(AndroidGameResources)/**/*.bkey;$(AndroidGameResources)/**/*.keystore;$(AndroidGameResources)/**/*.jks;$(AndroidGameResources)/**/*.pfx;$(AndroidGameResources)/**/*.pem;$(AndroidGameResources)/**/server*.json;$(AndroidGameResources)/**/editor_strings.json;$(AndroidGameResources)/**/config - *.json">
+      <Link>resources/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>resources/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </AndroidAsset>
+  </ItemGroup>
+</Project>
