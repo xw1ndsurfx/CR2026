@@ -1,6 +1,7 @@
 using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
+using ClientEvent = Intersect.Client.Entities.Events.Event;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen;
@@ -42,7 +43,8 @@ internal sealed class TutorialWorldMarker : Base
     internal void SetStep(TutorialStep? step)
     {
         _step = step is { HighlightTarget: TutorialHighlightTarget.Player or
-            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc } ? step : null;
+            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or
+            TutorialHighlightTarget.WorldEvent } ? step : null;
         RefreshVisibility();
     }
 
@@ -96,6 +98,30 @@ internal sealed class TutorialWorldMarker : Base
                 map.Y + (_step.TargetY + 0.5f) * Options.Instance.Map.TileHeight
             );
             _headAnchor = anchor;
+            return true;
+        }
+
+        if (_step.HighlightTarget == TutorialHighlightTarget.WorldEvent)
+        {
+            // Map events can look exactly like NPCs, but their persistent
+            // descriptor ID is the trusted identity of an interaction lesson.
+            ClientEvent? selectedEvent = null;
+            var closest = float.MaxValue;
+            foreach (var local in map.LocalEntities.Values)
+            {
+                if (local is not ClientEvent eventCandidate || eventCandidate.IsDisposed || eventCandidate.IsHidden || eventCandidate.IsStealthed ||
+                    eventCandidate.Id != _step.TargetEventId || eventCandidate.MapId != _step.MapId)
+                    continue;
+                var squareDistance = Vector2.DistanceSquared(eventCandidate.Center, player.Center);
+                if (squareDistance >= closest)
+                    continue;
+                selectedEvent = eventCandidate;
+                closest = squareDistance;
+            }
+            if (selectedEvent == null)
+                return false;
+            anchor = selectedEvent.Origin;
+            _headAnchor = selectedEvent.AnimationAnchor(true);
             return true;
         }
 
@@ -190,7 +216,7 @@ internal sealed class TutorialWorldMarker : Base
         {
             var head = Project(_headAnchor);
             var arrowY = (int)head.Y - 10 - (int)(pulse * 5);
-            if (_step?.HighlightTarget != TutorialHighlightTarget.WorldNpc ||
+            if (_step?.HighlightTarget is not (TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent) ||
                 !DrawAsset(renderer, "royal-guide/guide_npc_v1.png", new Rectangle(x-24, arrowY-48, 48, 48), Color.White))
                 DrawArrow(renderer, new Vector2(x, arrowY), Vector2.UnitY, gold, 3);
         }

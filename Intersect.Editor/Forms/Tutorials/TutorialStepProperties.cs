@@ -13,7 +13,7 @@ internal sealed class TutorialStepProperties(TutorialStep step):CustomTypeDescri
             .Select(p=>(PropertyDescriptor)new HighlightProperty(p,step)).ToArray());
     internal static string EnumCaption(object value)=>FrmTutorial.T(value.ToString() switch
     {
-        "WorldMap"=>"World map", "Hotbar"=>"Quickbar", "WorldNpc"=>"World NPC", "WorldTile"=>"World tile",
+        "WorldEvent"=>"Map event", "InteractEvent"=>"Interact with map event", "WorldMap"=>"World map", "Hotbar"=>"Quickbar", "WorldNpc"=>"World NPC", "WorldTile"=>"World tile",
         "ReachMap"=>"Reach map", "ReachTile"=>"Reach tile", "CombatDodge"=>"Dodge", "CombatPerfectParry"=>"Perfect parry",
         "CombatCounterattack"=>"Counterattack", "CombatFinisher"=>"Finisher", _=>value.ToString()!,
     });
@@ -23,7 +23,7 @@ internal sealed class TutorialStepProperties(TutorialStep step):CustomTypeDescri
         {
             "HighlightTarget"=>"Highlight target", "HighlightStyle"=>"Highlight style", "MapId"=>"Target map",
             "TargetX"=>"Target X", "TargetY"=>"Target Y", "TargetRadius"=>"Arrival radius", "TargetNpcId"=>"Target NPC",
-            "VariableId"=>"Player variable", "VariableValue"=>"Required value", "CinematicEventId"=>"Cinematic common event", _=>inner.Name,
+            "TargetEventId"=>"Target map event", "VariableId"=>"Player variable", "VariableValue"=>"Required value", "CinematicEventId"=>"Cinematic common event", _=>inner.Name,
         });
         public override string Category=>FrmTutorial.T("Objective");
         public override string Description=>DisplayName;

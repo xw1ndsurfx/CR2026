@@ -4,6 +4,8 @@ using System.Reflection;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Network.Packets.Tutorials;
 using Newtonsoft.Json;
+using Intersect.Framework.Core.GameObjects.Maps;
+using EventDescriptor = Intersect.Framework.Core.GameObjects.Events.EventDescriptor;
 
 internal static class Program
 {
@@ -34,6 +36,10 @@ internal static class Program
     if(step.HighlightTarget!=TutorialHighlightTarget.Hotbar)throw new Exception("Property edit did not reach actual tutorial step");
     var loaded=JsonConvert.DeserializeObject<TutorialConfiguration>(JsonConvert.SerializeObject(config))!;
     if(!loaded.IsValid||loaded.Steps[0].HighlightTarget!=TutorialHighlightTarget.Hotbar)throw new Exception("Settings did not survive save/reopen");
+    var map = new MapDescriptor(Guid.NewGuid());
+    var evt = new EventDescriptor(Guid.NewGuid(), map.Id, 4, 5) { Name="Tutor" };
+    var duplicate = new EventDescriptor(Guid.NewGuid(), map.Id, 6, 5) { Name="Tutor" };
+    map.LocalEvents[evt.Id]=evt; map.LocalEvents[duplicate.Id]=duplicate; MapDescriptor.Lookup.Set(map.Id,map); step.MapId=map.Id;
     using var form=(Form)Activator.CreateInstance(formType,BindingFlags.Instance|BindingFlags.NonPublic,null,[new TutorialEditorPacket{Json=JsonConvert.SerializeObject(config),Revision="test"}],null)!;
     var grid=(PropertyGrid)formType.GetField("_properties",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(form)!;
     if(grid.SelectedObject is not ICustomTypeDescriptor)throw new Exception("Editor did not bind localized property adapter");
@@ -51,7 +57,23 @@ internal static class Program
     if(!((ComboBox)Field("_worldNpc")).Enabled||x.Enabled)throw new Exception("Wrong controls enabled for NPC target");
     var preview=(Control)Field("_preview");preview.Size=new System.Drawing.Size(800,465);preview.CreateControl();
     using(var bitmap=new System.Drawing.Bitmap(800,465))preview.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,800,465));
-    Console.WriteLine("PASS tutorial editor: translated property/choices, editable values and persistence ("+language+")");
+    var objectives=(ComboBox)Field("_completionObjective");var events=(ComboBox)Field("_worldEvent");
+    if(!events.Enabled||events.Items.Count!=3)throw new Exception("Cannot choose a loaded map event before creating an interaction lesson");
+    if(events.GetItemText(events.Items[1])==events.GetItemText(events.Items[2]))throw new Exception("Same-name events are ambiguous");
+    objectives.SelectedItem=TutorialObjective.InteractEvent; targets.SelectedItem=TutorialHighlightTarget.WorldEvent;events.SelectedIndex=1;
+    if(actual.Objective!=TutorialObjective.InteractEvent||actual.TargetEventId==Guid.Empty)throw new Exception("Event selection not stored");
+    if(objectives.GetItemText(TutorialObjective.InteractEvent)=="InteractEvent"||targets.GetItemText(TutorialHighlightTarget.WorldEvent)=="WorldEvent")throw new Exception("Raw interaction enum visible");
+    if(properties[nameof(TutorialStep.TargetEventId)]!.DisplayName==nameof(TutorialStep.TargetEventId))throw new Exception("Untranslated event property");
+    var roundtrip=JsonConvert.DeserializeObject<TutorialStep>(JsonConvert.SerializeObject(actual))!;
+    if(roundtrip.TargetEventId!=actual.TargetEventId)throw new Exception("Event target lost after serialization");
+    preview.Size=new System.Drawing.Size(800,465);
+    preview.GetType().GetMethod("OnMouseClick",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(preview,[new MouseEventArgs(MouseButtons.Left,1,573,170,0)]);
+    if(actual.HighlightTarget!=TutorialHighlightTarget.WorldEvent)throw new Exception("Preview click loses event target");
+    using(var bitmap=new System.Drawing.Bitmap(800,465))preview.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,800,465));
+    ((ComboBox)Field("_worldMap")).SelectedIndex=0;
+    if(actual.TargetEventId!=Guid.Empty)throw new Exception("Changing maps retains old event");
+    MapDescriptor.Lookup.DeleteAt(map.Id);
+    Console.WriteLine("PASS tutorial editor: translated choices, map event identity, preview clicks and persistence ("+language+")");
    }
   }
   finally{CultureInfo.CurrentUICulture=original;}

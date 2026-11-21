@@ -25,6 +25,7 @@ internal sealed class TutorialWindow : Window
     private TutorialHighlightStyle _style = TutorialHighlightStyle.Outline;
     private readonly Label _heading;
     private readonly Label _progress;
+    private readonly Label _interactionHint;
     private readonly Panel _progressTrack, _progressFill;
     private double _progressFraction;
     private readonly Action<TutorialRequestPacket> _send;
@@ -82,6 +83,11 @@ internal sealed class TutorialWindow : Window
         _restart.SetSize(160, 28);
         _pause.SetSize(160, 30);
         _next.SetSize(150, 30);
+        _interactionHint = NavalManagementWindow.Text(
+            this, "RoyalGuideInteractionHint", "", Width - 166, Height - 70, 160, 52, 10);
+        _interactionHint.WrappingBehavior = WrappingBehavior.Wrapped;
+        _interactionHint.TextColorOverride = new Color(a: 255, r: 250, g: 202, b: 113);
+        _interactionHint.IsHidden = true;
         Closed += (_, _) =>
         {
             _spotlight.Hide();
@@ -139,7 +145,10 @@ internal sealed class TutorialWindow : Window
         _heading.Text = step == null ? T("Tutorial complete") : Content(step.Title);
         _body.Text = step == null ? T("You can replay this guide at any time.") : Content(step.Text);
         _next.IsDisabled = !state.CanAdvance;
+        _next.IsHidden = step?.Objective == TutorialObjective.InteractEvent;
         _next.Text = T("Next");
+        _interactionHint.IsHidden = step?.Objective != TutorialObjective.InteractEvent;
+        _interactionHint.Text = T("Interact with the highlighted target.");
         _scene.IsHidden = step == null || step.CinematicEventId == Guid.Empty;
         _restart.IsHidden = !state.Finished;
         _pause.IsHidden = state.Finished;
@@ -199,7 +208,8 @@ internal sealed class TutorialWindow : Window
         // World cues replace the darkened HUD spotlight, leaving walking and
         // NPC interactions unobstructed. Combat always disables both overlays.
         var worldTarget = _target is TutorialHighlightTarget.Player or
-            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc;
+            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or
+            TutorialHighlightTarget.WorldEvent;
         if (worldTarget && !_combatDrill)
         {
             _spotlight.Hide();
@@ -237,6 +247,7 @@ internal sealed class TutorialWindow : Window
         _restart.SetBounds(20, height - 66, buttonWidth, 30);
         _pause.SetBounds(20, height - 66, buttonWidth, 30);
         _next.SetBounds(28 + buttonWidth, height - 66, buttonWidth, 30);
+        _interactionHint.SetBounds(28 + buttonWidth, height - 70, buttonWidth, 52);
         _progressFill.SetSize((int)(_progressTrack.Width * _progressFraction), 5);
     }
 

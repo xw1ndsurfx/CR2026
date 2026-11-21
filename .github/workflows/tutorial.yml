@@ -5,6 +5,9 @@ on:
       - '**/*Tutorial*'
       - '**/Tutorials/**'
       - 'Utilities/Tutorial*/**'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Intersect.Server.Core/Entities/Events/**'
+      - 'Intersect.Editor/Networking/PacketHandler.cs'
       - 'resources/gui/royal-guide/**'
       - 'resources/sounds/royal_guide_*'
       - 'tools/generate_royal_guide_sounds.py'
@@ -33,8 +36,8 @@ jobs:
         run: dotnet build Intersect.Client.Core/Intersect.Client.Core.csproj -c Debug
       - name: Compile editor integration
         run: dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug
-      - name: World guidance server validation
-        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter FullyQualifiedName~TutorialWorldGuidanceTests
+      - name: World guidance and verified interactions on the server
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~TutorialWorldGuidanceTests|FullyQualifiedName~TutorialInteractionTests"
       - name: Guide layout, markers and sound transitions
         run: dotnet run --project Utilities/TutorialUiTests/TutorialUiTests.csproj -c Release
       - name: Visual editor and transparent assets

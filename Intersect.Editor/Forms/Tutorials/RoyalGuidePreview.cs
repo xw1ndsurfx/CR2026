@@ -3,6 +3,8 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Maps;
 using GdiColor = System.Drawing.Color;
 using GdiPoint = System.Drawing.Point;
 using GdiGraphics = System.Drawing.Graphics;
@@ -18,6 +20,7 @@ internal sealed class RoyalGuidePreview : Control
 {
     private readonly System.Windows.Forms.Timer _animation = new() { Interval = 70 };
     private TutorialStep? _step;
+    internal event Action<TutorialHighlightTarget>? TargetPicked;
     private string _title = "";
 
     internal RoyalGuidePreview()
@@ -25,6 +28,8 @@ internal sealed class RoyalGuidePreview : Control
         DoubleBuffered = true;
         Dock = DockStyle.Fill;
         BackColor = GdiColor.FromArgb(23, 24, 28);
+        Cursor = Cursors.Hand;
+        AccessibleName = FrmTutorial.T("Royal Guide clickable highlight preview");
         _animation.Tick += (_, _) => Invalidate();
         _animation.Start();
     }
@@ -44,6 +49,51 @@ internal sealed class RoyalGuidePreview : Control
             _animation.Dispose();
         }
         base.Dispose(disposing);
+    }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        if (e.Button != MouseButtons.Left || Width < 260 || Height < 180)
+            return;
+
+        const float stageWidth = 800, stageHeight = 465;
+        var scale = Math.Min((Width - 24f) / stageWidth, (Height - 24f) / stageHeight);
+        if (scale <= 0)
+            return;
+        var x = (e.X - (Width - stageWidth * scale) / 2) / scale;
+        var y = (e.Y - (Height - stageHeight * scale) / 2) / scale;
+        if (x < 0 || y < 0 || x >= stageWidth || y >= stageHeight)
+            return;
+
+        TutorialHighlightTarget target;
+        if (x < 144 && y >= 54 && y < 54 + 7 * 37)
+        {
+            var row = (int)((y - 54) / 37);
+            target = row switch
+            {
+                0 => TutorialHighlightTarget.Character,
+                1 => TutorialHighlightTarget.Inventory,
+                2 => TutorialHighlightTarget.Quests,
+                3 => TutorialHighlightTarget.WorldMap,
+                _ => TutorialHighlightTarget.Menu,
+            };
+        }
+        else if (x >= 610 && y < 178)
+            target = TutorialHighlightTarget.Minimap;
+        else if (x >= 270 && x < 540 && y >= 410)
+            target = TutorialHighlightTarget.Hotbar;
+        else if (x is >= 345 and <= 440 && y is >= 235 and <= 320)
+            target = TutorialHighlightTarget.Player;
+        else if (x is >= 535 and <= 620 && y is >= 118 and <= 220)
+            target = _step != null && _step.TargetEventId != Guid.Empty
+                ? TutorialHighlightTarget.WorldEvent
+                : TutorialHighlightTarget.WorldNpc;
+        else if (x is >= 155 and <= 605 && y is >= 70 and <= 330)
+            target = TutorialHighlightTarget.WorldTile;
+        else
+            return;
+        TargetPicked?.Invoke(target);
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -89,7 +139,9 @@ internal sealed class RoyalGuidePreview : Control
         DrawActor(g, 390, 280, GdiColor.FromArgb(215, 224, 231));
         DrawActor(g, 573, 170, GdiColor.FromArgb(221, 182, 112));
         g.DrawString(FrmTutorial.T("Player"), tinyFont, textBrush, 371, 303);
-        var npcName = _step is { TargetNpcId: var npcId } && npcId != Guid.Empty
+        var npcName = _step?.HighlightTarget == TutorialHighlightTarget.WorldEvent
+            ? MapDescriptor.Get(_step.MapId)?.LocalEvents.GetValueOrDefault(_step.TargetEventId)?.Name ?? FrmTutorial.T("Map event")
+            : _step is { TargetNpcId: var npcId } && npcId != Guid.Empty
             ? NPCDescriptor.Get(npcId)?.Name ?? FrmTutorial.T("NPC")
             : FrmTutorial.T("NPC");
         if (npcName.Length > 17) npcName = npcName[..14] + "...";
@@ -124,7 +176,7 @@ internal sealed class RoyalGuidePreview : Control
             TutorialHighlightTarget.Minimap or TutorialHighlightTarget.WorldMap => new(625, 76, 124, 87),
             TutorialHighlightTarget.Hotbar => new(282, 424, 238, 28),
             TutorialHighlightTarget.Player => new(365, 254, 50, 55),
-            TutorialHighlightTarget.WorldNpc => new(547, 142, 54, 60),
+            TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent => new(547, 142, 54, 60),
             TutorialHighlightTarget.WorldTile => new(
                 179 + Math.Clamp((_step?.TargetX ?? 0) / (float)Math.Max(1, Options.Instance.Map.MapWidth - 1), 0f, 1f) * 345f,
                 94 + Math.Clamp((_step?.TargetY ?? 0) / (float)Math.Max(1, Options.Instance.Map.MapHeight - 1), 0f, 1f) * 226f,
@@ -135,7 +187,7 @@ internal sealed class RoyalGuidePreview : Control
         {
             using var glow = new Pen(GdiColor.FromArgb((int)(110 + pulse * 135), 255, 183, 66), 7);
             rect.Inflate(padding + 2, padding + 2);
-            if (highlight is TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.Player or TutorialHighlightTarget.WorldTile ||
+            if (highlight is TutorialHighlightTarget.WorldEvent or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.Player or TutorialHighlightTarget.WorldTile ||
                 _step?.HighlightStyle == TutorialHighlightStyle.Circle)
             {
                 g.DrawEllipse(glow, rect);
@@ -146,7 +198,7 @@ internal sealed class RoyalGuidePreview : Control
                 g.DrawRectangle(glow, rect.X, rect.Y, rect.Width, rect.Height);
                 g.DrawRectangle(goldPen, rect.X, rect.Y, rect.Width, rect.Height);
             }
-            if (highlight is TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldTile)
+            if (highlight is TutorialHighlightTarget.WorldEvent or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldTile)
             {
                 g.DrawLine(goldPen, rect.X + rect.Width / 2, rect.Top - 20, rect.X + rect.Width / 2, rect.Top - 7);
                 g.FillPolygon(goldBrush, [
@@ -164,7 +216,9 @@ internal sealed class RoyalGuidePreview : Control
         var title = string.IsNullOrWhiteSpace(_title) ? FrmTutorial.T("Your next step") : _title;
         if (title.Length > 49) title = title[..46] + "...";
         g.DrawString(title, labelFont, textBrush, 181, 369);
-        g.DrawString(_step?.Objective == TutorialObjective.ReachTile
+        g.DrawString(_step?.Objective == TutorialObjective.InteractEvent
+            ? FrmTutorial.T("Interact with the highlighted target.")
+            : _step?.Objective == TutorialObjective.ReachTile
             ? string.Format(FrmTutorial.T("Approach X:{0} Y:{1} (radius {2})."), _step?.TargetX, _step?.TargetY, _step?.TargetRadius)
             : highlight == TutorialHighlightTarget.WorldNpc
                 ? FrmTutorial.T("Talk to the indicated character.")

@@ -236,6 +236,8 @@ internal sealed partial class PacketHandler
         }
 
         MapInstance.Lookup.Set(packet.MapId, receivedMap);
+        foreach (var guide in System.Windows.Forms.Application.OpenForms.OfType<Intersect.Editor.Forms.Tutorials.FrmTutorial>())
+            guide.RefreshMapEvents(packet.MapId);
         if (!Globals.InEditor && Globals.HasGameData)
         {
             Globals.CurrentMap = receivedMap;

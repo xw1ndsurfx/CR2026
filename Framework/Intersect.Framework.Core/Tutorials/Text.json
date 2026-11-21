@@ -509,6 +509,66 @@
       "en": "Royal Guide: select an existing NPC.",
       "fr": "Guide royal : choisissez un PNJ existant.",
       "es": "Guía real: elige un PNJ existente."
+    },
+    "Completion objective": {
+      "en": "Completion objective",
+      "fr": "Objectif de validation",
+      "es": "Objetivo de finalización"
+    },
+    "Target map event": {
+      "en": "Target map event",
+      "fr": "Événement de carte ciblé",
+      "es": "Evento del mapa objetivo"
+    },
+    "Create interaction step": {
+      "en": "Create interaction step",
+      "fr": "Créer une étape d'interaction",
+      "es": "Crear paso de interacción"
+    },
+    "Select a map event first.": {
+      "en": "Select a map event first.",
+      "fr": "Choisissez d'abord un événement de carte.",
+      "es": "Selecciona primero un evento del mapa."
+    },
+    "Interact with the highlighted target.": {
+      "en": "Interact with the highlighted target.",
+      "fr": "Interagis avec la cible indiquée.",
+      "es": "Interactúa con el objetivo señalado."
+    },
+    "Map event": {
+      "en": "Map event",
+      "fr": "Événement de carte",
+      "es": "Evento del mapa"
+    },
+    "Interact with map event": {
+      "en": "Interact with map event",
+      "fr": "Interagir avec un événement de carte",
+      "es": "Interactuar con un evento del mapa"
+    },
+    "Require this interaction": {
+      "en": "Require this interaction",
+      "fr": "Exiger cette interaction",
+      "es": "Exigir esta interacción"
+    },
+    "Open this list to load map events": {
+      "en": "Open this list to load map events",
+      "fr": "Ouvrez cette liste pour charger les événements",
+      "es": "Abre esta lista para cargar los eventos"
+    },
+    "Royal Guide clickable highlight preview": {
+      "en": "Royal Guide clickable highlight preview",
+      "fr": "Aperçu cliquable du guide royal",
+      "es": "Vista previa interactiva de la guía real"
+    },
+    "Royal Guide: select an event on the chosen map.": {
+      "en": "Royal Guide: select an event on the chosen map.",
+      "fr": "Guide royal : choisissez un événement de la carte sélectionnée.",
+      "es": "Guía real: elige un evento del mapa seleccionado."
+    },
+    "Royal Guide: choose an event with a player interaction trigger.": {
+      "en": "Royal Guide: choose an event with a player interaction trigger.",
+      "fr": "Guide royal : choisissez un événement déclenché par une interaction du joueur.",
+      "es": "Guía real: elige un evento activado por una interacción del jugador."
     }
   }
 }

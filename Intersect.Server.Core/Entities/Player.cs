@@ -7046,6 +7046,15 @@ public partial class Player : Entity
 
     public void TryActivateEvent(Guid eventId)
     {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            TryActivateEventCore(eventId);
+        }
+    }
+
+    private void TryActivateEventCore(Guid eventId)
+    {
         foreach (var evt in EventLookup)
         {
             if (evt.Value.PageInstance != null && evt.Value.PageInstance.Id == eventId)
@@ -7094,6 +7103,8 @@ public partial class Player : Entity
                             break;
                     }
                 }
+
+                RecordTutorialEventInteraction(evt.Value);
             }
         }
     }
@@ -7377,10 +7388,24 @@ public partial class Player : Entity
         }
     }
 
-    static bool IsEventOneBlockAway(Event evt)
+    private bool IsEventOneBlockAway(Event evt)
     {
-        //todo this
-        return true;
+        if (evt.Player != this || evt.MapInstanceId != MapInstanceId || evt.Descriptor.CommonEvent ||
+            evt.PageInstance is not { } page || page.MapId != evt.MapId || page.MapInstanceId != MapInstanceId)
+            return false;
+        var target = page.GlobalClone ?? page;
+        if (target.MapInstanceId != MapInstanceId || target.Z != Z) return false;
+        // Resolve each neighbor through actual map links. Identical grid coordinates
+        // on unrelated maps must not be treated as adjacent.
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0 || !Options.Instance.Map.EnableDiagonalMovement && dx != 0 && dy != 0) continue;
+            var neighbor = new TileHelper(MapId, X, Y);
+            if (neighbor.Translate(dx, dy) && neighbor.Matches(new TileHelper(target.MapId, target.X, target.Y)))
+                return true;
+        }
+        return false;
     }
 
     public Event FindGlobalEventInstance(EventPageInstance en)
@@ -7731,6 +7756,15 @@ public partial class Player : Entity
 
     public void TryBumpEvent(Guid mapId, Guid eventId)
     {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            TryBumpEventCore(mapId, eventId);
+        }
+    }
+
+    private void TryBumpEventCore(Guid mapId, Guid eventId)
+    {
         foreach (var evt in EventLookup)
         {
             if (evt.Value.MapId == mapId)
@@ -7740,7 +7774,7 @@ public partial class Player : Entity
                     var x = evt.Value.PageInstance.GlobalClone?.X ?? evt.Value.PageInstance.X;
                     var y = evt.Value.PageInstance.GlobalClone?.Y ?? evt.Value.PageInstance.Y;
                     var z = evt.Value.PageInstance.GlobalClone?.Z ?? evt.Value.PageInstance.Z;
-                    if (IsOneBlockAway(mapId, x, y, z))
+                    if (IsEventOneBlockAway(evt.Value))
                     {
                         if (evt.Value.PageInstance.Trigger != EventTrigger.PlayerBump)
                         {
@@ -7754,6 +7788,7 @@ public partial class Player : Entity
 
                         var newStack = new CommandInstance(evt.Value.PageInstance.MyPage);
                         evt.Value.CallStack.Push(newStack);
+                        RecordTutorialEventInteraction(evt.Value);
                     }
                 }
             }
@@ -7761,6 +7796,15 @@ public partial class Player : Entity
     }
 
     public void HandleEventCollision(Event evt, int pageNum)
+    {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            HandleEventCollisionCore(evt, pageNum);
+        }
+    }
+
+    private void HandleEventCollisionCore(Event evt, int pageNum)
     {
         var eventInstance = evt;
         if (evt.Player == null) //Global
@@ -7770,7 +7814,8 @@ public partial class Player : Entity
             {
                 if (e.Value.Descriptor.Id == evt.Descriptor.Id)
                 {
-                    if (e.Value.PageInstance.MyPage == e.Value.Descriptor.Pages[pageNum])
+                    if (pageNum >= 0 && pageNum < e.Value.Descriptor.Pages.Count &&
+                        e.Value.PageInstance != null && e.Value.PageInstance.MyPage == e.Value.Descriptor.Pages[pageNum])
                     {
                         eventInstance = e.Value;
 
@@ -7782,6 +7827,13 @@ public partial class Player : Entity
 
         if (eventInstance != null)
         {
+            var page = eventInstance.PageInstance;
+            var position = page?.GlobalClone ?? page;
+            if (eventInstance.Player != this || eventInstance.Descriptor.CommonEvent ||
+                eventInstance.MapInstanceId != MapInstanceId || page == null || position == null ||
+                page.MapInstanceId != MapInstanceId || position.MapInstanceId != MapInstanceId ||
+                eventInstance.MapId != MapId || page.MapId != MapId || position.MapId != MapId ||
+                position.X != X || position.Y != Y || position.Z != Z) return;
             if (eventInstance.PageInstance.Trigger != EventTrigger.PlayerCollide)
             {
                 return;
@@ -7794,6 +7846,7 @@ public partial class Player : Entity
 
             var newStack = new CommandInstance(eventInstance.PageInstance.MyPage);
             eventInstance.CallStack.Push(newStack);
+            RecordTutorialEventInteraction(eventInstance);
         }
     }
 

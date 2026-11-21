@@ -50,6 +50,12 @@ foreach(var sample in from size in new[]{new Point(320,480),new Point(640,480),n
  Apply(State());Call(guide,"CompleteOnHudAction",TutorialHighlightTarget.Inventory);Check(sent.Count==2,"Retry/resume of same step was permanently suppressed");
  step.HighlightTarget=TutorialHighlightTarget.None;Apply(State());Check(Field<TutorialHighlightTarget>(guide,"_target")==TutorialHighlightTarget.None,"Explicit None overridden by title");
  step.HighlightTarget=TutorialHighlightTarget.Minimap;step.HighlightStyle=TutorialHighlightStyle.Outline;Apply(State());Check(Field<TutorialHighlightStyle>(guide,"_style")==TutorialHighlightStyle.Outline,"Authored minimap style overridden");
+ step.Objective=TutorialObjective.InteractEvent;Apply(State(canAdvance:false));
+ var hint=Field<Label>(guide,"_interactionHint");
+ Check(next.IsHidden&&!hint.IsHidden,"Interaction lesson offers a Next bypass or has no instruction");
+ Check(hint.X>=pause.Right&&hint.Right<=hint.Parent!.Width&&hint.Bottom<=hint.Parent.Height,"Interaction hint overlaps buttons or clips at "+size);
+ Check(hint.Text==TutorialText.Get("Interact with the highlighted target.",sample.Language),"Untranslated interaction instruction");
+ var beforeInteraction=sent.Count;Call(guide,"CompleteOnHudAction",TutorialHighlightTarget.Minimap);Check(sent.Count==beforeInteraction,"HUD action replaces interaction");
  step.Objective=TutorialObjective.CombatDodge;Apply(State());Check(guide.IsHidden,"Combat guide stole the screen without explicit opening");
  Call(guide,"OpenGuide");Check(!guide.IsHidden,"Combat guide cannot be opened on demand");
  var sentBeforeCombat=sent.Count;Call(guide,"CompleteOnHudAction",TutorialHighlightTarget.Minimap);Check(sent.Count==sentBeforeCombat,"HUD action credited a combat drill");

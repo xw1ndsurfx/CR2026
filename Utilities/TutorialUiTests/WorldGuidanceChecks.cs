@@ -53,6 +53,18 @@ internal static class WorldGuidanceChecks
             Check((Vector2)args[0]! == new Vector2(180, 210), "Marker did not follow moving NPC");
             npc.IsHidden = true; Call(marker, "RefreshVisibility"); Check(marker.IsHidden, "Hidden NPC revealed by marker");
             npc.IsHidden = false; step.TargetNpcId = Guid.NewGuid(); Call(marker, "RefreshVisibility"); Check(marker.IsHidden, "Different descriptor matched");
+            var evt = new Intersect.Client.Entities.Events.Event(Guid.NewGuid(), null!) { MapId = map.Id, LatestMap = map };
+            GC.SuppressFinalize(evt); map.LocalEntities[evt.Id] = evt;
+            typeof(Entity).GetField("mOrigin", Hidden)!.SetValue(evt, new Vector2(210, 240));
+            step.HighlightTarget = TutorialHighlightTarget.WorldEvent; step.TargetEventId = evt.Id;
+            Call(marker, "SetStep", step); Call(marker, "TryGetWorldAnchor", args);
+            Check((Vector2)args[0]! == evt.Origin, "Event marker is not at its feet");
+            var eventHead = (Vector2)typeof(Entity).GetMethod("AnimationAnchor", Hidden)!.Invoke(evt, [true])!;
+            Check((Vector2)Marker.GetField("_headAnchor", Hidden)!.GetValue(marker)! == eventHead, "Event arrow retains previous target's head");
+            evt.IsHidden = true; Call(marker, "RefreshVisibility"); Check(marker.IsHidden, "Hidden event revealed");
+            evt.IsHidden = false; step.TargetEventId = Guid.NewGuid(); Call(marker, "RefreshVisibility"); Check(marker.IsHidden, "Wrong event identity accepted");
+            step.TargetEventId = evt.Id; evt.MapId = Guid.NewGuid(); Call(marker, "RefreshVisibility"); Check(marker.IsHidden, "Event from another map accepted");
+            map.LocalEntities.Remove(evt.Id);
             step.HighlightTarget = TutorialHighlightTarget.WorldTile; step.TargetX = 8; step.TargetY = 9;
             Call(marker, "SetStep", step); Call(marker, "TryGetWorldAnchor", args);
             Check((Vector2)args[0]! == new Vector2(map.X + 8.5f * Options.Instance.Map.TileWidth, map.Y + 9.5f * Options.Instance.Map.TileHeight), "Tile center is wrong");
@@ -66,7 +78,7 @@ internal static class WorldGuidanceChecks
             var project = Marker.GetMethod("ProjectPoint", BindingFlags.Static | BindingFlags.NonPublic)!;
             var projected = (Vector2)project.Invoke(null, [new Vector2(300, 200), new Vector2(100, 80), .5f, 2f])!;
             Check(projected == new Vector2(50, 30), "Camera zoom or UI scaling applied incorrectly");
-            System.Console.WriteLine("PASS world guide: exact/moving/hidden NPC, tile, absent map, offscreen, input, missing-art fallback and projection");
+            System.Console.WriteLine("PASS world guide: exact/moving/hidden NPC and event, tile, absent map, offscreen, input, missing-art fallback and projection");
         }
         finally
         {

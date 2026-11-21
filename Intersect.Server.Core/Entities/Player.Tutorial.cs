@@ -65,11 +65,39 @@ public partial class Player
         SendTutorial();
     }
 
+    /// <summary>
+    /// This hook is called only after the real event activation checks have
+    /// succeeded and its command stack has started (ActionButton, PlayerBump,
+    /// or PlayerCollide). Client event requests alone never grant tutorial credit.
+    /// </summary>
+    private void RecordTutorialEventInteraction(Intersect.Server.Entities.Events.Event activatedEvent)
+    {
+        lock (EntityLock)
+        {
+            if (!_tutorialSent || _tutorialRevision != TutorialRuntime.Revision ||
+                !InGame || IsDead || HasPendingDeath || !TutorialRuntime.Current.Enabled ||
+                Tutorial.Paused || Tutorial.Finished)
+                return;
+
+            var current = Tutorial.Current(TutorialRuntime.Current);
+            if (current == null || current.Id != _tutorialStep ||
+                !current.MatchesActivatedEvent(activatedEvent.Descriptor.Id, activatedEvent.MapId))
+                return;
+
+            Tutorial.Completed.Add(current.Id);
+            if (Tutorial.Current(TutorialRuntime.Current) == null)
+                Tutorial.Finished = true;
+            SaveTutorial();
+            SendTutorial();
+        }
+    }
+
     private void SaveTutorial() => SetVariableValue(TutorialProgressId, JsonConvert.SerializeObject(Tutorial));
     private bool TutorialReady(TutorialStep step) => step.Objective switch
     {
         TutorialObjective.Read => true,
         TutorialObjective.Move => _tutorialMoved,
+        TutorialObjective.InteractEvent => false, // Only validated event activation can complete this step.
         TutorialObjective.ReachMap => MapId == step.MapId,
         // Authoritative check: arrival is measured by the server's player position,
         // never by a client-reported tutorial or marker packet.
