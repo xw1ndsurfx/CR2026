@@ -1276,6 +1276,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        en.PlayNpcDeathSound();
         en.ClearAnimations();
     }
 
@@ -2111,6 +2112,7 @@ internal sealed partial class PacketHandler
         }
 
         Globals.Me.Party.Clear();
+        Globals.Me.PartyMemberCapacity=Math.Clamp(packet.MaximumMembers,0,100);
         for (var i = 0; i < packet.MemberData.Length; i++)
         {
             var mem = packet.MemberData[i];

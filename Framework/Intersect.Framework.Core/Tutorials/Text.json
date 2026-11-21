@@ -282,8 +282,8 @@
     },
     "Highlight target": {
       "en": "Highlight target",
-      "fr": "Élément à mettre en évidence",
-      "es": "Elemento que se resalta"
+      "fr": "Cible de surbrillance",
+      "es": "Objetivo del resaltado"
     },
     "Highlight shape": {
       "en": "Highlight shape",
@@ -319,6 +319,56 @@
       "en": "Use open map",
       "fr": "Utiliser la carte ouverte",
       "es": "Usar mapa abierto"
+    },
+    "Highlight style": {
+      "en": "Highlight style",
+      "fr": "Style de surbrillance",
+      "es": "Estilo del resaltado"
+    },
+    "Menu": {
+      "en": "Menu",
+      "fr": "Menu",
+      "es": "Menú"
+    },
+    "Inventory": {
+      "en": "Inventory",
+      "fr": "Inventaire",
+      "es": "Inventario"
+    },
+    "Quests": {
+      "en": "Quests",
+      "fr": "Quêtes",
+      "es": "Misiones"
+    },
+    "Minimap": {
+      "en": "Minimap",
+      "fr": "Mini-carte",
+      "es": "Minimapa"
+    },
+    "Character": {
+      "en": "Character",
+      "fr": "Personnage",
+      "es": "Personaje"
+    },
+    "World map": {
+      "en": "World map",
+      "fr": "Carte du monde",
+      "es": "Mapa del mundo"
+    },
+    "Quickbar": {
+      "en": "Quickbar",
+      "fr": "Barre de raccourcis",
+      "es": "Barra de accesos rápidos"
+    },
+    "Outline": {
+      "en": "Outline",
+      "fr": "Contour",
+      "es": "Contorno"
+    },
+    "Circle": {
+      "en": "Circle",
+      "fr": "Cercle",
+      "es": "Círculo"
     }
   }
 }

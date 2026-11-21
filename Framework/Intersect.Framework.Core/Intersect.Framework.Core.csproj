@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><EmbeddedResource Include="../../resources/ocean/Ship_*_Normal_v5_compat.png.naval.json;../../resources/ocean/Ship_*_Damaged_v5_compat.png.naval.json;../../resources/ocean/Ship_*_Idle_v5_compat.png.naval.json" Exclude="../../resources/ocean/Ship_CorpsRoyaux_*_Idle_v5_compat.png.naval.json;../../resources/ocean/Ship_Adventurer_*_Idle_v5_compat.png.naval.json" LogicalName="Intersect.Naval.%(Filename)%(Extension)" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../resources/ocean/Ship_CorpsRoyaux_ThreeMast_Layered_v4_compat.png.naval.json" LogicalName="Intersect.Naval.RoyalDeckAtlas" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../resources/ocean/Ship_CorpsRoyaux_*_Idle_v5_compat.png.naval.json;../../resources/ocean/Ship_Adventurer_*_Idle_v5_compat.png.naval.json" LogicalName="Intersect.Naval.%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="RoyalContracts/Text.json" LogicalName="Intersect.RoyalContracts.Text" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="Exportation/Text.json" LogicalName="Intersect.Exportation.Text" /></ItemGroup>
   <ItemGroup>
@@ -21,6 +24,9 @@
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Corps Royaux</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>CorpsRoyaux.Android</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Intersect.Client.Core</_Parameter1>

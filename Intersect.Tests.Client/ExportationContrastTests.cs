@@ -83,6 +83,15 @@ public sealed class ExportationContrastTests
     }
 
     [Test]
+    public void BitmapTextFittingUsesVisibleInkInsteadOfTransparentCellPadding()
+    {
+        var sparse = ExportationWindow.ScaleForVisibleInk(16, 16, new FontInkMetrics(3f / 16, 7f / 16));
+        var full = ExportationWindow.ScaleForVisibleInk(16, 16, new FontInkMetrics(0, 1));
+        Assert.That(sparse * 7, Is.EqualTo(12).Within(.001));
+        Assert.That(sparse, Is.GreaterThan(full), "Empire's 7px glyph must not be treated as a 16px visible letter.");
+    }
+
+    [Test]
     public void CrateCountsMatchActualPackedItemsByGroup()
     {
         var wood = Guid.NewGuid();

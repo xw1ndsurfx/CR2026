@@ -13,14 +13,44 @@ public partial class DescriptionWindowBase : ComponentBase
 
     // Our internal list of components.
     private readonly List<ComponentBase> _components = [];
+    private Base? _mobileOwner;
+    internal bool MobilePinned { get; private set; }
+
+    internal void PinMobileAction(Base owner, string? caption, Func<bool> canExecute, Action execute)
+    {
+        MobilePinned = true;
+        _mobileOwner = owner;
+        MouseInputEnabled = true;
+        ShouldCacheToTexture = false;
+        var actions = new MobileDescriptionActionBar(this, caption,
+            () => owner.IsVisibleInTree && canExecute(), execute, CloseMobileDescription);
+        // Keep the action reachable even when a long equipment description exceeds the screen.
+        _components.Insert(0, actions);
+        FinalizeWindow();
+        if (Canvas is { } canvas)
+            MoveTo(Math.Clamp(X, 0, Math.Max(0, canvas.Width - Width)),
+                Math.Clamp(Y, 0, Math.Max(0, canvas.Height - Height)));
+        BringToFront();
+    }
+
+    internal void CloseMobileDescription()
+    {
+        MobilePinned = false;
+        Hide();
+    }
 
     public DescriptionWindowBase(Base parent, string name) : base(parent, name)
     {
-        LoadJsonUi(Framework.File_Management.GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+        LoadJsonUi(Framework.File_Management.GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString() ?? string.Empty);
     }
 
     protected override void OnPreDraw(Framework.Gwen.Skin.Base skin)
     {
+        if (MobilePinned && _mobileOwner?.IsVisibleInTree != true)
+        {
+            CloseMobileDescription();
+            return;
+        }
         base.OnPreDraw(skin);
 
         if (!IsOnTop)

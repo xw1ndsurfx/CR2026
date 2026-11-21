@@ -1272,6 +1272,8 @@ public static partial class CommandPrinter
     private static string GetCommandText(OpenNavalShopCommand command, MapInstance map) =>
         Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",
             System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+    private static string GetCommandText(ShipRewardCommand command,MapInstance map)=>
+        Intersect.Framework.Core.Naval.NavalSetupText.Get(command.Action==ShipRewardAction.GrantShip?"Give owned ship":"Unlock ship model",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+": "+command.ModelId;
 
     private static string GetCommandText(OpenQuestShopCommand command, MapInstance map)
     {

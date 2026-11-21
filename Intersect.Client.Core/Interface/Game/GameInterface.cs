@@ -548,7 +548,9 @@ public partial class GameInterface : MutableInterface
         if (mShouldOpenShop)
         {
             OpenShop();
+#if !ANDROID
             GameMenu.OpenInventory();
+#endif
         }
 
         if (_shopWindow != null && (!_shopWindow.IsVisibleInTree || mShouldCloseShop))
@@ -561,8 +563,13 @@ public partial class GameInterface : MutableInterface
         //Bank Update
         if (mShouldOpenBank)
         {
-            OpenBank();
+#if ANDROID
             GameMenu?.OpenInventory();
+#endif
+            OpenBank();
+#if !ANDROID
+            GameMenu?.OpenInventory();
+#endif
         }
         else if (_shouldCloseBank)
         {
@@ -596,8 +603,13 @@ public partial class GameInterface : MutableInterface
         //Crafting station update
         if (mShouldOpenCraftingTable)
         {
-            OpenCraftingTable();
+#if ANDROID
             GameMenu.OpenInventory();
+#endif
+            OpenCraftingTable();
+#if !ANDROID
+            GameMenu.OpenInventory();
+#endif
         }
 
         if (mCraftingWindow != null)
@@ -613,8 +625,13 @@ public partial class GameInterface : MutableInterface
         //Trading update
         if (mShouldOpenTrading)
         {
-            OpenTrading();
+#if ANDROID
             GameMenu.OpenInventory();
+#endif
+            OpenTrading();
+#if !ANDROID
+            GameMenu.OpenInventory();
+#endif
         }
 
         if (mTradingWindow != null)
@@ -726,6 +743,16 @@ public partial class GameInterface : MutableInterface
         mTradingWindow = null;
         Globals.InTrade = false;
         PacketSender.SendDeclineTrade();
+    }
+
+    internal void CloseMobileInventorySession()
+    {
+        if (_shopWindow != null) CloseShop();
+        if (_bankWindow != null) { _bankWindow.Hide(); CloseBank(); }
+        if (_bagWindow != null) CloseBagWindow();
+        if (mTradingWindow != null) CloseTrading();
+        if (mCraftingWindow is { IsCrafting: false }) CloseCraftingTable();
+        GameMenu.GetInventoryWindow().Hide();
     }
 
     public bool CloseAllWindows()

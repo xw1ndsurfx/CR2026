@@ -125,12 +125,20 @@ public sealed class CannonStationArtwork
     public ShipSpriteFrame? Frame {get;set;}
     public ShipSpriteFrame? LeftFrame {get;set;}
     public ShipSpriteFrame? RightFrame {get;set;}
-    public bool IsValid(int width,int height)=>Version==1 && ImageWidth==width && ImageHeight==height &&
+    public ShipSpriteFrame? LowerFrame {get;set;}
+    public ShipSpriteFrame? LowerLeftFrame {get;set;}
+    public ShipSpriteFrame? LowerRightFrame {get;set;}
+    public bool IsPanoramic=>Version==2;
+    public bool IsValid(int width,int height)=>Version is 1 or 2 && ImageWidth==width && ImageHeight==height &&
         width is >0 and <=16384 && height is >0 and <=16384 && Fits(Frame,width,height) &&
-        (LeftFrame==null || Fits(LeftFrame,width,height)) && (RightFrame==null || Fits(RightFrame,width,height));
+        (LeftFrame==null || Fits(LeftFrame,width,height)) && (RightFrame==null || Fits(RightFrame,width,height)) &&
+        (LowerFrame==null && LowerLeftFrame==null && LowerRightFrame==null ||
+            Version==2 && Fits(LowerFrame,width,height) && Fits(LowerLeftFrame,width,height) && Fits(LowerRightFrame,width,height));
     private static bool Fits(ShipSpriteFrame? f,int width,int height)=>f!=null &&
         f.X>=0 && f.Y>=0 && f.Width>0 && f.Height>0 && f.X<=width-f.Width && f.Y<=height-f.Height;
-    public ShipSpriteFrame Pose(double yaw)=>yaw< -12?LeftFrame??Frame!:yaw>12?RightFrame??Frame!:Frame!;
+    public ShipSpriteFrame Pose(double yaw,bool lowerBattery=false)=>lowerBattery && LowerFrame!=null
+        ? yaw< -12?LowerLeftFrame??LowerFrame:yaw>12?LowerRightFrame??LowerFrame:LowerFrame
+        : yaw< -12?LeftFrame??Frame!:yaw>12?RightFrame??Frame!:Frame!;
 }
 
 

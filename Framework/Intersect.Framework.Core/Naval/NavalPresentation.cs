@@ -4,6 +4,7 @@ namespace Intersect.Framework.Core.Naval;
 [MessagePackObject]
 public sealed class NavalPresentation
 {
+    [Key(23)] public bool MatchCrewCannonToShip {get;set;}=true;
     [Key(22)] public Guid LevelUpAnimationId {get;set;}
     [Key(21)] public string CrewCannonGraphic {get;set;}="Ship_Crew_Cannon.png";
     [Key(20)] public string CrewIcon {get;set;}="";

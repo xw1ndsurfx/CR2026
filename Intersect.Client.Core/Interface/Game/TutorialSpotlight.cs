@@ -53,6 +53,14 @@ internal sealed class TutorialSpotlight : Base
         var y = Math.Clamp(origin.Y, 0, _canvas.Height);
         var right = Math.Clamp(origin.X + target.Width, 0, _canvas.Width);
         var bottom = Math.Clamp(origin.Y + target.Height, 0, _canvas.Height);
+        for (var ancestor = target.Parent; ancestor != null && ancestor != _canvas; ancestor = ancestor.Parent)
+        {
+            if (!ancestor.ClipContents) continue;
+            var clip = ancestor.ToCanvas(Point.Empty);
+            x = Math.Max(x, clip.X); y = Math.Max(y, clip.Y);
+            right = Math.Min(right, clip.X + ancestor.Width);
+            bottom = Math.Min(bottom, clip.Y + ancestor.Height);
+        }
         if (right <= x || bottom <= y)
             return null;
         return new Rectangle(x, y, right - x, bottom - y);

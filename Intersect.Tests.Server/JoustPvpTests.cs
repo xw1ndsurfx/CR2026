@@ -53,15 +53,27 @@ public sealed class JoustPvpTests
         internal JoustPvpSession? Session => (JoustPvpSession?)Field(A, "_joustPvp");
         internal JoustPvpRuntime.Invitation Invite()
         {
+            // The success fixture represents two available players, not a race
+            // with background map updates taking the target's entity lock.
+            lock(A.EntityLock)lock(B.EntityLock)
+            {
+            // A fresh fixture has no invitation cooldown, including on newly booted CI hosts.
+            typeof(Player).GetField("_pvpJoustRequestAt", Hidden)!.SetValue(A, Environment.TickCount64 - 5001);
             A.HandleJoustRequest(new() { Action = JoustAction.InviteDuel, TargetId = B.Id });
             var list = (Dictionary<Guid, JoustPvpRuntime.Invitation>)typeof(JoustPvpRuntime).GetField("Invitations", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            Assert.That(list.ContainsKey(B.Id), Is.True, $"Invitation missing: challenger ready={A.CanEnterPvpJoust(Arena)}, target ready={B.CanEnterPvpJoust(Arena)}, start=({A.X},{A.Y}), clock={Environment.TickCount64}.");
             return list[B.Id];
+            }
         }
         internal JoustPvpSession Start()
         {
+            lock(A.EntityLock)lock(B.EntityLock)
+            {
             var invite = Invite();
+            typeof(Player).GetField("_pvpJoustAnswerAt", Hidden)!.SetValue(B, Environment.TickCount64 - 501);
             B.HandleJoustRequest(new() { Action = JoustAction.AcceptDuel, InvitationId = invite.Id });
             Assert.That(Session, Is.Not.Null, "Native invitation and acceptance must start one shared session."); return Session!;
+            }
         }
         public void Dispose()
         {

@@ -23,10 +23,12 @@ public partial class Player
         internal required FishingZoneDefinition Zone;
         internal required FishingToolDefinition Tool;
         internal required FishingState State;
-        internal Guid StartMapId, InstanceId, AttemptId;
+        internal Guid StartMapId, InstanceId, AttemptId, ShipId;
         internal float StartX, StartY;
         internal long LastRequest, LastSent, PhaseStarted, Deadline, FightDeadline, NextAnimation;
         internal readonly long[] SkillReadyAt = new long[4];
+        internal bool CatchAutomatic;
+        internal List<FishingInventoryEntry> BonusLoot = [];
         internal FishingCatchDefinition? Catch;
         internal FishingFight? Fight;
         internal FishingLegendaryEncounter? Legendary;
@@ -129,7 +131,7 @@ public partial class Player
 
     private bool ValidFishing() => _fishing is { } s && InGame && !IsDisposed && Client is { IsEditor: false } && Client.IsConnected() &&
         Client.Entity == this && !IsDead && !HasPendingDeath && MapId == s.StartMapId && MapInstanceId == s.InstanceId && X == s.StartX && Y == s.StartY &&
-        FishingRules.WithinZone(s.Zone, MapId, X, Y) && ReferenceEquals(s.Configuration, FishingRuntime.Current) &&
+        FishingRules.WithinZone(s.Zone, MapId, X, Y) && (s.ShipId==Guid.Empty || Naval.NavalSystem.ValidFishingStation(this,s.ShipId)) && ReferenceEquals(s.Configuration, FishingRuntime.Current) &&
         EquippedFishingTool(s.Configuration)?.ItemId == s.Tool.ItemId && CombatTimer <= Timing.Global.Milliseconds && !IsCasting && !IsBusy();
 
     internal void HandleFishingRequest(FishingRequestPacket packet)
@@ -146,6 +148,23 @@ public partial class Player
             if (_fishing != s) return;
             switch (packet.Action)
             {
+                case FishingAction.SetLootDestination:
+                    s.State.BankLoot = packet.Input == 1 && HasBankPremium && BankAccount.Opened;
+                    break;
+                case FishingAction.TakeLoot:
+                    if (s.State.Phase == FishingPhase.Loot) TakeFishingLoot(now);
+                    break;
+                case FishingAction.DiscardLoot:
+                    if (s.State.Phase == FishingPhase.Loot)
+                    {
+                        s.State.Phase = FishingPhase.Ready;
+                        s.State.Loot = []; s.BonusLoot = [];
+                        s.State.CatchQuantity = 0;
+                        s.State.CatchItemId = Guid.Empty;
+                        s.State.Message = "";
+                        s.Deadline = now;
+                    }
+                    break;
                 case FishingAction.Cast:
                     if (s.State.Phase is FishingPhase.Ready or FishingPhase.Caught or FishingPhase.Failed && now >= s.Deadline) CastFishing(now);
                     break;
@@ -212,7 +231,7 @@ public partial class Player
         if (!ValidFishing()) { EndFishing("Fishing interrupted."); return; }
         if (EligibleFishing().Length == 0)
         { FailFishing("No eligible catch is available with this tool and these conditions.", now, "tool_incompatible", stopAutomatic: true); return; }
-        if (!EligibleFishing().Any(c => CanGiveItem(c.ItemId, c.MinimumQuantity)))
+        if (s.State.Automatic && !s.State.BankLoot && !EligibleFishing().Any(c => CanGiveItem(c.ItemId, c.MinimumQuantity)))
         { FailFishing("Your inventory is full. Make room and cast again.", now, s.State.Automatic ? "auto_inventory_full" : "inventory_full", stopAutomatic: true); return; }
         var bait = FishingRewards.ConsumeBait(this, s.Tool.BaitItemId, s.Tool.BaitQuantity);
         if (bait != FishingRewardResult.Success)
@@ -222,6 +241,7 @@ public partial class Player
             return;
         }
         if (s.Tool.BaitItemId != Guid.Empty) RefreshFishingInventory(s.Tool.BaitItemId);
+        s.State.Loot = []; s.BonusLoot = [];
         s.AttemptId = Guid.NewGuid();
         s.Catch = null; s.Fight = null; s.Legendary = null;
         s.State.Phase = FishingPhase.Waiting; s.State.Reeling = false;
@@ -322,6 +342,13 @@ public partial class Player
                             : "The legendary creature escaped. Choose a mode to resume fishing.", now, "legendary_timeout",
                             stopAutomatic: !expired.ResumeAutomaticAfterTimeout, resumeAutomatic: expired.ResumeAutomaticAfterTimeout);
                     break;
+                case FishingPhase.Retrieving:
+                    if (now >= s.Deadline)
+                    {
+                        s.State.Phase = FishingPhase.Loot;
+                        if (s.State.Automatic) TakeFishingLoot(now);
+                    }
+                    break;
                 case FishingPhase.Ready:
                 case FishingPhase.Caught:
                 case FishingPhase.Failed:
@@ -374,16 +401,37 @@ public partial class Player
             FailFishing("The catch escaped.", now);
             return;
         }
-        var experience = s.State.Automatic
+        s.BonusLoot = FishingRules.RollBonusLoot(s.Catch, () => Random.Shared.NextDouble(), (min, max) => Random.Shared.Next(min, max));
+        s.State.Loot = [new() { ItemId = s.Catch.ItemId, Quantity = s.State.CatchQuantity }, ..s.BonusLoot];
+        s.CatchAutomatic = s.State.Automatic;
+        s.State.Phase = FishingPhase.Retrieving;
+        s.State.Reeling = false;
+        s.State.Progress = 100;
+        s.State.FishStamina = 0;
+        s.PhaseStarted = now;
+        s.Deadline = now + 1200;
+        FishingAnimation(s.Tool.CatchAnimationId);
+        FishingWorld(FishingWorldAction.Catch, now);
+    }
+
+    private void TakeFishingLoot(long now)
+    {
+        var s = _fishing!;
+        if (s.State.Phase != FishingPhase.Loot || s.Catch == null) return;
+        // Recheck entitlement at collection time; an expired premium cannot route rewards to storage.
+        s.State.BankLoot &= HasBankPremium && BankAccount.Opened;
+        var experience = s.CatchAutomatic
             ? FishingRules.AutomaticExperience(s.Zone, s.Catch.Experience)
             : s.Catch.Experience;
         var award = FishingRewards.Progress(this, s.Configuration, experience);
-        var result = FishingRewards.Reward(this, s.AttemptId, s.Catch.ItemId, s.State.CatchQuantity, award);
+        var result = FishingRewards.Reward(this, s.AttemptId, s.Catch.ItemId, s.State.CatchQuantity, award, s.State.BankLoot, s.BonusLoot);
         if (result is not (FishingRewardResult.Success or FishingRewardResult.AlreadyCommitted))
         {
-            FailFishing(result == FishingRewardResult.InventoryFull ? "Your inventory is full. Make room and cast again." :
-                "Fishing could not be saved. Please try again.", now, result == FishingRewardResult.InventoryFull ?
-                    s.State.Automatic ? "auto_inventory_full" : "inventory_full" : "ui_error", stopAutomatic: true);
+            s.State.Automatic = false;
+            s.State.Message = result == FishingRewardResult.InventoryFull
+                ? "Not enough space for all loot. Free space, change destination or discard it."
+                : "Fishing could not be saved. Please try again.";
+            FishingCue("ui_error");
             return;
         }
         s.State.Phase = FishingPhase.Caught; s.State.Reeling = false; s.State.Progress = 100; s.State.FishStamina = 0;
@@ -394,8 +442,15 @@ public partial class Player
         FishingWorld(FishingWorldAction.Catch, now);
         if (result == FishingRewardResult.Success)
         {
-            RefreshFishingInventory(s.Catch.ItemId);
-            SendPacket(new ItemChangeNotificationPacket(s.Catch.ItemId, s.State.CatchQuantity));
+            if (!s.State.BankLoot)
+            {
+                PacketSender.SendInventory(this);
+                foreach (var loot in s.State.Loot.GroupBy(loot => loot.ItemId))
+                {
+                    UpdateGatherItemQuests(loot.Key);
+                    SendPacket(new ItemChangeNotificationPacket(loot.Key, loot.Sum(entry => entry.Quantity)));
+                }
+            }
             if (award.Profession != null) ProfessionRuntime.PublishFishingAward(this, award.Profession, award.PreviousLevel, award.Gained);
         }
         SendFishing(now);
@@ -457,6 +512,8 @@ public partial class Player
         if (_fishing is not { } s) return;
         var state = s.State;
         var progress = FishingRewards.Progress(this, s.Configuration);
+        state.CanBankLoot = HasBankPremium && BankAccount.Opened;
+        state.BankLoot &= state.CanBankLoot;
         state.Level = progress.PreviousLevel;
         state.Experience = progress.Before;
         state.MaximumLevel = progress.Profession?.MaximumLevel ?? MiniGameProgression.MaximumLevel;
@@ -475,7 +532,7 @@ public partial class Player
                 state.SkillCooldownsMs[index] == 0 && (index == 3 ? state.Phase == FishingPhase.Waiting && state.Depth < 100 :
                     state.Phase == FishingPhase.Fighting && (index != 2 || state.LineCondition < 100));
         }
-        var catchIds = s.Configuration.Zones.SelectMany(z => z.Catches).Select(c => c.ItemId).ToHashSet();
+        var catchIds = s.Configuration.Zones.SelectMany(z => z.Catches).SelectMany(c => new[] { c.ItemId }.Concat(c.BonusLoot.Select(loot => loot.ItemId))).ToHashSet();
         state.Inventory = Items.Where(item => catchIds.Contains(item.ItemId) && item.Quantity > 0).GroupBy(item => item.ItemId)
             .Select(group => new FishingInventoryEntry { ItemId = group.Key, Quantity = (int)Math.Min(int.MaxValue, group.Sum(i => (long)i.Quantity)) }).ToList();
         state.Revision++; s.LastSent = now;

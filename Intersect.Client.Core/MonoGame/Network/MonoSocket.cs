@@ -155,6 +155,9 @@ internal partial class MonoSocket : GameSocket
             }
 
             endPoint = new IPEndPoint(address, port.Value);
+#if ANDROID
+            global::Android.Util.Log.Info("CR2026", $"Resolved game server: {_lastHost} -> {endPoint}");
+#endif
             _lastEndpoint = endPoint;
             return true;
         }

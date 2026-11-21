@@ -162,6 +162,12 @@ public partial class WindowControl : ResizableControl
     {
         base.Layout(skin);
 
+        if (FullscreenViewport != null)
+        {
+            LayoutFullscreenContent();
+            return;
+        }
+
         _titlebar.SizeToChildren(resizeX: false, resizeY: true, recursive: true);
         var size = _titlebar.Height;
         if (_innerPanel is { } innerPanel)
@@ -309,6 +315,13 @@ public partial class WindowControl : ResizableControl
     /// <param name="skin">Skin to use.</param>
     protected override void Render(Skin.Base skin)
     {
+        if (FullscreenViewport != null)
+        {
+            var previousColor = skin.Renderer.DrawColor;
+            skin.Renderer.DrawColor = new Color(255, 20, 27, 37);
+            skin.Renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
+            skin.Renderer.DrawColor = previousColor;
+        }
         var hasFocus = IsOnTop;
         var textColor = GetTextColor(ControlState.Active);
         if (textColor == null && !hasFocus)

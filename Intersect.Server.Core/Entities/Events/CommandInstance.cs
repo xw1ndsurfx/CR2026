@@ -47,6 +47,9 @@ public partial class CommandInstance
 
     public EventResponse WaitingForResponse = EventResponse.None;
 
+    // Runtime-only, discarded with the command frame when the event ends or is interrupted.
+    public bool ProtectDialogue;
+
     public Guid WaitingForRoute;
 
     public Guid WaitingForRouteMap;

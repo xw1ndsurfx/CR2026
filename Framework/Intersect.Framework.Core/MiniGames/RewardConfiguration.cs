@@ -30,9 +30,11 @@ public sealed class RewardConfiguration
     public PokerLevelReward[] BlackjackLevelRewards { get; set; } = [];
     public PokerLevelReward[] PotionLevelRewards { get; set; } = [];
     public PotionRecipeDefinition[] PotionRecipes { get; set; } = [];
+    public PotionPresentationAssets PotionAssets { get; set; } = new();
     public CookingRecipeDefinition[] CookingRecipes { get; set; } = [];
 
     public bool IsStructurallyValid =>
+        PotionAssets is { IsValid: true } &&
         DailyCycleDays is >= 1 and <= MaximumDailyCycleDays &&
         (DailyRewards ?? []).Length <= MaximumDailyCycleDays * 8 &&
         (DailyRewards ?? []).All(reward => reward is { } && reward.IsValid(DailyCycleDays)) &&
@@ -72,6 +74,7 @@ public sealed class RewardConfiguration
         value.PotionLevelRewards ??= [];
         value.PotionRecipes ??= [];
         value.CookingRecipes ??= [];
+        value.PotionAssets ??= new();
         if (!value.IsStructurallyValid)
         {
             throw new InvalidDataException("Invalid reward configuration.");
