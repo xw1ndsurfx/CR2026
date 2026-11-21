@@ -27,7 +27,7 @@ Les tests serveur appellent les vraies entrées `TryActivateEvent`, `TryBumpEven
 
 Les tests de fenêtre utilisent les contrôles Gwen avec des métriques de rendu synthétiques sur cinq tailles et trois langues. Les tests d'éditeur construisent les vrais contrôles WinForms et dessinent l'aperçu avec GDI. Ils couvrent les choix d'événement, les libellés traduits, le clic dans l'aperçu et la conservation des identifiants.
 
-Résultats locaux : **27 tests serveur et 14 tests de configuration réussis**, **19 groupes de contrôles client réussis**, contrôles d'éditeur réussis en **EN/FR/ES**, transparence des deux images vérifiée. Les compilations Release du serveur, de l'éditeur et du client standard ont réussi. Les vérifications locales ont utilisé `RunAnalyzers=false` et `NuGetAudit=false` ; le workflow GitHub conserve ses commandes normales. Les avertissements existants du dépôt ne sont pas traités par cette PR.
+Résultats locaux : **27 tests serveur et 14 tests de configuration réussis**, **19 groupes de contrôles client réussis**, contrôles d'éditeur réussis en **EN/FR/ES**, transparence des deux images vérifiée. Les compilations Release du serveur, de l'éditeur et du client standard ont réussi. Après correction du nettoyage des joueurs de test signalé par NUnit, les 27 tests serveur ont été relancés avec succès avec `RunAnalyzers=true`. Les autres vérifications locales ont utilisé `RunAnalyzers=false`, et toutes ont utilisé `NuGetAudit=false` ; le workflow GitHub conserve ses commandes normales. Les avertissements existants du dépôt ne sont pas traités par cette PR.
 
 ## Limites et essai en jeu restant
 

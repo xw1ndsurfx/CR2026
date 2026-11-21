@@ -62,8 +62,16 @@ public sealed class TutorialInteractionTests
     [TearDown]
     public void TearDown()
     {
-        EventDescriptor.Lookup.DeleteAt(_event.Descriptor.Id); MapController.Lookup.DeleteAt(_map.Id);
-        foreach (var (field, value) in _runtimeBefore) field.SetValue(null, value);
+        try
+        {
+            _event.PageInstance?.Dispose();
+            _player.Dispose();
+        }
+        finally
+        {
+            EventDescriptor.Lookup.DeleteAt(_event.Descriptor.Id); MapController.Lookup.DeleteAt(_map.Id);
+            foreach (var (field, value) in _runtimeBefore) field.SetValue(null, value);
+        }
     }
 
     private void Activate(EventTrigger trigger)
@@ -82,7 +90,8 @@ public sealed class TutorialInteractionTests
         Assert.That(_event.CallStack.Count, Is.EqualTo(1), "Credit follows the actual command stack start.");
         Activate(trigger);
         Assert.That(Progress.Completed.Count, Is.EqualTo(1), "A duplicate request while the event is running cannot validate the next lesson.");
-        var saved = _player.GetVariable(Player.TutorialProgressId).Value.String;
+        var saved = _player.GetVariable(Player.TutorialProgressId).Value.String
+            ?? throw new InvalidOperationException("Tutorial progress was not saved.");
         Assert.That(JsonConvert.DeserializeObject<TutorialProgress>(saved)!.Completed, Is.EquivalentTo(Progress.Completed));
         Field(_player, "_tutorial", null); _player.ResetTutorialSession(); Invoke(_player, "SendTutorial");
         Assert.That(Progress.Current(_config)!.Id, Is.EqualTo(_config.Steps[1].Id));
