@@ -275,10 +275,50 @@
       "fr": "Guide royal",
       "es": "Guía real"
     },
+    "Visual guide": {
+      "en": "Visual guide",
+      "fr": "Guide visuel",
+      "es": "Guía visual"
+    },
     "Highlight target": {
       "en": "Highlight target",
       "fr": "Cible de surbrillance",
       "es": "Objetivo del resaltado"
+    },
+    "Highlight shape": {
+      "en": "Highlight shape",
+      "fr": "Forme de surbrillance",
+      "es": "Forma de resaltado"
+    },
+    "Target map": {
+      "en": "Target map",
+      "fr": "Carte ciblée",
+      "es": "Mapa de destino"
+    },
+    "Target NPC": {
+      "en": "Target NPC",
+      "fr": "PNJ ciblé",
+      "es": "PNJ objetivo"
+    },
+    "Target tile X and Y": {
+      "en": "Target tile X and Y",
+      "fr": "Case ciblée X et Y",
+      "es": "Casilla objetivo X e Y"
+    },
+    "Arrival radius": {
+      "en": "Arrival radius",
+      "fr": "Rayon d'arrivée",
+      "es": "Radio de llegada"
+    },
+    "Preview is illustrative. Select a real map, NPC and coordinates.": {
+      "en": "Preview is illustrative. Select a real map, NPC and coordinates.",
+      "fr": "L'aperçu est illustratif. Sélectionnez une vraie carte, un PNJ et des coordonnées.",
+      "es": "La vista previa es ilustrativa. Selecciona un mapa, un PNJ y coordenadas."
+    },
+    "Use open map": {
+      "en": "Use open map",
+      "fr": "Utiliser la carte ouverte",
+      "es": "Usar mapa abierto"
     },
     "Highlight style": {
       "en": "Highlight style",
@@ -329,6 +369,146 @@
       "en": "Circle",
       "fr": "Cercle",
       "es": "Círculo"
+    },
+    "Player": {
+      "en": "Player",
+      "fr": "Joueur",
+      "es": "Jugador"
+    },
+    "World tile": {
+      "en": "World tile",
+      "fr": "Destination sur la carte",
+      "es": "Destino en el mapa"
+    },
+    "World NPC": {
+      "en": "World NPC",
+      "fr": "PNJ sur la carte",
+      "es": "PNJ en el mapa"
+    },
+    "Read": {
+      "en": "Read",
+      "fr": "Lire",
+      "es": "Leer"
+    },
+    "Move": {
+      "en": "Move",
+      "fr": "Se déplacer",
+      "es": "Moverse"
+    },
+    "Reach map": {
+      "en": "Reach map",
+      "fr": "Atteindre la carte",
+      "es": "Llegar al mapa"
+    },
+    "Variable": {
+      "en": "Variable",
+      "fr": "Variable",
+      "es": "Variable"
+    },
+    "Reach tile": {
+      "en": "Reach tile",
+      "fr": "Atteindre une case",
+      "es": "Llegar a una casilla"
+    },
+    "Dodge": {
+      "en": "Dodge",
+      "fr": "Esquive",
+      "es": "Esquiva"
+    },
+    "Perfect parry": {
+      "en": "Perfect parry",
+      "fr": "Parade parfaite",
+      "es": "Parada perfecta"
+    },
+    "Counterattack": {
+      "en": "Counterattack",
+      "fr": "Contre-attaque",
+      "es": "Contraataque"
+    },
+    "Finisher": {
+      "en": "Finisher",
+      "fr": "Coup de grâce",
+      "es": "Golpe final"
+    },
+    "Target X": {
+      "en": "Target X",
+      "fr": "Case X",
+      "es": "Casilla X"
+    },
+    "Target Y": {
+      "en": "Target Y",
+      "fr": "Case Y",
+      "es": "Casilla Y"
+    },
+    "Player variable": {
+      "en": "Player variable",
+      "fr": "Variable du joueur",
+      "es": "Variable del jugador"
+    },
+    "Required value": {
+      "en": "Required value",
+      "fr": "Valeur requise",
+      "es": "Valor requerido"
+    },
+    "NPC": {
+      "en": "NPC",
+      "fr": "PNJ",
+      "es": "PNJ"
+    },
+    "Spells": {
+      "en": "Spells",
+      "fr": "Sorts",
+      "es": "Hechizos"
+    },
+    "Guild": {
+      "en": "Guild",
+      "fr": "Guilde",
+      "es": "Gremio"
+    },
+    "Your next step": {
+      "en": "Your next step",
+      "fr": "Votre prochaine étape",
+      "es": "Tu próximo paso"
+    },
+    "Approach X:{0} Y:{1} (radius {2}).": {
+      "en": "Approach X:{0} Y:{1} (radius {2}).",
+      "fr": "Approchez de X:{0} Y:{1} (rayon {2}).",
+      "es": "Acércate a X:{0} Y:{1} (radio {2})."
+    },
+    "Talk to the indicated character.": {
+      "en": "Talk to the indicated character.",
+      "fr": "Parlez au personnage indiqué.",
+      "es": "Habla con el personaje indicado."
+    },
+    "Move to progress.": {
+      "en": "Move to progress.",
+      "fr": "Déplacez-vous pour progresser.",
+      "es": "Muévete para avanzar."
+    },
+    "Follow the highlighted element.": {
+      "en": "Follow the highlighted element.",
+      "fr": "Suivez l’élément mis en évidence.",
+      "es": "Sigue el elemento resaltado."
+    },
+    "ILLUSTRATIVE PREVIEW - actual positions in game": {
+      "en": "ILLUSTRATIVE PREVIEW - actual positions in game",
+      "fr": "APERÇU ILLUSTRATIF - positions réelles en jeu",
+      "es": "VISTA ILUSTRATIVA - posiciones reales en el juego"
+    },
+    "Royal Guide: select an existing map.": {
+      "en": "Royal Guide: select an existing map.",
+      "fr": "Guide royal : choisissez une carte existante.",
+      "es": "Guía real: elige un mapa existente."
+    },
+    "Royal Guide: target tile is outside the map.": {
+      "en": "Royal Guide: target tile is outside the map.",
+      "fr": "Guide royal : la case cible est hors de la carte.",
+      "es": "Guía real: la casilla de destino está fuera del mapa."
+    },
+    "Royal Guide: select an existing NPC.": {
+      "en": "Royal Guide: select an existing NPC.",
+      "fr": "Guide royal : choisissez un PNJ existant.",
+      "es": "Guía real: elige un PNJ existente."
     }
   }
 }

@@ -1,0 +1,24 @@
+{
+  "generator": "Built-in image_gen",
+  "assets": [
+    {
+      "file": "resources/gui/royal-guide/guide_npc_v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent 2D fantasy RPG tutorial marker, single square PNG. Create one small polished hand-painted pixel-art gold wayfinder pin for Corps Royaux, medieval royal aesthetic matching warm oak, brass and royal-blue RPG interfaces. A compact gold shield-shaped medallion with one very readable raised ivory exclamation symbol in its center, a tiny fleur-de-lis crown at its top, and a clear short downward-pointing gold tip at bottom. Front view, symmetrical, strong dark brown outline, restrained highlights, no scene, no character. Must remain readable when rendered only 48 pixels high over an NPC. Centered in a square image, occupy about 85 percent of height; isolated on genuine transparent alpha, including transparent outer corners. No background, no floor, no drop shadow outside the icon, no words, no watermark. Only the single marker.",
+      "sha256": "c3944ee15fb9440301a0636f8b6f02974c585a231d52cc4aecc0b173d2b3a527"
+    },
+    {
+      "file": "resources/gui/royal-guide/guide_ground_v1.png",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent 2D fantasy RPG ground destination sprite for Corps Royaux. A clean elliptical golden rune ring lying flat on the ground in a 2D top-down three-quarter game, viewed from above at a shallow angle: width about twice its height. Warm golden double rim with a few tiny brass fleur-de-lis details at four compass points and a very soft amber glow touching the rim. The interior must remain completely transparent so the actual game terrain shows through. Clean readable pixel-art contour, sparse details, consistent royal brass, brown and ivory medieval style; no blue disk, no pedestal, no ground, no cast shadow, no text, no characters, no vertical beam. Only one flat elliptical target ring centered in a square transparent canvas, spanning 88 percent of width and 44 percent of height. Intended to be rendered 64 pixels wide. Genuine transparent alpha outside and inside the ring. No words or watermark.",
+      "sha256": "e8839e881dd11ff579ced16700e078274bc4d2fd153a8623b988531e93755410"
+    }
+  ],
+  "audio": {
+    "generator": "tools/generate_royal_guide_sounds.py",
+    "description": "Original deterministic synthesized harp/bell cues, no external recordings",
+    "files": [
+      "royal_guide_objective_v1.wav",
+      "royal_guide_step_v1.wav",
+      "royal_guide_complete_v1.wav"
+    ]
+  }
+}

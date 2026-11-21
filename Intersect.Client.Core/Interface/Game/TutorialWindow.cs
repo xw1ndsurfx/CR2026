@@ -17,6 +17,9 @@ internal sealed class TutorialWindow : Window
 {
     private readonly Canvas _canvas;
     private readonly TutorialSpotlight _spotlight;
+    private readonly TutorialWorldMarker _worldMarker;
+    private readonly TutorialAudioCue _audioCue = new();
+    private string _pendingSound = "";
     private TutorialStatePacket _state = new();
     private TutorialHighlightTarget _target = TutorialHighlightTarget.None;
     private TutorialHighlightStyle _style = TutorialHighlightStyle.Outline;
@@ -38,6 +41,7 @@ internal sealed class TutorialWindow : Window
         _canvas = canvas;
         _send = send ?? (packet => Networking.Network.SendPacket(packet));
         _spotlight = new TutorialSpotlight(canvas);
+        _worldMarker = new TutorialWorldMarker(canvas);
         var width = Math.Min(460, Math.Max(240, canvas.Width - 20));
         var height = Math.Min(315, Math.Max(225, canvas.Height - 20));
         SetSize(width, height);
@@ -81,6 +85,7 @@ internal sealed class TutorialWindow : Window
         Closed += (_, _) =>
         {
             _spotlight.Hide();
+            _worldMarker.Hide();
             if (_combatDrill)
                 _combatGuideExplicitlyOpened = false;
             else if (RequestedOpen)
@@ -116,7 +121,11 @@ internal sealed class TutorialWindow : Window
         if (config == null)
             return;
         var step = config.Steps.FirstOrDefault(s => s.Id == state.StepId);
+        var sound = _audioCue.Observe(state, config);
+        if (sound.Length > 0) _pendingSound = sound;
+        if (!state.Open && !state.Finished) _pendingSound = "";
         _combatDrill = step != null && AdvancedCombatTutorialLessons.IsCombatObjective(step.Objective);
+        if (_combatDrill) _pendingSound = "";
         if (changedStep)
         {
             _combatGuideExplicitlyOpened = false;
@@ -137,6 +146,7 @@ internal sealed class TutorialWindow : Window
 
         _target = step?.HighlightTarget ?? TutorialHighlightTarget.None;
         _style = step?.HighlightStyle ?? TutorialHighlightStyle.Outline;
+        _worldMarker.SetStep(step);
         RequestedOpen = state.Open;
         RefreshVisibility();
     }
@@ -170,24 +180,43 @@ internal sealed class TutorialWindow : Window
     {
         ResizeGuide();
         _body.SetSize(_body.Width, Math.Max(50, _body.TextHeight + 12));
-        var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) &&
-            !Cinematics.CinematicControls.Active && !_canvas.Children.OfType<Modal>().Any(modal => modal.IsVisibleInTree);
+        var suspended = Cinematics.CinematicControls.Active || _canvas.Children.OfType<Modal>().Any(modal => modal.IsVisibleInTree);
+        var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) && !suspended;
+        if (!suspended && (display || _state.Finished) && _pendingSound.Length > 0)
+        {
+            if (General.Globals.ContentManager != null) Core.Audio.AddGameSound(_pendingSound, false);
+            _pendingSound = "";
+        }
 
         if (!display)
         {
             _spotlight.Hide();
+            _worldMarker.Hide();
             Hide();
             return;
         }
 
-        // Combat drills show instructions only on demand; no focus is stolen.
-        var highlighted = _combatDrill ? null : ResolveTarget();
-        _spotlight.Highlight(highlighted, _style);
-        PositionGuide(_spotlight.GetTargetBounds());
+        // World cues replace the darkened HUD spotlight, leaving walking and
+        // NPC interactions unobstructed. Combat always disables both overlays.
+        var worldTarget = _target is TutorialHighlightTarget.Player or
+            TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc;
+        if (worldTarget && !_combatDrill)
+        {
+            _spotlight.Hide();
+            _worldMarker.RefreshVisibility();
+            PositionGuide(_worldMarker.GetTargetBounds());
+        }
+        else
+        {
+            _worldMarker.Hide();
+            _spotlight.Highlight(_combatDrill ? null : ResolveTarget(), _style);
+            PositionGuide(_spotlight.GetTargetBounds());
+        }
         if (IsHidden)
         {
             Show();
-            _spotlight.BringToFront();
+            if (worldTarget) _worldMarker.SendToBack();
+            else _spotlight.BringToFront();
             BringToFront();
         }
         // Do not raise the card every frame over windows opened by the player.
@@ -217,6 +246,11 @@ internal sealed class TutorialWindow : Window
         {
             _spotlight.Parent = null;
             _spotlight.Dispose();
+        }
+        if (disposing && !_canvas.IsDisposed && !_worldMarker.IsDisposed)
+        {
+            _worldMarker.Parent = null;
+            _worldMarker.Dispose();
         }
         base.Dispose(disposing);
     }
