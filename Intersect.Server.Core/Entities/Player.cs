@@ -500,6 +500,7 @@ public partial class Player : Entity
 
     public void TryLogout(bool force = false, bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("logout-request", this, new { force, softLogout, BoardedShipId, CaptainedShipId });
         Intersect.Server.Naval.NavalSystem.Release(this, returnToHarbour: true);
         LastOnline = DateTime.Now;
         Client = default;
@@ -1255,6 +1256,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("player-death", this, new { dropItems, killer = killer?.Id, type = killer?.GetType().Name, npc = (killer as Npc)?.Descriptor?.Name });
         EndFishing("Fishing interrupted.");
         Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
@@ -1678,6 +1680,7 @@ public partial class Player : Entity
         try
         {
             Exp = (long)Math.Min(long.MaxValue, (decimal)Exp + totalAward);
+            if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("experience-awarded", this, new { amount, totalAward, fromNpcKill });
             // CheckLevelUp sends an ExperiencePacket even when the XP crosses
             // a level boundary; that packet carries the unconsumed award.
             CheckLevelUp();
@@ -1758,6 +1761,7 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("entity-killed", this, new { entity = entity.Id, type = entity.GetType().Name, npc = (entity as Npc)?.Descriptor.Name });
         if(entity is Player victim)Intersect.Server.Pvp.PvpRuntime.RecordKill(this,victim);
         var rolledNpcExperience=entity is Npc killedNpc ? killedNpc.Descriptor.RollExperience() : 0L;
         if (entity is Npc { PetOwner: null })
@@ -2417,6 +2421,7 @@ public partial class Player : Entity
         bool fromLogin = false,
         bool forceInstanceChange = false)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("warp-request", this, new { newMapId, newX, newY, fromLogin });
         if (!NavalWarpInProgress) Intersect.Server.Naval.NavalSystem.Release(this);
         #region shortcircuit exits
         // First, deny the warp entirely if we CAN'T, for some reason, warp to the requested instance type. ONly do this if we're not forcing a change
@@ -3269,6 +3274,7 @@ public partial class Player : Entity
     /// <returns>Whether the player received the item or not.</returns>
     public bool TryGiveItem(Item item, ItemHandling handler = ItemHandling.Normal, bool bankOverflow = false, int slot = -1, bool sendUpdate = true, int overflowTileX = -1, int overflowTileY = -1)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("item-grant-request", this, new { item = item.ItemId, item.Quantity });
         // Is this a valid item?
         if (item.Descriptor == null)
         {
@@ -5490,7 +5496,7 @@ public partial class Player : Entity
             }
         }
 
-        if (Party.Count >= Math.Min(Options.Instance.Party.MaximumMembers, Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
+        if (Party.Count >= Math.Min(Intersect.Server.Naval.NavalSystem.PartyCapacity(this), Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
         {
             PacketSender.SendChatMsg(this, Strings.Parties.LimitReached, ChatMessageType.Party, CustomColors.Alerts.Error);
             return false;
@@ -7040,6 +7046,15 @@ public partial class Player : Entity
 
     public void TryActivateEvent(Guid eventId)
     {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            TryActivateEventCore(eventId);
+        }
+    }
+
+    private void TryActivateEventCore(Guid eventId)
+    {
         foreach (var evt in EventLookup)
         {
             if (evt.Value.PageInstance != null && evt.Value.PageInstance.Id == eventId)
@@ -7089,7 +7104,7 @@ public partial class Player : Entity
                     }
                 }
 
-                RecordTutorialEventInteraction(evt.Value.Descriptor.Id, evt.Value.MapId);
+                RecordTutorialEventInteraction(evt.Value);
             }
         }
     }
@@ -7373,10 +7388,24 @@ public partial class Player : Entity
         }
     }
 
-    static bool IsEventOneBlockAway(Event evt)
+    private bool IsEventOneBlockAway(Event evt)
     {
-        //todo this
-        return true;
+        if (evt.Player != this || evt.MapInstanceId != MapInstanceId || evt.Descriptor.CommonEvent ||
+            evt.PageInstance is not { } page || page.MapId != evt.MapId || page.MapInstanceId != MapInstanceId)
+            return false;
+        var target = page.GlobalClone ?? page;
+        if (target.MapInstanceId != MapInstanceId || target.Z != Z) return false;
+        // Resolve each neighbor through actual map links. Identical grid coordinates
+        // on unrelated maps must not be treated as adjacent.
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            if (dx == 0 && dy == 0 || !Options.Instance.Map.EnableDiagonalMovement && dx != 0 && dy != 0) continue;
+            var neighbor = new TileHelper(MapId, X, Y);
+            if (neighbor.Translate(dx, dy) && neighbor.Matches(new TileHelper(target.MapId, target.X, target.Y)))
+                return true;
+        }
+        return false;
     }
 
     public Event FindGlobalEventInstance(EventPageInstance en)
@@ -7727,6 +7756,15 @@ public partial class Player : Entity
 
     public void TryBumpEvent(Guid mapId, Guid eventId)
     {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            TryBumpEventCore(mapId, eventId);
+        }
+    }
+
+    private void TryBumpEventCore(Guid mapId, Guid eventId)
+    {
         foreach (var evt in EventLookup)
         {
             if (evt.Value.MapId == mapId)
@@ -7736,7 +7774,7 @@ public partial class Player : Entity
                     var x = evt.Value.PageInstance.GlobalClone?.X ?? evt.Value.PageInstance.X;
                     var y = evt.Value.PageInstance.GlobalClone?.Y ?? evt.Value.PageInstance.Y;
                     var z = evt.Value.PageInstance.GlobalClone?.Z ?? evt.Value.PageInstance.Z;
-                    if (IsOneBlockAway(mapId, x, y, z))
+                    if (IsEventOneBlockAway(evt.Value))
                     {
                         if (evt.Value.PageInstance.Trigger != EventTrigger.PlayerBump)
                         {
@@ -7750,7 +7788,7 @@ public partial class Player : Entity
 
                         var newStack = new CommandInstance(evt.Value.PageInstance.MyPage);
                         evt.Value.CallStack.Push(newStack);
-                        RecordTutorialEventInteraction(evt.Value.Descriptor.Id, evt.Value.MapId);
+                        RecordTutorialEventInteraction(evt.Value);
                     }
                 }
             }
@@ -7758,6 +7796,15 @@ public partial class Player : Entity
     }
 
     public void HandleEventCollision(Event evt, int pageNum)
+    {
+        lock (EntityLock)
+        {
+            if (!InGame || IsDead || HasPendingDeath) return;
+            HandleEventCollisionCore(evt, pageNum);
+        }
+    }
+
+    private void HandleEventCollisionCore(Event evt, int pageNum)
     {
         var eventInstance = evt;
         if (evt.Player == null) //Global
@@ -7767,7 +7814,8 @@ public partial class Player : Entity
             {
                 if (e.Value.Descriptor.Id == evt.Descriptor.Id)
                 {
-                    if (e.Value.PageInstance.MyPage == e.Value.Descriptor.Pages[pageNum])
+                    if (pageNum >= 0 && pageNum < e.Value.Descriptor.Pages.Count &&
+                        e.Value.PageInstance != null && e.Value.PageInstance.MyPage == e.Value.Descriptor.Pages[pageNum])
                     {
                         eventInstance = e.Value;
 
@@ -7779,6 +7827,13 @@ public partial class Player : Entity
 
         if (eventInstance != null)
         {
+            var page = eventInstance.PageInstance;
+            var position = page?.GlobalClone ?? page;
+            if (eventInstance.Player != this || eventInstance.Descriptor.CommonEvent ||
+                eventInstance.MapInstanceId != MapInstanceId || page == null || position == null ||
+                page.MapInstanceId != MapInstanceId || position.MapInstanceId != MapInstanceId ||
+                eventInstance.MapId != MapId || page.MapId != MapId || position.MapId != MapId ||
+                position.X != X || position.Y != Y || position.Z != Z) return;
             if (eventInstance.PageInstance.Trigger != EventTrigger.PlayerCollide)
             {
                 return;
@@ -7791,7 +7846,7 @@ public partial class Player : Entity
 
             var newStack = new CommandInstance(eventInstance.PageInstance.MyPage);
             eventInstance.CallStack.Push(newStack);
-            RecordTutorialEventInteraction(eventInstance.Descriptor.Id, eventInstance.MapId);
+            RecordTutorialEventInteraction(eventInstance);
         }
     }
 

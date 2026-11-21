@@ -115,6 +115,14 @@ internal sealed class ClientLoopDiagnostics : IDisposable
     }
     private void Write(string message)
     {
+#if ANDROID
+        if (global::Intersect.Client.Android.GameActivity.FrameDiagnosticsEnabled &&
+            (message.StartsWith("slow-phase:", StringComparison.Ordinal) ||
+             message.StartsWith("android-frame:", StringComparison.Ordinal)))
+        {
+            _logger.LogInformation("{FrameDiagnostic}", message);
+        }
+#endif
         try
         {
             if (Volatile.Read(ref _stopped) != 0) return;

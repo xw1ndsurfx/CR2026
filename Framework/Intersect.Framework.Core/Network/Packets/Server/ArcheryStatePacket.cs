@@ -18,4 +18,5 @@ public sealed partial class ArcheryStatePacket : IntersectPacket
     [Key(12)] public bool MasteriesReadOnly { get; set; }
     [Key(13)] public string MasteriesOwner { get; set; } = "";
     [Key(14)] public string WeaponSkillCooldownsJson { get; set; } = "";
+    [Key(15)] public string WeaponSkillSlotsJson { get; set; } = "";
 }

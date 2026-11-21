@@ -282,8 +282,8 @@
     },
     "Highlight target": {
       "en": "Highlight target",
-      "fr": "Élément à mettre en évidence",
-      "es": "Elemento que se resalta"
+      "fr": "Cible de surbrillance",
+      "es": "Objetivo del resaltado"
     },
     "Highlight shape": {
       "en": "Highlight shape",
@@ -320,6 +320,196 @@
       "fr": "Utiliser la carte ouverte",
       "es": "Usar mapa abierto"
     },
+    "Highlight style": {
+      "en": "Highlight style",
+      "fr": "Style de surbrillance",
+      "es": "Estilo del resaltado"
+    },
+    "Menu": {
+      "en": "Menu",
+      "fr": "Menu",
+      "es": "Menú"
+    },
+    "Inventory": {
+      "en": "Inventory",
+      "fr": "Inventaire",
+      "es": "Inventario"
+    },
+    "Quests": {
+      "en": "Quests",
+      "fr": "Quêtes",
+      "es": "Misiones"
+    },
+    "Minimap": {
+      "en": "Minimap",
+      "fr": "Mini-carte",
+      "es": "Minimapa"
+    },
+    "Character": {
+      "en": "Character",
+      "fr": "Personnage",
+      "es": "Personaje"
+    },
+    "World map": {
+      "en": "World map",
+      "fr": "Carte du monde",
+      "es": "Mapa del mundo"
+    },
+    "Quickbar": {
+      "en": "Quickbar",
+      "fr": "Barre de raccourcis",
+      "es": "Barra de accesos rápidos"
+    },
+    "Outline": {
+      "en": "Outline",
+      "fr": "Contour",
+      "es": "Contorno"
+    },
+    "Circle": {
+      "en": "Circle",
+      "fr": "Cercle",
+      "es": "Círculo"
+    },
+    "Player": {
+      "en": "Player",
+      "fr": "Joueur",
+      "es": "Jugador"
+    },
+    "World tile": {
+      "en": "World tile",
+      "fr": "Destination sur la carte",
+      "es": "Destino en el mapa"
+    },
+    "World NPC": {
+      "en": "World NPC",
+      "fr": "PNJ sur la carte",
+      "es": "PNJ en el mapa"
+    },
+    "Read": {
+      "en": "Read",
+      "fr": "Lire",
+      "es": "Leer"
+    },
+    "Move": {
+      "en": "Move",
+      "fr": "Se déplacer",
+      "es": "Moverse"
+    },
+    "Reach map": {
+      "en": "Reach map",
+      "fr": "Atteindre la carte",
+      "es": "Llegar al mapa"
+    },
+    "Variable": {
+      "en": "Variable",
+      "fr": "Variable",
+      "es": "Variable"
+    },
+    "Reach tile": {
+      "en": "Reach tile",
+      "fr": "Atteindre une case",
+      "es": "Llegar a una casilla"
+    },
+    "Dodge": {
+      "en": "Dodge",
+      "fr": "Esquive",
+      "es": "Esquiva"
+    },
+    "Perfect parry": {
+      "en": "Perfect parry",
+      "fr": "Parade parfaite",
+      "es": "Parada perfecta"
+    },
+    "Counterattack": {
+      "en": "Counterattack",
+      "fr": "Contre-attaque",
+      "es": "Contraataque"
+    },
+    "Finisher": {
+      "en": "Finisher",
+      "fr": "Coup de grâce",
+      "es": "Golpe final"
+    },
+    "Target X": {
+      "en": "Target X",
+      "fr": "Case X",
+      "es": "Casilla X"
+    },
+    "Target Y": {
+      "en": "Target Y",
+      "fr": "Case Y",
+      "es": "Casilla Y"
+    },
+    "Player variable": {
+      "en": "Player variable",
+      "fr": "Variable du joueur",
+      "es": "Variable del jugador"
+    },
+    "Required value": {
+      "en": "Required value",
+      "fr": "Valeur requise",
+      "es": "Valor requerido"
+    },
+    "NPC": {
+      "en": "NPC",
+      "fr": "PNJ",
+      "es": "PNJ"
+    },
+    "Spells": {
+      "en": "Spells",
+      "fr": "Sorts",
+      "es": "Hechizos"
+    },
+    "Guild": {
+      "en": "Guild",
+      "fr": "Guilde",
+      "es": "Gremio"
+    },
+    "Your next step": {
+      "en": "Your next step",
+      "fr": "Votre prochaine étape",
+      "es": "Tu próximo paso"
+    },
+    "Approach X:{0} Y:{1} (radius {2}).": {
+      "en": "Approach X:{0} Y:{1} (radius {2}).",
+      "fr": "Approchez de X:{0} Y:{1} (rayon {2}).",
+      "es": "Acércate a X:{0} Y:{1} (radio {2})."
+    },
+    "Talk to the indicated character.": {
+      "en": "Talk to the indicated character.",
+      "fr": "Parlez au personnage indiqué.",
+      "es": "Habla con el personaje indicado."
+    },
+    "Move to progress.": {
+      "en": "Move to progress.",
+      "fr": "Déplacez-vous pour progresser.",
+      "es": "Muévete para avanzar."
+    },
+    "Follow the highlighted element.": {
+      "en": "Follow the highlighted element.",
+      "fr": "Suivez l’élément mis en évidence.",
+      "es": "Sigue el elemento resaltado."
+    },
+    "ILLUSTRATIVE PREVIEW - actual positions in game": {
+      "en": "ILLUSTRATIVE PREVIEW - actual positions in game",
+      "fr": "APERÇU ILLUSTRATIF - positions réelles en jeu",
+      "es": "VISTA ILUSTRATIVA - posiciones reales en el juego"
+    },
+    "Royal Guide: select an existing map.": {
+      "en": "Royal Guide: select an existing map.",
+      "fr": "Guide royal : choisissez une carte existante.",
+      "es": "Guía real: elige un mapa existente."
+    },
+    "Royal Guide: target tile is outside the map.": {
+      "en": "Royal Guide: target tile is outside the map.",
+      "fr": "Guide royal : la case cible est hors de la carte.",
+      "es": "Guía real: la casilla de destino está fuera del mapa."
+    },
+    "Royal Guide: select an existing NPC.": {
+      "en": "Royal Guide: select an existing NPC.",
+      "fr": "Guide royal : choisissez un PNJ existant.",
+      "es": "Guía real: elige un PNJ existente."
+    },
     "Completion objective": {
       "en": "Completion objective",
       "fr": "Objectif de validation",
@@ -344,6 +534,41 @@
       "en": "Interact with the highlighted target.",
       "fr": "Interagis avec la cible indiquée.",
       "es": "Interactúa con el objetivo señalado."
+    },
+    "Map event": {
+      "en": "Map event",
+      "fr": "Événement de carte",
+      "es": "Evento del mapa"
+    },
+    "Interact with map event": {
+      "en": "Interact with map event",
+      "fr": "Interagir avec un événement de carte",
+      "es": "Interactuar con un evento del mapa"
+    },
+    "Require this interaction": {
+      "en": "Require this interaction",
+      "fr": "Exiger cette interaction",
+      "es": "Exigir esta interacción"
+    },
+    "Open this list to load map events": {
+      "en": "Open this list to load map events",
+      "fr": "Ouvrez cette liste pour charger les événements",
+      "es": "Abre esta lista para cargar los eventos"
+    },
+    "Royal Guide clickable highlight preview": {
+      "en": "Royal Guide clickable highlight preview",
+      "fr": "Aperçu cliquable du guide royal",
+      "es": "Vista previa interactiva de la guía real"
+    },
+    "Royal Guide: select an event on the chosen map.": {
+      "en": "Royal Guide: select an event on the chosen map.",
+      "fr": "Guide royal : choisissez un événement de la carte sélectionnée.",
+      "es": "Guía real: elige un evento del mapa seleccionado."
+    },
+    "Royal Guide: choose an event with a player interaction trigger.": {
+      "en": "Royal Guide: choose an event with a player interaction trigger.",
+      "fr": "Guide royal : choisissez un événement déclenché par une interaction du joueur.",
+      "es": "Guía real: elige un evento activado por una interacción del jugador."
     }
   }
 }

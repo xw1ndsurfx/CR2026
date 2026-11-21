@@ -314,7 +314,7 @@ public partial class User
     {
         lock (_lastSaveLock)
         {
-            if (_lastSave < debounceMs + Timing.Global.MillisecondsUtc)
+            if (UserSaveDebounce.ShouldSkip(_lastSave, Timing.Global.MillisecondsUtc, debounceMs))
             {
                 ApplicationContext.Context.Value?.Logger.LogDebug("Skipping save due to debounce");
                 return;
@@ -437,6 +437,8 @@ public partial class User
 
             if (playerContext.SaveChanges() > -1)
             {
+                if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) foreach (var tracedPlayer in Players)
+                    Intersect.Server.Core.LocalPlaytestTrace.Record("save-completed", tracedPlayer);
                 return UserSaveResult.Completed;
             }
 

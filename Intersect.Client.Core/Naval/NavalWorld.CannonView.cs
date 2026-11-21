@@ -18,6 +18,8 @@ internal static partial class NavalWorld
     internal static double GunElevation {get;set;}=-Math.Atan(.12)*180/Math.PI;
     internal static bool AutoPickCannonSide {get;set;}
     private static long _gunRenew,_gunFire,_gunAcquire;
+    private static double _sentGunYaw,_sentGunElevation;
+    private static long _gunAimSent;
     internal static void RequestStation(CannonStationAction action)
     {
         if(OwnShip is not {Sinking:false} own || Driver(own)==Globals.Me?.Id) return;
@@ -30,6 +32,7 @@ internal static partial class NavalWorld
     internal static bool ShouldAcquireStation(long now,long next,bool enabled,bool busy,bool occupied)=>enabled && !busy && !occupied && now>=next;
     internal static void EnsureStation()
     {
+        if(OwnShip?.WalkableDeck==true){RenewStation();return;}
         var now=Environment.TickCount64;
         if(Gunner.LeaseId!=Guid.Empty) AutoPickCannonSide=false;
         else if(AutoPickCannonSide && Gunner.Message=="All cannons on this side are occupied.")
@@ -40,21 +43,34 @@ internal static partial class NavalWorld
     }
     internal static void RenewStation()
     {
-        if(Gunner.LeaseId==Guid.Empty || Environment.TickCount64<_gunRenew) return;
-        _gunRenew=Environment.TickCount64+1000;RequestStation(CannonStationAction.Renew);
+        var now=Environment.TickCount64;
+        if(Gunner.LeaseId==Guid.Empty || !ShouldSendGunAim(now,_gunAimSent,_gunRenew,Math.Abs(GunYaw-_sentGunYaw),Math.Abs(GunElevation-_sentGunElevation))) return;
+        _gunRenew=now+1000;_gunAimSent=now;_sentGunYaw=GunYaw;_sentGunElevation=GunElevation;
+        RequestStation(CannonStationAction.Renew);
     }
-    internal static void ClearGunnery() {AutoPickCannonSide=false;Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=0;}
+    internal static bool ShouldSendGunAim(long now,long last,long heartbeat,double yawChange,double elevationChange) =>
+        now-last>=150 && (now>=heartbeat || yawChange>=.5 || elevationChange>=.5);
+    internal static void ClearGunnery() {AutoPickCannonSide=false;Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=_gunAimSent=0;_sentGunYaw=_sentGunElevation=0;}
     internal static bool CannonViewOpen { get; set; }
     internal static bool CannonViewStarboard { get; set; }
 
     // The camera stays aligned with the beam; individual crew shot yaw is validated separately by the server.
-    internal static Vector2 CannonViewDirection(double heading, bool starboard)
+    internal static Vector2 CannonViewDirection(double heading, bool starboard,ShipDeckKind kind=ShipDeckKind.ThreeMast)
     {
-        var (x,y) = ShipActions.Direction(heading,starboard);
-        return new((float)x,(float)y);
+        var angle=ShipDeck.CannonHeading(heading,starboard,kind)*Math.PI/180;
+        return new((float)Math.Sin(angle),(float)-Math.Cos(angle));
     }
     internal static double CannonViewRelativeHeading(double heading,double cameraHeading) =>
         ShipMovement.Normalize(heading-cameraHeading);
+
+    // Cancel the diagonal top-down deck slope without tilting vertical masts.
+    internal static float PerspectiveShipShear(ShipSpriteFrame pose)
+    {
+        if(pose.DeckMasts.Length!=3)return 0;
+        var a=pose.DeckMasts[0];var b=pose.DeckMasts[2];var dx=b.X-a.X;
+        if(Math.Abs(dx)<pose.Width*.15)return 0;
+        return (float)Math.Clamp((b.Y-a.Y)/dx*(pose.FlipHorizontal?-1:1),-1,1);
+    }
 
     internal static IEnumerable<MapPerspectiveDecoration> AlignSceneryFragments(IEnumerable<MapPerspectiveDecoration> source)
     {
@@ -72,13 +88,14 @@ internal static partial class NavalWorld
         if(own is not {Sinking:false} || !_ships.TryGetValue(own.Id,out var helm) ||
             !Position(helm,out var x,out var y,out var heading)) return null;
         var tw=Options.Instance.Map.TileWidth;var th=Options.Instance.Map.TileHeight;
-        var forward=CannonViewDirection(heading,CannonViewStarboard);
-        var beam=ShipMovement.Normalize(heading+(CannonViewStarboard?90:-90));
+        var kind=ShipDeck.Kind(own.Graphics);
+        var forward=CannonViewDirection(heading,CannonViewStarboard,kind);
+        var beam=ShipDeck.CannonHeading(heading,CannonViewStarboard,kind);
         // Place the eye just outside the hull; keep the exact floating position across map boundaries.
-        var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)(own.Width/2+.1);
+        var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)((kind==ShipDeckKind.Raft?own.Length:own.Width)/2+.1);
         if(Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==own.Id && Gunner.Starboard==CannonViewStarboard)
         {
-            var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);
+            var offset=(float)GunneryAim.StationOffset(ShipDeck.Kind(own.Graphics)==ShipDeckKind.ShipOfLine?Gunner.Station%3:Gunner.Station,ShipDeck.Kind(own.Graphics)==ShipDeckKind.ShipOfLine?3:Gunner.CannonsPerSide,own.Length);
             camera+=new Vector2((float)Math.Sin(heading*Math.PI/180)*tw,-(float)Math.Cos(heading*Math.PI/180)*th)*offset;
         }
         return WorldPerspectiveScene(camera,forward,beam,own.Id);
@@ -112,8 +129,9 @@ internal static partial class NavalWorld
             {
                 var atlas=NavalSpriteCatalog.Get(filename,texture.Width,texture.Height,s.Frames);
                 if(atlas==null) continue; // Never treat an unverified atlas as a regular grid.
-                Add(texture,atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds),
-                    atlas.PixelsPerTile,sx,sy);
+                var pose=atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds);
+                Add(texture,pose,atlas.PixelsPerTile,sx,sy,shear:PerspectiveShipShear(pose));
+                AddDeckCannonsToScene(sprites,vessel,atlas,pose,sx,sy);
             }
             else if(Globals.ContentManager?.GetTexture(TextureType.Entity,s.Graphics) is {} entity &&
                 s.Frames>0 && entity.Width%s.Frames==0 && entity.Height%8==0)
@@ -154,12 +172,12 @@ internal static partial class NavalWorld
         }
         return new(camera,forward,tw,th,terrain,sprites,AlignSceneryFragments(decorations).OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
 
-        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0)
+        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0,float shear=0)
         {
             var scale=(float)(1/pixelsPerTile);
             foreach(var part in NavalSpriteGeometry.Parts(frame))
                 sprites.Add(new(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),new(sx,sy),
-                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees));
+                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees,ShearY:shear));
         }
         void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0,NavalPresentation? style=null)
         {

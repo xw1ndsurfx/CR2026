@@ -34,7 +34,8 @@ internal static class SpriteVisibleBounds
             try
             {
                 var pixels = new Microsoft.Xna.Framework.Color[width * height];
-                native.GetData(0, new Microsoft.Xna.Framework.Rectangle(x, y, width, height), pixels, 0, pixels.Length);
+                Intersect.Client.MonoGame.Graphics.TextureReadback.GetData(native, 0,
+                    new Microsoft.Xna.Framework.Rectangle(x, y, width, height), pixels, 0, pixels.Length);
                 var bounds = GraphicBounds.Read(key.Item3, key.Item4,
                     (column, row) => pixels[rotated ? column * width + width - 1 - row : row * width + column].A > 0);
                 cache[key] = bounds;

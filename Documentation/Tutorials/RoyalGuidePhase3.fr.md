@@ -2,7 +2,7 @@
 
 ## Dépendances et statut
 
-Cette branche est basée sur la phase 2 (`feat/royal-guide-world-guidance-phase2`, PR #248), elle-même basée sur la phase 1 (PR #247). **Fusionner et tester dans cet ordre.** Le serveur et le client doivent utiliser des versions compatibles.
+La PR #249 reprend `main` après les PR #247 et #248. Le serveur, le client et l'éditeur doivent utiliser des versions compatibles. Le client privé Intel HD 3000 reste sur sa branche séparée ; aucun exécutable installé n'est remplacé par cette validation.
 
 ## Objectif
 
@@ -33,8 +33,8 @@ La validation se fait **au déclenchement** de l'événement, pas à la fermetur
 
 1. Dans Map Editor, créer un événement à l'emplacement du guide et lui attribuer le graphisme d'un personnage.
 2. Régler son déclencheur sur `ActionButton` (interaction classique) et lui donner une page de dialogue/actions valide.
-3. Dans **Tutorial Editor → Guide visuel**, choisir la carte, puis **Événement de carte ciblé**.
-4. Appuyer sur **Créer une étape d'interaction**. Cela sélectionne automatiquement `WorldEvent` et `InteractEvent` pour l'étape sélectionnée.
+3. Dans **Tutorial Editor → Guide visuel**, choisir la carte, puis **Événement de carte ciblé**. Ouvrir la liste demande la carte au serveur si elle n'est pas encore chargée. Les coordonnées et un identifiant court distinguent les événements homonymes.
+4. Appuyer sur **Exiger cette interaction**. Cela transforme l'étape sélectionnée en `WorldEvent` / `InteractEvent` ; pour une étape supplémentaire, utiliser d'abord **Ajouter une étape**. Changer de carte efface la cible précédente.
 5. Écrire le titre et la consigne en FR/EN/ES dans les onglets de traduction.
 6. Enregistrer, reconnecter un personnage de test et vérifier le cercle et la flèche au-dessus du bon personnage.
 7. Lui parler : la progression passe à l'étape suivante après l'activation vérifiée.
@@ -47,7 +47,8 @@ Le serveur refuse l'enregistrement si :
 - un objectif `InteractEvent` n'a pas de `MapId` ou de `TargetEventId` ;
 - un marqueur `WorldEvent` n'a pas de carte ou d'événement ;
 - la carte n'existe pas ;
-- le descripteur choisi n'est plus présent, est un événement commun, n'a aucune page ou appartient à une autre carte.
+- le descripteur choisi n'est plus présent dans la liste des événements de cette carte, est un événement commun, n'a aucune page ou appartient à une autre carte ;
+- aucune page n'utilise un déclencheur `ActionButton`, `PlayerBump` ou `PlayerCollide` pour l'objectif `InteractEvent`.
 
 Le client masque le repère lorsque la carte ou l'événement n'est pas disponible, au lieu de guider vers un mauvais personnage.
 
@@ -67,4 +68,4 @@ Le client masque le repère lorsque la carte ou l'événement n'est pas disponib
 12. Rejouer un ancien tutoriel sans réinitialiser sa progression ; confirmer les autres exercices et cinématiques.
 13. Vérifier les traductions FR/EN/ES et l'absence de capture de souris/clavier par les marqueurs.
 
-Des **tests unitaires de validation** ont été ajoutés dans `Intersect.Tests/TutorialTests.cs`. Les tests d'intégration détaillés, la compilation Windows de l'éditeur, le client et le serveur doivent encore être exécutés dans un environnement doté du SDK .NET et d'un moteur de jeu. **Ne pas fusionner comme « testé » avant cela.**
+La recette automatisée et ses limites sont décrites dans `RoyalGuidePhase3-validation.fr.md`. Une validation automatisée ne remplace pas l'essai en jeu avec les événements et les dialogues du serveur de test.

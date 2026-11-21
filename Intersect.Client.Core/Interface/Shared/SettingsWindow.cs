@@ -818,6 +818,10 @@ public partial class SettingsWindow : Window
             {
                 localizedControlName = Strings.Controls.HotkeyXLabel.ToString(hotkeySlotHumanNumber);
             }
+            else if (control >= Control.WeaponSkill1 && control <= Control.WeaponSkill10)
+            {
+                localizedControlName = Intersect.Client.Localization.ClientLanguages.Format("Weapon skill slot {0}", control - Control.WeaponSkill1 + 1);
+            }
             else
             {
                 localizedControlName = control == Control.ToggleMount ? Intersect.Client.Localization.ClientLanguages.Text("Ride favorite / Dismount") : $"ControlName:{controlName}";

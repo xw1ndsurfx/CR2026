@@ -1,0 +1,250 @@
+{
+  "mode": "Built-in image_gen",
+  "purpose": "Eight-direction fleet art, four states per model; runtime slicing and compositing use native C# tools.",
+  "families": {
+    "adventurer-three-mast": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: precise-object-edit\nAsset type: eight-direction 2D player ship sprite source, genuine transparent RGBA.\nPrimary request: create the neutral ADVENTURER version of this exact large three-masted ship. This is the player's base vessel: warm natural oak and walnut planks, plain timber hull and railings, cream linen sails, simple dark iron fittings and rope. Modest, well-built and inviting, with the same polished game-art quality. NO faction colors, blue/green/red hull stripe, gilding, fleur-de-lis, skulls, logos or royal symbols. A small plain unmarked beige pennant only.\nPreserve EXACT hull footprint, raised stern deck and helm, three mast/yard locations, open walkable deck and eight-view placement. Six cannon stations, three per side, but paint ONLY the wooden carriages and open gun ports: NO fixed metal cannon BARRELS, they are supplied as a separate animated layer at runtime. Do not remove the carriages or change station positions.\nComposition: exactly the reference's 2-column by 4-row grid, eight views N NE E SE S SW W NW, same scale, margin and fixed overhead 3/4 RPG camera, every tip inside its cell. Helm at the stern, never at bow. Sails pass in front of masts and climbing shrouds in the bow-facing and forward diagonal views.\nStyle: crisp richly detailed painted pixel-art, dark contours, wood grain and soft cloth shading consistent with the reference and the tile RPG world. NORMAL navigation with full intact sails.\nNo characters, people, water, sea, fire, labels, text or backdrop. Actual transparent RGBA, no colored matte or checkerboard.",
+          "source": "exec-a2b487d9-7d4c-4719-9b78-a041259d0691.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: precise-object-edit\nMake the IDLE state of this exact adventurer ship. Change ONLY all the cream sails to tightly furled bundles tied along their yards, leaving the deck open. Keep all other ship parts and colors unchanged. Preserve exact 2-column by 4-row grid, eight views N NE E SE S SW W NW, hull footprint, ship placement, scale, camera and three mast/yard positions. Same crisp polished painted pixel-art with natural timber, cream canvas, plain beige flag and no faction symbols. Helm at stern, empty deck. Six wooden cannon stations, three per side, with no fixed metal barrels. No people, sea, labels or backdrop. Genuine transparent RGBA.",
+          "source": "exec-4b33db1b-b14c-409f-8b07-f6b167c17030.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nMake the DAMAGED state of this exact adventurer ship. Add splintered hull planks, impact scars, a few broken timber rail segments and torn holes/frayed edges in the cream sails. Still upright and afloat, all three masts standing, no floodwater. NO fire, flames or smoke; runtime animations supply those effects. Preserve exact 2-column by 4-row grid, eight views N NE E SE S SW W NW, hull footprint, ship placement, scale, camera and three mast/yard positions. Same crisp polished painted pixel-art with natural timber, cream canvas, plain beige flag and no faction symbols. Helm at stern, empty deck. Six wooden cannon stations, three per side, with no fixed metal barrels. No people, sea, labels or backdrop. Genuine transparent RGBA.",
+          "source": "exec-e9484608-bef6-4da2-9b98-f17815d5bb35.png"
+        },
+        {
+          "name": "normal-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-0807a235-90b7-49d9-ad89-a6497c2f1b61.png"
+        },
+        {
+          "name": "idle-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-8edb62f0-415e-4441-8e0d-7b8c2ebba637.png"
+        },
+        {
+          "name": "damaged-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-bee9653b-8c83-416d-b8af-62af8a6c9ba9.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nCreate the sinking state of this exact neutral adventurer three-mast ship. Keep the 2-column by 4-row grid and exact eight headings N NE E SE S SW W NW, ship placement, size and camera. Natural wood, cream sails and beige flag unchanged. Ship is a heavily wrecked flooded hulk: torn broken sails hanging from damaged yards, broken railings, hull breaches, flooded dark deck. No flames, no large smoke, no surrounding water or waves; the runtime lowers the ship to sink it. Do not crop or change hull footprint. Helm remains at stern. No people, scenery, lettering or faction symbols. Genuine transparent RGBA, same polished detailed painted pixel-art style.",
+          "source": "exec-17ed3853-6709-4624-a332-4eecefca2827.png"
+        }
+      ]
+    },
+    "adventurer-sloop": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: stylized-concept\nAsset type: production eight-direction ship sprite contact sheet for Corps Royaux 2, transparent RGBA.\nReference image: style and natural wood/cream adventurer materials only. Make a distinctly smaller ONE-MAST SLOOP, not the reference three-masted hull. Short rounded single-deck hull, a modest raised stern platform with wooden helm at the stern, one single central mast with a cream square mainsail plus small triangular foresail toward the bowsprit. Simple timber, modest brass fittings, plain beige pennant; no faction or royal ornament. Exactly TWO empty wooden cannon carriages, one at the middle of each side; no fixed iron cannon barrels, dynamic barrels are rendered separately. Enough open deck for a captain and two player gunners. No characters.\nLayout: exact 2 columns by 4 rows, same eight directions in reading order: N (bow away, stern toward viewer), NE, E (bow right, stern left), SE, S (bow toward viewer), SW, W (bow left, stern right), NW. Orthographic elevated RPG camera like the reference, same camera across all directions, no perspective scale changes. All eight sprites complete with padding; matching silhouette and design across views; smaller hull than the three-mast. For S/SE/SW views cream cloth is in front of the mast and climbing rigging, and largely hides the stern helm. For N views viewer sees backs of sails, mast in front. Crisp polished painted pixel-art, dark readable outlines, warm timber; no water, shadows, labels or scene. Genuine transparent background.",
+          "source": "exec-6d28b55f-da75-4695-be1f-08a3bc3dd906.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: precise-object-edit\nMake the IDLE state of this exact small one-mast sloop. Only furl the cream mainsail tightly along its yard and tie the triangular foresail into a compact bundle. The mast and rigging remain, all deck positions unchanged. Keep the exact two columns/four rows and eight headings N NE E SE S SW W NW, canvas, hull footprint, placement and one central mast position. Helm at stern, no people, no scenery or water, no lettering. Same natural timber, plain beige flag and polished painted pixel-art. Transparent RGBA.",
+          "source": "exec-70577ef4-065c-480a-8181-29a9ae55812b.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nMake the DAMAGED sailing state of this exact small one-mast sloop. Show a few hull splinters and breaches, worn cracked planks, ragged holes through cream sails; seaworthy hull still complete. No fire/smoke. Keep the exact two columns/four rows and eight headings N NE E SE S SW W NW, canvas, hull footprint, placement and one central mast position. Helm at stern, no people, no scenery or water, no lettering. Same natural timber, plain beige flag and polished painted pixel-art. Transparent RGBA.",
+          "source": "exec-78e0940e-4eba-4af5-a7a0-b2f2677ccb79.png"
+        },
+        {
+          "name": "normal-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-4071db30-2c91-457d-8684-b7f8c1e3a34c.png"
+        },
+        {
+          "name": "idle-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-42125674-cdfc-46e9-a52d-c52f946aa5f8.png"
+        },
+        {
+          "name": "damaged-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the sails, masts, yards, rigging, climbing ladders, flags and raised timber railings from this eight-view ship. Keep retained parts in their exact original positions and size. Remove every horizontal deck floor, hull side and cannon carriage/barrel, leaving transparent holes; no horizontal floor pixels in the foreground. Do not redesign, move or add any retained part. Exact same grid and canvas dimensions. No scenery or labels. Actual transparent RGBA.",
+          "source": "exec-a99c3da2-999d-4b95-9f37-cde882969dfe.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nMake the sinking wreck state of this exact small one-mast adventurer sloop. Dark flooded deck, several broken rails and hull breaches, ragged sails hanging from broken yard. Keep hull footprint, stern helm, single mast and exact eight ship positions, orientation and scale, 2 columns by 4 rows. N NE E SE S SW W NW. Runtime animates the ship lowering into water, so do not paint any sea/wake/scenery. No crew, fire, smoke, text or faction symbols. Natural wooden boat, cream canvas, genuine transparency.",
+          "source": "exec-605c5d96-a7d0-457c-8680-492ae05fadee.png"
+        }
+      ]
+    },
+    "adventurer-raft": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: stylized-concept\nAsset type: Eight-direction playable RAFT sprites for a fantasy 2D RPG, same polished painted pixel-art as the reference.\nReference is art style and warm natural wood only. Create a VERY SMALL adventurer raft, distinctly rectangular platform of thick timber logs lashed by coarse rope with flat planks over the middle. NO sail, NO mast, NO cabin, NO bowsprit. Two sturdy low side guardrails and open front, a simple stern wooden tiller steering post (captain position at rear), ONE empty wooden cannon carriage at the FRONT centre aiming forward; NO fixed iron cannon barrel, it is separate runtime art. Empty central walking space for captain + one gunner. A tiny plain beige pennant on a short corner post is okay. No faction, blue, gold ornaments, cannons on the sides, people or sea.\nSheet: exact 2 columns by 4 rows, reading order N NE E SE S SW W NW. N means front away from viewer and tiller at near edge. E front right. S front toward viewer, tiller at far edge. W front left. Elevated orthographic game view, consistent raft design and scale all eight directions. Show full raft in each cell with padding, no characters or shadows. Very readable charming wooden beginner craft, quality detailed wood and knots, dark contours. Actual transparent RGBA, no text or labels.",
+          "source": "exec-7d86a938-2366-43aa-b564-07e1f5dc63c8.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: stylized-concept\nAsset type: Eight-direction playable RAFT sprites for a fantasy 2D RPG, same polished painted pixel-art as the reference.\nReference is art style and warm natural wood only. Create a VERY SMALL adventurer raft, distinctly rectangular platform of thick timber logs lashed by coarse rope with flat planks over the middle. NO sail, NO mast, NO cabin, NO bowsprit. Two sturdy low side guardrails and open front, a simple stern wooden tiller steering post (captain position at rear), ONE empty wooden cannon carriage at the FRONT centre aiming forward; NO fixed iron cannon barrel, it is separate runtime art. Empty central walking space for captain + one gunner. A tiny plain beige pennant on a short corner post is okay. No faction, blue, gold ornaments, cannons on the sides, people or sea.\nSheet: exact 2 columns by 4 rows, reading order N NE E SE S SW W NW. N means front away from viewer and tiller at near edge. E front right. S front toward viewer, tiller at far edge. W front left. Elevated orthographic game view, consistent raft design and scale all eight directions. Show full raft in each cell with padding, no characters or shadows. Very readable charming wooden beginner craft, quality detailed wood and knots, dark contours. Actual transparent RGBA, no text or labels.",
+          "source": "exec-7d86a938-2366-43aa-b564-07e1f5dc63c8.png"
+        },
+        {
+          "name": "normal-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the upright wooden side guardrails, their posts, short flagpole and pennant, and the stern steering post/tiller of this exact raft sheet. Remove ALL horizontal deck floor planks, base logs, rope lashings and cannon carriages. Retain the original shapes and exact positions, size, canvas, 2 columns by 4 rows and eight views, with no repainting or rearrangement. Holes in the railings must be transparent; no deck floor pixels. Transparent RGBA.",
+          "source": "exec-b4cfed90-3e91-4572-903b-5a6dd865cf98.png"
+        },
+        {
+          "name": "idle-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the upright wooden side guardrails, their posts, short flagpole and pennant, and the stern steering post/tiller of this exact raft sheet. Remove ALL horizontal deck floor planks, base logs, rope lashings and cannon carriages. Retain the original shapes and exact positions, size, canvas, 2 columns by 4 rows and eight views, with no repainting or rearrangement. Holes in the railings must be transparent; no deck floor pixels. Transparent RGBA.",
+          "source": "exec-b4cfed90-3e91-4572-903b-5a6dd865cf98.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nMake the DAMAGED state of this exact tiny adventurer raft: cracked worn timber planks, some splinters, several frayed lashings, a couple of broken rail segments, tiny tears in beige pennant. Still intact and afloat with same footprint and empty cannon carriage at front and steering tiller at stern. Preserve EXACT every sprite location, original 2 columns by 4 rows, eight directions N NE E SE S SW W NW, original scale/camera. No sails, mast, iron barrel, people, water or backdrop. Same polished painted pixel-art, actual transparency.",
+          "source": "exec-930b09b6-522d-4c39-8bdd-808a33cb57ce.png"
+        },
+        {
+          "name": "damaged-fringe",
+          "prompt": "Use case: background-extraction\nExtract ONLY the upright wooden side guardrails, their posts, short flagpole and pennant, and the stern steering post/tiller of this exact raft sheet. Remove ALL horizontal deck floor planks, base logs, rope lashings and cannon carriages. Retain the original shapes and exact positions, size, canvas, 2 columns by 4 rows and eight views, with no repainting or rearrangement. Holes in the railings must be transparent; no deck floor pixels. Transparent RGBA.",
+          "source": "exec-626f273f-a456-479b-abe1-3bc17577133b.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nMake the SINKING WRECK state of this exact tiny adventurer raft: snapped wet blackened planks with dark flooded gaps, broken guardrails, fraying ropes and partly separated logs, broken pennant corner post and tiller. One empty broken gun carriage at front, no iron gun barrel. Retain rectangular raft footprint and exact eight orientations/positions/size, 2 columns by 4 rows N NE E SE S SW W NW. Do not paint water around the craft, wake, foam, scenery, people, mast or sails. Runtime animates sinking. Same polished painted pixel-art, transparent RGBA.",
+          "source": "exec-66d7990f-9999-4959-b1ba-04c369b88017.png"
+        }
+      ],
+      "idle": "Same empty raft with four buoyancy phases; no sails to furl."
+    },
+    "adventurer-fishing": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: precise-object-edit\nTransform this exact neutral adventurer three-mast Normal ship into a DEDICATED FISHING BOAT, an unarmed working vessel in the same fantasy RPG. Replace all six cannon ports and carriages with plain wooden fishing rail notches/rod rests, three per side; NO metal barrels, NO guns, NO weapon ports or wheeled carriages anywhere. Add restrained fishing identity: neatly coiled fishing ropes and a rolled net lashed by the bow barrels, a small basket on the aft cabin, modest plain timber rail fittings. Keep the deck walkways clear. Preserve EXACT hull outline, all three mast feet, sail/yard/rigging geometry, stern helm, eight views/positions/scale and original two-column four-row grid. Natural wood, unmarked beige pennant and cream canvas, no faction colors. Keep this exact state's healthy full sails. No people, water, background, labels, anchors hanging outside silhouette or new masts. Genuine transparent RGBA. Same polished painted pixel-art.",
+          "source": "exec-f44ff549-5813-4c54-9f13-ba07100500f4.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: precise-object-edit\nTransform this exact neutral adventurer three-mast Idle ship into a DEDICATED FISHING BOAT, an unarmed working vessel in the same fantasy RPG. Replace all six cannon ports and carriages with plain wooden fishing rail notches/rod rests, three per side; NO metal barrels, NO guns, NO weapon ports or wheeled carriages anywhere. Add restrained fishing identity: neatly coiled fishing ropes and a rolled net lashed by the bow barrels, a small basket on the aft cabin, modest plain timber rail fittings. Keep the deck walkways clear. Preserve EXACT hull outline, all three mast feet, sail/yard/rigging geometry, stern helm, eight views/positions/scale and original two-column four-row grid. Natural wood, unmarked beige pennant and cream canvas, no faction colors. Keep this exact state's furled sails. No people, water, background, labels, anchors hanging outside silhouette or new masts. Genuine transparent RGBA. Same polished painted pixel-art.",
+          "correction": "Use case: precise-object-edit\nFix ONLY the remaining unwanted metal cannon stubs on this UNARMED FISHING BOAT sheet. In the N and S straight-on views (top-left and third-row-left), six dark grey metal gun ends are still sticking out from left/right hull edges. Remove ALL of these grey/black gun barrels and their metal caps, replace those attachment points with the same simple wooden fishing rod rests seen on the side views. There must be ZERO iron weapon barrels anywhere. Preserve everything else exactly, including the 2-column by 4-row grid, eight view silhouettes, mast/sail positions, cream/beige palette, nets, baskets and furled sail bundles. No new cannon carriages, no people/water/text. Same transparent RGBA image, no re-layout.",
+          "source": "exec-2df8919d-2bce-4155-9ba0-92e04dc1a71d.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nTransform this exact neutral adventurer three-mast Damaged ship into a DEDICATED FISHING BOAT, an unarmed working vessel in the same fantasy RPG. Replace all six cannon ports and carriages with plain wooden fishing rail notches/rod rests, three per side; NO metal barrels, NO guns, NO weapon ports or wheeled carriages anywhere. Add restrained fishing identity: neatly coiled fishing ropes and a rolled net lashed by the bow barrels, a small basket on the aft cabin, modest plain timber rail fittings. Keep the deck walkways clear. Preserve EXACT hull outline, all three mast feet, sail/yard/rigging geometry, stern helm, eight views/positions/scale and original two-column four-row grid. Natural wood, unmarked beige pennant and cream canvas, no faction colors. Keep this exact state's torn sails and moderate hull wear. No people, water, background, labels, anchors hanging outside silhouette or new masts. Genuine transparent RGBA. Same polished painted pixel-art.",
+          "source": "exec-b47ad79c-6c68-4dd4-8440-78c73f6f5178.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nTransform this exact neutral adventurer three-mast Sinking ship into a DEDICATED FISHING BOAT, an unarmed working vessel in the same fantasy RPG. Replace all six cannon ports and carriages with plain wooden fishing rail notches/rod rests, three per side; NO metal barrels, NO guns, NO weapon ports or wheeled carriages anywhere. Add restrained fishing identity: neatly coiled fishing ropes and a rolled net lashed by the bow barrels, a small basket on the aft cabin, modest plain timber rail fittings. Keep the deck walkways clear. Preserve EXACT hull outline, all three mast feet, sail/yard/rigging geometry, stern helm, eight views/positions/scale and original two-column four-row grid. Natural wood, unmarked beige pennant and cream canvas, no faction colors. Keep this exact state's wrecked flooded deck, ragged sails and hull breaches. No people, water, background, labels, anchors hanging outside silhouette or new masts. Genuine transparent RGBA. Same polished painted pixel-art.",
+          "correction": "Use case: precise-object-edit\nFix ONLY the remaining unwanted metal cannon stubs on this UNARMED FISHING BOAT sheet. In the N and S straight-on views (top-left and third-row-left), six dark grey metal gun ends are still sticking out from left/right hull edges. Remove ALL of these grey/black gun barrels and their metal caps, replace those attachment points with the same simple wooden fishing rod rests seen on the side views. There must be ZERO iron weapon barrels anywhere. Preserve everything else exactly, including the 2-column by 4-row grid, eight view silhouettes, mast/sail positions, cream/beige palette, nets, baskets and wrecked flooded hull and ragged sails. No new cannon carriages, no people/water/text. Same transparent RGBA image, no re-layout.",
+          "source": "exec-b9fd9d5b-dd7f-4c22-9f8d-50b367c85dd9.png"
+        }
+      ],
+      "masks": "adventurer-three-mast"
+    },
+    "royal-sloop": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: precise-object-edit\nCreate a CORPS ROYAUX faction skin of this exact one-mast sloop Normal state. Change only a wide band on the hull and cabin trim to royal blue with restrained golden edging, and the beige pennant to royal blue with a gold fleur-de-lis. Keep cream sail colors, natural wooden deck, helm at stern, single mast, empty wooden gun carriages and all damage/furled sails of this exact state. Absolutely preserve exact hull geometry, every part position, original canvas/grid, eight directions N NE E SE S SW W NW in two columns by four rows. Do not add masts, guns, characters or decorative protrusions. No iron barrels, no ocean, no background, no labels. Actual transparent RGBA, same polished painted pixel-art.",
+          "source": "exec-bb33d552-ea47-4609-8664-96d98f05726d.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: precise-object-edit\nCreate a CORPS ROYAUX faction skin of this exact one-mast sloop Idle state. Change only a wide band on the hull and cabin trim to royal blue with restrained golden edging, and the beige pennant to royal blue with a gold fleur-de-lis. Keep cream sail colors, natural wooden deck, helm at stern, single mast, empty wooden gun carriages and all damage/furled sails of this exact state. Absolutely preserve exact hull geometry, every part position, original canvas/grid, eight directions N NE E SE S SW W NW in two columns by four rows. Do not add masts, guns, characters or decorative protrusions. No iron barrels, no ocean, no background, no labels. Actual transparent RGBA, same polished painted pixel-art.",
+          "source": "exec-c326eec6-2dc4-4ba8-8cc0-9f871c3196b7.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nCreate a CORPS ROYAUX faction skin of this exact one-mast sloop Damaged state. Change only a wide band on the hull and cabin trim to royal blue with restrained golden edging, and the beige pennant to royal blue with a gold fleur-de-lis. Keep cream sail colors, natural wooden deck, helm at stern, single mast, empty wooden gun carriages and all damage/furled sails of this exact state. Absolutely preserve exact hull geometry, every part position, original canvas/grid, eight directions N NE E SE S SW W NW in two columns by four rows. Do not add masts, guns, characters or decorative protrusions. No iron barrels, no ocean, no background, no labels. Actual transparent RGBA, same polished painted pixel-art.",
+          "source": "exec-1805440b-b7a5-48e5-b16d-dc80db2c63d4.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nCreate a CORPS ROYAUX faction skin of this exact one-mast sloop Sinking state. Change only a wide band on the hull and cabin trim to royal blue with restrained golden edging, and the beige pennant to royal blue with a gold fleur-de-lis. Keep cream sail colors, natural wooden deck, helm at stern, single mast, empty wooden gun carriages and all damage/furled sails of this exact state. Absolutely preserve exact hull geometry, every part position, original canvas/grid, eight directions N NE E SE S SW W NW in two columns by four rows. Do not add masts, guns, characters or decorative protrusions. No iron barrels, no ocean, no background, no labels. Actual transparent RGBA, same polished painted pixel-art.",
+          "source": "exec-5f869e2a-137a-4dba-9e6f-947a77640f17.png"
+        }
+      ],
+      "masks": "adventurer-sloop"
+    },
+    "majestya": {
+      "mode": "built-in",
+      "sources": [
+        {
+          "name": "normal",
+          "prompt": "Use case: precise-object-edit\nCreate the MAJESTYA green-faction skin of this exact three-masted Normal ship. Change only the hull's wide decorative side band to deep emerald green with restrained pale brass trim; sails and sail bundles to muted forest green canvas with narrow warm ivory borders, pennant to dark green. Keep warm timber deck and masts, stern helm, six wooden gun stations three per side, all rigging and ladders unchanged. No fixed iron gun barrels: those are animated separately. No new ornament, emblem or figurehead. Preserve EXACT hull/rigging geometry, each original sprite placement, canvas and scale, 2 columns by 4 rows reading N NE E SE S SW W NW. Retain the original healthy full sails. Green faction identity must be easy to distinguish from neutral adventurer and blue royal. Same polished painted pixel-art. No people, text, water or background. Genuine transparent RGBA.",
+          "source": "exec-7afa3e85-a3be-47eb-a96a-4b6fec5a6cbb.png"
+        },
+        {
+          "name": "idle",
+          "prompt": "Use case: precise-object-edit\nCreate the MAJESTYA green-faction skin of this exact three-masted Idle ship. Change only the hull's wide decorative side band to deep emerald green with restrained pale brass trim; sails and sail bundles to muted forest green canvas with narrow warm ivory borders, pennant to dark green. Keep warm timber deck and masts, stern helm, six wooden gun stations three per side, all rigging and ladders unchanged. No fixed iron gun barrels: those are animated separately. No new ornament, emblem or figurehead. Preserve EXACT hull/rigging geometry, each original sprite placement, canvas and scale, 2 columns by 4 rows reading N NE E SE S SW W NW. Retain the original tightly furled sail bundles. Green faction identity must be easy to distinguish from neutral adventurer and blue royal. Same polished painted pixel-art. No people, text, water or background. Genuine transparent RGBA.",
+          "source": "exec-63010d66-a789-459b-91c5-28cb99e75bdf.png"
+        },
+        {
+          "name": "damaged",
+          "prompt": "Use case: precise-object-edit\nCreate the MAJESTYA green-faction skin of this exact three-masted Damaged ship. Change only the hull's wide decorative side band to deep emerald green with restrained pale brass trim; sails and sail bundles to muted forest green canvas with narrow warm ivory borders, pennant to dark green. Keep warm timber deck and masts, stern helm, six wooden gun stations three per side, all rigging and ladders unchanged. No fixed iron gun barrels: those are animated separately. No new ornament, emblem or figurehead. Preserve EXACT hull/rigging geometry, each original sprite placement, canvas and scale, 2 columns by 4 rows reading N NE E SE S SW W NW. Retain the original moderately torn sails and scarred hull. Green faction identity must be easy to distinguish from neutral adventurer and blue royal. Same polished painted pixel-art. No people, text, water or background. Genuine transparent RGBA.",
+          "source": "exec-dbd4f15a-3fa2-452b-91f0-e7b772fd31fa.png"
+        },
+        {
+          "name": "sinking",
+          "prompt": "Use case: precise-object-edit\nCreate the MAJESTYA green-faction skin of this exact three-masted Sinking ship. Change only the hull's wide decorative side band to deep emerald green with restrained pale brass trim; sails and sail bundles to muted forest green canvas with narrow warm ivory borders, pennant to dark green. Keep warm timber deck and masts, stern helm, six wooden gun stations three per side, all rigging and ladders unchanged. No fixed iron gun barrels: those are animated separately. No new ornament, emblem or figurehead. Preserve EXACT hull/rigging geometry, each original sprite placement, canvas and scale, 2 columns by 4 rows reading N NE E SE S SW W NW. Retain the original broken flooded hull and ragged wrecked sails. Green faction identity must be easy to distinguish from neutral adventurer and blue royal. Same polished painted pixel-art. No people, text, water or background. Genuine transparent RGBA.",
+          "source": "exec-f8751b75-0283-4ce5-8c2a-7eace80bca7e.png"
+        }
+      ],
+      "masks": "adventurer-three-mast"
+    },
+    "ghost": {
+      "mode": "Built-in image_gen",
+      "normal": "Use case: precise-object-edit\nAsset type: eight-direction 2D game ship sprite source, genuine transparent RGBA.\nPrimary request: create the GHOST variant of this exact large royal three-masted ship. Keep its same hull footprint, deck and mast arrangement, all eight corresponding views. Replace solid wood and metal with spectral translucent blue-green material, ghostly cyan planks, pale turquoise sails with fine worn edges, and a restrained luminous mint rim around hull, rigging and canvas. Dark teal details keep the deck legible. The body and sails should allow the background to show through softly, while contours remain readable. Small tattered spectral pennant; no royal fleur-de-lis and no skull bone structure.\nThe input royal sheet is the precise shape, camera and placement reference. Exactly 2 columns by 4 rows, N NE E SE S SW W NW. Exactly three masts; stern helm behind aft mast, six separate cannon stations, three per side. Empty walkable deck. Maintain proper sail occlusion: in bow-facing and forward diagonal views, sails hide the mast and climbing ladders behind them. All ships completely inside cells.\nStyle: finely detailed crisp painted pixel-art for an overhead 2D fantasy tile RPG, consistent with reference. Ghost ship should be distinct and polished, with visible transparent glazing and soft cyan edge glow, not white overexposure.\nNo people, water, sea, smoke clouds, labels or backdrop. Actual transparent RGBA outside ships; preserve soft translucent material alpha, never colored matte or a checkerboard. NORMAL seaworthy navigation state, sails open, no flooding.",
+      "idle": "Use case: precise-object-edit\nAsset type: eight-direction game sprite source, transparent RGBA.\nPrimary request: create the IDLE state of this same ghost ship. Change only its sails to tightly furled and tied canvas bundles along the horizontal yards, opening up the deck. Preserve exactly the spectral turquoise hull, luminous mint edges, translucent teal surfaces, rigging, three mast positions, flags, stern helm and six cannon stations. No characters.\nInvariants: same eight poses and exact ship positions, footprint, scale, camera, grid of 2 columns and 4 rows N NE E SE S SW W NW. Same polished painted pixel-art. No scene, sea or labels. Genuine transparent background, soft restrained cyan glow tight to the silhouette, no large opaque green or cyan clouds or colored matte.",
+      "damaged": "Use case: precise-object-edit\nAsset type: eight-direction game sprite source, genuine transparent RGBA.\nPrimary request: create the DAMAGED state of this same ghost ship. Add cracked spectral planks and broken rail segments, torn holes and ragged lower edges in the turquoise sails, missing stretches of rigging, a few dim cyan fissures. It is still floating upright and seaworthy. Preserve the same three masts, six cannon stations, stern helm, ghostly pennant, translucent teal material and restrained mint edge illumination. No flames, fire, smoke, floodwater or characters; damage animations are added at runtime.\nInvariants: preserve exact 2-column 4-row grid and corresponding eight views N NE E SE S SW W NW, ship placements, hull footprint, scale and overhead 3/4 camera. Do not move mast/yard/helm anchors or crop anything. Same crisp polished painted pixel-art. No sea backdrop, labels or large opaque glow clouds. Transparent background with soft cyan glow tightly hugging ship edges.",
+      "sinking": "Use case: precise-object-edit\nAsset type: eight-direction 2D sinking ship source, genuine transparent RGBA.\nPrimary request: create the SINKING state of this same ghost three-masted ship. Broken spectral hull and railing gaps, heavily torn sails, some sagging yards, cyan foam and dark teal floodwater covering portions of the deck. The ghostly hull is starting to dissolve in small luminous wisps close to its edges. Keep the main three masts and same overall silhouette so runtime can animate the descent into the sea.\nPreserve the same exact ship placement, hull footprint, scale, corresponding eight orientations N NE E SE S SW W NW and fixed overhead 3/4 camera, 2 columns by 4 rows. One upright sinking pose per cell, not a series of phases. Stern helm, six cannon stations, empty deck. Same detailed painted pixel-art with translucent turquoise body and soft mint edge glow.\nNo characters, fire, text, labels or sea backdrop. Foam and glow stay in a thin rim tightly hugging the ship. No large opaque green/cyan cloud, no colored matte, actual transparent background."
+    },
+    "pirate": {
+      "mode": "Built-in image_gen",
+      "normal": "Use case: precise-object-edit\nAsset type: eight-direction 2D game ship sprite source, transparent RGBA.\nPrimary request: create the PIRATE variant of this exact royal three-masted ship. Preserve the hull footprint, open deck layout, mast and yard positions and exact eight-view composition. Change the identity to dark walnut timber, near-black hull strakes, aged bronze trim, BLACK canvas sails with subtle readable folds, and a black Jolly Roger flag with a clear ivory skull and crossed bones. Remove all royal blue and fleurs-de-lis. No skeletal ribs or bone hull ornaments: this is a solid wooden pirate vessel.\nExactly three masts and three cannon stations on EACH side (six total), helm at the raised stern behind the aft mast. Proper sails in front of masts and climbing shrouds in the bow-facing and forward diagonal views. Empty walkable deck, no characters.\nComposition: exact same 2 columns by 4 rows, eight poses N NE E SE S SW W NW corresponding to reference, same scale, position and fixed overhead 3/4 RPG camera. All ship tips inside cells, no cropping.\nStyle: crisp richly detailed painted pixel-art, warm timber shading and dark outlines consistent with the game's reference. NORMAL seaworthy navigation state, full sails. No fire, water, scenery, text or labels. Genuine transparent background, no matte or checkerboard.",
+      "idle": "Use case: precise-object-edit\nCreate the IDLE state of the exact supplied pirate ship. Change ONLY the sails to tightly furled black canvas bundles tied along the horizontal yards, revealing the deck. Preserve exactly the dark walnut hull, black hull strakes, bronze trim, black skull flag, three masts, six cannon stations and stern helm.\nKeep the exact 2-column 4-row grid, ship positions and scale, all eight views N NE E SE S SW W NW, fixed overhead 3/4 camera and crisp painted pixel-art style. Every tip fully inside its cell. No people, sea, fire, labels or scenery. Genuine transparent RGBA, no matte.",
+      "damaged": "Use case: precise-object-edit\nCreate the DAMAGED state of the exact supplied pirate ship. Add torn holes and frayed edges in the black sails, splintered hull planks, broken railing segments, dark cannon impact scars and a few damaged ropes. Keep it upright and afloat, all three masts standing, six cannon stations, skull flag and helm at the stern. No flames or smoke; runtime animations supply fires.\nPreserve exact hull footprint, mast and yard coordinates, ship placement, camera, scale and bronze/black/walnut material palette in each view. Exactly 2 columns by 4 rows with the same eight directions N NE E SE S SW W NW. Crisp detailed painted pixel-art. Empty deck, no characters, water, text, labels or scene. Actual transparent RGBA, no matte.",
+      "sinking": "Use case: precise-object-edit\nCreate the SINKING state of this exact pirate ship: severe hull breaches, flooded deck with dark water and a thin band of foam, splintered rails, sagging yards, heavily torn black sails, three main masts still identifiable. Keep the black skull flag, bronze details, dark walnut hull, stern helm and six cannon stations. One upright sinking pose per view; runtime supplies the descent. No flames or characters.\nPreserve exact 2 columns by 4 rows, all eight views N NE E SE S SW W NW, each ship position, hull footprint, scale and fixed overhead 3/4 camera. Crisp painted pixel-art as reference. Keep foam tightly hugging the hull; no sea, backdrop, labels or matte. Genuine transparent RGBA.",
+      "damageForeground": "Use case: background-extraction\nExtract ONLY the torn black sails, yards, three masts, flags, climbing ladders and ropes, and raised bronze railings from the supplied eight-view damaged pirate ship. Preserve their original exact position, scale and pixels. Remove all horizontal deck floors, hull sides and cannon metal barrels/carriages, leaving transparent holes. The holes in the torn sails must remain fully transparent where they reveal deck; no floor in the foreground layer.\nSame exact 2-column 4-row grid, eight poses and canvas dimensions. Do not move or redesign retained parts. No characters, backdrop or labels. Genuine transparent RGBA."
+    },
+    "skeleton": {
+      "mode": "Built-in image_gen",
+      "prompts": {
+        "damaged-prompt.txt": "Use case: precise-object-edit\nAsset type: eight-direction 2D game sprite source, transparent RGBA.\nPrimary request: make the DAMAGED state of this same skeleton three-masted warship. Add broken bone railing segments, dark impact scars and splintered plank edges on the hull, more torn holes and frayed sections in all the bone-white sails, and a few damaged rigging ropes. The ship still floats upright and is navigable. Keep all three masts standing, same skull figurehead and black skull flags, six cannon stations, empty walkable deck, helm at stern. NO flames, smoke, sparks, characters, water or glow: runtime animations will supply fires.\nInvariants: exact same hull footprint, mast/yard coordinates, cell positions, scale, camera, color palette, contour and lighting. Exactly 2 columns and 4 rows, eight views N NE E SE S SW W NW as input. No cropping, labels or backdrop. Preserve crisp detailed game pixel-art style and actual transparent RGBA.\n",
+        "damaged-selection-prompt.txt": "Use case: background-extraction\nAsset type: foreground selection layer for an eight-direction ship sprite.\nPrimary request: preserve ONLY the foreground ship parts from the input sheet, with their original exact pixels, locations, sizes and colors. Keep the sails, yards, masts, rigging, ropes, climbing ladders, flags, raised side railings and stern upper wall. Remove all horizontal wooden deck floors, hull sides and all cannon metal barrels and carriages, leaving actual transparent holes where those parts were. This is an extraction mask, not a new design.\nKeep the EXACT 2-column by 4-row grid and dimensions, eight view placements and camera. Preserve delicate sail edges and bone railings. Do not add outlines around removed parts, do not move any parts. No background, no text, no characters. Real transparent RGBA.\nFor this damaged sheet, preserve the exact torn holes: make open deck visible through holes in the sails completely transparent in this layer. Keep damaged bone railings, not horizontal hull planks.\n",
+        "idle-prompt.txt": "Use case: precise-object-edit\nAsset type: eight-direction 2D game sprite source, transparent RGBA.\nPrimary request: turn this SAME skeleton three-masted ship into its IDLE state. Change ONLY the sails: all canvas tightly furled and tied around each yard, small rolled bundles along the horizontal spars, leaving the deck visibly open below. Preserve the bone railings, skull figurehead, charcoal hull, golden fittings, black skull flags, six cannon stations and helm at the stern. Exactly three masts, no additional masts.\nComposition and invariants: preserve exact 2-column by 4-row grid, every ship's position, size, hull silhouette, orientation, mast and yard coordinates, viewpoint and lighting, in all eight views N NE E SE S SW W NW. Do not crop any ship. No actors, water, labels or backdrop. Same crisp painted pixel-art game style. Real transparent background.\n",
+        "idle-selection-prompt.txt": "Use case: background-extraction\nAsset type: foreground selection layer for an eight-direction ship sprite.\nPrimary request: preserve ONLY the foreground ship parts from the input sheet, with their original exact pixels, locations, sizes and colors. Keep the sails, yards, masts, rigging, ropes, climbing ladders, flags, raised side railings and stern upper wall. Remove all horizontal wooden deck floors, hull sides and all cannon metal barrels and carriages, leaving actual transparent holes where those parts were. This is an extraction mask, not a new design.\nKeep the EXACT 2-column by 4-row grid and dimensions, eight view placements and camera. Preserve delicate sail edges and bone railings. Do not add outlines around removed parts, do not move any parts. No background, no text, no characters. Real transparent RGBA.\nFor this IDLE sheet, retain only the furled sail bundles, masts, yards, ladders, ropes, flags and raised bone railings. All areas of empty deck revealed below the furled sails must be fully transparent; do not keep any horizontal floor.\n",
+        "normal-prompt.txt": "Use case: precise-object-edit\nAsset type: eight-direction 2D game ship sprite source, transparent RGBA.\nPrimary request: create the SKELETON fleet variant of this exact three-masted royal warship. Original design inspired by cursed skeletal pirate ships. Keep the same hull outline, deck dimensions, mast positions, orientation and camera in every corresponding view, but change its visual identity to charcoal weathered wood, carved ivory bone railings and ribs, subtle aged brass, a skull figurehead, bone-white ragged sails and a black skull flag. The ship is seaworthy and intact in this NORMAL navigation state, not sinking. No fire yet.\nInput image: the supplied royal ship contact sheet is the exact layout and silhouette reference.\nComposition: exactly 2 columns and 4 rows of eight isolated ships. Reading order N, NE, E, SE, S, SW, W, NW, matching reference. N bow up, E bow right, S bow down, W bow left. Fixed overhead 3/4 game camera, same scale and empty margins. Every ship fully inside its cell.\nConstraints: exactly three masts and three independent cannon stations on EACH side, six total. Helm at raised STERN behind the aft mast, never at bow. Maintain the proper sail/mast/shroud depth ordering, sails obscure mast and ladders on bow-facing views. Empty walkable deck, no people or skeleton characters. No text, labels, water, scene or backdrop. Crisp detailed painted pixel-art shading and dark contours consistent with the reference and a 2D tile RPG. Actual transparent background, no baked checkerboard or colored matte.\n",
+        "normal-selection-prompt.txt": "Use case: background-extraction\nAsset type: foreground selection layer for an eight-direction ship sprite.\nPrimary request: preserve ONLY the foreground ship parts from the input sheet, with their original exact pixels, locations, sizes and colors. Keep the sails, yards, masts, rigging, ropes, climbing ladders, flags, raised side railings and stern upper wall. Remove all horizontal wooden deck floors, hull sides and all cannon metal barrels and carriages, leaving actual transparent holes where those parts were. This is an extraction mask, not a new design.\nKeep the EXACT 2-column by 4-row grid and dimensions, eight view placements and camera. Preserve delicate sail edges and bone railings. Do not add outlines around removed parts, do not move any parts. No background, no text, no characters. Real transparent RGBA.\n",
+        "sinking-prompt.txt": "Use case: precise-object-edit\nAsset type: eight-direction 2D sinking ship sprite source, transparent RGBA.\nPrimary request: create the beginning of the SINKING state of this same skeleton three-masted ship. Severely broken bone railings and breached hull, flooded dark deck with a modest band of foam spilling across the planks, spars and torn sails sagging slightly but three main masts still identifiable. The skull figurehead, dark hull and ivory bone ribs retain the skeleton identity. No orange fire. No living or skeletal people. Runtime will animate descent, so depict ONE upright damaged sinking pose for each direction, not multiple animation phases.\nInvariants: same 2-column,4-row contact sheet, eight orientations N NE E SE S SW W NW, exact hull scale and placement, fixed overhead 3/4 camera, three masts, stern helm, six cannon stations. Keep water and foam tightly hugging the hull; transparent everywhere outside this small rim. No sea backdrop, no labels or text. Same crisp detailed painted pixel-art game style. Genuine transparent RGBA.\n"
+      }
+    },
+    "herbonia": {
+      "mode": "Built-in image_gen",
+      "prompts": {}
+    },
+    "royal-idle": {
+      "mode": "Built-in image_gen",
+      "prompts": {}
+    },
+    "royal-damaged": {
+      "mode": "Built-in image_gen",
+      "prompts": {}
+    },
+    "royal-sinking": {
+      "mode": "Built-in image_gen",
+      "prompts": {}
+    }
+  }
+}

@@ -78,8 +78,8 @@ public sealed class TutorialStep
     public bool IsAtTarget(Guid playerMapId, int playerX, int playerY) =>
         MapId != Guid.Empty && playerMapId == MapId &&
         TargetRadius is >= 0 and <= 6 &&
-        Math.Abs(playerX - TargetX) <= TargetRadius &&
-        Math.Abs(playerY - TargetY) <= TargetRadius;
+        Math.Abs((long)playerX - TargetX) <= TargetRadius &&
+        Math.Abs((long)playerY - TargetY) <= TargetRadius;
     public Guid VariableId { get; set; }
     public long VariableValue { get; set; } = 1;
     // Select a common event compiled by the existing cinematic director.

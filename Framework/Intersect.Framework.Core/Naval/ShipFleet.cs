@@ -10,6 +10,8 @@ public sealed class OwnedShip
     public string Name {get;set;}="";
     public List<NavalCargoParcel> Cargo {get;set;}=[];
     public string ModelId { get; set; } = "";
+    public Guid SourceShopId {get;set;}
+    public HarbourOffer? ModelSnapshot {get;set;}
     public int CargoCapacity {get;set;}=20;
     public int Health { get; set; } = 100;
     public int SinkingSerial {get;set;}
@@ -24,6 +26,22 @@ public sealed class OwnedShip
 
 public static class ShipFleetRules
 {
+    public static OwnedShip FromOffer(HarbourOffer offer,Guid sourceShopId=default)=>new()
+    {
+        ModelId=offer.Id,CargoCapacity=offer.Ship.CargoCapacity,SourceShopId=sourceShopId,
+        ModelSnapshot=Newtonsoft.Json.JsonConvert.DeserializeObject<HarbourOffer>(Newtonsoft.Json.JsonConvert.SerializeObject(offer)),
+    };
+    public static HarbourOffer? ResolveOffer(OwnedShip owned,HarbourCatalog global,IEnumerable<(Guid Id,HarbourCatalog Catalogue)> shops)
+    {
+        HarbourOffer? source=null;
+        if(owned.SourceShopId!=Guid.Empty)source=shops.Where(s=>s.Id==owned.SourceShopId).SelectMany(s=>s.Catalogue.Offers??[]).FirstOrDefault(o=>o.Id==owned.ModelId);
+        else source=global.Offers.FirstOrDefault(o=>o.Id==owned.ModelId);
+        if(source?.IsValid()==true)return source;
+        if(owned.ModelSnapshot is {} snapshot && snapshot.Id==owned.ModelId && snapshot.IsValid())return snapshot;
+        source=global.Offers.FirstOrDefault(o=>o.Id==owned.ModelId);if(source?.IsValid()==true)return source;
+        var legacy=shops.SelectMany(s=>s.Catalogue.Offers??[]).Where(o=>o.Id==owned.ModelId && o.IsValid()).Take(2).ToArray();
+        return legacy.Length==1?legacy[0]:null;
+    }
     public const int MaximumShips = 32;
     // Round up the missing hull fraction; an afloat vessel always costs less than a total loss.
     public static int RepairCost(int fullPrice,int health)

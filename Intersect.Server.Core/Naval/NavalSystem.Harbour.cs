@@ -44,6 +44,15 @@ internal static partial class NavalSystem
         var catalog=shop?.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills && shop.NavalCatalogue.Enabled?shop.NavalCatalogue:HarbourCatalog.Load(CataloguePath);
         catalog.Validate();return catalog;
     }
+    private static HarbourCatalog FleetCatalogue(Player player)
+    {
+        var global=HarbourCatalog.Load(CataloguePath);
+        var shops=Intersect.GameObjects.ShopDescriptor.Lookup.Values.OfType<Intersect.GameObjects.ShopDescriptor>()
+            .Where(s=>s.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills)
+            .Select(s=>(s.Id,s.NavalCatalogue)).ToArray();
+        return new HarbourCatalog {Enabled=global.Enabled,Offers=player.NavalFleet.DistinctBy(s=>s.ModelId)
+            .Select(s=>ShipFleetRules.ResolveOffer(s,global,shops)).Where(o=>o!=null).Cast<HarbourOffer>().ToArray()};
+    }
     private static NavalSkillDefinition[] ShopSkills(Player p)
     {
         var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
@@ -70,7 +79,7 @@ internal static partial class NavalSystem
             if (!fromEvent && now - player.LastHarbourRequest < 500) return;
             player.LastHarbourRequest = now;
             HarbourCatalog catalog;
-            try { catalog = packet.View==HarbourView.Shop?ShopCatalogue(player):HarbourCatalog.Load(Path.Combine("resources", "naval-shop.json")); }
+            try { catalog = packet.View==HarbourView.Shop?ShopCatalogue(player):FleetCatalogue(player); }
             catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException)
             { player.SendPacket(new HarbourStatePacket { View = packet.View, Message = "The harbour catalogue is unavailable." }); return; }
             (int X, int Y)? dock = null;
@@ -104,7 +113,9 @@ internal static partial class NavalSystem
             if (packet.Action != HarbourAction.Open && offer == null) message = "This ship is unavailable.";
             else if (packet.Action == HarbourAction.Buy)
             {
-                if (!offer.ForSale || !ShipFleetRules.CanBuy(player.NavalFleet, offer.Id, offer.PremiumRequired, premium))
+                if (!CanAccessShip(player,offer,premium))
+                    message = "Complete this ship's quest and unlock requirements first.";
+                else if (!offer.ForSale || !ShipFleetRules.CanBuy(player.NavalFleet, offer.Id, offer.PremiumRequired, premium))
                     message = "Ship already owned, fleet full or Premium required.";
                 else message = PurchaseOrRepair(player, offer, null);
             }
@@ -141,8 +152,8 @@ internal static partial class NavalSystem
             }
             else if (packet.Action == HarbourAction.Launch)
             {
-                if (owned == null || owned.Sunk || offer.PremiumRequired && !premium)
-                    message = "Repair this ship and check its Premium requirement before sailing.";
+                if (owned == null || owned.Sunk || !CanAccessShip(player,offer,premium))
+                    message = "Repair this ship and check its access requirements before sailing.";
                 else
                 {
                     ShipState launched; string failure;
@@ -178,7 +189,7 @@ internal static partial class NavalSystem
         {
             var result = HarbourTrade.Commit(
                 () => cost == 0 || player.TryTakeItem(currency.Id, cost, sendUpdate: false),
-                () => { if (repair == null) player.NavalFleet.Add(new OwnedShip { ModelId = offer.Id,CargoCapacity=offer.Ship.CargoCapacity }); else repair.Health = 100; },
+                () => { if (repair == null) player.NavalFleet.Add(ShipFleetRules.FromOffer(offer,Intersect.GameObjects.ShopDescriptor.Get(player.NavalShopId)?.NavalCatalogue.Enabled==true?player.NavalShopId:Guid.Empty)); else repair.Health = 100; },
                 () => player.User.Save(force: true) == UserSaveResult.Completed,
                 () => { player.NavalFleetJson = fleetBefore; for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]); });
             if(result==HarbourTradeResult.Completed && shopSound)PlayShopTradeSound(player,false);
@@ -197,7 +208,7 @@ internal static partial class NavalSystem
         {
             var owned = player.NavalFleet.FirstOrDefault(s => s.ModelId == o.Id);
             var currency = Currency(o);
-            return new HarbourEntry {Graphics=o.Ship.Graphics,Frames=o.Ship.Frames,SellPrice=owned is {AtSea:false,Cargo.Count:0}?(int)((long)o.Price*owned.Health/200):0,ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
+            return new HarbourEntry {AccessGranted=CanAccessShip(player,o,premium),RequiredQuestName=Intersect.GameObjects.QuestDescriptor.Get(o.RequiredQuestId)?.Name??"",EventUnlockRequired=o.EventUnlockRequired,Graphics=o.Ship.Graphics,Frames=o.Ship.Frames,SellPrice=owned is {AtSea:false,Cargo.Count:0}?(int)((long)o.Price*owned.Health/200):0,ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
                 Price = o.Price, RepairPrice = ShipFleetRules.RepairCost(o.RepairPrice,owned?.Health??100), PremiumRequired = o.PremiumRequired,
                 CargoCount=owned?.Cargo.Count??0,Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
                 ForSale = o.ForSale, CurrencyAvailable = currency != null };
@@ -211,13 +222,20 @@ internal static partial class NavalSystem
         var vessel = new Vessel(d) { OwnerId = player.Id, Name=owned.Name??"", SinkingGraphics = offer.SinkingGraphics };
         var ocean = OceanMapResolver.Maps();
         if (Ships.ContainsKey(owned.Id)) return null;
-        var candidates = from dy in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1) from dx in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1)
-                         let distance = dx*dx+dy*dy where distance > 0 && distance <= _settings.LaunchSearchRadius * _settings.LaunchSearchRadius orderby distance, dy, dx select (dx,dy);
+        var clearance=NavalShipAtlas.LaunchClearance(d);
+        var search=Math.Min(20,Math.Max(_settings.LaunchSearchRadius,(int)Math.Ceiling(clearance)+2));
+        var candidates = from dy in Enumerable.Range(-search, search * 2 + 1) from dx in Enumerable.Range(-search, search * 2 + 1)
+                         let distance = dx*dx+dy*dy where distance >= clearance*clearance && distance <= search*search orderby distance, dy, dx select (dx,dy);
         foreach (var (dx,dy) in candidates)
         {
             var x = dock.X + dx + .5; var y = dock.Y + dy + .5;
             if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight ||
-                !ClearHull(player, vessel, ocean, player.MapId, x, y)) continue;
+                !ClearHull(player, vessel, ocean, player.MapId, x, y) ||
+                NavalShipAtlas.LaunchFootprint(d,x,y).Any(tile=>
+                {
+                    var map=player.MapId;double tx=tile.X+.5,ty=tile.Y+.5;
+                    return !OceanMapResolver.Resolve(ocean,ref map,ref tx,ref ty) || !ClearTile(player,map,(int)Math.Floor(tx),(int)Math.Floor(ty));
+                })) continue;
             d.X = vessel.State.X = x; d.Y = vessel.State.Y = y;
             vessel.Health = owned.Health;vessel.SinkingSerial=owned.SinkingSerial;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;

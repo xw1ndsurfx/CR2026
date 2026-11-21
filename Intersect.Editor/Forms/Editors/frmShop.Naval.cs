@@ -6,9 +6,11 @@ public partial class FrmShop
 {
     private DarkComboBox _navalType=null!;
     private static FrmShop? _navalPending;
+    private static Guid _navalPendingRequest;
     internal static bool ReceiveNavalShopConfiguration(Intersect.Network.Packets.Server.NavalConfigurationPacket packet)
     {
-        var editor=_navalPending;_navalPending=null;
+        if(packet.RequestId!=_navalPendingRequest)return false;
+        var editor=_navalPending;_navalPending=null;_navalPendingRequest=Guid.Empty;
         if(editor==null || editor.IsDisposed || editor.mEditorItem==null)return false;
         if(packet.Error.Length>0){MessageBox.Show(editor,packet.Error);return true;}
         using var dialog=new FrmNavalShopOffers(editor.mEditorItem,packet);dialog.ShowDialog(editor);return true;
@@ -23,7 +25,7 @@ public partial class FrmShop
         pnlContainer.Height+=64;ClientSize=new Size(ClientSize.Width,ClientSize.Height+64);btnSave.Top+=64;btnCancel.Top+=64;grpShops.Height+=64;
         var bar=new FlowLayoutPanel {Dock=DockStyle.Top,Height=64,AutoSize=false};_navalType.Dock=DockStyle.None;_navalType.Width=450;
         var configure=new DarkButton {Text=T("Configure shop offers"),Width=250,Height=26};
-        configure.Click+=(_,_)=>{if(mEditorItem?.ConfigurationKind==ShopConfigurationKind.RoyalSeals){grpItemsSold.Focus();return;}if(mEditorItem?.ConfigurationKind is ShopConfigurationKind.Spells or ShopConfigurationKind.PremiumMusic){using var services=new FrmShopServices(mEditorItem);services.ShowDialog(this);return;}if(mEditorItem?.ConfigurationKind!=ShopConfigurationKind.NavalShipsAndSkills)return;_navalPending=this;Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.Editor.NavalConfigurationRequestPacket());};
+        configure.Click+=(_,_)=>{if(mEditorItem?.ConfigurationKind==ShopConfigurationKind.RoyalSeals){grpItemsSold.Focus();return;}if(mEditorItem?.ConfigurationKind is ShopConfigurationKind.Spells or ShopConfigurationKind.PremiumMusic){using var services=new FrmShopServices(mEditorItem);services.ShowDialog(this);return;}if(mEditorItem?.ConfigurationKind!=ShopConfigurationKind.NavalShipsAndSkills)return;_navalPending=this;var request=new Intersect.Network.Packets.Editor.NavalConfigurationRequestPacket();_navalPendingRequest=request.RequestId;Intersect.Editor.Networking.Network.SendPacket(request);};
         bar.Controls.AddRange([_navalType,configure]);pnlContainer.Controls.Add(bar);bar.BringToFront();
         new ToolTip(components).SetToolTip(_navalType,T("Naval shops open on land. Use the item lists for ammunition prices, or Configure boats and skills for this shop."));
     }

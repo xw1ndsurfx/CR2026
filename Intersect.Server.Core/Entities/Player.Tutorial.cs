@@ -70,7 +70,7 @@ public partial class Player
     /// succeeded and its command stack has started (ActionButton, PlayerBump,
     /// or PlayerCollide). Client event requests alone never grant tutorial credit.
     /// </summary>
-    private void RecordTutorialEventInteraction(Guid descriptorId, Guid activatedMapId)
+    private void RecordTutorialEventInteraction(Intersect.Server.Entities.Events.Event activatedEvent)
     {
         lock (EntityLock)
         {
@@ -81,7 +81,7 @@ public partial class Player
 
             var current = Tutorial.Current(TutorialRuntime.Current);
             if (current == null || current.Id != _tutorialStep ||
-                !current.MatchesActivatedEvent(descriptorId, activatedMapId))
+                !current.MatchesActivatedEvent(activatedEvent.Descriptor.Id, activatedEvent.MapId))
                 return;
 
             Tutorial.Completed.Add(current.Id);
@@ -97,6 +97,7 @@ public partial class Player
     {
         TutorialObjective.Read => true,
         TutorialObjective.Move => _tutorialMoved,
+        TutorialObjective.InteractEvent => false, // Only validated event activation can complete this step.
         TutorialObjective.ReachMap => MapId == step.MapId,
         // Authoritative check: arrival is measured by the server's player position,
         // never by a client-reported tutorial or marker packet.

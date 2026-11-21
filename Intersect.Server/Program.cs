@@ -34,7 +34,10 @@ internal static class Program
 
             ServerContext.NetworkFactory = (context, parameters, handlePacket, shouldProcessPacket) =>
             {
-                var config = new NetworkConfiguration(Options.Instance.ServerPort);
+                var config = new NetworkConfiguration(Options.Instance.ServerPort)
+                {
+                    LoopbackOnly = Environment.GetEnvironmentVariable("INTERSECT_LOCAL_TEST_ONLY") == "1",
+                };
                 return new ServerNetwork(context as IServerContext, context, config, parameters)
                 {
                     Handler = handlePacket,

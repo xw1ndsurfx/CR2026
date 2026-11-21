@@ -40,8 +40,6 @@ public partial class MenuContainer : Panel
         return icon?.Parent ?? this;
     }
 
-    internal bool TutorialInventoryOpen => _inventoryWindow is { IsVisibleInTree: true };
-    internal bool TutorialQuestsOpen => _questsWindow is { IsVisibleInTree: true };
 
 
     private readonly ImagePanel _spellsButtonContainer;
@@ -522,6 +520,7 @@ public partial class MenuContainer : Panel
         {
             HideWindows();
             _inventoryWindow.Show();
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Inventory);
         }
     }
 
@@ -552,6 +551,7 @@ public partial class MenuContainer : Panel
         {
             HideWindows();
             _questsWindow.Show();
+            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Quests);
         }
     }
 
@@ -657,8 +657,6 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
-        if (_questsWindow.IsVisibleInTree)
-            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Quests);
     }
 
     private void DungeonsButton_Clicked(Base sender, MouseButtonState arguments)
@@ -684,8 +682,6 @@ public partial class MenuContainer : Panel
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleInventoryWindow();
-        if (_inventoryWindow.IsVisibleInTree)
-            Interface.InGameUiOrNull?.NotifyTutorialHudAction(TutorialHighlightTarget.Inventory);
     }
 
     private void SpellsButton_Clicked(Base sender, MouseButtonState arguments)

@@ -29,7 +29,7 @@ internal static class ShipAtlasResources
         try
         {
             var path=Path.Combine(resources,"ocean",name+".naval.json");
-            if (!File.Exists(path) || new FileInfo(path).Length > 65536) return null;
+            if (!File.Exists(path) || new FileInfo(path).Length > ShipSpriteAtlas.MaximumMetadataBytes) return null;
             var atlas=JsonConvert.DeserializeObject<ShipSpriteAtlas>(File.ReadAllText(path),new JsonSerializerSettings {MaxDepth=12,TypeNameHandling=TypeNameHandling.None});
             if (atlas?.IsValid(width,height,frames) != true) return null;
             atlas.UpgradeLegacySoutheast(name);return atlas;

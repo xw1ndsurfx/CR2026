@@ -5,13 +5,24 @@ namespace Intersect.Framework.Core.Naval;
 
 public sealed class NavalConfiguration
 {
+    public int ShipAppearancesVersion {get;set;}=1;
     public int AmmunitionVisualsVersion {get;set;}=1;
     public int SkillsVersion {get;set;}=1;
     [System.Runtime.Serialization.OnDeserializing]
-    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context){SkillsVersion=0;AmmunitionVisualsVersion=0;}
+    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context){SkillsVersion=0;AmmunitionVisualsVersion=0;ShipAppearancesVersion=0;}
     [System.Runtime.Serialization.OnDeserialized]
     private void UpgradeSkills(System.Runtime.Serialization.StreamingContext context)
     {
+        if(ShipAppearancesVersion<1 && Herbonia!=null)
+        {
+            var model=NavalShipModels.ThreeMasts[1];
+            foreach(var patrol in Herbonia.Where(p=>p?.Ship?.Graphics?.ToLowerInvariant() is "ship_herbonia_001.png" or "ship_herbonia_002.png"))
+            {
+                patrol.Ship.Graphics=model.Graphics;patrol.Ship.IdleGraphics=model.IdleGraphics;
+                patrol.Ship.DamagedGraphics=model.DamagedGraphics;patrol.Ship.SinkingGraphics=model.SinkingGraphics;patrol.Ship.Frames=4;patrol.Ship.FrameMilliseconds=180;patrol.Ship.CrewCapacity=7;
+            }
+            ShipAppearancesVersion=1;
+        }
         if(SkillsVersion<1 && Skills!=null)
         {
             // Append only the new abilities once; preserve authored prices, omissions and future removals.
@@ -52,12 +63,13 @@ public sealed class NavalConfiguration
     public SailingSettings Sailing {get;set;}=new();
     public HerboniaPatrol[] Herbonia { get; set; } = [];
     public ShipDefinition[] Ships { get; set; } = [];
+    public NavalMonsterDefinition[] Monsters {get;set;}=[];
     [JsonExtensionData] public IDictionary<string, JToken>? AdditionalData { get; set; }
     [JsonIgnore] public string? SourceJson { get; set; }
 
     public void Validate(int width, int height)
     {
-        if (AmmoInventory?.IsValid()!=true || Repair?.IsValid()!=true || Skills==null || Skills.Length>Enum.GetValues<NavalSkillKind>().Length || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
+        if (Monsters==null || Monsters.Length>64 || Monsters.Any(m=>m?.IsValid(width,height)!=true) || Monsters.Select(m=>m.Id).Distinct().Count()!=Monsters.Length || AmmoInventory?.IsValid()!=true || Repair?.IsValid()!=true || Skills==null || Skills.Length>Enum.GetValues<NavalSkillKind>().Length || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
             Ammunition.Select(a=>a.Kind).Distinct().Count()!=Ammunition.Length || !Ammunition.Any(a=>a.Kind==CannonAmmoKind.Standard) || CombatTimeoutSeconds is <3 or >120 || Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.BoardingDungeonId!=Guid.Empty && (p.BoardingEntryX>=width || p.BoardingEntryY>=height) || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
             Herbonia.Select(p=>p.Ship.Id).Concat(Ships?.Where(p=>p!=null).Select(p=>p.Id)??[]).GroupBy(id=>id).Any(g=>g.Count()>1) || Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||

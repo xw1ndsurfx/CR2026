@@ -196,6 +196,10 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
     public Guid DeathAnimationId { get; set; }
     public int DeathAnimationDurationSeconds { get; set; }
 
+    public string DeathSound { get; set; } = string.Empty;
+    public string ProximitySound { get; set; } = string.Empty;
+    public int ProximitySoundRadius { get; set; } = 5;
+
     [NotMapped]
     [JsonIgnore]
     public AnimationDescriptor DeathAnimation

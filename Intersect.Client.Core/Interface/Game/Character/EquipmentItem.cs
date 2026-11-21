@@ -47,6 +47,13 @@ public partial class EquipmentItem
 
     void pnl_RightClicked(Base sender, MouseButtonState arguments)
     {
+#if ANDROID
+        if (arguments.MouseButton == MouseButton.Left)
+        {
+            DescriptionWindows.MobileDescriptionActions.ShowEquipment(mYindex, Pnl);
+            return;
+        }
+#endif
         if (arguments.MouseButton != MouseButton.Right)
         {
             return;

@@ -58,6 +58,45 @@ public sealed class NavalHelmRegressionTests
     }
 
     [Test]
+    public void WideCameraFollowsTheActiveHelmsmanRatherThanShipOwnership()
+    {
+        var previous = Globals.Me;
+        var me = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));
+        GC.SuppressFinalize(me);
+        me.Id = Guid.NewGuid();
+        var ship = new ShipSnapshot { Id = Guid.NewGuid(), CaptainId = me.Id, Health = 100 };
+        var packet = new NavalSnapshotPacket { Ships = [ship] };
+        try
+        {
+            Globals.Me = me;
+            NavalWorld.Clear();
+
+            NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.IsAtHelm, Is.True);
+
+            ship.HelmVacant = true;
+            NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.IsAtHelm, Is.False);
+
+            ship.HelmVacant = false;
+            ship.CaptainId = Guid.NewGuid();
+            ship.CrewIds = [me.Id];
+            ship.HelmsmanId = me.Id;
+            NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.IsAtHelm, Is.True);
+
+            ship.Sinking = true;
+            NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.IsAtHelm, Is.False);
+        }
+        finally
+        {
+            NavalWorld.Clear();
+            Globals.Me = previous;
+        }
+    }
+
+    [Test]
     public void ClippedShipBandsKeepTheirWorldPositionIncludingMirroredPoses()
     {
         var frame=new ShipSpriteFrame {X=100,Y=200,Width=200,Height=250,AnchorX=90,AnchorY=180,Slices=[[20,40,120,8]]};

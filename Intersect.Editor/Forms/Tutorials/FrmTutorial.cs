@@ -117,8 +117,14 @@ internal sealed class FrmTutorial : Form
         controls.Controls.Add(Caption("Completion objective"));
         foreach (var value in Enum.GetValues<TutorialObjective>())
             _completionObjective.Items.Add(value);
+        _completionObjective.FormattingEnabled = true;
+        _completionObjective.Format += (_, e) => e.Value = TutorialStepProperties.EnumCaption(e.ListItem!);
         controls.Controls.Add(_completionObjective);
-
+        _highlightTarget.FormattingEnabled = _highlightStyle.FormattingEnabled = true;
+        _highlightTarget.Format += (_, e) => e.Value = TutorialStepProperties.EnumCaption(e.ListItem!);
+        _highlightStyle.Format += (_, e) => e.Value = TutorialStepProperties.EnumCaption(e.ListItem!);
+        _worldX.Maximum = Math.Clamp(Options.Instance.Map.MapWidth - 1, 0, 255);
+        _worldY.Maximum = Math.Clamp(Options.Instance.Map.MapHeight - 1, 0, 255);
         controls.Controls.Add(Caption("Highlight target"));
         foreach (var value in Enum.GetValues<TutorialHighlightTarget>())
             _highlightTarget.Items.Add(value);
@@ -149,7 +155,12 @@ internal sealed class FrmTutorial : Form
         controls.Controls.Add(_worldNpc);
         controls.Controls.Add(Caption("Target map event"));
         controls.Controls.Add(_worldEvent);
-        var interaction = new Button { Text = T("Create interaction step"), Width = 258, Height = 32 };
+        _worldEvent.DropDown += (_, _) =>
+        {
+            if (_selected is { MapId: var id } && id != Guid.Empty && MapDescriptor.Get(id) == null)
+                PacketSender.SendNeedMap(id);
+        };
+        var interaction = new Button { Text = T("Require this interaction"), Width = 258, Height = 32 };
         interaction.Click += (_, _) =>
         {
             var id = (_worldEvent.SelectedItem as TargetChoice)?.Id ?? Guid.Empty;
@@ -223,7 +234,7 @@ internal sealed class FrmTutorial : Form
         change(_selected);
         _dirty = true;
         _properties.Refresh();
-        _preview.ShowStep(_selected, _titles[0].Text);
+        RefreshWorldControls();
     }
 
     private void RefreshWorldControls()
@@ -239,12 +250,22 @@ internal sealed class FrmTutorial : Form
             SelectChoice(_worldMap, step?.MapId ?? Guid.Empty);
             SelectChoice(_worldNpc, step?.TargetNpcId ?? Guid.Empty);
             RefreshEventChoices(step?.MapId ?? Guid.Empty, step?.TargetEventId ?? Guid.Empty);
-            _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, 255);
-            _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, 255);
+            _worldX.Value = Math.Clamp(step?.TargetX ?? 0, 0, _worldX.Maximum);
+            _worldY.Value = Math.Clamp(step?.TargetY ?? 0, 0, _worldY.Maximum);
             _worldRadius.Value = Math.Clamp(step?.TargetRadius ?? 1, 0, 6);
+            _worldEvent.Enabled = step != null && step.MapId != Guid.Empty;
+            _worldNpc.Enabled = step?.HighlightTarget == TutorialHighlightTarget.WorldNpc;
+            _worldX.Enabled = _worldY.Enabled = step?.HighlightTarget == TutorialHighlightTarget.WorldTile || step?.Objective == TutorialObjective.ReachTile;
+            _worldRadius.Enabled = step?.Objective == TutorialObjective.ReachTile;
+            _highlightStyle.Enabled = step?.HighlightTarget is not (TutorialHighlightTarget.Player or TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent);
             _preview.ShowStep(step, _titles[0].Text);
         }
         finally { _loading = oldLoading; }
+    }
+
+    internal void RefreshMapEvents(Guid mapId)
+    {
+        if (_selected?.MapId == mapId) RefreshWorldControls();
     }
 
     private void RefreshEventChoices(Guid mapId, Guid selectedEventId)
@@ -253,13 +274,14 @@ internal sealed class FrmTutorial : Form
         try
         {
             _worldEvent.Items.Clear();
-            _worldEvent.Items.Add(new TargetChoice(Guid.Empty, T("None")));
+            _worldEvent.Items.Add(new TargetChoice(Guid.Empty, T(mapId != Guid.Empty && MapDescriptor.Get(mapId) == null
+                ? "Open this list to load map events" : "None")));
             if (MapDescriptor.Get(mapId) is { } map)
             {
                 foreach (var descriptor in map.LocalEvents.Values
                     .Where(e => e != null && !e.CommonEvent)
                     .OrderBy(e => e.Name))
-                    _worldEvent.Items.Add(new TargetChoice(descriptor.Id, descriptor.Name));
+                    _worldEvent.Items.Add(new TargetChoice(descriptor.Id, $"{descriptor.Name} ({descriptor.SpawnX}, {descriptor.SpawnY}) [{descriptor.Id.ToString()[..8]}]"));
             }
             SelectChoice(_worldEvent, selectedEventId);
         }
@@ -284,7 +306,7 @@ internal sealed class FrmTutorial : Form
     { _loading = true; _steps.DataSource = null; _steps.DataSource = _config.Steps.ToArray(); _steps.SelectedItem = step; _loading = false; LoadStep(step); }
     private void LoadStep(TutorialStep? step)
     {
-        _selected = step; _loading = true; _properties.SelectedObject = step;
+        _selected = step; _loading = true; _properties.SelectedObject = step == null ? null : new TutorialStepProperties(step);
         if (step != null) for (var i = 0; i < 3; i++) { var lang = new[] { "en", "fr", "es" }[i]; _titles[i].Text = _config.Translations.Get(step.Title, lang); _texts[i].Text = _config.Translations.Get(step.Text, lang); }
         var choices = new List<SceneChoice> { new(Guid.Empty, T("None")) };
         choices.AddRange(EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new SceneChoice(e.Id, e.Name)));
@@ -310,7 +332,7 @@ internal sealed class FrmTutorial : Form
     internal void Receive(TutorialEditorPacket packet)
     {
         _saveTimeout.Stop(); SetPending(false);
-        if (packet.Error.Length > 0) { MessageBox.Show(this, packet.Error); return; }
+        if (packet.Error.Length > 0) { MessageBox.Show(this, T(packet.Error)); return; }
         _revision = packet.Revision; if (packet.Saved) { _dirty = false; MessageBox.Show(this, T("Saved")); }
     }
 }

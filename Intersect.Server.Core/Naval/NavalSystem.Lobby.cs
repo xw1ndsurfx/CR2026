@@ -18,7 +18,8 @@ internal static partial class NavalSystem
                 captain.InstanceType!=MapInstanceType.Overworld ||
                 !Ships.TryGetValue(captain.CaptainedShipId,out var ship) || ship.OwnerId!=captain.Id ||
                 ship.State.CaptainId!=captain.Id || captain.MapId!=ship.State.MapId || ship.Health<=0 || ship.SunkUntil>0 || atDock && !NearCrewDock(ship)) return null;
-            return (ship.State.Id,ship.Definition.CrewCapacity);
+            if(DeckEnabled(ship))DeckPartyCapacities[captain.Id]=7;
+            return (ship.State.Id,VesselCapacity(ship));
         }
     }
     internal static string BoardFromLobby(Player player,Player captain,Guid shipId)
@@ -33,7 +34,7 @@ internal static partial class NavalSystem
                     !captain.InGame || captain.IsDead || captain.HasPendingDeath || captain.CaptainedShipId!=shipId ||
                     captain.InstanceType!=MapInstanceType.Overworld || captain.Z!=0 ||
                     !Ships.TryGetValue(shipId,out var ship) || ship.OwnerId!=captain.Id || ship.State.CaptainId!=captain.Id || captain.MapId!=ship.State.MapId ||
-                    !player.Party.Contains(captain) || !NearCrewDock(ship) || ship.Crew.Count+1>=ship.Definition.CrewCapacity)
+                    !player.Party.Contains(captain) || !NearCrewDock(ship) || ship.Crew.Count+1>=VesselCapacity(ship))
                     return "The captain must stop beside a Q dock with a free crew seat before you can board.";
                 if(player.NavalCrewPassage is {Ship.Cargo.Count:>0} old && old.Ship.Id!=shipId)
                     return "Unload your previous crew cargo before joining another ship.";

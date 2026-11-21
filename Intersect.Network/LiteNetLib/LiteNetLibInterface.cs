@@ -134,9 +134,14 @@ public sealed class LiteNetLibInterface : INetworkLayerInterface, INetEventListe
             {
                 ApplicationContext.Context.Value?.Logger.LogError("Failed to make the initial connection attempt.");
             }
-        } else if (!_manager.Start(_network.Configuration.Port))
+        }
+        else
         {
-            throw new Exception($"Failed to listen on port {_network.Configuration.Port}");
+            var started = _network.Configuration.LoopbackOnly
+                ? _manager.Start(IPAddress.Loopback, IPAddress.IPv6Loopback, _network.Configuration.Port)
+                : _manager.Start(_network.Configuration.Port);
+            if (!started)
+                throw new Exception($"Failed to listen on port {_network.Configuration.Port}");
         }
     }
 

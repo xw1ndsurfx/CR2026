@@ -54,8 +54,12 @@ internal static class TutorialRuntime
                 step.HighlightTarget == TutorialHighlightTarget.WorldEvent)
             {
                 var target = EventDescriptor.Get(step.TargetEventId);
-                if (target == null || target.CommonEvent || target.MapId != step.MapId || target.Pages.Count == 0)
+                if (target == null || target.CommonEvent || target.MapId != step.MapId || target.Pages.Count == 0 ||
+                    !Intersect.Server.Maps.MapController.Get(step.MapId).EventIds.Contains(target.Id))
                     throw new InvalidDataException("Royal Guide: select an event on the chosen map.");
+                if (step.Objective == TutorialObjective.InteractEvent && !target.Pages.Any(page =>
+                        page.Trigger is EventTrigger.ActionButton or EventTrigger.PlayerBump or EventTrigger.PlayerCollide))
+                    throw new InvalidDataException("Royal Guide: choose an event with a player interaction trigger.");
             }
             if (step.Objective == TutorialObjective.Variable && PlayerVariableDescriptor.Get(step.VariableId) == null) throw new InvalidDataException("Select an existing player variable.");
         }

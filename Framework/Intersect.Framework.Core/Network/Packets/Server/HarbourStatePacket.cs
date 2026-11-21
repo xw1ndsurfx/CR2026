@@ -16,6 +16,9 @@ public partial class HarbourStatePacket : IntersectPacket
 [MessagePackObject]
 public sealed class HarbourEntry
 {
+    [Key(16)] public bool AccessGranted {get;set;}=true;
+    [Key(17)] public string RequiredQuestName {get;set;}="";
+    [Key(18)] public bool EventUnlockRequired {get;set;}
     [Key(14)] public string Graphics {get;set;}="";
     [Key(15)] public int Frames {get;set;}=4;
     [Key(13)] public int SellPrice {get;set;}

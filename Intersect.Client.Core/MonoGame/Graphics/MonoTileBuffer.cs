@@ -247,6 +247,9 @@ internal partial class MonoTileBuffer(MonoRenderer renderer, GraphicsDevice devi
         TileBufferCount++;
 
         _vertexBuffer ??= renderer.CreateVertexBuffer<VertexPositionTexture>(_vertices.Count, BufferUsage.WriteOnly);
+        // Each tile contributes six indices for two triangles. The framework's
+        // default is LineList, whose count would overrun the triangle index buffer.
+        _vertexBuffer.PrimitiveType = Intersect.Client.Framework.Graphics.PrimitiveType.TriangleList;
         _vertexBuffer.SetData(_vertices.ToArray());
 
         _indexBuffer ??= renderer.CreateIndexBuffer<short>(_indices.Count, BufferUsage.WriteOnly);
