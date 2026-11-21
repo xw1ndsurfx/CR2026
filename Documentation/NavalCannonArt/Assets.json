@@ -1,0 +1,254 @@
+[
+  {
+    "ModelId": "royal-three-mast",
+    "Graphic": "Ship_Crew_CorpsRoyaux_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "c91386505215504beee35e545467fbf9165d7667868f417edfaa65d8f9eb5bae",
+    "Prompt": "Use case: stylized-concept. Production game sprite atlas, not a mockup. Input 1 is the old cannon station, a style and camera reference only. Input 2 is the existing Corps Royaux ship identity reference: royal cobalt blue, gilt gold trims, warm oak, ivory and fleur-de-lys. Create a NEW improved Royal navy cannon station foreground, panoramic edge-to-edge deck, matching this 2D detailed pixel-art pirate RPG. Exact atlas composition: square image, THREE equal full-width horizontal strips stacked vertically, each strip a 3:1 wide panorama (ideal canvas 1536x1536, strips 1536x512). Each strip repeats the SAME camera, same continuous deck floor, same royal-blue and gold bulwark, same side ropes and optional off-center mast/lantern, same lighting. One single cannon in the center foreground seen from BEHIND THE BREECH looking OUT over the ship side; muzzle points AWAY from viewer towards the empty transparent ocean area. Top strip cannon aimed 25 degrees to camera left; middle strip cannon dead ahead; bottom strip cannon 25 degrees to camera right. ONLY cannon and carriage rotate between strips, do not rotate the deck/camera. The cannon is dark polished iron on a royal blue and oak carriage with gold hardware, tasteful small fleur-de-lys. Deck floor extends continuously all the way to BOTH left and right image edges and the entire bottom edge of EVERY strip, no floating vignette, no rounded disconnected platform. Deck and bulwark occupy lower 55 percent of each strip. Entire upper 35 percent is genuinely TRANSPARENT empty air for the live game ocean; no water, sky, background, mountains, characters, lettering, borders, labels, guides or baked UI. Thin masts/rigging may rise near extreme outer edges, keeping the center aim zone clear. Same crisp dark outlines, material shading and pixel-art texture as reference sprites, professional coherent asset quality. Distinct three separate strips with no artwork crossing strip boundaries. No checkerboard baked in, preserve true transparent alpha."
+  },
+  {
+    "ModelId": "royal-sloop",
+    "Graphic": "Ship_Crew_CorpsRoyaux_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "1aa63d3aac275e4ec301f72515fa5aae7267585640b5bd52ce65b967d7238b0f",
+    "Prompt": "Use case: stylized-concept. Production transparent cannon-station sprite atlas for a 2D hand-painted pixel-art pirate RPG. The first reference is the Royal wide three-pose atlas: match its rendering quality, dark crisp outlines, its straight-on camera from BEHIND the cannon breech facing outward, and edge-to-edge deck construction. The second reference shows this exact boat's identity. Make a NEW royal-sloop station; palette/materials: royal cobalt-blue lacquer and bright gilded trim, tasteful fleur-de-lys, warm oak, gold fittings, warm amber lamp. Vessel structure: A SMALL SLOOP: a compact, lightly furnished gunwale, one small mast at the extreme left edge, few supplies, a single practical cannon, no grand ship architecture, no cabin or roof. Exact layout: 3 equal full-width horizontal strips stacked vertically, each strip a wide panoramic foreground, no strip borders or labels. Ideal 1536x1024 canvas, THREE strips, upper row cannon aimed 25 degrees to camera LEFT, middle straight away, lower row 25 degrees RIGHT. Repeat identical scene and camera within each battery: ONLY the one centered cannon and carriage change aim. Muzzle always points AWAY from viewer; breech and rear carriage closest to viewer. Entire floor spans both image edges and the full bottom edge of each strip, never a rounded floating platform. Keep the upper central half of each strip transparent, leaving a clear aiming zone for the LIVE ocean rendered by the game; if lower gun deck, the view through its gunport is transparent. Absolutely no ocean, sky, scenery, words, text, UI, characters, checkerboard or gradient backdrop. REAL transparent alpha. Strong coherent readable game art; preserve separate strips, nothing crosses row boundaries."
+  },
+  {
+    "ModelId": "royal-raft",
+    "Graphic": "Ship_Crew_CorpsRoyaux_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "f4c4e4263df1b2d2d63728dd039343101d901ee6183632acb0fbbdf08b50e71b",
+    "Prompt": "Use case: stylized-concept. Production transparent cannon-station sprite atlas for a 2D hand-painted pixel-art pirate RPG. The first reference is the Royal wide three-pose atlas: match its rendering quality, dark crisp outlines, its straight-on camera from BEHIND the cannon breech facing outward, and edge-to-edge deck construction. The second reference shows this exact boat's identity. Make a NEW royal-raft station; palette/materials: royal cobalt-blue limited accents and modest gold metal fittings, small fleur-de-lys, natural tied logs. Vessel structure: A RAFT: a low platform of rough parallel logs tied by thick rope, VERY LOW rope edging, NO tall ship bulwark, NO conventional ship sidewalls, no heavy mast, no crates stacked high, one small sturdy cannon lashed to a low wooden mounting. View towards the bow over the low raft edge. Make the simple raft identity unmistakable. Exact layout: 3 equal full-width horizontal strips stacked vertically, each strip a wide panoramic foreground, no strip borders or labels. Ideal 1536x1024 canvas, THREE strips, upper row cannon aimed 25 degrees to camera LEFT, middle straight away, lower row 25 degrees RIGHT. Repeat identical scene and camera within each battery: ONLY the one centered cannon and carriage change aim. Muzzle always points AWAY from viewer; breech and rear carriage closest to viewer. Entire floor spans both image edges and the full bottom edge of each strip, never a rounded floating platform. Keep the upper central half of each strip transparent, leaving a clear aiming zone for the LIVE ocean rendered by the game; if lower gun deck, the view through its gunport is transparent. Absolutely no ocean, sky, scenery, words, text, UI, characters, checkerboard or gradient backdrop. REAL transparent alpha. Strong coherent readable game art; preserve separate strips, nothing crosses row boundaries."
+  },
+  {
+    "ModelId": "royal-line",
+    "Graphic": "Ship_Crew_CorpsRoyaux_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "cd5608607f131380cd2d04ccbad53bcf3d2af692702cffd5e6804e94a49440bd",
+    "Prompt": "Use case: stylized-concept. Production transparent cannon-station sprite atlas for a 2D hand-painted pixel-art pirate RPG. The first reference is the Royal wide three-pose atlas: match its rendering quality, dark crisp outlines, its straight-on camera from BEHIND the cannon breech facing outward, and edge-to-edge deck construction. The second reference shows this exact boat's identity. Make a NEW royal-line station; palette/materials: royal cobalt-blue lacquer, ornate gold trims, fleur-de-lys and warm polished oak. Vessel structure: A massive SHIP OF THE LINE: larger heavy naval cannon, substantial oak gunwale and ornate royal fittings. THREE UPPER DECK poses followed by THREE LOWER GUN DECK poses. Lower gun deck has dark massive ceiling beams and the broad open gunport framing the transparent target zone, enclosed battery atmosphere, not an open top deck. Exact layout: 6 equal full-width horizontal strips stacked vertically, each strip a wide panoramic foreground, no strip borders or labels. Ideal 1536x2048 canvas, SIX strips. Rows 1/2/3 are upper battery aimed left/straight/right; rows 4/5/6 lower battery aimed left/straight/right. Repeat identical scene and camera within each battery: ONLY the one centered cannon and carriage change aim. Muzzle always points AWAY from viewer; breech and rear carriage closest to viewer. Entire floor spans both image edges and the full bottom edge of each strip, never a rounded floating platform. Keep the upper central half of each strip transparent, leaving a clear aiming zone for the LIVE ocean rendered by the game; if lower gun deck, the view through its gunport is transparent. Absolutely no ocean, sky, scenery, words, text, UI, characters, checkerboard or gradient backdrop. REAL transparent alpha. Strong coherent readable game art; preserve separate strips, nothing crosses row boundaries."
+  },
+  {
+    "ModelId": "adventurer-three-mast",
+    "Graphic": "Ship_Crew_Adventurer_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "e703d0a0ea2cd40c751e5b4c3da4c78f182b322ff6560ad447237009e4af1a4a",
+    "Prompt": "Use case: style-transfer. Edit target image 1 is a production 3-row cannon-station atlas. Supporting reference image 2 shows the adventurer ThreeMast boat this station belongs to. Retarget ALL visible materials, decorative emblems, lighting and palette to match this boat: simple adventurer craft: plain warm honey oak and weathered rope, unpainted natural wood, practical dark iron cannon and fittings, restrained brass; no royal blue, no gilded royal ornament, no fleur-de-lys and no skull insignia. Preserve the exact number of horizontal strips (3), exact edge-to-edge deck coverage, exact cannon perspective (viewed from behind breech, muzzle pointing AWAY), exact camera and same cannon aiming directions (LEFT, STRAIGHT, RIGHT in order in each group of three). Retain a substantial three-mast ship's gunwale and deck. Replace every royal fleur-de-lys or royal-blue decoration with the correct plain/faction-appropriate material; don't retain royal emblems. Consistent crisp shaded 2D game-art rendering at least as detailed as reference, no characters, text, labels, UI or frame borders. Entire floor reaches left/right and bottom image edges in EACH strip. Empty air and every gunport window must remain genuinely TRANSPARENT ALPHA, no painted gradient/sky/ocean/checkerboard; the game supplies the moving ocean. Keep strip boundaries unchanged. The weapon and carriage rotate only within their strip, never the deck or camera."
+  },
+  {
+    "ModelId": "adventurer-sloop",
+    "Graphic": "Ship_Crew_Adventurer_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "76a22451a350b4fd400b1f99e6a57c82cb40598fe6172616d404bf21ff99baae",
+    "Prompt": "Use case: style-transfer. Edit target image 1 is a production 3-row cannon-station atlas. Supporting reference image 2 shows the adventurer Sloop boat this station belongs to. Retarget ALL visible materials, decorative emblems, lighting and palette to match this boat: simple adventurer craft: plain warm honey oak and weathered rope, unpainted natural wood, practical dark iron cannon and fittings, restrained brass; no royal blue, no gilded royal ornament, no fleur-de-lys and no skull insignia. Preserve the exact number of horizontal strips (3), exact edge-to-edge deck coverage, exact cannon perspective (viewed from behind breech, muzzle pointing AWAY), exact camera and same cannon aiming directions (LEFT, STRAIGHT, RIGHT in order in each group of three). Retain a compact practical SLOOP with a low gunwale and sparse supplies. Replace every royal fleur-de-lys or royal-blue decoration with the correct plain/faction-appropriate material; don't retain royal emblems. Consistent crisp shaded 2D game-art rendering at least as detailed as reference, no characters, text, labels, UI or frame borders. Entire floor reaches left/right and bottom image edges in EACH strip. Empty air and every gunport window must remain genuinely TRANSPARENT ALPHA, no painted gradient/sky/ocean/checkerboard; the game supplies the moving ocean. Keep strip boundaries unchanged. The weapon and carriage rotate only within their strip, never the deck or camera."
+  },
+  {
+    "ModelId": "adventurer-raft",
+    "Graphic": "Ship_Crew_Adventurer_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "511ae205272627774142e4f26d76b59a22e48db5acc33bd4b0935a86886babe8",
+    "Prompt": "Use case: style-transfer. Edit target image 1 is a production 3-row cannon-station atlas. Supporting reference image 2 shows the adventurer Raft boat this station belongs to. Retarget ALL visible materials, decorative emblems, lighting and palette to match this boat: simple adventurer craft: plain warm honey oak and weathered rope, unpainted natural wood, practical dark iron cannon and fittings, restrained brass; no royal blue, no gilded royal ornament, no fleur-de-lys and no skull insignia. Preserve the exact number of horizontal strips (3), exact edge-to-edge deck coverage, exact cannon perspective (viewed from behind breech, muzzle pointing AWAY), exact camera and same cannon aiming directions (LEFT, STRAIGHT, RIGHT in order in each group of three). Retain a low lashed-log RAFT with a single fixed cannon, no conventional ship bulwark or tall mast. Replace every royal fleur-de-lys or royal-blue decoration with the correct plain/faction-appropriate material; don't retain royal emblems. Consistent crisp shaded 2D game-art rendering at least as detailed as reference, no characters, text, labels, UI or frame borders. Entire floor reaches left/right and bottom image edges in EACH strip. Empty air and every gunport window must remain genuinely TRANSPARENT ALPHA, no painted gradient/sky/ocean/checkerboard; the game supplies the moving ocean. Keep strip boundaries unchanged. The weapon and carriage rotate only within their strip, never the deck or camera."
+  },
+  {
+    "ModelId": "adventurer-line",
+    "Graphic": "Ship_Crew_Adventurer_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "5429ced920ad687ec55bf0e1f25e0d6b7cda0db30eb17165199357173048d248",
+    "Prompt": "Use case: style-transfer. Edit target image 1 is a production 6-row cannon-station atlas. Supporting reference image 2 shows the adventurer ShipOfLine boat this station belongs to. Retarget ALL visible materials, decorative emblems, lighting and palette to match this boat: simple adventurer craft: plain warm honey oak and weathered rope, unpainted natural wood, practical dark iron cannon and fittings, restrained brass; no royal blue, no gilded royal ornament, no fleur-de-lys and no skull insignia. Preserve the exact number of horizontal strips (6), exact edge-to-edge deck coverage, exact cannon perspective (viewed from behind breech, muzzle pointing AWAY), exact camera and same cannon aiming directions (LEFT, STRAIGHT, RIGHT in order in each group of three). Keep upper-deck poses in rows 1-3 and lower enclosed gun-battery poses in rows 4-6. Replace every royal fleur-de-lys or royal-blue decoration with the correct plain/faction-appropriate material; don't retain royal emblems. Consistent crisp shaded 2D game-art rendering at least as detailed as reference, no characters, text, labels, UI or frame borders. Entire floor reaches left/right and bottom image edges in EACH strip. Empty air and every gunport window must remain genuinely TRANSPARENT ALPHA, no painted gradient/sky/ocean/checkerboard; the game supplies the moving ocean. Keep strip boundaries unchanged. The weapon and carriage rotate only within their strip, never the deck or camera."
+  },
+  {
+    "ModelId": "herbonia-three-mast",
+    "Graphic": "Ship_Crew_Herbonia_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "75d9e66023d7fa4c8526c9453d9c4fc3545d9c1d2fa81c35ffe070100fa23556",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the herbonia ThreeMast boat shown by supporting reference 2. Exact materials: enemy Herbonia craft: deep crimson red lacquer panels and carriage, warm dark mahogany, brass/gold fittings and severe angular metal braces, red accents; no blue paint, no royal fleur-de-lys. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the large three-mast gunwale structure. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "herbonia-sloop",
+    "Graphic": "Ship_Crew_Herbonia_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "ac816db279ab16ecf115a10de51789969986de716a476bd9e6f13b6ac17d5def",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the herbonia Sloop boat shown by supporting reference 2. Exact materials: enemy Herbonia craft: deep crimson red lacquer panels and carriage, warm dark mahogany, brass/gold fittings and severe angular metal braces, red accents; no blue paint, no royal fleur-de-lys. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the compact lightly furnished SLOOP structure. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "herbonia-raft",
+    "Graphic": "Ship_Crew_Herbonia_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "1188af88f086b873243d4225d8938fcbc9e79193b917a214f4884675bfc921ce",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the herbonia Raft boat shown by supporting reference 2. Exact materials: enemy Herbonia craft: deep crimson red lacquer panels and carriage, warm dark mahogany, brass/gold fittings and severe angular metal braces, red accents; no blue paint, no royal fleur-de-lys. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the unmistakable LOW LASHED-LOG RAFT structure, no conventional high bulwark or tall mast. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "herbonia-line",
+    "Graphic": "Ship_Crew_Herbonia_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "70c1e93b4845cf46d1458cf608ca6f51d57e627b4cfb9f38bdc5141983ac1b55",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the herbonia ShipOfLine boat shown by supporting reference 2. Exact materials: enemy Herbonia craft: deep crimson red lacquer panels and carriage, warm dark mahogany, brass/gold fittings and severe angular metal braces, red accents; no blue paint, no royal fleur-de-lys. Keep the reference's EXACT 6-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Rows 1-3 upper deck, rows 4-6 enclosed LOWER gun deck with heavy ceiling beams and clear transparent gunport. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "majestya-three-mast",
+    "Graphic": "Ship_Crew_Majestya_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "ae50c5bf1afc83e915f2e2a1e8be37d8c0f22c2b7a873654f28cce6c80412228",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the majestya ThreeMast boat shown by supporting reference 2. Exact materials: Majestya green craft: rich forest-green lacquer, warm oak, restrained gold/brass trim, dark iron cannon with green carriage; no royal blue, no red panels. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the large three-mast gunwale structure. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "majestya-sloop",
+    "Graphic": "Ship_Crew_Majestya_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "7e7a10cd934b33c63a9c0406813d53bbc9cb96863433f5a902aea4d2a486f19d",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the majestya Sloop boat shown by supporting reference 2. Exact materials: Majestya green craft: rich forest-green lacquer, warm oak, restrained gold/brass trim, dark iron cannon with green carriage; no royal blue, no red panels. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the compact lightly furnished SLOOP structure. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "majestya-raft",
+    "Graphic": "Ship_Crew_Majestya_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "f3553f1454bd86f01bf8ce6df56c6a549d472aecbd9b37b7d0dbac921bef5e93",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the majestya Raft boat shown by supporting reference 2. Exact materials: Majestya green craft: rich forest-green lacquer, warm oak, restrained gold/brass trim, dark iron cannon with green carriage; no royal blue, no red panels. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the unmistakable LOW LASHED-LOG RAFT structure, no conventional high bulwark or tall mast. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "majestya-line",
+    "Graphic": "Ship_Crew_Majestya_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "913d438ef18e9a25eb12001b402cfbbf26d1404f9ad06851716198ccd8ba0778",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the majestya ShipOfLine boat shown by supporting reference 2. Exact materials: Majestya green craft: rich forest-green lacquer, warm oak, restrained gold/brass trim, dark iron cannon with green carriage; no royal blue, no red panels. Keep the reference's EXACT 6-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Rows 1-3 upper deck, rows 4-6 enclosed LOWER gun deck with heavy ceiling beams and clear transparent gunport. Replace all royal blue/fleur-de-lys with faction-appropriate details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "skeleton-three-mast",
+    "Graphic": "Ship_Crew_Skeleton_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "6fb409f222b133968071388bd178adfbbab695ec57890ef0926d2394130352e3",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the skeleton ThreeMast boat shown by supporting reference 2. Exact materials: skeleton undead ship: weathered charcoal gray wood with ivory bone reinforcements and small carved skull reliefs, yellowed bone braces, cold dark iron cannon with bone carriage; frayed ropes, pale amber lantern, no living crew, no flesh or gore. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the large three-mast gunwale structure. Replace all royal blue/fleur-de-lys with faction-appropriate bone/dark wood details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference.\nAlpha correction: Use case: background-extraction. Correct ONLY the alpha/background of this exact three-strip skeletal cannon game sprite atlas. Preserve the complete existing bones, cannon, wood, ropes, lanterns, all three aiming poses, exact image dimensions, exact strip boundaries and object placement. The light gray/white checkerboard currently visible in the empty air above each deck and inside the railing openings is an INCORRECT BAKED BACKGROUND. Remove that entire checkerboard/white background completely to REAL RGBA ALPHA=0. No checkerboard may remain painted into the pixels. The deck and objects themselves should remain solid, readable, fully detailed; do not wash out the artwork or turn the entire sheet translucent. Make every empty air region truly transparent, including small gaps in the rigging. Keep the deck floor reaching both image sides in all three strips. No replacement background, no gradient, no scenery, no sea, no additional objects. This is a transparent cutout production asset, not an illustration on a white backdrop."
+  },
+  {
+    "ModelId": "skeleton-sloop",
+    "Graphic": "Ship_Crew_Skeleton_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "c90c5e787b293f97fd7f2bbfdfdd28c9618a3f6f7d552356e369de898b7bbabb",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the skeleton Sloop boat shown by supporting reference 2. Exact materials: skeleton undead ship: weathered charcoal gray wood with ivory bone reinforcements and small carved skull reliefs, yellowed bone braces, cold dark iron cannon with bone carriage; frayed ropes, pale amber lantern, no living crew, no flesh or gore. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the compact lightly furnished SLOOP structure. Replace all royal blue/fleur-de-lys with faction-appropriate bone/dark wood details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "skeleton-raft",
+    "Graphic": "Ship_Crew_Skeleton_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "d02b4af418ec20d52e3d7e9140f60b4e62dc3f2787f3fe297c3e662d1ef3655f",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the skeleton Raft boat shown by supporting reference 2. Exact materials: skeleton undead ship: weathered charcoal gray wood with ivory bone reinforcements and small carved skull reliefs, yellowed bone braces, cold dark iron cannon with bone carriage; frayed ropes, pale amber lantern, no living crew, no flesh or gore. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the unmistakable LOW LASHED-LOG RAFT structure, no conventional high bulwark or tall mast. Replace all royal blue/fleur-de-lys with faction-appropriate bone/dark wood details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "skeleton-line",
+    "Graphic": "Ship_Crew_Skeleton_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "0ca92d0515b3400c2808ed60522cfb4d2d8065e400cda48c5e78800e208183fa",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the cannon-station atlas for the skeleton ShipOfLine boat shown by supporting reference 2. Exact materials: skeleton undead ship: weathered charcoal gray wood with ivory bone reinforcements and small carved skull reliefs, yellowed bone braces, cold dark iron cannon with bone carriage; frayed ropes, pale amber lantern, no living crew, no flesh or gore. Keep the reference's EXACT 6-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Rows 1-3 upper deck, rows 4-6 enclosed LOWER gun deck with heavy ceiling beams and clear transparent gunport. Replace all royal blue/fleur-de-lys with faction-appropriate bone/dark wood details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "ghost-three-mast",
+    "Graphic": "Ship_Crew_Ghost_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "cdbf9e473073da3a96317ab4f2b9c4e682c83476b936af0035122271a690e947",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the GHOST cannon-station atlas for the ThreeMast boat in supporting reference 2. Exact style: ghost ship: ALL deck timber, rope, cannon, carriage and fittings are translucent spectral blue-green/cyan, real alpha translucency on material surfaces with luminous teal edges, eerie turquoise lanterns, visibly ghostly wood-grain, no ordinary warm brown solid deck, no characters. This is a SPECTRAL ship, not ordinary solid brown wood painted teal: make cannon, carriage and planks partially see-through, with luminous detailed cyan/green contours and GENUINE partial alpha on the surfaces. No fog cloud or opaque coloured backdrop. Preserve the reference's EXACT 3-strip grid, rear view from BEHIND the cannon breech looking OUTWARD, floor reaching both side edges and bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep substantial three-mast ship station architecture. Replace all royal insignia with spectral carved whorls/teal fittings; no royal blue/gold solid objects. One cannon per strip, muzzle points AWAY, breech closest to viewer. Coherent premium shaded 2D pirate RPG sprite art with crisp edges and rich readable ghostly details. All empty air and every window genuinely alpha=0 transparent for live ocean. No sky, sea, gradients, checkerboard, labels, UI, characters, frame borders. Keep strips separated and exactly aligned."
+  },
+  {
+    "ModelId": "ghost-sloop",
+    "Graphic": "Ship_Crew_Ghost_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "c3abc337655d6a485375a75f71d1821afd30627177fdd89c2119e243fc071fb5",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the GHOST cannon-station atlas for the Sloop boat in supporting reference 2. Exact style: ghost ship: ALL deck timber, rope, cannon, carriage and fittings are translucent spectral blue-green/cyan, real alpha translucency on material surfaces with luminous teal edges, eerie turquoise lanterns, visibly ghostly wood-grain, no ordinary warm brown solid deck, no characters. This is a SPECTRAL ship, not ordinary solid brown wood painted teal: make cannon, carriage and planks partially see-through, with luminous detailed cyan/green contours and GENUINE partial alpha on the surfaces. No fog cloud or opaque coloured backdrop. Preserve the reference's EXACT 3-strip grid, rear view from BEHIND the cannon breech looking OUTWARD, floor reaching both side edges and bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep compact SLOOP structure and light rigging. Replace all royal insignia with spectral carved whorls/teal fittings; no royal blue/gold solid objects. One cannon per strip, muzzle points AWAY, breech closest to viewer. Coherent premium shaded 2D pirate RPG sprite art with crisp edges and rich readable ghostly details. All empty air and every window genuinely alpha=0 transparent for live ocean. No sky, sea, gradients, checkerboard, labels, UI, characters, frame borders. Keep strips separated and exactly aligned."
+  },
+  {
+    "ModelId": "ghost-raft",
+    "Graphic": "Ship_Crew_Ghost_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "1b0f4b0c18285a620f4a2ae01e3287085528ad7754382b0541898d7431e5faf5",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the GHOST cannon-station atlas for the Raft boat in supporting reference 2. Exact style: ghost ship: ALL deck timber, rope, cannon, carriage and fittings are translucent spectral blue-green/cyan, real alpha translucency on material surfaces with luminous teal edges, eerie turquoise lanterns, visibly ghostly wood-grain, no ordinary warm brown solid deck, no characters. This is a SPECTRAL ship, not ordinary solid brown wood painted teal: make cannon, carriage and planks partially see-through, with luminous detailed cyan/green contours and GENUINE partial alpha on the surfaces. No fog cloud or opaque coloured backdrop. Preserve the reference's EXACT 3-strip grid, rear view from BEHIND the cannon breech looking OUTWARD, floor reaching both side edges and bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep LOW LASHED-LOG RAFT geometry with glowing lashings, no high conventional ship bulwark or tall mast. Replace all royal insignia with spectral carved whorls/teal fittings; no royal blue/gold solid objects. One cannon per strip, muzzle points AWAY, breech closest to viewer. Coherent premium shaded 2D pirate RPG sprite art with crisp edges and rich readable ghostly details. All empty air and every window genuinely alpha=0 transparent for live ocean. No sky, sea, gradients, checkerboard, labels, UI, characters, frame borders. Keep strips separated and exactly aligned."
+  },
+  {
+    "ModelId": "ghost-line",
+    "Graphic": "Ship_Crew_Ghost_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "9e38d57c8b94947e3a45a6e2cb29d9fd690392f669b96805bb7e8c3c060e9496",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the GHOST cannon-station atlas for the ShipOfLine boat in supporting reference 2. Exact style: ghost ship: ALL deck timber, rope, cannon, carriage and fittings are translucent spectral blue-green/cyan, real alpha translucency on material surfaces with luminous teal edges, eerie turquoise lanterns, visibly ghostly wood-grain, no ordinary warm brown solid deck, no characters. This is a SPECTRAL ship, not ordinary solid brown wood painted teal: make cannon, carriage and planks partially see-through, with luminous detailed cyan/green contours and GENUINE partial alpha on the surfaces. No fog cloud or opaque coloured backdrop. Preserve the reference's EXACT 6-strip grid, rear view from BEHIND the cannon breech looking OUTWARD, floor reaching both side edges and bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Rows 1-3 upper deck, rows 4-6 spectral enclosed LOWER gun deck with ghost ceiling beams and transparent gunport. Replace all royal insignia with spectral carved whorls/teal fittings; no royal blue/gold solid objects. One cannon per strip, muzzle points AWAY, breech closest to viewer. Coherent premium shaded 2D pirate RPG sprite art with crisp edges and rich readable ghostly details. All empty air and every window genuinely alpha=0 transparent for live ocean. No sky, sea, gradients, checkerboard, labels, UI, characters, frame borders. Keep strips separated and exactly aligned."
+  },
+  {
+    "ModelId": "pirate-three-mast",
+    "Graphic": "Ship_Crew_Pirate_ThreeMast_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "601ebcd17e987ffc8460acefe7e6d8e5438f60e85cbe75f10578ce65d95a7d9c",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the PIRATE cannon-station atlas for the ThreeMast boat shown by supporting reference 2. Exact materials: pirate ship: tar-black bulwark and cannon carriage, heavily weathered dark warm oak, blackened iron cannon, aged brass hardware, restrained ivory skull-and-crossbones relief on small plates; black cloth remnants only near edge, no royal fleurs-de-lys, no blue paint. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the large three-mast gunwale structure. Remove all royal blue/fleur-de-lys; use pirate black and weathered wood/skull details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "pirate-sloop",
+    "Graphic": "Ship_Crew_Pirate_Sloop_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "9d0f8eecd39cfa37d93bf8720f576ecf73647dd2c0cabee46829a33d739cd9ad",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the PIRATE cannon-station atlas for the Sloop boat shown by supporting reference 2. Exact materials: pirate ship: tar-black bulwark and cannon carriage, heavily weathered dark warm oak, blackened iron cannon, aged brass hardware, restrained ivory skull-and-crossbones relief on small plates; black cloth remnants only near edge, no royal fleurs-de-lys, no blue paint. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the compact lightly furnished SLOOP structure. Remove all royal blue/fleur-de-lys; use pirate black and weathered wood/skull details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "pirate-raft",
+    "Graphic": "Ship_Crew_Pirate_Raft_Wide_v1.png",
+    "Rows": 3,
+    "Width": 1536,
+    "Height": 1024,
+    "Sha256": "2b2b7453faea0e8313ecb0e400456c9e763ce4e36a5c8b6f07b97c4d3cfa5984",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the PIRATE cannon-station atlas for the Raft boat shown by supporting reference 2. Exact materials: pirate ship: tar-black bulwark and cannon carriage, heavily weathered dark warm oak, blackened iron cannon, aged brass hardware, restrained ivory skull-and-crossbones relief on small plates; black cloth remnants only near edge, no royal fleurs-de-lys, no blue paint. Keep the reference's EXACT 3-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Keep the unmistakable LOW LASHED-LOG RAFT structure, no conventional high bulwark or tall mast. Remove all royal blue/fleur-de-lys; use pirate black and weathered wood/skull details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  },
+  {
+    "ModelId": "pirate-line",
+    "Graphic": "Ship_Crew_Pirate_ShipOfLine_Wide_v1.png",
+    "Rows": 6,
+    "Width": 1086,
+    "Height": 1448,
+    "Sha256": "d63cf6888666ed809cd7456d7bfc4895b3d1d6bbcf12b06fb41ee4ee0bbf6362",
+    "Prompt": "Use case: style-transfer. Edit image 1 into the PIRATE cannon-station atlas for the ShipOfLine boat shown by supporting reference 2. Exact materials: pirate ship: tar-black bulwark and cannon carriage, heavily weathered dark warm oak, blackened iron cannon, aged brass hardware, restrained ivory skull-and-crossbones relief on small plates; black cloth remnants only near edge, no royal fleurs-de-lys, no blue paint. Keep the reference's EXACT 6-strip grid, camera from BEHIND the cannon breech looking OUTWARD, full-width floor reaching both side edges and entire bottom of each strip. Aim order LEFT / STRAIGHT / RIGHT; only cannon/carriage turn, scenery stays fixed. Rows 1-3 upper deck, rows 4-6 enclosed LOWER gun deck with heavy ceiling beams and clear transparent gunport. Remove all royal blue/fleur-de-lys; use pirate black and weathered wood/skull details. One cannon per strip, muzzle pointing AWAY from viewer, breech nearest viewer. Coherent professionally shaded 2D pirate RPG sprite art with crisp outlines. Empty air and gunport windows must have genuine TRANSPARENT ALPHA for the game's live ocean; no sky, sea, gradients, checkerboard, labels, UI, people, frame borders. Keep all scene strips separate and aligned exactly like reference."
+  }
+]

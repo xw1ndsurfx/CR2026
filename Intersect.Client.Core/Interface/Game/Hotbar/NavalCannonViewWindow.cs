@@ -158,8 +158,7 @@ internal sealed class NavalCannonViewWindow : Window
     {
         internal bool CrewMode {get;set;}
         private Point _aim;
-        private string _artName="";
-        private CannonStationArtwork? _art;
+        private readonly Dictionary<string,(int Width,int Height,CannonStationArtwork? Art)> _artCache=[];
         protected override void OnMouseMoved(int x,int y,int dx,int dy)
         {
             base.OnMouseMoved(x,y,dx,dy);if(!CrewMode || Width<1 || Height<1) return;
@@ -175,33 +174,63 @@ internal sealed class NavalCannonViewWindow : Window
             if(CrewMode && button==MouseButton.Left && NavalWorld.Gunner.Ammunition.FirstOrDefault(a=>a.Kind==NavalWorld.SelectedAmmo)?.Available==true)
                 NavalWorld.RequestStation(CannonStationAction.Fire);
         }
+        private CannonStationArtwork? Artwork(string filename,IGameTexture texture)
+        {
+            if(_artCache.TryGetValue(filename,out var cached) && cached.Width==texture.Width && cached.Height==texture.Height)
+                return cached.Art;
+            CannonStationArtwork? art=null;
+            try
+            {
+                var path=Path.Combine(ClientConfiguration.ResourcesDirectory,"ocean",filename+".crew.json");
+                if(File.Exists(path) && new FileInfo(path).Length<=16384)
+                {
+                    art=JsonConvert.DeserializeObject<CannonStationArtwork>(File.ReadAllText(path),
+                        new JsonSerializerSettings {MaxDepth=8,TypeNameHandling=TypeNameHandling.None});
+                    if(art?.IsValid(texture.Width,texture.Height)!=true)art=null;
+                }
+            }
+            catch(Exception error) when(error is IOException or JsonException or UnauthorizedAccessException) {art=null;}
+            _artCache[filename]=(texture.Width,texture.Height,art);
+            return art;
+        }
         private void DrawCannon(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
-            var filename=NavalWorld.Presentation.CrewCannonGraphic;
-            if(!CrewMode || !NavalPresentation.SafeAsset(filename) || Globals.ContentManager?.GetTexture(TextureType.Ocean,filename) is not {} texture) return;
-            if(_artName!=filename)
+            if(!CrewMode)return;
+            var presentation=NavalWorld.Presentation;
+            var configured=presentation.CrewCannonGraphic;
+            var ship=NavalWorld.OwnShip;
+            var selected=CannonStationCatalog.Resolve(ship?.Graphics,configured,presentation.MatchCrewCannonToShip);
+            foreach(var filename in new[]{selected,configured}.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                _artName=filename;_art=null;
-                try
+                if(!NavalPresentation.SafeAsset(filename) || string.IsNullOrEmpty(filename) ||
+                    Globals.ContentManager?.GetTexture(TextureType.Ocean,filename) is not {IsMissingOrCorrupt:false,IsLoaded:true} texture ||
+                    Artwork(filename,texture) is not {} art)continue;
+                var lower=ship!=null && ShipDeck.Kind(ship.Graphics)==ShipDeckKind.ShipOfLine && NavalWorld.Gunner.Station>=3;
+                var frame=art.Pose(NavalWorld.GunYaw,lower);
+                skin.Renderer.DrawColor=Color.White;
+                if(art.IsPanoramic)
                 {
-                    var path=Path.Combine(ClientConfiguration.ResourcesDirectory,"ocean",filename+".crew.json");
-                    if(File.Exists(path) && new FileInfo(path).Length<=16384)
-                        _art=JsonConvert.DeserializeObject<CannonStationArtwork>(File.ReadAllText(path),new JsonSerializerSettings {MaxDepth=8,TypeNameHandling=TypeNameHandling.None});
+                    var placement=CannonStationLayout.Panoramic(Width,Height,frame);
+                    skin.Renderer.DrawTexturedRect(texture,placement.Destination,Color.White,
+                        frame.X/(float)texture.Width,(float)(placement.SourceY/texture.Height),
+                        (frame.X+frame.Width)/(float)texture.Width,(float)((placement.SourceY+placement.SourceHeight)/texture.Height));
                 }
-                catch(Exception e) when(e is IOException or JsonException or UnauthorizedAccessException) {_art=null;}
+                else
+                {
+                    // Retain the authored framing of custom legacy sprite sheets.
+                    var w=Math.Min((int)(Width*.6),(int)(Height*.7));var h=w*frame.Height/frame.Width;
+                    var offset=(int)(NavalWorld.GunYaw/Math.Max(1,NavalWorld.Gunner.AimArcDegrees)*8);
+                    var lift=(int)(Math.Sin(NavalWorld.GunElevation*Math.PI/180)*Height*.12);
+                    skin.Renderer.DrawTexturedRect(texture,new Rectangle((Width-w)/2+offset,Height-h-lift,w,h+lift),Color.White,
+                        frame.X/(float)texture.Width,frame.Y/(float)texture.Height,(frame.X+frame.Width)/(float)texture.Width,(frame.Y+frame.Height)/(float)texture.Height);
+                }
+                return;
             }
-            if(_art?.IsValid(texture.Width,texture.Height)!=true) return;
-            var frame=_art.Pose(NavalWorld.GunYaw);var w=Math.Min((int)(Width*.6),(int)(Height*.7));var h=w*frame.Height/frame.Width;
-            var offset=(int)(NavalWorld.GunYaw/NavalWorld.Gunner.AimArcDegrees*8);
-            var lift=(int)(Math.Sin(NavalWorld.GunElevation*Math.PI/180)*Height*.12);
-            skin.Renderer.DrawColor=Color.White;
-            skin.Renderer.DrawTexturedRect(texture,new Rectangle((Width-w)/2+offset,Height-h-lift,w,h+lift),Color.White,
-                frame.X/(float)texture.Width,frame.Y/(float)texture.Height,(frame.X+frame.Width)/(float)texture.Width,(frame.Y+frame.Height)/(float)texture.Height);
         }
         private IGameRenderTexture? _texture;
         private long _nextFrame;
         private bool _failed;
-        internal void Release() {_texture?.Dispose();_texture=null;_nextFrame=0;_failed=false;_aim=default;NavalWorld.GunYaw=0;NavalWorld.GunElevation=-Math.Atan(.12)*180/Math.PI;}
+        internal void Release() {_artCache.Clear();_texture?.Dispose();_texture=null;_nextFrame=0;_failed=false;_aim=default;NavalWorld.GunYaw=0;NavalWorld.GunElevation=-Math.Atan(.12)*180/Math.PI;}
         protected override void Dispose(bool disposing) {if(disposing) Release();base.Dispose(disposing);}
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
