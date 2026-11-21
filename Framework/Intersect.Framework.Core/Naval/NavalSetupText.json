@@ -2444,6 +2444,11 @@
     "{0} - Repelled": {"en":"{0} - Repelled","fr":"{0} - Repoussé","es":"{0} - Repelido"},
     "{0} - Tentacles {1}/{2} - Hull {3}% - {4}s": {"en":"{0} - Tentacles {1}/{2} - Hull {3}% - {4}s","fr":"{0} - Tentacules {1}/{2} - Coque {3}% - {4}s","es":"{0} - Tentáculos {1}/{2} - Casco {3}% - {4}s"},
     "{0} - Limbs {1}/{2} - Hull {3}% - {4}s": {"en":"{0} - Limbs {1}/{2} - Hull {3}% - {4}s","fr":"{0} - Membres {1}/{2} - Coque {3}% - {4}s","es":"{0} - Miembros {1}/{2} - Casco {3}% - {4}s"},
-    "E: take lower battery cannon": {"en":"E: take lower battery cannon","fr":"E : prendre un canon de la batterie inférieure","es":"E: tomar un cañón de la batería inferior"}
+    "E: take lower battery cannon": {"en":"E: take lower battery cannon","fr":"E : prendre un canon de la batterie inférieure","es":"E: tomar un cañón de la batería inferior"},
+    "MatchCrewCannonToShip": {
+      "en": "Match built-in cannon station to ship",
+      "fr": "Adapter le poste de canon intégré au navire",
+      "es": "Adaptar el puesto de cañón integrado al barco"
+    }
   }
 }

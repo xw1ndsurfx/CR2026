@@ -1,0 +1,53 @@
+{
+  "Version": 2,
+  "ImageWidth": 1086,
+  "ImageHeight": 1448,
+  "Frame": {
+    "X": 0,
+    "Y": 251,
+    "Width": 1086,
+    "Height": 230,
+    "AnchorX": 543,
+    "AnchorY": 230
+  },
+  "LeftFrame": {
+    "X": 0,
+    "Y": 0,
+    "Width": 1086,
+    "Height": 240,
+    "AnchorX": 543,
+    "AnchorY": 240
+  },
+  "RightFrame": {
+    "X": 0,
+    "Y": 492,
+    "Width": 1086,
+    "Height": 231,
+    "AnchorX": 543,
+    "AnchorY": 231
+  },
+  "LowerFrame": {
+    "X": 0,
+    "Y": 975,
+    "Width": 1086,
+    "Height": 230,
+    "AnchorX": 543,
+    "AnchorY": 230
+  },
+  "LowerLeftFrame": {
+    "X": 0,
+    "Y": 734,
+    "Width": 1086,
+    "Height": 230,
+    "AnchorX": 543,
+    "AnchorY": 230
+  },
+  "LowerRightFrame": {
+    "X": 0,
+    "Y": 1216,
+    "Width": 1086,
+    "Height": 231,
+    "AnchorX": 543,
+    "AnchorY": 231
+  }
+}
