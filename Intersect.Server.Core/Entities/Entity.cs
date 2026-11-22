@@ -2175,6 +2175,8 @@ public abstract partial class Entity : IEntity
             );
         }
 
+        baseDamage = Dungeons.DungeonRunRuntime.ScaleNpcDungeonDamage(this, baseDamage);
+
         // Retaliatory hits retain the existing counter bonus but must not also
         // build a normal three-hit combo.
         var wasAdvancedCounter = Options.Instance.Combat.EnableAdvancedCombat &&
@@ -2398,6 +2400,7 @@ public abstract partial class Entity : IEntity
                 );
             }
 
+            secondaryDamage = Dungeons.DungeonRunRuntime.ScaleNpcDungeonDamage(this, secondaryDamage);
             if (secondaryDamage < 0 && secondaryDamagingAttack)
             {
                 secondaryDamage = 0;

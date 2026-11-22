@@ -1,4 +1,4 @@
-﻿using Intersect.Core;
+using Intersect.Core;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Naval;
@@ -96,7 +96,7 @@ internal static partial class NavalSystem
                 SailingExperience=Math.Max(0,player.SailingExperience-previousExperience),Cargo=kept,
                 ReplacedLots=before.Count(id=>!afterIds.Contains(id)),DiscardedLots=candidates.Count-kept.Length,
                 CargoFull=RewardHolds(player).Any(s=>touched.TryGetValue(s.Id,out var capacity) && s.Cargo.Count>=capacity)};
-            committed=save();
+            committed=RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(player, Intersect.Framework.Core.Naval.NavalProfessions.Sailing, result.SailingExperience, save);
             if(committed) receipt=result;
             return committed;
         }

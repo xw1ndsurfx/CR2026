@@ -24,7 +24,7 @@ public partial class Player
             PetCollection.Jousting = next;
             try
             {
-                if (user.Save(force: true) != UserSaveResult.Completed) { PetCollection.Jousting = before; return; }
+                if (!RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(this, JoustProfession.Id, next.Experience-before.Experience, () => user.Save(force: true) == UserSaveResult.Completed)) { PetCollection.Jousting = before; return; }
             }
             catch { PetCollection.Jousting = before; throw; }
             _joustPendingReward = null; SendJoustCareer();

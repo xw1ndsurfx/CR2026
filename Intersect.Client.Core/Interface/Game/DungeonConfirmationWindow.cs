@@ -85,6 +85,7 @@ internal sealed class DungeonConfirmationWindow : Window
     private readonly Label _objectives;
     private readonly Label _rewards;
     private readonly Label _extra;
+    private readonly Label _modifiers;
     private readonly ImagePanel _icon;
     private readonly Button _enter;
     private readonly Button _cancel;
@@ -137,6 +138,9 @@ internal sealed class DungeonConfirmationWindow : Window
         _rewards = ValueText("Rewards", 9);
         _extra = AddText(this, "DungeonGateExtra", string.Empty,
             20, 268, 466, 15, 9, Cream);
+        _modifiers = AddText(this, "DungeonGateModifiers", string.Empty, 20, 288, 466, 72, 10, Cream);
+        _modifiers.WrappingBehavior = WrappingBehavior.Wrapped;
+        _modifiers.Hide();
 
         _icon = new ImagePanel(this, "DungeonCustomIcon")
         {
@@ -247,7 +251,18 @@ internal sealed class DungeonConfirmationWindow : Window
             : $"{dungeon.MinimumLevel}+";
         _level.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{levelRange} / RECOMMENDED {dungeon.RecommendedLevel}+");
         _party.Text = $"{dungeon.MinimumPartySize}-{dungeon.MaximumPartySize}";
-        _lives.Text = Math.Max(1, dungeon.MaxLives).ToString();
+        var modifiers = dungeon.Modifiers.Resolve(dungeon.Id, DateTimeOffset.FromUnixTimeMilliseconds(packet.PreviewUtcMilliseconds));
+        _lives.Text = Math.Max(1, dungeon.MaxLives - modifiers.LivesPenalty).ToString();
+        var modified = modifiers.Names.Length > 0;
+        SetSize(506, modified ? 476 : 396);
+        _enter.SetPosition(18, modified ? 369 : 289);
+        _cancel.SetPosition(18, modified ? 406 : 326);
+        _modifiers.IsHidden = !modified;
+        var modifierNames = string.Join(", ", modifiers.Names.Select(n => Intersect.Client.Localization.ClientLanguages.ContentText(n)));
+        _modifiers.Text = Shorten(modifierNames, 100) + "\n" +
+            string.Format(RoyalSeasonWindow.T("Enemy health: {0}% | Enemy damage: {1}% | Completion XP: {2}%"), modifiers.HealthPercent, modifiers.DamagePercent, modifiers.ExperiencePercent) + "\n" +
+            RoyalSeasonWindow.T("Preview: rules are fixed when the attempt starts.");
+        _modifiers.SetToolTipText(modifierNames);
 
         var requirements = dungeon.CompletionRequirements == DungeonCompletionRequirement.None
             ? DungeonCompletionRequirement.DefeatFinalBoss : dungeon.CompletionRequirements;
@@ -264,7 +279,7 @@ internal sealed class DungeonConfirmationWindow : Window
 
         var rewards = new List<string>();
         if (dungeon.CompletionExperience > 0)
-            rewards.Add($"{dungeon.CompletionExperience:N0} EXP");
+            rewards.Add($"{DungeonModifierSnapshot.Scale(dungeon.CompletionExperience, modifiers.ExperiencePercent, 2000000000):N0} EXP");
         var rewardItem = dungeon.CompletionItemId == Guid.Empty
             ? null : ItemDescriptor.Get(dungeon.CompletionItemId);
         if (rewardItem != null && dungeon.CompletionItemQuantity > 0)
@@ -273,7 +288,7 @@ internal sealed class DungeonConfirmationWindow : Window
 
         var extras = new List<string>();
         if (dungeon.TimeLimitMinutes > 0)
-            extras.Add($"TIME {dungeon.TimeLimitMinutes} MIN");
+            extras.Add(string.Format(RoyalSeasonWindow.T("Time limit: {0} seconds"), DungeonModifierSnapshot.Scale(dungeon.TimeLimitMinutes * 60L, modifiers.TimePercent)));
         if (dungeon.PremiumRequired)
             extras.Add("PREMIUM REQUIRED");
         if (!string.IsNullOrWhiteSpace(dungeon.Description))

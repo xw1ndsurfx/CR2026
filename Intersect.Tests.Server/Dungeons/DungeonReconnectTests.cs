@@ -84,6 +84,30 @@ public sealed class DungeonReconnectTests
     }
 
     [Test]
+    public void DungeonModifiersScaleOnlyRunEnemiesOnceAndResetWithoutHealing()
+    {
+        using var world = new RunWorld();
+        RunType.GetProperty("Modifiers")!.SetValue(world.Run, new DungeonModifierSnapshot { Names = ["Elite"], HealthPercent = 150, DamagePercent = 200 });
+        var descriptor = new NPCDescriptor(Guid.NewGuid()); descriptor.MaxVitals[(int)Vital.Health] = 100;
+        var enemy = new Npc(descriptor) { MapId = world.Map.Id, MapInstanceId = world.Instance };
+        GC.SuppressFinalize(enemy); enemy.SetVital(Vital.Health, 80);
+        DungeonRunRuntime.ConfigureDungeonNpc(enemy);
+        Assert.That(enemy.GetMaxVital(Vital.Health), Is.EqualTo(150)); Assert.That(enemy.GetVital(Vital.Health), Is.EqualTo(120));
+        DungeonRunRuntime.ConfigureDungeonNpc(enemy);
+        Assert.That(enemy.GetMaxVital(Vital.Health), Is.EqualTo(150), "Respawn/update hooks must not stack multipliers.");
+        Assert.That(DungeonRunRuntime.ScaleNpcDungeonDamage(enemy, 12), Is.EqualTo(24));
+        Assert.That(DungeonRunRuntime.ScaleNpcDungeonDamage(enemy, -12), Is.EqualTo(-12), "Healing is not a damage bonus.");
+        var outside = new Npc(descriptor) { MapId = world.Map.Id, MapInstanceId = Guid.Empty }; GC.SuppressFinalize(outside);
+        DungeonRunRuntime.ConfigureDungeonNpc(outside); Assert.That(outside.GetMaxVital(Vital.Health), Is.EqualTo(100));
+        var other = new Npc(descriptor) { MapId = world.Map.Id, MapInstanceId = Guid.NewGuid() }; GC.SuppressFinalize(other);
+        DungeonRunRuntime.ConfigureDungeonNpc(other); Assert.That(other.GetMaxVital(Vital.Health), Is.EqualTo(100));
+        enemy.SetVital(Vital.Health, 75);
+        typeof(DungeonRunRuntime).GetMethod("ResetNpcModifiers", Static)!.Invoke(null, [enemy]);
+        Assert.That(enemy.GetMaxVital(Vital.Health), Is.EqualTo(100)); Assert.That(enemy.GetVital(Vital.Health), Is.EqualTo(50));
+        Assert.That(DungeonRunRuntime.ScaleNpcDungeonDamage(enemy, 12), Is.EqualTo(12));
+    }
+
+    [Test]
     public void DisconnectThenNewPlayerObjectRejoinsOriginalRunAndPartyAndCanAbandon()
     {
         using var world = new RunWorld();

@@ -85,6 +85,9 @@ public partial class Npc : Entity
     public double InvasionHealthMultiplier { get; set; } = 1d;
     public double InvasionBaseDamageMultiplier { get; set; } = 1d;
     public double InvasionDamageMultiplier { get; set; } = 1d;
+    internal Guid DungeonModifierRunId;
+    internal long DungeonBaseHealth;
+    internal int DungeonDamagePercent = 100;
 
     //Moving
     public long LastRandomMove;

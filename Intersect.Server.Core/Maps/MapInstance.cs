@@ -552,6 +552,7 @@ public partial class MapInstance : IMapInstance
 
             configure?.Invoke(npc);
             if (IsEnemyBoardingDeck || mMapController.GeneratedBoardingDeck) npc.ConfigureBoardingCombat();
+            Intersect.Server.Dungeons.DungeonRunRuntime.ConfigureDungeonNpc(npc);
             AddEntity(npc);
             PacketSender.SendEntityDataToProximity(npc);
 

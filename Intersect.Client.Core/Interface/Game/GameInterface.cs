@@ -460,6 +460,7 @@ public partial class GameInterface : MutableInterface
         UpdateTutorialGuide();
         UpdateNavalExpeditionInterface();
         UpdateHeadquarters();
+        _royalSeasons?.UpdateState();
         _royalContractsWindow?.Update();
         UpdateContractJournal();
         GuildEmblems.Update();

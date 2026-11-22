@@ -28,4 +28,6 @@ public partial class DungeonConfirmationPacket : IntersectPacket
 
     [Key(2)]
     public string ConfigurationJson { get; set; } = string.Empty;
+
+    [Key(3)] public long PreviewUtcMilliseconds { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 }
