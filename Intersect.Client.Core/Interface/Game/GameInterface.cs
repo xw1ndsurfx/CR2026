@@ -458,6 +458,7 @@ public partial class GameInterface : MutableInterface
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
         UpdateTutorialGuide();
+        UpdateNavalExpeditionInterface();
         _royalContractsWindow?.Update();
         UpdateContractJournal();
         GuildEmblems.Update();

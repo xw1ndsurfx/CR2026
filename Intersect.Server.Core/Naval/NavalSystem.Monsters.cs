@@ -118,6 +118,8 @@ internal static partial class NavalSystem
         if(!won && Ships.TryGetValue(run.Ship,out var doomed))doomed.State.DamageState=1;
         if(won && Ships.TryGetValue(run.Ship,out var source))
         {
+            RecordExpeditionVictory(NavalExpeditionObjective.DefeatMonster, monster.Id, source.State.MapId,
+                run.Id, run.Ship, source.State.X, source.State.Y);
             var victim=new Vessel(new(){Name=monster.Name,MapId=source.State.MapId}){Enemy=new(){Loot=monster.Loot,SailingExperienceReward=monster.SailingExperienceReward},Health=0};
             foreach(var member in run.Members.Where(id=>Player.FindOnline(id) is {} p && CanReceiveBoardingReward(p,run.Id)))victim.Contributions[member]=1;
             CreditNavalVictory(victim,run.Ship,run.Captain,false);

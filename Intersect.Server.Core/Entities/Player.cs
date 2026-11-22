@@ -501,6 +501,7 @@ public partial class Player : Entity
     public void TryLogout(bool force = false, bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
         if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("logout-request", this, new { force, softLogout, BoardedShipId, CaptainedShipId });
+        Intersect.Server.Naval.NavalSystem.DisconnectExpedition(this);
         Intersect.Server.Naval.NavalSystem.Release(this, returnToHarbour: true);
         LastOnline = DateTime.Now;
         Client = default;

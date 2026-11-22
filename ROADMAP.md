@@ -106,6 +106,7 @@ Ces éléments sont des **domaines de travail**, pas une affirmation que chaque 
 | **P1** | Interface, navigation et outils de l'éditeur | Régression des workflows essentiels du Logiklik 2D Engine |
 | **P1** | Démo Steam Next Fest | Une boucle de jeu autonome, compréhensible et stable, avec configuration de publication distincte |
 | **P2** | Naval, joutes, cinématiques, concours d'archerie, montures, maisons | Périmètre publié défini par la validation en conditions réelles, sans annoncer un prototype comme terminé |
+| **P2 — en validation** | Expéditions navales coopératives : équipage unique et flotte | Configuration, objectifs partagés et récompenses implémentés; recette multijoueur sur copie isolée encore requise. [Configuration et recette](Documentation/NavalExpeditions.fr.md) |
 | **P2** | Équilibrage, économie, artisanat, compagnons et systèmes sociaux | Économie/XP cohérentes, abus et exploitations prioritaires corrigés |
 
 Documents techniques existants :

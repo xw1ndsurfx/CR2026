@@ -8,6 +8,7 @@ public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectA
 public sealed class NavalAmmoStack {public Guid ItemId {get;set;} public int Quantity {get;set;}}
 public sealed class NavalCareerData
 {
+    public Guid LastExpeditionRewardRunId { get; set; }
     public HashSet<string> UnlockedShipModels {get;set;}=[];
     public List<NavalAmmoStack> Ammo {get;set;}=[];
     public int AmmoUpgradeLevel {get;set;}
