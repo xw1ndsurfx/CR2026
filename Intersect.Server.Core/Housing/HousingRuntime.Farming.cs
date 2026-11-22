@@ -39,17 +39,21 @@ internal static partial class HousingRuntime
         lock (player.EntityLock)
         {
             var before = player.HousingJson;
+            var seasonBefore = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Json(player.PetCollection.RoyalSeasons ??= new());
             try
             {
                 var harvested = player.House.Farm.Harvested;
                 var wages = player.House.Farm.WagesPaid;
+                var experienceBefore = player.House.Farm.Experience;
                 player.House.Farm.Advance(Configuration.Farm, FarmNow);
                 if (harvested == player.House.Farm.Harvested && wages == player.House.Farm.WagesPaid) return;
+                RoyalSeasons.RoyalSeasonRuntime.Observe(player, Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.ProfessionExperience,
+                    FarmingProfession.Id, player.House.Farm.Experience - experienceBefore, scheduleSave: false);
                 if (player.User?.Save(force: true) != UserSaveResult.Completed) throw new IOException();
                 FarmUpdates[player.Id] = Environment.TickCount64 + 30000;
-                if (broadcast) BroadcastOwner(player);
             }
-            catch { player.HousingJson = before; }
+            catch { player.HousingJson = before; player.PetCollection.RoyalSeasons = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Read<Intersect.Framework.Core.RoyalSeasons.RoyalSeasonProfile>(seasonBefore); return; }
+            if (broadcast) BroadcastOwner(player);
         }
     }
 
@@ -67,6 +71,8 @@ internal static partial class HousingRuntime
         if (request.OwnerId != Guid.Empty && request.OwnerId != player.Id) throw new InvalidOperationException("Only the owner can manage this farm.");
         if (request.Action == HouseAction.VisitFarm) { SettleFarm(player); Enter(player, player.Id, outside: true); return; }
         var before = player.HousingJson;
+        var seasonBefore = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Json(player.PetCollection.RoyalSeasons ??= new());
+        var experienceBefore = player.House.Farm.Experience;
         var inventory = player.Items.Select(i => i.Clone()).ToArray();
         try
         {
@@ -117,11 +123,14 @@ internal static partial class HousingRuntime
                 default: throw new InvalidOperationException("Invalid house action.");
             }
             farm.Advance(config, now);
+            RoyalSeasons.RoyalSeasonRuntime.Observe(player, Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.ProfessionExperience,
+                FarmingProfession.Id, farm.Experience - experienceBefore, scheduleSave: false);
             if (player.User?.Save(force: true) != UserSaveResult.Completed) throw new IOException();
         }
         catch
         {
             player.HousingJson = before;
+            player.PetCollection.RoyalSeasons = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Read<Intersect.Framework.Core.RoyalSeasons.RoyalSeasonProfile>(seasonBefore);
             for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]);
             PacketSender.SendInventory(player);
             throw;

@@ -93,7 +93,7 @@ internal static partial class NavalSystem
         try
         {
             player.SailingExperience=Math.Min(_settings.Sailing.Cap,previous+Math.Min(earned,200000000000000L));
-            committed=save();return committed;
+            committed=RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(player, Intersect.Framework.Core.Naval.NavalProfessions.Sailing, player.SailingExperience-previous, save);return committed;
         }
         finally {if(!committed) player.SailingExperience=previous;}
     }

@@ -36,17 +36,19 @@ public partial class MenuContainer
         var houseButton = new Button(houseContainer, "MyHouseMenuIcon", disableText: true);
         var lobbyContainer = new ImagePanel(this, "LobbyButtonContainer");
         var lobbyButton = new Button(lobbyContainer, "LobbyMenuIcon", disableText: true);
+        var seasonsContainer = new ImagePanel(this, "SeasonsButtonContainer");
+        var seasonsButton = new Button(seasonsContainer, "SeasonsMenuIcon", disableText: true);
         var containers = new[] { _inventoryButtonContainer, _spellsButtonContainer, _characterButtonContainer,
             _questsButtonContainer, _dungeonsButtonContainer, _newsButtonContainer, _dailyRewardButtonContainer,
-            _logiCoinShopButtonContainer, _friendsButtonContainer, _partyButtonContainer, _guildButtonContainer, houseContainer, lobbyContainer, _escapeMenuButtonContainer };
+            _logiCoinShopButtonContainer, _friendsButtonContainer, _partyButtonContainer, _guildButtonContainer, houseContainer, lobbyContainer, seasonsContainer, _escapeMenuButtonContainer };
         var buttons = new[] { _inventoryButton, _spellsButton, _characterButton, _questsButton, _dungeonsButton,
-            _newsButton, _dailyRewardButton, _logiCoinShopButton, _friendsButton, _partyButton, _guildButton, houseButton, lobbyButton, _escapeMenuButton };
+            _newsButton, _dailyRewardButton, _logiCoinShopButton, _friendsButton, _partyButton, _guildButton, houseButton, lobbyButton, seasonsButton, _escapeMenuButton };
         // Full labels remain in tooltips; short localized labels keep the list readable.
         var captions = new[] { "Inventory", "Spell Book", "Character", "Quest Log", "Dungeons", "News",
-            "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "My house", "Lobby", "Open Menu" };
+            "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "My house", "Lobby", "Royal seasons", "Open Menu" };
         Base.GwenEventHandler<MouseButtonState>[] actions = [InventoryButton_Clicked, SpellsButton_Clicked,
             CharacterButton_Clicked, QuestBtn_Clicked, DungeonsButton_Clicked, NewsButton_Clicked,
-            DailyRewardButton_Clicked, LogiCoinShopButton_Clicked, FriendsBtn_Clicked, PartyBtn_Clicked, GuildBtn_Clicked, (_, _) => Interface.InGameUiOrNull?.OpenHouseFromMenu(), (_, _) => { HideWindows(); Interface.InGameUiOrNull?.OpenPartyLobbies(); }, EscapeMenuButtonClicked];
+            DailyRewardButton_Clicked, LogiCoinShopButton_Clicked, FriendsBtn_Clicked, PartyBtn_Clicked, GuildBtn_Clicked, (_, _) => Interface.InGameUiOrNull?.OpenHouseFromMenu(), (_, _) => { HideWindows(); Interface.InGameUiOrNull?.OpenPartyLobbies(); }, (_, _) => { HideWindows(); Interface.InGameUiOrNull?.OpenRoyalSeasons(); }, EscapeMenuButtonClicked];
         for (var i = 0; i < containers.Length; i++)
         {
             var container = containers[i];
@@ -184,7 +186,7 @@ public partial class MenuContainer
         {
             if (_language == ClientLanguages.Current) return;
             _language = ClientLanguages.Current;
-            Text = ClientLanguages.Text(_caption); SetToolTipText(Text);
+            Text = _caption == "Royal seasons" ? RoyalSeasonWindow.T(_caption) : ClientLanguages.Text(_caption); SetToolTipText(Text);
         }
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {

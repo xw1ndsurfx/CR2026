@@ -36,6 +36,9 @@ public partial class FrmMain
         var headquartersEditor = new ToolStripMenuItem(Editors.FrmGuildHeadquarters.T("Guild headquarters")) { Name = "guildHeadquartersEditor" };
         headquartersEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.GuildHeadquarters.HeadquartersConfigurationRequestPacket());
         contentEditorsToolStripMenuItem.DropDownItems.Add(headquartersEditor);
+        var seasonsEditor = new ToolStripMenuItem(Editors.RoyalSeasonEditorControls.T("Royal seasons")) { Name = "royalSeasonsEditor" };
+        seasonsEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.RoyalSeasons.RoyalSeasonConfigurationRequestPacket());
+        contentEditorsToolStripMenuItem.DropDownItems.Add(seasonsEditor);
         AddRoyalStylistEditorMenu();
         AddRoyalContractsEditorMenu();
         var lobbyEditor = new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Lobby Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)) { Name = "lobbyEditor" };

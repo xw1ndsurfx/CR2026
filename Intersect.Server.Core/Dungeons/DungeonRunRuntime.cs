@@ -22,6 +22,7 @@ internal static partial class DungeonRunRuntime
     {
         public Guid Id { get; } = Guid.NewGuid();
         public required DungeonDefinition Dungeon { get; init; }
+        public DungeonModifierSnapshot Modifiers { get; init; } = new();
         public required Guid MapInstanceId { get; init; }
         public required Guid EntryMapId { get; init; }
         public required byte EntryX { get; init; }
@@ -87,6 +88,10 @@ internal static partial class DungeonRunRuntime
     )
     {
         error = string.Empty;
+
+        // Every run owns its authored rules; editor changes affect the next attempt only.
+        dungeon = DungeonConfiguration.FromJson(new DungeonConfiguration { Dungeons = [dungeon] }.ToJson()).Dungeons[0];
+        var modifiers = dungeon.Modifiers.Resolve(dungeon.Id, DateTimeOffset.UtcNow);
 
         if (player == null || mapId == Guid.Empty)
         {
@@ -226,12 +231,13 @@ internal static partial class DungeonRunRuntime
 
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var end = dungeon.TimeLimitMinutes > 0
-            ? now + dungeon.TimeLimitMinutes * 60_000L
+            ? now + DungeonModifierSnapshot.Scale(dungeon.TimeLimitMinutes * 60_000L, modifiers.TimePercent)
             : 0L;
 
         var run = new Run
         {
             Dungeon = dungeon,
+            Modifiers = modifiers,
             MapInstanceId = instanceId,
             EntryMapId = mapId,
             EntryX = x,
@@ -244,7 +250,7 @@ internal static partial class DungeonRunRuntime
             ChangeInstance = changeInstance,
             InstanceType = navalEncounterId!=Guid.Empty?MapInstanceType.Personal:instanceType,
             NavalEncounterId=navalEncounterId,
-            LivesRemaining = Math.Max(1, dungeon.MaxLives),
+            LivesRemaining = Math.Max(1, dungeon.MaxLives - modifiers.LivesPenalty),
         };
 
         foreach (var member in participants)
@@ -268,6 +274,7 @@ internal static partial class DungeonRunRuntime
         }
 
         if (navalEncounterId != Guid.Empty) SetBoardingCombat(run, true);
+        foreach (var npc in ModifierNpcs(run)) ConfigureDungeonNpc(npc);
 
         if(navalEncounterId!=Guid.Empty && CountAliveMonsters(run)==0)
         {
@@ -358,6 +365,7 @@ internal static partial class DungeonRunRuntime
             player.SetVariableValue(ResumeMarkerId, run.MapInstanceId.ToString("N"));
             player.Warp(player.MapId,player.X,player.Y,player.Dir,fromLogin:true,forceInstanceChange:true);
             player.TryAddToInstanceController();
+            foreach (var npc in ModifierNpcs(run)) ConfigureDungeonNpc(npc);
             player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run,player.Client?.LanguageCode??"en")));
             return true;
         }
@@ -630,6 +638,9 @@ internal static partial class DungeonRunRuntime
         foreach (var player in participants)
         {
             DungeonStatisticsRuntime.RecordCompletion(player, run.Dungeon.Id, clearTimeMs);
+            RoyalSeasons.RoyalSeasonRuntime.Observe(player, run.Modifiers.Names.Length > 0
+                ? Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.ModifiedDungeonsCompleted
+                : Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.DungeonsCompleted, run.Dungeon.Id, evidence: run.Id);
             player.UpdateDungeonQuestTasks(run.Dungeon.Id);
             AchievementRuntime.AddProgress(
                 player,
@@ -638,8 +649,9 @@ internal static partial class DungeonRunRuntime
                 run.Dungeon.Id
             );
 
-            if (run.Dungeon.CompletionExperience > 0)
-                player.GiveExperience(run.Dungeon.CompletionExperience);
+            var completionExperience = DungeonModifierSnapshot.Scale(run.Dungeon.CompletionExperience, run.Modifiers.ExperiencePercent, 2_000_000_000);
+            if (completionExperience > 0)
+                player.GiveExperience(completionExperience);
 
             if (run.Dungeon.CompletionItemId != Guid.Empty &&
                 run.Dungeon.CompletionItemQuantity > 0)
@@ -655,7 +667,7 @@ internal static partial class DungeonRunRuntime
             player.SendPacket(
                 new DungeonRewardNotificationPacket(
                     run.Dungeon.Name,
-                    run.Dungeon.CompletionExperience,
+                    completionExperience,
                     run.Dungeon.CompletionItemId,
                     run.Dungeon.CompletionItemQuantity
                 )
@@ -679,6 +691,7 @@ internal static partial class DungeonRunRuntime
 
         lock (Gate)
             RunsByInstance.TryRemove(run.MapInstanceId, out _);
+        ClearRunModifiers(run);
         if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
     }
 
@@ -715,6 +728,7 @@ internal static partial class DungeonRunRuntime
 
         lock (Gate)
             RunsByInstance.TryRemove(run.MapInstanceId, out _);
+        ClearRunModifiers(run);
         if (run.NavalEncounterId != Guid.Empty) SetBoardingCombat(run, false);
 
         if (offerRetry && run.NavalEncounterId==Guid.Empty)
@@ -873,9 +887,10 @@ internal static partial class DungeonRunRuntime
             run.CompletionStarted ? 0 : run.EndAtUnixMilliseconds,
             message,
             run.LivesRemaining,
-            run.Dungeon.MaxLives,
+            Math.Max(1, run.Dungeon.MaxLives - run.Modifiers.LivesPenalty),
             (run.Dungeon.CompletionRequirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0
                 ? CountAliveMonsters(run)
                 : -1
-        ) { RunId = run.Id };
+        ) { RunId = run.Id, ModifierNames = run.Modifiers.Names, EnemyHealthPercent = run.Modifiers.HealthPercent,
+            EnemyDamagePercent = run.Modifiers.DamagePercent, CompletionExperiencePercent = run.Modifiers.ExperiencePercent };
 }

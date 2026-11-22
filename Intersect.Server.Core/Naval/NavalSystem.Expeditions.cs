@@ -13,6 +13,10 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
+    internal static bool SeasonExpeditionExists(Guid id)
+    { lock (Gate) { _ = IsEnabled(); return _settings.Expeditions.Any(e => e.Id == id); } }
+    internal static Dictionary<Guid, string> SeasonExpeditionNames()
+    { lock (Gate) { _ = IsEnabled(); return _settings.Expeditions.ToDictionary(e => e.Id, e => e.Name); } }
     private static NavalExpeditionStore ExpeditionStore = new(Path.Combine("resources", "naval-expedition-runs.json"));
     private static Dictionary<Guid, NavalExpeditionRun> Expeditions = [];
     private static bool _expeditionsLoaded;
@@ -267,19 +271,25 @@ internal static partial class NavalSystem
         var planned = definition.RewardItemId == Guid.Empty ? inventory : PlanCargoInventory(inventory,
             [new NavalCargoParcel { ItemId = definition.RewardItemId, Quantity = definition.RewardQuantity }]);
         if (planned == null) return false;
-        var before = player.NavalFleetJson; var committed = false;
+        var before = player.NavalFleetJson; var sailingBefore = player.SailingExperience; var committed = false;
+        var seasonBefore = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Json((player.PetCollection ??= new()).RoyalSeasons ??= new());
         try
         {
             for (var i = 0; i < planned.Length; i++) player.Items[i].Set(planned[i]);
             if (player.SailingExperience < _settings.Sailing.Cap)
                 player.SailingExperience = Math.Min(_settings.Sailing.Cap, player.SailingExperience + definition.SailingExperienceReward);
             player.NavalCareer.LastExpeditionRewardRunId = runId;
+            RoyalSeasons.RoyalSeasonRuntime.Observe(player, Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.NavalExpeditionsCompleted,
+                definition.Id, evidence: runId, scheduleSave: false);
+            RoyalSeasons.RoyalSeasonRuntime.Observe(player, Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.ProfessionExperience,
+                Intersect.Framework.Core.Naval.NavalProfessions.Sailing, player.SailingExperience-sailingBefore, scheduleSave: false);
             return committed = save();
         }
         finally
         {
             if (!committed)
-            { player.NavalFleetJson = before; for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]); }
+            { player.NavalFleetJson = before; player.PetCollection.RoyalSeasons = Intersect.Framework.Core.RoyalSeasons.RoyalSeasonRules.Read<Intersect.Framework.Core.RoyalSeasons.RoyalSeasonProfile>(seasonBefore);
+                for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]); }
         }
     }
 

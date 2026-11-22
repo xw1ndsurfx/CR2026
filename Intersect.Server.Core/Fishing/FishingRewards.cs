@@ -138,7 +138,11 @@ internal static class FishingRewards
             for (var i = 0; i < slots.Length; i++) slots[i].Set(plan[i]);
             if (award != null) Variable(award.VariableId, v => v.Value.Integer = award.RawAfter);
             if (receipt != Guid.Empty) Variable(FishingRules.LastRewardId, v => v.Value.String = receipt.ToString("N"));
-            if (checkpoint() == UserSaveResult.Completed) return FishingRewardResult.Success;
+            var saved = award?.Profession is { } seasonProfession
+                ? RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(player, seasonProfession.Id, award.Gained,
+                    () => checkpoint() == UserSaveResult.Completed)
+                : checkpoint() == UserSaveResult.Completed;
+            if (saved) return FishingRewardResult.Success;
         }
         catch (Exception error)
         {

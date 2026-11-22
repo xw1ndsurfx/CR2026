@@ -1,4 +1,4 @@
-﻿using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.Server;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -182,7 +182,7 @@ internal static partial class NavalSystem
     internal static bool CommitGunneryExperience(Player player,long earned,Func<bool> save)
     {
         var before=player.GunneryExperience;var committed=false;var cap=_settings.Gunnery.Curve().Cap;
-        try {player.GunneryExperience=before>=cap?before:Math.Min(cap,before+Math.Clamp(earned,0,200000000000000L));committed=save();return committed;}
+        try {player.GunneryExperience=before>=cap?before:Math.Min(cap,before+Math.Clamp(earned,0,200000000000000L));committed=RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(player, Intersect.Framework.Core.Naval.NavalProfessions.Gunnery, player.GunneryExperience-before, save);return committed;}
         finally {if(!committed) player.GunneryExperience=before;}
     }
     private static void ApplyPendingGunnery(Player player,long now)

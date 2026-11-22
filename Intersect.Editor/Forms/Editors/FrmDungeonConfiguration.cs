@@ -440,6 +440,10 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Dungeon maps", _maps, 230);
         AddRow(table, "NPC respawn", _npcRespawn);
         AddRow(table, "Lives", _maxLives);
+        var modifiers = new Button { Text = RoyalSeasonEditorControls.T("Configure modifiers"), Height = 34 };
+        modifiers.Click += (_, _) => { if (_selected == null) return; using var dialog = new FrmDungeonModifiers(_selected.Modifiers);
+            if (dialog.ShowDialog(this) == DialogResult.OK) _selected.Modifiers = dialog.Draft; };
+        AddRow(table, RoyalSeasonEditorControls.T("Dungeon modifiers"), modifiers);
 
         var help = new Label
         {

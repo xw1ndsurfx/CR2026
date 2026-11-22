@@ -51,4 +51,8 @@ public partial class DungeonRunStatePacket : IntersectPacket
     [Key(7)] public int MaxLives { get; set; }
     [Key(8)] public int MonstersRemaining { get; set; } = -1;
     [Key(9)] public Guid RunId { get; set; }
+    [Key(10)] public string[] ModifierNames { get; set; } = [];
+    [Key(11)] public int EnemyHealthPercent { get; set; } = 100;
+    [Key(12)] public int EnemyDamagePercent { get; set; } = 100;
+    [Key(13)] public int CompletionExperiencePercent { get; set; } = 100;
 }
