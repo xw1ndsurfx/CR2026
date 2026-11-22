@@ -2,6 +2,9 @@
 ## Eclipse
 #################
 
+# Local verification output and temporary tooling
+/validation-local/
+
 *.pydevproject
 .project
 .metadata

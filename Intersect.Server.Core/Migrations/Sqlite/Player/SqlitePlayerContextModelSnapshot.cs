@@ -232,6 +232,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("GuildInstanceId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("HeadquartersJson").HasColumnName("Headquarters").HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
@@ -520,6 +522,7 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<string>("BankAccountJson").HasColumnName("BankAccount").HasColumnType("TEXT");
 
                     b.Property<string>("HousingJson").HasColumnType("TEXT").HasColumnName("Housing");
+                    b.Property<string>("GuildHeadquartersVisitJson").HasColumnType("TEXT").HasColumnName("GuildHeadquartersVisit");
 
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT")

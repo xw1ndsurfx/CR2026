@@ -636,6 +636,22 @@
     "subcategory": "EconomyAndCommerce"
   },
   {
+    "id": "guildHeadquartersEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": ["World", "Economy"],
+    "title": { "en": "Guild headquarters", "fr": "Quartier général de guilde", "es": "Cuartel de gremio" },
+    "description": {
+      "en": "Configure private halls, collective upgrades, invitations, artwork and audio.",
+      "fr": "Configurez les salles privées, améliorations collectives, invitations, images et sons.",
+      "es": "Configura salas privadas, mejoras colectivas, invitaciones, imágenes y sonidos."
+    },
+    "sign": "Furniture",
+    "art": "housingEditor.png",
+    "keywords": "guild headquarters guildhall guilde quartier général visiteurs invitations gremio cuartel",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
     "id": "housingEditor",
     "oldMenu": "Game Editors",
     "category": "Game",

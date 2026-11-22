@@ -1,0 +1,42 @@
+name: Guild headquarters
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*Headquarters*'
+      - '**/GuildHeadquarters/**'
+      - '**/GuildHeadquartersAssets/**'
+      - '**/GuildHeadquartersUiTests/**'
+      - '**/guild_hq_*'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.cs'
+      - 'Intersect.Client.Core/Interface/Game/UserListWindow.GuildParty.cs'
+      - 'Intersect.Client.Core/Interface/Game/MarketplaceWindow.cs'
+      - 'Intersect.Client.Core/WorldEvents/WorldMusic.cs'
+      - 'Intersect.Editor/Forms/frmMain.EditorHub.cs'
+      - 'Intersect.Editor/Resources/EditorHub/**'
+      - '.github/workflows/guild-headquarters.yml'
+jobs:
+  headquarters:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy soundfile
+      - run: python Utilities/GuildHeadquartersAssets/validate_assets.py
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter FullyQualifiedName~Headquarters --nologo
+      - run: dotnet run --project Utilities/GuildHeadquartersUiTests/GuildHeadquartersUiTests.csproj -c Release
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Release -p:RuntimeIdentifiers=win-x64 -- --headquarters-only
+      - run: dotnet build Intersect.Server/Intersect.Server.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headquarters-ui
+          path: validation-local/headquarters-ui/*.png
