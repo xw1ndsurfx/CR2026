@@ -66,7 +66,25 @@ public sealed class GuildHeadquartersTests
         var player = new Player { MapId = world.Hall.Id, MapInstanceId = Guid.NewGuid(), InstanceType = MapInstanceType.Shared, GuildHeadquartersVisitJson = saved };
         GC.SuppressFinalize(player);
         HeadquartersRuntime.RestoreLogin(player);
-        Assert.That(player.MapId, Is.EqualTo(world.Outside.Id)); Assert.That(player.MapInstanceId, Is.EqualTo(Guid.Empty));
+        // Other fixtures may have registered public maps; the emergency fallback may use any of them.
+        Assert.That(MapController.Get(player.MapId), Is.Not.Null);
+        Assert.That(player.MapId, Is.Not.EqualTo(world.Hall.Id));
+        Assert.That(HeadquartersRuntime.CanWarp(player, player.MapId, Guid.Empty), Is.True);
+        Assert.That(player.MapInstanceId, Is.EqualTo(Guid.Empty));
+        Assert.That(player.InstanceType, Is.EqualTo(MapInstanceType.Overworld));
+        Assert.That(player.GuildHeadquartersVisitJson, Is.Null);
+    }
+    [TestCase("broken")] [TestCase(null)]
+    public void HeadquartersRestartPrefersLastOverworldPositionWhenReturnIsMissingOrCorrupt(string? saved)
+    {
+        using var world = new HeadquartersWorld();
+        var player = new Player { MapId = world.Hall.Id, MapInstanceId = Guid.NewGuid(), InstanceType = MapInstanceType.Shared, GuildHeadquartersVisitJson = saved };
+        GC.SuppressFinalize(player);
+        player.UpdateLastOverworldLocation(world.Outside.Id, 7, 8);
+        HeadquartersRuntime.RestoreLogin(player);
+        Assert.That((player.MapId, player.X, player.Y), Is.EqualTo((world.Outside.Id, 7f, 8f)));
+        Assert.That(player.MapInstanceId, Is.EqualTo(Guid.Empty));
+        Assert.That(player.InstanceType, Is.EqualTo(MapInstanceType.Overworld));
         Assert.That(player.GuildHeadquartersVisitJson, Is.Null);
     }
     [Test]
