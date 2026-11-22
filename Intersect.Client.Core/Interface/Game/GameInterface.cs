@@ -459,6 +459,7 @@ public partial class GameInterface : MutableInterface
     {
         UpdateTutorialGuide();
         UpdateNavalExpeditionInterface();
+        UpdateHeadquarters();
         _royalContractsWindow?.Update();
         UpdateContractJournal();
         GuildEmblems.Update();
@@ -772,6 +773,8 @@ public partial class GameInterface : MutableInterface
         closedWindows = CloseExportationWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
+        if (_headquarters is { IsVisibleInTree: true }) { _headquarters.Close(); closedWindows = true; }
+        if (_headquartersInvitation is { IsVisibleInTree: true }) { _headquartersInvitation.Close(); closedWindows = true; }
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
         {
             CloseBagWindow();
@@ -827,6 +830,7 @@ public partial class GameInterface : MutableInterface
     public void Dispose()
     {
         DisposePotions();
+        HeadquartersPresentation.Reset();
         DisposeCooking();
         DisposePoker();
         DisposeRoulette();

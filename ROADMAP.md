@@ -116,6 +116,7 @@ Documents techniques existants :
 - [Royal Weapon Mastery / Archery : état et travaux restants](Documentation/RoyalCombat/README.md)
 - [Montures : prototype](docs/mount-prototype.md)
 - [Maisons et mobilier](Documentation/features/housing.md)
+- [Quartier général de guilde : développement, GFX/audio et recette à effectuer](Documentation/GuildHeadquarters.fr.md)
 - [Familiers](Documentation/features/pets.md)
 - [Brouillard d'exploration](docs/world-map-exploration.md)
 - [Outil de diagnostic des crashes](docs/server-crash-diagnostics.md)

@@ -527,6 +527,7 @@ internal sealed class MarketplaceWindow : Window
         private static readonly Color Band = new(a: 255, r: 77, g: 46, b: 34);
 
         public FrameStyle Style { get; set; }
+        public bool DrawHeaderDivider { get; set; } = true;
 
         public MarketChrome(Base parent, string name, FrameStyle style) : base(parent, name)
         {
@@ -546,7 +547,7 @@ internal sealed class MarketplaceWindow : Window
                     Border(skin, Inset(rect, 5), InnerGold, 1);
                     Fill(skin, rect.X + 14, rect.Y + 6, 34, 2, BrightGold);
                     Fill(skin, rect.Right - 48, rect.Y + 6, 34, 2, BrightGold);
-                    Fill(skin, rect.X + 18, rect.Y + 94, rect.Width - 36, 1, InnerGold);
+                    if (DrawHeaderDivider) Fill(skin, rect.X + 18, rect.Y + 94, rect.Width - 36, 1, InnerGold);
                     Fill(skin, rect.X + 12, rect.Bottom - 9, rect.Width - 24, 2, InnerGold);
                     Corners(skin, rect, BrightGold);
                     break;

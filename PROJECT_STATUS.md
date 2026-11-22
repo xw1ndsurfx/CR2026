@@ -19,6 +19,10 @@
 
 ## État des fonctionnalités — distinction code / validation
 
+### Ajout du 21 novembre 2026 : quartier général de guilde
+
+Le [quartier général de guilde](Documentation/GuildHeadquarters.fr.md) est développé sur `codex/guild-headquarters`, depuis `main` après la PR 277 : instance privée pour les membres, visiteurs sur invitation, coffre existant et améliorations collectives configurables. Un pack de six images, huit WAV et un thème OGG accompagne l’éditeur. Ce travail n’est pas encore publié ou déployé ; les cartes dédiées et la recette multijoueur restent à configurer et vérifier. Le client Intel HD 3000 reste séparé. Les autres constats datés ci-dessous ne sont pas réévalués par cet ajout.
+
 | Chantier | État observé au 11 novembre | Validation encore nécessaire |
 | --- | --- | --- |
 | **Agriculture de la maison** | Première implémentation intégrée ([#195](https://github.com/xw1ndsurfx/CR2026/pull/195)), métier Agriculteur, cultures et ouvriers. Fonctionnement confirmé par l’utilisateur le 11 novembre. [Guide](Documentation/features/farming.md). | Consigner une recette couvrant absence, redémarrage, réservations de graines/salaires, capacité du grenier et droits du propriétaire ; le retour fonctionnel ne précise pas ces scénarios. |
@@ -70,7 +74,7 @@ L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.f
 
 ### P2 — pistes de conception, non engagées comme fonctionnalités livrées
 
-Les idées discutées pour une étape ultérieure comprennent les **expéditions navales coopératives**, **configurations rapides d'équipement**, **quartier général de guilde**, **matchmaking amélioré**, **courses de montures**, **donjons à modificateurs** et **saisons royales**. Les maquettes et idées ne signifient pas que ces fonctionnalités sont intégrées à `main`. Priorité, périmètre et faisabilité sont à valider séparément.
+Les idées discutées pour une étape ultérieure comprennent les **configurations rapides d'équipement**, **matchmaking amélioré**, **courses de montures**, **donjons à modificateurs** et **saisons royales**. Les expéditions navales coopératives ont rejoint la référence de travail par la PR 277 ; le quartier général est décrit dans l’ajout du 21 novembre ci-dessus. L’intégration de code ne vaut pas validation en production. Priorité, périmètre et faisabilité des autres pistes restent à valider séparément.
 
 ## Reprise sur une nouvelle session de développement
 

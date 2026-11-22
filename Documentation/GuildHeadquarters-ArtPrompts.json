@@ -1,0 +1,32 @@
+[
+  {
+    "file": "guild_hq_hall_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "Use case: stylized-concept. Asset type: finished wide background illustration for the Guild Headquarters management window in the 2D fantasy pixel-art MMORPG Corps Royaux. Create a warm medieval guild great hall, carved dark oak beams, a blue-and-gold fleur-de-lis guild banner at the far left, stone hearth with modest warm fire at the right, long communal table at the rear, locked oak-and-iron shared treasury chest, candles and a few maps. Detailed crisp retro game illustration, hand-painted pixel texture, dark chocolate wood, warm bronze, stone grey and restrained royal blue, matching a polished medieval 2D RPG. Composition wide landscape 1536x1024, perspective into the hall, main furniture at perimeter, center low-contrast and darker so game UI text can remain readable. No characters, no typography, no words, no UI buttons, no border, no watermark. This must be an actual production game background, not a mockup."
+  },
+  {
+    "file": "guild_hq_lodge_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "A production-ready medieval fantasy RPG guild headquarters emblem icon for Corps Royaux. A single compact sturdy small oak hall with stone foundation, blue slate roof, modest gold fleur-de-lis above its door, two blue pennants; welcoming warm window light. Three-quarter isometric view. Crisp high-quality hand-painted pixel-art style, warm wood, royal blue, muted gold, strong dark outlines, readable small silhouette. Centered at 80% of square frame, entirely visible, isolated on genuinely transparent background. No text, no letters, no watermarks, no scenery, no drop shadow outside silhouette. 1024x1024."
+  },
+  {
+    "file": "guild_hq_bank_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "A production-ready medieval fantasy RPG shared guild bank icon for Corps Royaux. One closed ornate dark oak treasury chest reinforced with black iron and warm brass bands, large centered brass keyhole, subtle blue cloth with tiny gold fleur-de-lis tucked under the lid. Three-quarter isometric view, readable at small size. Crisp high-quality hand-painted pixel-art, restrained warm colours and strong dark outlines. Centered at 80% of square frame, entire object visible, genuinely transparent background. No loose coins outside silhouette, no text, no words, no watermark, no scenery, no ground plane. 1024x1024."
+  },
+  {
+    "file": "guild_hq_manor_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "Use case: stylized-concept. A finished production icon for an upgraded guild manor in Corps Royaux, a medieval fantasy pixel-art RPG. Compact two-storey stone and dark-oak guild manor with two symmetrical wings, blue slate roofs, central blue-and-gold fleur-de-lis banner, lit windows, welcoming double door. Three-quarter isometric view, polished hand-painted pixel texture, bold dark outline, warm wood and stone, royal blue and gold, readable at 64 pixels. One isolated building filling 80 percent of the frame on a genuinely transparent background. No text, no UI frame, no scenery, no ground plane, no watermark. Square image."
+  },
+  {
+    "file": "guild_hq_citadel_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "Use case: stylized-concept. A finished production icon for the highest guild headquarters tier in Corps Royaux, medieval fantasy pixel-art RPG. Compact majestic stone guild citadel with three towers, royal blue conical slate roofs, gold finials, elegant central hall and warm lit windows, central blue fleur-de-lis pennant. Three-quarter isometric view, polished hand-painted pixel texture, bold dark outline, warm stone, royal blue and restrained gold, readable silhouette at 64 pixels. One isolated building filling 80 percent of square frame on a genuinely transparent background. No text, no UI frame, no scenery, no ground plane, no watermark."
+  },
+  {
+    "file": "guild_hq_invitation_v1.png",
+    "source": "Built-in image generation",
+    "prompt": "Use case: stylized-concept. Asset type: production GUI icon for a guild headquarters visitor invitation in Corps Royaux, medieval fantasy pixel-art RPG. One folded ivory parchment letter tied with royal blue ribbon and a round red wax seal bearing a simple gold fleur-de-lis, elegant warm brass key tucked under the ribbon. Slight three-quarter view. Polished hand-painted pixel art, thick dark outlines, ivory/blue/gold/red, clearly readable at 64 pixels. Centered at 75 percent of square frame, entirely visible, genuinely transparent background, no words or letters or runes, no decorative background, no watermark."
+  }
+]

@@ -529,6 +529,7 @@ public partial class Player : Entity
         EndArchery();
         EndJoust(true);
         Intersect.Server.Housing.HousingRuntime.Disconnect(this);
+        Intersect.Server.GuildHeadquarters.HeadquartersRuntime.Disconnect(this);
         lock (_savingLock)
         {
             lock (_pendingLogoutLock)
@@ -887,6 +888,7 @@ public partial class Player : Entity
 
                 if (!HasPendingDeath) base.Update(timeMs);
                 Intersect.Server.Housing.HousingRuntime.Update(this);
+                Intersect.Server.GuildHeadquarters.HeadquartersRuntime.Update(this);
                 UpdateActivePet(timeMs);
                 UpdatePremiumStatus(timeMs);
                 Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
@@ -2396,6 +2398,7 @@ public partial class Player : Entity
 
     public void AdminWarp(Guid newMapId, float newX, float newY, Guid newMapInstanceId, MapInstanceType instanceType, bool force)
     {
+        if (!Intersect.Server.GuildHeadquarters.HeadquartersRuntime.CanWarp(this, newMapId, newMapInstanceId, instanceType)) return;
         PreviousMapInstanceId = MapInstanceId;
         PreviousMapInstanceType = InstanceType;
 
@@ -2423,6 +2426,13 @@ public partial class Player : Entity
         bool forceInstanceChange = false)
     {
         if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("warp-request", this, new { newMapId, newX, newY, fromLogin });
+        if (!Intersect.Server.GuildHeadquarters.HeadquartersRuntime.CanWarp(this, newMapId, MapInstanceId, mapInstanceType)) return;
+        // Event/death warps leaving the headquarters must not carry its private instance into public maps.
+        if (Intersect.Server.GuildHeadquarters.HeadquartersRuntime.ExitsPrivateInstance(this, newMapId))
+        {
+            mapInstanceType = MapInstanceType.Overworld;
+            forceInstanceChange = false;
+        }
         if (!NavalWarpInProgress) Intersect.Server.Naval.NavalSystem.Release(this);
         #region shortcircuit exits
         // First, deny the warp entirely if we CAN'T, for some reason, warp to the requested instance type. ONly do this if we're not forcing a change
@@ -2571,6 +2581,7 @@ public partial class Player : Entity
         if(DungeonRunRuntime.RecoverLogin(this))return;
         if(Intersect.Server.Naval.NavalSystem.RecoverLogin(this))return;
         Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
+        Intersect.Server.GuildHeadquarters.HeadquartersRuntime.RestoreLogin(this);
         if (MapId == null || MapId == Guid.Empty)
         {
             WarpToSpawn();
@@ -4657,6 +4668,7 @@ public partial class Player : Entity
     //Bank
     public bool OpenBank(bool openGuildBank = false)
     {
+        if (Intersect.Server.GuildHeadquarters.HeadquartersRuntime.IsVisitor(this)) return false;
         if (IsBusy())
         {
             return false;

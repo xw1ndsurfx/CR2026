@@ -259,6 +259,8 @@ namespace Intersect.Server.Migrations.MySql.Player
                         .HasColumnType("char(36)")
                         .UseCollation("ascii_general_ci");
 
+                    b.Property<string>("HeadquartersJson").HasColumnType("longtext").HasColumnName("Headquarters");
+
                     b.Property<string>("Name")
                         .HasColumnType("longtext");
 
@@ -573,6 +575,7 @@ namespace Intersect.Server.Migrations.MySql.Player
                     b.Property<string>("BankAccountJson").HasColumnName("BankAccount").HasColumnType("longtext");
 
                     b.Property<string>("HousingJson").HasColumnType("longtext").HasColumnName("Housing");
+                    b.Property<string>("GuildHeadquartersVisitJson").HasColumnType("longtext").HasColumnName("GuildHeadquartersVisit");
 
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")

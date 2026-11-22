@@ -57,7 +57,7 @@ internal static class WorldMusic
             _playlist = playlist;
             _combatTrack = tracks[Random.Shared.Next(tracks.Length)];
         }
-        var selected = Select(map.Music, InvasionEnvironmentManager.Current?.Music ?? "", _combatTrack, fighting);
+        var selected = Select(Interface.Game.HeadquartersPresentation.Music ?? map.Music, InvasionEnvironmentManager.Current?.Music ?? "", _combatTrack, fighting);
         if (string.Equals(selected, _selected, StringComparison.OrdinalIgnoreCase))
             return;
         _selected = selected;

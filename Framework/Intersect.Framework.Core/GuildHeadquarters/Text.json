@@ -1,0 +1,529 @@
+{
+  "Entries": {
+    "No server confirmation. Reopen the editor to check the saved configuration.": {
+      "en": "No server confirmation. Reopen the editor to check the saved configuration.",
+      "fr": "Aucune confirmation du serveur. Rouvre l’éditeur pour vérifier la configuration enregistrée.",
+      "es": "Sin confirmación del servidor. Reabre el editor para comprobar la configuración guardada."
+    },
+    "Guild headquarters": {
+      "en": "Guild headquarters",
+      "fr": "Quartier général de guilde",
+      "es": "Cuartel de gremio"
+    },
+    "Guild invitation": {
+      "en": "Guild invitation",
+      "fr": "Invitation de guilde",
+      "es": "Invitación del gremio"
+    },
+    "You cannot manage this headquarters.": {
+      "en": "You cannot manage this headquarters.",
+      "fr": "Tu ne peux pas gérer ce quartier général.",
+      "es": "No puedes gestionar este cuartel."
+    },
+    "The headquarters changed. Review the updated details.": {
+      "en": "The headquarters changed. Review the updated details.",
+      "fr": "Le quartier général a changé. Vérifie les nouveaux détails.",
+      "es": "El cuartel ha cambiado. Revisa los detalles actualizados."
+    },
+    "Your guild needs more members for this upgrade.": {
+      "en": "Your guild needs more members for this upgrade.",
+      "fr": "Ta guilde doit avoir plus de membres pour cette amélioration.",
+      "es": "Tu gremio necesita más miembros para esta mejora."
+    },
+    "Deposit the required resources in the guild bank first.": {
+      "en": "Deposit the required resources in the guild bank first.",
+      "fr": "Dépose d’abord les ressources nécessaires dans le coffre de guilde.",
+      "es": "Primero deposita los recursos necesarios en el banco del gremio."
+    },
+    "Invalid headquarters configuration.": {
+      "en": "Invalid headquarters configuration.",
+      "fr": "Configuration du quartier général invalide.",
+      "es": "Configuración del cuartel no válida."
+    },
+    "The configuration changed. Reopen the editor before saving.": {
+      "en": "The configuration changed. Reopen the editor before saving.",
+      "fr": "La configuration a changé. Rouvre l’éditeur avant d’enregistrer.",
+      "es": "La configuración ha cambiado. Vuelve a abrir el editor antes de guardar."
+    },
+    "Keep saved tiers in order. You can append new tiers.": {
+      "en": "Keep saved tiers in order. You can append new tiers.",
+      "fr": "Conserve l’ordre des paliers enregistrés. Tu peux en ajouter à la suite.",
+      "es": "Conserva el orden de los niveles guardados. Puedes añadir nuevos al final."
+    },
+    "Choose isolated maps with walkable entry and bank tiles.": {
+      "en": "Choose isolated maps with walkable entry and bank tiles.",
+      "fr": "Choisis des cartes isolées avec des cases d’entrée et de coffre praticables.",
+      "es": "Elige mapas aislados con casillas transitables para la entrada y el banco."
+    },
+    "The bank capacity exceeds the server limit.": {
+      "en": "The bank capacity exceeds the server limit.",
+      "fr": "La capacité du coffre dépasse la limite du serveur.",
+      "es": "La capacidad del banco supera el límite del servidor."
+    },
+    "Choose a stackable resource that can be deposited in the guild bank.": {
+      "en": "Choose a stackable resource that can be deposited in the guild bank.",
+      "fr": "Choisis une ressource empilable pouvant être déposée au coffre de guilde.",
+      "es": "Elige un recurso apilable que se pueda depositar en el banco del gremio."
+    },
+    "Headquarters are not available yet.": {
+      "en": "Headquarters are not available yet.",
+      "fr": "Les quartiers généraux ne sont pas encore disponibles.",
+      "es": "Los cuarteles aún no están disponibles."
+    },
+    "This invitation is no longer valid.": {
+      "en": "This invitation is no longer valid.",
+      "fr": "Cette invitation n’est plus valide.",
+      "es": "Esta invitación ya no es válida."
+    },
+    "Only guild members can use this service.": {
+      "en": "Only guild members can use this service.",
+      "fr": "Ce service est réservé aux membres de la guilde.",
+      "es": "Este servicio está reservado a los miembros del gremio."
+    },
+    "Stand next to the guild bank location.": {
+      "en": "Stand next to the guild bank location.",
+      "fr": "Place-toi près de l’emplacement du coffre de guilde.",
+      "es": "Acércate a la ubicación del banco del gremio."
+    },
+    "Enter your headquarters with management permission first.": {
+      "en": "Enter your headquarters with management permission first.",
+      "fr": "Entre dans ton quartier général avec les droits de gestion.",
+      "es": "Entra en tu cuartel con permiso de gestión."
+    },
+    "Finish your current activity first.": {
+      "en": "Finish your current activity first.",
+      "fr": "Termine d’abord ton activité en cours.",
+      "es": "Termina primero tu actividad actual."
+    },
+    "Headquarters upgraded.": {
+      "en": "Headquarters upgraded.",
+      "fr": "Quartier général amélioré.",
+      "es": "Cuartel mejorado."
+    },
+    "Enter your headquarters with invitation permission first.": {
+      "en": "Enter your headquarters with invitation permission first.",
+      "fr": "Entre dans ton quartier général avec le droit d’inviter.",
+      "es": "Entra en tu cuartel con permiso para invitar."
+    },
+    "Choose an online visitor who has not blocked you.": {
+      "en": "Choose an online visitor who has not blocked you.",
+      "fr": "Choisis un visiteur connecté qui ne t’a pas bloqué.",
+      "es": "Elige un visitante conectado que no te haya bloqueado."
+    },
+    "Too many pending invitations. Try again later.": {
+      "en": "Too many pending invitations. Try again later.",
+      "fr": "Trop d’invitations en attente. Réessaie plus tard.",
+      "es": "Hay demasiadas invitaciones pendientes. Inténtalo más tarde."
+    },
+    "Invitation sent.": {
+      "en": "Invitation sent.",
+      "fr": "Invitation envoyée.",
+      "es": "Invitación enviada."
+    },
+    "Visitor invitations revoked.": {
+      "en": "Visitor invitations revoked.",
+      "fr": "Les invitations des visiteurs ont été annulées.",
+      "es": "Se han revocado las invitaciones de visitantes."
+    },
+    "Headquarters could not be saved. Please try again.": {
+      "en": "Headquarters could not be saved. Please try again.",
+      "fr": "Impossible d’enregistrer le quartier général. Réessaie.",
+      "es": "No se pudo guardar el cuartel. Inténtalo de nuevo."
+    },
+    "Finish your activity and return to the overworld first.": {
+      "en": "Finish your activity and return to the overworld first.",
+      "fr": "Termine ton activité et retourne d’abord dans le monde principal.",
+      "es": "Termina tu actividad y vuelve primero al mundo principal."
+    },
+    "The headquarters map is unavailable.": {
+      "en": "The headquarters map is unavailable.",
+      "fr": "La carte du quartier général est indisponible.",
+      "es": "El mapa del cuartel no está disponible."
+    },
+    "The headquarters visitor limit has been reached.": {
+      "en": "The headquarters visitor limit has been reached.",
+      "fr": "Le nombre maximal de visiteurs est atteint.",
+      "es": "Se ha alcanzado el límite de visitantes del cuartel."
+    },
+    "Headquarters progress is unavailable. Contact an administrator.": {
+      "en": "Headquarters progress is unavailable. Contact an administrator.",
+      "fr": "La progression du quartier général est indisponible. Contacte un administrateur.",
+      "es": "El progreso del cuartel no está disponible. Contacta con un administrador."
+    },
+    "Visitor character name": {
+      "en": "Visitor character name",
+      "fr": "Nom du personnage à inviter",
+      "es": "Nombre del personaje visitante"
+    },
+    "Invite visitor": {
+      "en": "Invite visitor",
+      "fr": "Inviter un visiteur",
+      "es": "Invitar visitante"
+    },
+    "End all visits": {
+      "en": "End all visits",
+      "fr": "Terminer les visites",
+      "es": "Finalizar visitas"
+    },
+    "Revoke invitations and return every visitor?": {
+      "en": "Revoke invitations and return every visitor?",
+      "fr": "Annuler les invitations et faire repartir tous les visiteurs ?",
+      "es": "¿Revocar las invitaciones y devolver a todos los visitantes?"
+    },
+    "Open guild bank": {
+      "en": "Open guild bank",
+      "fr": "Ouvrir le coffre de guilde",
+      "es": "Abrir banco del gremio"
+    },
+    "Enter headquarters": {
+      "en": "Enter headquarters",
+      "fr": "Entrer au quartier général",
+      "es": "Entrar al cuartel"
+    },
+    "Leave headquarters": {
+      "en": "Leave headquarters",
+      "fr": "Quitter le quartier général",
+      "es": "Salir del cuartel"
+    },
+    "Upgrade headquarters": {
+      "en": "Upgrade headquarters",
+      "fr": "Améliorer le quartier général",
+      "es": "Mejorar cuartel"
+    },
+    "Confirm spending guild resources": {
+      "en": "Confirm spending guild resources",
+      "fr": "Confirmer la dépense du coffre",
+      "es": "Confirmar gasto del banco"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Accept": {
+      "en": "Accept",
+      "fr": "Accepter",
+      "es": "Aceptar"
+    },
+    "Decline": {
+      "en": "Decline",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Guest access: no bank or upgrades. Your host can end the visit.": {
+      "en": "Guest access: no bank or upgrades. Your host can end the visit.",
+      "fr": "Accès invité : ni coffre ni améliorations. Ton hôte peut terminer la visite.",
+      "es": "Acceso de invitado: sin banco ni mejoras. Tu anfitrión puede finalizar la visita."
+    },
+    "Build your guild home together. Deposit upgrade resources in the shared bank.": {
+      "en": "Build your guild home together. Deposit upgrade resources in the shared bank.",
+      "fr": "Développez ensemble votre quartier général. Déposez les ressources d’amélioration dans le coffre commun.",
+      "es": "Desarrollad juntos vuestro cuartel. Depositad los recursos para mejoras en el banco compartido."
+    },
+    "Tier {0}: {1}": {
+      "en": "Tier {0}: {1}",
+      "fr": "Palier {0} : {1}",
+      "es": "Nivel {0}: {1}"
+    },
+    "{0} members · {1} bank slots · {2} visitors": {
+      "en": "{0} members · {1} bank slots · {2} visitors",
+      "fr": "{0} membres · {1} cases de coffre · {2} visiteurs",
+      "es": "{0} miembros · {1} casillas de banco · {2} visitantes"
+    },
+    "Guild bank location: ({0}, {1}). Stand nearby to open it.": {
+      "en": "Guild bank location: ({0}, {1}). Stand nearby to open it.",
+      "fr": "Emplacement du coffre : ({0}, {1}). Approche-toi pour l’ouvrir.",
+      "es": "Ubicación del banco: ({0}, {1}). Acércate para abrirlo."
+    },
+    "Next upgrade": {
+      "en": "Next upgrade",
+      "fr": "Prochaine amélioration",
+      "es": "Siguiente mejora"
+    },
+    "Free upgrade": {
+      "en": "Free upgrade",
+      "fr": "Amélioration gratuite",
+      "es": "Mejora gratuita"
+    },
+    "Cost from guild bank: {0} × {1} · available: {2}": {
+      "en": "Cost from guild bank: {0} × {1} · available: {2}",
+      "fr": "Coût prélevé au coffre : {0} × {1} · disponible : {2}",
+      "es": "Coste del banco del gremio: {0} × {1} · disponible: {2}"
+    },
+    "Required members: {0} · bank capacity after upgrade: at least {1}": {
+      "en": "Required members: {0} · bank capacity after upgrade: at least {1}",
+      "fr": "Membres requis : {0} · capacité du coffre après amélioration : au moins {1}",
+      "es": "Miembros necesarios: {0} · capacidad del banco tras la mejora: al menos {1}"
+    },
+    "Upgrading moves everyone to the next hall. Guild bank permissions stay unchanged.": {
+      "en": "Upgrading moves everyone to the next hall. Guild bank permissions stay unchanged.",
+      "fr": "L’amélioration déplace tout le monde vers la nouvelle salle. Les permissions du coffre restent inchangées.",
+      "es": "La mejora traslada a todos a la nueva sala. Los permisos del banco se mantienen."
+    },
+    "All headquarters upgrades are unlocked.": {
+      "en": "All headquarters upgrades are unlocked.",
+      "fr": "Toutes les améliorations sont débloquées.",
+      "es": "Todas las mejoras del cuartel están desbloqueadas."
+    },
+    "Invitations last 2 minutes. Visits last up to {0} minutes and end when the host disconnects.": {
+      "en": "Invitations last 2 minutes. Visits last up to {0} minutes and end when the host disconnects.",
+      "fr": "Les invitations durent 2 minutes. Les visites durent jusqu’à {0} minutes et se terminent à la déconnexion de l’hôte.",
+      "es": "Las invitaciones duran 2 minutos. Las visitas duran hasta {0} minutos y terminan cuando el anfitrión se desconecta."
+    },
+    "{0} invites you to {1}'s headquarters for up to {2} minutes. No bank access. Join?": {
+      "en": "{0} invites you to {1}'s headquarters for up to {2} minutes. No bank access. Join?",
+      "fr": "{0} t’invite au quartier général de {1} pour une durée maximale de {2} minutes, sans accès au coffre. Accepter ?",
+      "es": "{0} te invita al cuartel de {1} durante un máximo de {2} minutos, sin acceso al banco. ¿Aceptar?"
+    },
+    "Use one isolated map per tier. The first tier is free. Saved tiers keep their order. Install artwork and audio on every client.": {
+      "en": "Use one isolated map per tier. The first tier is free. Saved tiers keep their order. Install artwork and audio on every client.",
+      "fr": "Utilise une carte isolée par palier. Le premier palier est gratuit. Les paliers enregistrés conservent leur ordre. Installe les visuels et les sons sur chaque client.",
+      "es": "Usa un mapa aislado por nivel. El primero es gratuito. Los niveles guardados conservan su orden. Instala las imágenes y el audio en cada cliente."
+    },
+    "Settings": {
+      "en": "Settings",
+      "fr": "Paramètres",
+      "es": "Ajustes"
+    },
+    "Enable headquarters": {
+      "en": "Enable headquarters",
+      "fr": "Activer les quartiers généraux",
+      "es": "Activar cuarteles"
+    },
+    "Highest rank allowed to upgrade (0 = leader)": {
+      "en": "Highest rank allowed to upgrade (0 = leader)",
+      "fr": "Rang maximal autorisé à améliorer (0 = chef)",
+      "es": "Rango máximo para mejorar (0 = líder)"
+    },
+    "Allow invited visitors": {
+      "en": "Allow invited visitors",
+      "fr": "Autoriser les visiteurs invités",
+      "es": "Permitir visitantes invitados"
+    },
+    "Highest rank allowed to invite (0 = leader)": {
+      "en": "Highest rank allowed to invite (0 = leader)",
+      "fr": "Rang maximal autorisé à inviter (0 = chef)",
+      "es": "Rango máximo para invitar (0 = líder)"
+    },
+    "Maximum visit duration (minutes)": {
+      "en": "Maximum visit duration (minutes)",
+      "fr": "Durée maximale de visite (minutes)",
+      "es": "Duración máxima de visita (minutos)"
+    },
+    "Visitor permissions": {
+      "en": "Visitor permissions",
+      "fr": "Permissions des visiteurs",
+      "es": "Permisos de visitantes"
+    },
+    "Visitors cannot use banks or upgrades. Visits end on timeout, disconnection, host departure from the guild, or revocation.": {
+      "en": "Visitors cannot use banks or upgrades. Visits end on timeout, disconnection, host departure from the guild, or revocation.",
+      "fr": "Les visiteurs n’ont accès ni aux coffres ni aux améliorations. Leur visite se termine à l’expiration, à la déconnexion, si l’hôte quitte la guilde ou si l’accès est révoqué.",
+      "es": "Los visitantes no pueden usar bancos ni mejoras. La visita termina al caducar, desconectarse, salir el anfitrión del gremio o revocarse el acceso."
+    },
+    "Upgrade tiers": {
+      "en": "Upgrade tiers",
+      "fr": "Paliers d’amélioration",
+      "es": "Niveles de mejora"
+    },
+    "Add tier": {
+      "en": "Add tier",
+      "fr": "Ajouter un palier",
+      "es": "Añadir nivel"
+    },
+    "Guild lodge": {
+      "en": "Guild lodge",
+      "fr": "Pavillon de guilde",
+      "es": "Pabellón del gremio"
+    },
+    "Guild manor": {
+      "en": "Guild manor",
+      "fr": "Manoir de guilde",
+      "es": "Mansión del gremio"
+    },
+    "Guild citadel": {
+      "en": "Guild citadel",
+      "fr": "Citadelle de guilde",
+      "es": "Ciudadela del gremio"
+    },
+    "Remove last unsaved tier": {
+      "en": "Remove last unsaved tier",
+      "fr": "Retirer le dernier palier non enregistré",
+      "es": "Quitar último nivel sin guardar"
+    },
+    "Save headquarters": {
+      "en": "Save headquarters",
+      "fr": "Enregistrer le quartier général",
+      "es": "Guardar cuartel"
+    },
+    "Tier name": {
+      "en": "Tier name",
+      "fr": "Nom du palier",
+      "es": "Nombre del nivel"
+    },
+    "Description": {
+      "en": "Description",
+      "fr": "Description",
+      "es": "Descripción"
+    },
+    "Interior map": {
+      "en": "Interior map",
+      "fr": "Carte intérieure",
+      "es": "Mapa interior"
+    },
+    "Entry X": {
+      "en": "Entry X",
+      "fr": "Entrée X",
+      "es": "Entrada X"
+    },
+    "Entry Y": {
+      "en": "Entry Y",
+      "fr": "Entrée Y",
+      "es": "Entrada Y"
+    },
+    "Bank X": {
+      "en": "Bank X",
+      "fr": "Coffre X",
+      "es": "Banco X"
+    },
+    "Bank Y": {
+      "en": "Bank Y",
+      "fr": "Coffre Y",
+      "es": "Banco Y"
+    },
+    "Upgrade resource": {
+      "en": "Upgrade resource",
+      "fr": "Ressource d’amélioration",
+      "es": "Recurso para mejorar"
+    },
+    "Resource quantity (0 = free)": {
+      "en": "Resource quantity (0 = free)",
+      "fr": "Quantité de ressources (0 = gratuit)",
+      "es": "Cantidad de recursos (0 = gratis)"
+    },
+    "Minimum guild members": {
+      "en": "Minimum guild members",
+      "fr": "Nombre minimal de membres",
+      "es": "Mínimo de miembros"
+    },
+    "Minimum bank capacity (0 = unchanged)": {
+      "en": "Minimum bank capacity (0 = unchanged)",
+      "fr": "Capacité minimale du coffre (0 = inchangée)",
+      "es": "Capacidad mínima del banco (0 = sin cambios)"
+    },
+    "Base tier": {
+      "en": "Base tier",
+      "fr": "Palier de base",
+      "es": "Nivel inicial"
+    },
+    "Free access for every guild member. Existing bank capacity is preserved.": {
+      "en": "Free access for every guild member. Existing bank capacity is preserved.",
+      "fr": "Accès gratuit pour chaque membre. La capacité actuelle du coffre est conservée.",
+      "es": "Acceso gratuito para cada miembro. Se conserva la capacidad actual del banco."
+    },
+    "Tier icon": {
+      "en": "Tier icon",
+      "fr": "Icône du palier",
+      "es": "Icono del nivel"
+    },
+    "Stable ID": {
+      "en": "Stable ID",
+      "fr": "Identifiant permanent",
+      "es": "Identificador permanente"
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "Preview": {
+      "en": "Preview",
+      "fr": "Aperçu",
+      "es": "Vista previa"
+    },
+    "Artwork and sounds": {
+      "en": "Artwork and sounds",
+      "fr": "Visuels et sons",
+      "es": "Imágenes y sonidos"
+    },
+    "Hall background": {
+      "en": "Hall background",
+      "fr": "Fond de la salle",
+      "es": "Fondo de la sala"
+    },
+    "Bank icon": {
+      "en": "Bank icon",
+      "fr": "Icône du coffre",
+      "es": "Icono del banco"
+    },
+    "Invitation icon": {
+      "en": "Invitation icon",
+      "fr": "Icône d’invitation",
+      "es": "Icono de invitación"
+    },
+    "Theme music": {
+      "en": "Theme music",
+      "fr": "Musique du quartier général",
+      "es": "Música del cuartel"
+    },
+    "Hearth ambience": {
+      "en": "Hearth ambience",
+      "fr": "Ambiance du foyer",
+      "es": "Ambiente de la chimenea"
+    },
+    "Open window": {
+      "en": "Open window",
+      "fr": "Ouverture de la fenêtre",
+      "es": "Abrir ventana"
+    },
+    "Invitation received": {
+      "en": "Invitation received",
+      "fr": "Invitation reçue",
+      "es": "Invitación recibida"
+    },
+    "Upgrade complete": {
+      "en": "Upgrade complete",
+      "fr": "Amélioration terminée",
+      "es": "Mejora completada"
+    },
+    "Action refused": {
+      "en": "Action refused",
+      "fr": "Action refusée",
+      "es": "Acción rechazada"
+    },
+    "Effect volume (%)": {
+      "en": "Effect volume (%)",
+      "fr": "Volume des effets (%)",
+      "es": "Volumen de efectos (%)"
+    },
+    "Ambience volume (%)": {
+      "en": "Ambience volume (%)",
+      "fr": "Volume d’ambiance (%)",
+      "es": "Volumen ambiental (%)"
+    },
+    "Asset help": {
+      "en": "Asset help",
+      "fr": "Aide des ressources",
+      "es": "Ayuda de recursos"
+    },
+    "Empty selection disables an asset. Missing files keep the native interface usable. Music follows the player's music volume setting.": {
+      "en": "Empty selection disables an asset. Missing files keep the native interface usable. Music follows the player's music volume setting.",
+      "fr": "Une sélection vide désactive la ressource. L’interface reste utilisable si un fichier manque. La musique respecte le volume choisi par le joueur.",
+      "es": "Una selección vacía desactiva el recurso. La interfaz sigue funcionando si falta un archivo. La música respeta el volumen elegido por el jugador."
+    },
+    "Check maps, coordinates, prices, member requirements and assets.": {
+      "en": "Check maps, coordinates, prices, member requirements and assets.",
+      "fr": "Vérifie les cartes, les coordonnées, les prix, les membres requis et les ressources.",
+      "es": "Revisa mapas, coordenadas, precios, miembros necesarios y recursos."
+    },
+    "Saving...": {
+      "en": "Saving...",
+      "fr": "Enregistrement…",
+      "es": "Guardando…"
+    },
+    "Headquarters saved.": {
+      "en": "Headquarters saved.",
+      "fr": "Quartier général enregistré.",
+      "es": "Cuartel guardado."
+    }
+  }
+}
