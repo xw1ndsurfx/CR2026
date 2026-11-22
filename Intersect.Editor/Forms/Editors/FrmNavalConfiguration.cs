@@ -39,7 +39,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(ScrollFields(Fields(_navigation, 0, ["ShipAppearancesVersion", "AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory", "Monsters"])));
+        general.Controls.Add(ScrollFields(Fields(_navigation, 0, ["ShipAppearancesVersion", "AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory", "Monsters", "Expeditions"])));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () =>
             {var ship=new ShipDefinition();NavalShipModels.PlayerDefault.ApplyTo(ship);return ship;},
             ships => _navigation.Ships = ships.ToArray());
@@ -58,6 +58,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Page("Ship repair activities").Controls.Add(ScrollFields(Fields(_navigation.Repair,0,[])));
         AddListPage("Sailing skills",_navigation.Skills.ToList(),0,()=>NavalSkillDefinition.Defaults().FirstOrDefault(a=>!_navigation.Skills.Any(old=>old.Kind==a.Kind))??new NavalSkillDefinition(),skills=>_navigation.Skills=skills.ToArray());
         AddListPage("Naval Monsters",_navigation.Monsters.ToList(),0,()=>{var kind=Enum.GetValues<NavalMonsterKind>().FirstOrDefault(k=>!_navigation.Monsters.Any(m=>m.Kind==k));return new NavalMonsterDefinition {Kind=kind,Graphics="Naval_"+kind+"_v1.png",TentacleCount=kind==NavalMonsterKind.Kraken?8:kind==NavalMonsterKind.SeaSerpent?6:4};},monsters=>_navigation.Monsters=monsters.ToArray());
+        AddListPage("Naval expeditions", _navigation.Expeditions.ToList(), 0, () => new NavalExpeditionDefinition(), expeditions => _navigation.Expeditions = expeditions.ToArray());
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft };
         _save.Text = T("Save current section");
         var close = new Button { Text = T("Close"), AutoSize = true };
@@ -93,6 +94,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(1000, 620), SplitterDistance = 275 };
         var list = new ListBox { Dock = DockStyle.Fill };
         list.Format += (_, e) => e.Value = e.ListItem is HarbourOffer offer ? T(offer.Name) :
+            e.ListItem is NavalExpeditionDefinition expedition ? (string.IsNullOrWhiteSpace(expedition.Name) ? T("Unnamed expedition") : expedition.Name) :
             e.ListItem is NavalSkillDefinition skill ? T(NavalSkillDefinition.Caption(skill.Kind)) :
             e.ListItem is CannonAmmunition ammunition ? T(CannonAmmunition.Caption(ammunition.Kind)) :
             e.ListItem is NavalMonsterDefinition monster ? (string.IsNullOrWhiteSpace(monster.Name)?T(monster.Kind.ToString()):monster.Name) :
@@ -119,7 +121,11 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             UpdateRemove();
             foreach (Control control in split.Panel2.Controls.Cast<Control>().ToArray()) control.Dispose();
             if (list.SelectedItem is not TItem item) return;
-            var fields = Fields(item, section, item is NavalMonsterDefinition ? ["Loot"] : (item is HarbourOffer or HerboniaPatrol) ? ["Ship", "Loot", "AdditionalData"] : ["AdditionalData"]);
+            var fields = Fields(item, section, item is NavalExpeditionDefinition ? ["Stages"] : item is NavalMonsterDefinition ? ["Loot"] : (item is HarbourOffer or HerboniaPatrol) ? ["Ship", "Loot", "AdditionalData"] : ["AdditionalData"]);
+            if (item is NavalExpeditionDefinition expedition)
+            {
+                var stages = ExpeditionStages(expedition); fields.Controls.Add(stages, 0, fields.RowCount++); fields.SetColumnSpan(stages, 2);
+            }
             var appearance=item switch {ShipDefinition s=>s,HarbourOffer o=>o.Ship,HerboniaPatrol p=>p.Ship,_=>null};
             if(appearance!=null)
             {
@@ -270,6 +276,12 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             if(target is ShipDefinition shipModel && property.Name=="DamageZones")field=DamageZoneField(shipModel,section);
             else if(target is ShipDefinition fishingShip && property.Name=="FishingZoneId")field=FishingZoneField(fishingShip,section);
             else if(target is NavalMonsterDefinition && property.Name=="Graphics")field=AssetField("MonsterGraphics",value?.ToString()??"",changed=>Set(changed));
+            else if(property.PropertyType==typeof(NavalExpeditionMode))
+            {
+                var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+                box.Items.AddRange(Enum.GetValues<NavalExpeditionMode>().Select(k => T(k.ToString())).ToArray()); box.SelectedIndex = (int)(NavalExpeditionMode)value!;
+                box.SelectedIndexChanged += (_, _) => Set((NavalExpeditionMode)box.SelectedIndex); field = box;
+            }
             else if(property.PropertyType==typeof(NavalMonsterKind))
             {
                 var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};box.Items.AddRange(Enum.GetValues<NavalMonsterKind>().Select(k=>T(k.ToString())).ToArray());box.SelectedIndex=(int)(NavalMonsterKind)value!;box.SelectedIndexChanged+=(_,_)=>Set((NavalMonsterKind)box.SelectedIndex);field=box;
@@ -321,7 +333,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             {
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
                 if(property.Name.EndsWith("AnimationId")) choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
-                else if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
+                else if(property.Name is "ItemId" or "RewardItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
                 else if(property.Name.EndsWith("NpcId")) choices.AddRange(Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>().OrderBy(n=>n.Name).Select(n=>new Choice(n.Id,n.Name)));
                 else if(property.Name is "UnlockQuestId" or "RequiredQuestId") choices.AddRange(Intersect.GameObjects.QuestDescriptor.Lookup.Values.OrderBy(q=>q.Name).Select(q=>new Choice(q.Id,q.Name)));
                 else if(property.Name=="BoardingDungeonId") choices.AddRange(Intersect.Framework.Core.Dungeons.DungeonConfiguration.Instance.Dungeons.Select(d=>new Choice(d.Id,d.Name)));

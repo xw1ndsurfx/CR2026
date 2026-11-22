@@ -7,6 +7,11 @@ namespace Intersect.Server.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(Client client, NavalExpeditionRequestPacket packet)
+    {
+        if (!client.IsEditor && client.Entity is { InGame: true } player)
+            Naval.NavalSystem.Expedition(player, packet, Timing.Global.Milliseconds);
+    }
     public void HandlePacket(Client client,DeckInputPacket packet)
     {
         if(!client.IsEditor && client.Entity is {InGame:true} player)

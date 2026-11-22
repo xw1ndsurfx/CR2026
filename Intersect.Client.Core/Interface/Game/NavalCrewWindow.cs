@@ -28,7 +28,7 @@ internal sealed class NavalCrewWindow:Window
         _hint=Text(this,"CrewHint",10);_hint.SetBounds(24,66,width-48,24);
         _status=Text(this,"CrewStatus",10);_status.SetBounds(24,102,width-48,24);
         _members=new ScrollControl(this,"CrewRoster") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
-        _members.SetBounds(24,142,width-48,height-342);
+        _members.SetBounds(24,142,width-48,height-390);
         _cargo=Text(this,"CrewCargo",11);_cargo.SetBounds(24,height-137,width-48,24);
         _action=new Button(this,"CrewAction") {Text=""};_action.SetBounds(24,height-95,width-200,34);
         var actionFrame=new Chrome(_action,"CrewActionFrame",Style.PrimaryAction);actionFrame.SetBounds(0,0,width-200,34);
@@ -38,6 +38,7 @@ internal sealed class NavalCrewWindow:Window
         var close=new Button(this,"CrewClose") {Text=T("Close"),Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11};
         close.SetBounds(width-164,height-95,140,34);close.Clicked+=(_,_)=>Hide();
         NavalManagementWindow.Button(this,"NavalHelmControl","Helm control",24,height-190,Width-48,32,()=>NavalManagementWindow.Request(NavalManageAction.OfferHelm));
+        NavalManagementWindow.Button(this,"OpenNavalExpeditions","Naval expeditions",24,height-230,Width-48,32,()=>NavalExpeditionWindow.Send(NavalExpeditionAction.Open));
         _footer=Text(this,"CrewFooter",10);_footer.SetBounds(24,height-49,width-48,22);Hide();
     }
     protected override void EnsureInitialized() { }

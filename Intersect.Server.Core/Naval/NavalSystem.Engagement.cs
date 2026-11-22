@@ -23,6 +23,8 @@ internal static partial class NavalSystem
         {ship.CombatTargetId=Guid.Empty;ship.CombatUntil=0;}
         if(captainId==Guid.Empty || !Ships.TryGetValue(attackerId,out var attacker) || attacker.Enemy!=null ||
             attacker.State.CaptainId!=captainId) return;
+        if (shipKill) RecordExpeditionVictory(NavalExpeditionObjective.DefeatPatrol, victim.Enemy.Ship.Id, victim.State.MapId,
+            victim.CombatLifeId, attackerId, victim.State.X, victim.State.Y);
         var now=Intersect.Framework.Core.Timing.Global.Milliseconds;
         var loot=NavalCargo.Roll(victim.Enemy.Loot,Random.Shared.NextDouble,Random.Shared.Next);
         var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct().ToArray();

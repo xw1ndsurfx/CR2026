@@ -254,3 +254,4 @@ __pycache__/
 /resources/playerdata.db*
 /resources/gamedata.db*
 /resources/logging.db*
+/resources/naval-expedition-runs.json

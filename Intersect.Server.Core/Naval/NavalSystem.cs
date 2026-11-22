@@ -18,6 +18,7 @@ internal static partial class NavalSystem
 {
     private sealed class Vessel(ShipDefinition definition)
     {
+        internal readonly Guid CombatLifeId = Guid.NewGuid();
         internal readonly Dictionary<Guid,long> Contributions=[];
         internal readonly Dictionary<CannonAmmoKind,CannonStatus> CannonStatuses=[];
         internal readonly ShipDefinition Definition = definition;
@@ -266,6 +267,7 @@ internal static partial class NavalSystem
     internal static void Update(Player player, long now)
     {
         UpdateNavalMonsters(player,now);
+        UpdateNavalExpeditions(player, now);
         if(UpdateEnemyBoarding(player,now))return;
         var nearDock=player.NavalShipId==Guid.Empty && player.InGame && !player.IsDead && !player.HasPendingDeath && BesideCrewDock(player);
         if(!nearDock)player.NavalDockPromptSeen=false;

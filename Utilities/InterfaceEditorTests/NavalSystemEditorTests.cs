@@ -24,7 +24,7 @@ internal static class NavalSystemEditorTests
             using var editor = new FrmNavalConfiguration(packet);
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
-            if (tabs.TabPages.Count != 11 || tabs.TabPages[10].Text != "Monstres marins") throw new Exception("The existing naval sections must remain available alongside the new localized monsters section.");
+            if (tabs.TabPages.Count != 12 || tabs.TabPages[10].Text != "Monstres marins" || tabs.TabPages[11].Text != "Expéditions navales") throw new Exception("The existing naval sections must remain available alongside expeditions.");
             var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
             var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
             cannonEnabled.Checked=true;cannonDamage.Value=17;
@@ -57,7 +57,7 @@ internal static class NavalSystemEditorTests
                 image.Save(preview, System.Drawing.Imaging.ImageFormat.Png);
                 editor.Hide();
             }
-            Console.WriteLine("PASS localized Naval System Editor opens eleven sections and keeps independent save versions");
+            Console.WriteLine("PASS localized Naval System Editor opens twelve sections and keeps independent save versions");
             CheckFleetConfiguration();
             CheckAssetPreview();
             CheckHerboniaEditor();

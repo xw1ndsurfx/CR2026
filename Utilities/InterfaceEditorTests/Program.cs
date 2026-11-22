@@ -47,6 +47,7 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--naval-expeditions-only")) { NavalSystemEditorTests.Run(); NavalExpeditionEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--import-status-only")) { ImportedResourceIndicatorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-crew-only")) { NavalCrewDamageEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--resource-workflow-only")) { ImportedResourceIndicatorTests.Run(); ImportedResourceDeclarationTests.Run(); return; }
