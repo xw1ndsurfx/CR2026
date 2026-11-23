@@ -18,6 +18,11 @@ internal static class Program
     }
     private static void Run()
     {
+        if (Environment.GetCommandLineArgs().Contains("--equipment-only"))
+        {
+            typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+            EquipmentEffectsEditorTests.Run(); return;
+        }
         if (Environment.GetCommandLineArgs().Contains("--dialogue-protection-only"))
         {
             typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());

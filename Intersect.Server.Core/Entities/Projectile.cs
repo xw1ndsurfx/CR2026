@@ -39,6 +39,7 @@ public partial class Projectile : Entity
     public ProjectileSpawn[] Spawns;
 
     public SpellDescriptor Spell;
+    public Intersect.Framework.Core.GameObjects.Items.ItemProperties? SourceEquipmentProperties;
 
     public new Entity Target;
 
@@ -75,6 +76,7 @@ public partial class Projectile : Entity
         Dir = direction;
         Spell = parentSpell;
         Item = parentItem;
+        if (parentSpell == null && owner is Player player) SourceEquipmentProperties = player.CaptureWeaponProperties(parentItem);
 
         Passable = true;
         HideName = true;

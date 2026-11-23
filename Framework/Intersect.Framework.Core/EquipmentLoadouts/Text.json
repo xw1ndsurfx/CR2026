@@ -1,0 +1,509 @@
+{
+  "Entries": {
+    "Please wait a moment before changing equipment sets again.": {
+      "en": "Please wait a moment before changing equipment sets again.",
+      "fr": "Patientez un instant avant de changer à nouveau de configuration.",
+      "es": "Espera un momento antes de volver a cambiar de conjunto."
+    },
+    "Equipment sets": {
+      "en": "Equipment sets",
+      "fr": "Configurations d’équipement",
+      "es": "Conjuntos de equipo"
+    },
+    "Equipment set {0}": {
+      "en": "Equipment set {0}",
+      "fr": "Configuration d’équipement {0}",
+      "es": "Conjunto de equipo {0}"
+    },
+    "Set {0}": {
+      "en": "Set {0}",
+      "fr": "Ensemble {0}",
+      "es": "Conjunto {0}"
+    },
+    "Save current equipment": {
+      "en": "Save current equipment",
+      "fr": "Enregistrer l’équipement",
+      "es": "Guardar equipo actual"
+    },
+    "Equip set": {
+      "en": "Equip set",
+      "fr": "Équiper",
+      "es": "Equipar conjunto"
+    },
+    "Delete set": {
+      "en": "Delete set",
+      "fr": "Supprimer",
+      "es": "Eliminar conjunto"
+    },
+    "Confirm replacement": {
+      "en": "Confirm replacement",
+      "fr": "Confirmer le remplacement",
+      "es": "Confirmar reemplazo"
+    },
+    "Confirm deletion": {
+      "en": "Confirm deletion",
+      "fr": "Confirmer la suppression",
+      "es": "Confirmar eliminación"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Unassigned": {
+      "en": "Unassigned",
+      "fr": "Non attribué",
+      "es": "Sin asignar"
+    },
+    "Empty set": {
+      "en": "Empty set",
+      "fr": "Ensemble vide",
+      "es": "Conjunto vacío"
+    },
+    "Empty slot": {
+      "en": "Empty slot",
+      "fr": "Emplacement vide",
+      "es": "Ranura vacía"
+    },
+    "Missing item": {
+      "en": "Missing item",
+      "fr": "Objet manquant",
+      "es": "Objeto ausente"
+    },
+    "Waiting for the server...": {
+      "en": "Waiting for the server...",
+      "fr": "En attente du serveur…",
+      "es": "Esperando al servidor…"
+    },
+    "Save your equipped items, then switch sets outside combat.": {
+      "en": "Save your equipped items, then switch sets outside combat.",
+      "fr": "Enregistrez vos objets équipés, puis changez d’ensemble hors combat.",
+      "es": "Guarda tu equipo y cambia de conjunto fuera de combate."
+    },
+    "Shortcut: {0}. Change it in Settings > Controls.": {
+      "en": "Shortcut: {0}. Change it in Settings > Controls.",
+      "fr": "Touche : {0}. Modifiable dans Paramètres > Commandes.",
+      "es": "Tecla: {0}. Cámbiala en Ajustes > Controles."
+    },
+    "Equip the items you want, then save this set.": {
+      "en": "Equip the items you want, then save this set.",
+      "fr": "Équipez les objets souhaités, puis enregistrez cet ensemble.",
+      "es": "Equipa los objetos que quieras y guarda este conjunto."
+    },
+    "Click again to replace this saved set with your current equipment.": {
+      "en": "Click again to replace this saved set with your current equipment.",
+      "fr": "Cliquez à nouveau pour remplacer cet ensemble par votre équipement actuel.",
+      "es": "Pulsa de nuevo para reemplazar este conjunto por tu equipo actual."
+    },
+    "Click again to delete this saved set. Your items are kept.": {
+      "en": "Click again to delete this saved set. Your items are kept.",
+      "fr": "Cliquez à nouveau pour supprimer cet ensemble. Vos objets sont conservés.",
+      "es": "Pulsa de nuevo para eliminar este conjunto. Conservarás tus objetos."
+    },
+    "No response. Refresh before trying again.": {
+      "en": "No response. Refresh before trying again.",
+      "fr": "Aucune réponse. Actualisez avant de réessayer.",
+      "es": "Sin respuesta. Actualiza antes de volver a intentarlo."
+    },
+    "Equipment sets cannot be changed during combat.": {
+      "en": "Equipment sets cannot be changed during combat.",
+      "fr": "Impossible de changer d’ensemble pendant un combat.",
+      "es": "No puedes cambiar de conjunto durante el combate."
+    },
+    "Finish your current action before changing equipment sets.": {
+      "en": "Finish your current action before changing equipment sets.",
+      "fr": "Terminez votre action en cours avant de changer d’ensemble.",
+      "es": "Termina tu acción actual antes de cambiar de conjunto."
+    },
+    "Equipment slots have changed. Save this set again.": {
+      "en": "Equipment slots have changed. Save this set again.",
+      "fr": "Les emplacements d’équipement ont changé. Enregistrez à nouveau cet ensemble.",
+      "es": "Las ranuras de equipo han cambiado. Guarda este conjunto de nuevo."
+    },
+    "A saved item is no longer valid for its equipment slot.": {
+      "en": "A saved item is no longer valid for its equipment slot.",
+      "fr": "Un objet enregistré ne convient plus à son emplacement.",
+      "es": "Un objeto guardado ya no es válido para su ranura."
+    },
+    "A saved item is missing from your inventory or its bonuses have changed.": {
+      "en": "A saved item is missing from your inventory or its bonuses have changed.",
+      "fr": "Un objet enregistré manque dans votre inventaire ou ses bonus ont changé.",
+      "es": "Falta un objeto guardado en tu inventario o sus bonificaciones han cambiado."
+    },
+    "A two-handed weapon cannot be equipped with a shield.": {
+      "en": "A two-handed weapon cannot be equipped with a shield.",
+      "fr": "Une arme à deux mains ne peut pas être équipée avec un bouclier.",
+      "es": "No puedes equipar un arma de dos manos junto con un escudo."
+    },
+    "This equipment set is already equipped.": {
+      "en": "This equipment set is already equipped.",
+      "fr": "Cet ensemble est déjà équipé.",
+      "es": "Este conjunto ya está equipado."
+    },
+    "You do not meet the requirements for all items in this set.": {
+      "en": "You do not meet the requirements for all items in this set.",
+      "fr": "Vous ne remplissez pas les prérequis de tous les objets de cet ensemble.",
+      "es": "No cumples los requisitos de todos los objetos de este conjunto."
+    },
+    "An equipment cooldown is still active. Please wait.": {
+      "en": "An equipment cooldown is still active. Please wait.",
+      "fr": "Un délai de réutilisation est encore actif. Veuillez patienter.",
+      "es": "Todavía hay un tiempo de reutilización activo. Espera."
+    },
+    "Equipment set equipped.": {
+      "en": "Equipment set equipped.",
+      "fr": "Ensemble équipé.",
+      "es": "Conjunto equipado."
+    },
+    "Unable to save. Your equipment has not changed.": {
+      "en": "Unable to save. Your equipment has not changed.",
+      "fr": "Sauvegarde impossible. Votre équipement reste inchangé.",
+      "es": "No se pudo guardar. Tu equipo no ha cambiado."
+    },
+    "Choose an equipment set.": {
+      "en": "Choose an equipment set.",
+      "fr": "Choisissez un ensemble d’équipement.",
+      "es": "Elige un conjunto de equipo."
+    },
+    "Your sets have changed. Refresh before saving.": {
+      "en": "Your sets have changed. Refresh before saving.",
+      "fr": "Vos ensembles ont changé. Actualisez avant d’enregistrer.",
+      "es": "Tus conjuntos han cambiado. Actualiza antes de guardar."
+    },
+    "Enter a name of 1 to 32 characters.": {
+      "en": "Enter a name of 1 to 32 characters.",
+      "fr": "Saisissez un nom de 1 à 32 caractères.",
+      "es": "Escribe un nombre de 1 a 32 caracteres."
+    },
+    "Equipment set saved.": {
+      "en": "Equipment set saved.",
+      "fr": "Ensemble enregistré.",
+      "es": "Conjunto guardado."
+    },
+    "Equipment set deleted.": {
+      "en": "Equipment set deleted.",
+      "fr": "Ensemble supprimé.",
+      "es": "Conjunto eliminado."
+    },
+    "This equipment set is empty. Save it first.": {
+      "en": "This equipment set is empty. Save it first.",
+      "fr": "Cet ensemble est vide. Enregistrez-le d’abord.",
+      "es": "Este conjunto está vacío. Guárdalo primero."
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Confirm": {
+      "en": "Confirm",
+      "fr": "Confirmer",
+      "es": "Confirmar"
+    },
+    "Weapon spell": {
+      "en": "Weapon spell",
+      "fr": "Sort de l’arme",
+      "es": "Hechizo del arma"
+    },
+    "Missing spell": {
+      "en": "Missing spell",
+      "fr": "Sort manquant",
+      "es": "Hechizo ausente"
+    },
+    "Activation": {
+      "en": "Activation",
+      "fr": "Activation",
+      "es": "Activación"
+    },
+    "Manual": {
+      "en": "Manual",
+      "fr": "Manuel",
+      "es": "Manual"
+    },
+    "Automatic on hit": {
+      "en": "Automatic on hit",
+      "fr": "Automatique à l’impact",
+      "es": "Automático al impactar"
+    },
+    "On hit ({0}%)": {
+      "en": "On hit ({0}%)",
+      "fr": "À l’impact ({0} %)",
+      "es": "Al impactar ({0} %)"
+    },
+    "Chance on hit (%)": {
+      "en": "Chance on hit (%)",
+      "fr": "Probabilité à l’impact (%)",
+      "es": "Probabilidad al impactar (%)"
+    },
+    "Bound event": {
+      "en": "Bound event",
+      "fr": "Événement lié",
+      "es": "Evento vinculado"
+    },
+    "Bound common event": {
+      "en": "Bound common event",
+      "fr": "Événement commun lié",
+      "es": "Evento común vinculado"
+    },
+    "Event trigger": {
+      "en": "Event trigger",
+      "fr": "Déclencheur de l’événement",
+      "es": "Activador del evento"
+    },
+    "OnUse": {
+      "en": "OnUse",
+      "fr": "À l’utilisation",
+      "es": "Al usar"
+    },
+    "OnEquip": {
+      "en": "OnEquip",
+      "fr": "À l’équipement",
+      "es": "Al equipar"
+    },
+    "OnUnequip": {
+      "en": "OnUnequip",
+      "fr": "Au retrait",
+      "es": "Al desequipar"
+    },
+    "OnHit": {
+      "en": "OnHit",
+      "fr": "À l’impact",
+      "es": "Al impactar"
+    },
+    "OnDamageReceived": {
+      "en": "OnDamageReceived",
+      "fr": "En subissant des dégâts",
+      "es": "Al recibir daño"
+    },
+    "Equipment forge": {
+      "en": "Equipment forge",
+      "fr": "Forge d’équipement",
+      "es": "Forja de equipo"
+    },
+    "Rarity": {
+      "en": "Rarity",
+      "fr": "Rareté",
+      "es": "Rareza"
+    },
+    "Target rarity": {
+      "en": "Target rarity",
+      "fr": "Rareté cible",
+      "es": "Rareza objetivo"
+    },
+    "Choose one inventory copy. Its existing bonuses are preserved.": {
+      "en": "Choose one inventory copy. Its existing bonuses are preserved.",
+      "fr": "Choisissez un exemplaire de l’inventaire. Ses bonus actuels sont conservés.",
+      "es": "Elige una copia del inventario. Sus bonificaciones actuales se conservan."
+    },
+    "Inventory slot {0}": {
+      "en": "Inventory slot {0}",
+      "fr": "Case d’inventaire {0}",
+      "es": "Ranura de inventario {0}"
+    },
+    "No matching equipment in your inventory.": {
+      "en": "No matching equipment in your inventory.",
+      "fr": "Aucun équipement correspondant dans votre inventaire.",
+      "es": "No hay equipo compatible en tu inventario."
+    },
+    "Select an item above.": {
+      "en": "Select an item above.",
+      "fr": "Sélectionnez un objet ci-dessus.",
+      "es": "Selecciona un objeto arriba."
+    },
+    "Improve selected item": {
+      "en": "Improve selected item",
+      "fr": "Améliorer l’objet",
+      "es": "Mejorar objeto"
+    },
+    "Failure: {0}%. Material loss on failure: {1}%. The selected item is kept.": {
+      "en": "Failure: {0}%. Material loss on failure: {1}%. The selected item is kept.",
+      "fr": "Échec : {0} %. Perte des matériaux en cas d’échec : {1} %. L’objet choisi est conservé.",
+      "es": "Fallo: {0} %. Pérdida de materiales al fallar: {1} %. Se conserva el objeto elegido."
+    },
+    "Improve an existing equipment copy": {
+      "en": "Improve an existing equipment copy",
+      "fr": "Améliorer un exemplaire existant",
+      "es": "Mejorar una copia existente"
+    },
+    "Enable weapon spell": {
+      "en": "Enable weapon spell",
+      "fr": "Activer le sort de l’arme",
+      "es": "Activar hechizo del arma"
+    },
+    "The result item identifies the equipment to improve. Ingredients are additional materials. Other copies are unchanged.": {
+      "en": "The result item identifies the equipment to improve. Ingredients are additional materials. Other copies are unchanged.",
+      "fr": "L’objet résultat désigne l’équipement à améliorer. Les ingrédients sont les matériaux supplémentaires. Les autres exemplaires restent inchangés.",
+      "es": "El objeto resultante identifica el equipo que se mejorará. Los ingredientes son materiales adicionales. Las otras copias no cambian."
+    },
+    "Only weapons support a spell. The usual mana costs, requirements and cooldowns apply.": {
+      "en": "Only weapons support a spell. The usual mana costs, requirements and cooldowns apply.",
+      "fr": "Seules les armes peuvent porter un sort. Les coûts en mana, conditions et temps de recharge habituels s’appliquent.",
+      "es": "Solo las armas admiten un hechizo. Se aplican los costes de maná, requisitos y tiempos de recarga habituales."
+    },
+    "None / keep existing": {
+      "en": "None / keep existing",
+      "fr": "Aucun / conserver l’existant",
+      "es": "Ninguno / conservar actual"
+    },
+    "The bound event runs on this item when triggered. The recipe event still runs after a successful craft.": {
+      "en": "The bound event runs on this item when triggered. The recipe event still runs after a successful craft.",
+      "fr": "L’événement lié se déclenche sur cet exemplaire. L’événement de la recette reste exécuté après une fabrication réussie.",
+      "es": "El evento vinculado se activa en esta copia. El evento de la receta sigue ejecutándose tras una fabricación exitosa."
+    },
+    "Manual: assign Weapon spell in Settings > Controls. Automatic: each successful hit rolls its chance.": {
+      "en": "Manual: assign Weapon spell in Settings > Controls. Automatic: each successful hit rolls its chance.",
+      "fr": "Manuel : attribuez Sort de l’arme dans Paramètres > Commandes. Automatique : chaque impact réussi teste sa probabilité.",
+      "es": "Manual: asigna Hechizo del arma en Ajustes > Controles. Automático: cada impacto válido comprueba su probabilidad."
+    },
+    "Choose equipment as the recipe result; spells require a weapon.": {
+      "en": "Choose equipment as the recipe result; spells require a weapon.",
+      "fr": "Choisissez un équipement comme résultat de recette ; un sort exige une arme.",
+      "es": "Elige un equipo como resultado de la receta; los hechizos requieren un arma."
+    },
+    "Choose a spell.": {
+      "en": "Choose a spell.",
+      "fr": "Choisissez un sort.",
+      "es": "Elige un hechizo."
+    },
+    "Choose at least one improvement.": {
+      "en": "Choose at least one improvement.",
+      "fr": "Choisissez au moins une amélioration.",
+      "es": "Elige al menos una mejora."
+    },
+    "Configure weapon spell": {
+      "en": "Configure weapon spell",
+      "fr": "Configurer le sort de l’arme",
+      "es": "Configurar hechizo del arma"
+    },
+    "Configure equipment improvement": {
+      "en": "Configure equipment improvement",
+      "fr": "Configurer l’amélioration d’équipement",
+      "es": "Configurar mejora de equipo"
+    },
+    "Choose the equipment copy you want to improve.": {
+      "en": "Choose the equipment copy you want to improve.",
+      "fr": "Choisissez l’exemplaire d’équipement à améliorer.",
+      "es": "Elige la copia de equipo que quieres mejorar."
+    },
+    "Equipment cannot be improved during combat.": {
+      "en": "Equipment cannot be improved during combat.",
+      "fr": "L’équipement ne peut pas être amélioré en combat.",
+      "es": "No se puede mejorar equipo durante el combate."
+    },
+    "Finish your current action before improving equipment.": {
+      "en": "Finish your current action before improving equipment.",
+      "fr": "Terminez votre action actuelle avant d’améliorer l’équipement.",
+      "es": "Termina tu acción actual antes de mejorar el equipo."
+    },
+    "You do not meet this recipe's requirements.": {
+      "en": "You do not meet this recipe's requirements.",
+      "fr": "Vous ne remplissez pas les conditions de cette recette.",
+      "es": "No cumples los requisitos de esta receta."
+    },
+    "The equipment or recipe changed. Choose it again.": {
+      "en": "The equipment or recipe changed. Choose it again.",
+      "fr": "L’équipement ou la recette a changé. Sélectionnez-le à nouveau.",
+      "es": "El equipo o la receta cambió. Selecciónalo de nuevo."
+    },
+    "This equipment upgrade recipe is invalid.": {
+      "en": "This equipment upgrade recipe is invalid.",
+      "fr": "Cette recette d’amélioration d’équipement est invalide.",
+      "es": "Esta receta de mejora de equipo no es válida."
+    },
+    "This recipe cannot lower an item's rarity.": {
+      "en": "This recipe cannot lower an item's rarity.",
+      "fr": "Cette recette ne peut pas diminuer la rareté d’un objet.",
+      "es": "Esta receta no puede reducir la rareza de un objeto."
+    },
+    "This equipment already has the requested improvements.": {
+      "en": "This equipment already has the requested improvements.",
+      "fr": "Cet équipement possède déjà les améliorations demandées.",
+      "es": "Este equipo ya tiene las mejoras solicitadas."
+    },
+    "You do not have the required upgrade materials.": {
+      "en": "You do not have the required upgrade materials.",
+      "fr": "Vous n’avez pas les matériaux nécessaires à cette amélioration.",
+      "es": "No tienes los materiales necesarios para esta mejora."
+    },
+    "Upgrade failed. Your equipment and materials were kept.": {
+      "en": "Upgrade failed. Your equipment and materials were kept.",
+      "fr": "Amélioration échouée. Votre équipement et vos matériaux ont été conservés.",
+      "es": "La mejora falló. Se conservaron tu equipo y tus materiales."
+    },
+    "Upgrade failed. Materials were consumed; your equipment was kept.": {
+      "en": "Upgrade failed. Materials were consumed; your equipment was kept.",
+      "fr": "Amélioration échouée. Les matériaux ont été consommés ; votre équipement a été conservé.",
+      "es": "La mejora falló. Se consumieron los materiales; se conservó tu equipo."
+    },
+    "Equipment improved.": {
+      "en": "Equipment improved.",
+      "fr": "Équipement amélioré.",
+      "es": "Equipo mejorado."
+    },
+    "Unable to save the upgrade. Your items were restored.": {
+      "en": "Unable to save the upgrade. Your items were restored.",
+      "fr": "Impossible d’enregistrer l’amélioration. Vos objets ont été restaurés.",
+      "es": "No se pudo guardar la mejora. Se restauraron tus objetos."
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucune",
+      "es": "Ninguna"
+    },
+    "Common": {
+      "en": "Common",
+      "fr": "Commune",
+      "es": "Común"
+    },
+    "Uncommon": {
+      "en": "Uncommon",
+      "fr": "Peu commune",
+      "es": "Poco común"
+    },
+    "Rare": {
+      "en": "Rare",
+      "fr": "Rare",
+      "es": "Rara"
+    },
+    "Epic": {
+      "en": "Epic",
+      "fr": "Épique",
+      "es": "Épica"
+    },
+    "Legendary": {
+      "en": "Legendary",
+      "fr": "Légendaire",
+      "es": "Legendaria"
+    },
+    "Attack": {
+      "en": "Attack",
+      "fr": "Attaque",
+      "es": "Ataque"
+    },
+    "AbilityPower": {
+      "en": "AbilityPower",
+      "fr": "Puissance magique",
+      "es": "Poder mágico"
+    },
+    "Defense": {
+      "en": "Defense",
+      "fr": "Défense",
+      "es": "Defensa"
+    },
+    "MagicResist": {
+      "en": "MagicResist",
+      "fr": "Résistance magique",
+      "es": "Resistencia mágica"
+    },
+    "Speed": {
+      "en": "Speed",
+      "fr": "Vitesse",
+      "es": "Velocidad"
+    }
+  }
+}

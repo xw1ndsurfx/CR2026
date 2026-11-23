@@ -887,6 +887,7 @@ public partial class Player : Entity
 
 
                 if (!HasPendingDeath) base.Update(timeMs);
+                UpdateEquipmentSpell();
                 Intersect.Server.Housing.HousingRuntime.Update(this);
                 Intersect.Server.GuildHeadquarters.HeadquartersRuntime.Update(this);
                 UpdateActivePet(timeMs);
@@ -1911,7 +1912,7 @@ public partial class Player : Entity
         ProjectileDescriptor projectile,
         SpellDescriptor parentSpell,
         ItemDescriptor parentItem,
-        Direction projectileDir)
+        Direction projectileDir, ItemProperties? sourceProperties = null)
     {
         if (!CanAttack(target, parentSpell))
         {
@@ -1919,6 +1920,7 @@ public partial class Player : Entity
         }
 
         LastAttackingWeapon = parentItem;
+        _attackingEquipmentProperties = sourceProperties;
 
         //If Entity is resource, check for the correct tool and make sure its not a spell cast.
         if (target is Resource resource)
@@ -1977,7 +1979,7 @@ public partial class Player : Entity
             return;
         }
 
-        base.TryAttack(target, projectile, parentSpell, parentItem, projectileDir);
+        base.TryAttack(target, projectile, parentSpell, parentItem, projectileDir, sourceProperties);
     }
 
     protected override void ReactToDamage(Vital vital)
@@ -2003,6 +2005,7 @@ public partial class Player : Entity
     {
         if (isAutoAttack)
         {
+            OnEquipmentWeaponHit(enemy);
             EnqueueStartCommonEvent(LastAttackingWeapon?.GetEventTrigger(ItemEventTrigger.OnHit));
             foreach (var trigger in CachedEquipmentOnHitTriggers)
             {
@@ -2130,6 +2133,7 @@ public partial class Player : Entity
         }
 
         LastAttackingWeapon = weapon;
+        _attackingEquipmentProperties = item == null ? null : new ItemProperties(item.Properties);
 
         // Only this validated direct weapon/unarmed melee path is eligible for
         // player combos. Spell and projectile damage use separate entry points.
@@ -3939,6 +3943,7 @@ public partial class Player : Entity
 
                     break;
                 case ItemType.Equipment:
+                    QueueEquipmentEvent(Items[slot], ItemEventTrigger.OnUse);
                     if (SlotIsEquipped(slot, out var eqpSlot))
                     {
                         UnequipItem(eqpSlot, true);
@@ -4444,6 +4449,12 @@ public partial class Player : Entity
             return;
         }
 
+        if (craftDescriptor.EquipmentUpgrade != null)
+        {
+            lock (EntityLock) CompleteEquipmentUpgrade(craftDescriptor);
+            return;
+        }
+
         var backupItems = new List<Item>();
         foreach (var backupItem in Items)
         {
@@ -4614,6 +4625,13 @@ public partial class Player : Entity
             PacketSender.SendChatMsg(this, Strings.Errors.UnknownErrorTryAgain, ChatMessageType.Error, CustomColors.Alerts.Error);
             ApplicationContext.Context.Value?.Logger.LogError($"Unable to find item descriptor {craftItem?.Id} for craft {craftDescriptor?.Id}.");
             return true;
+        }
+
+        if (craftDescriptor.EquipmentUpgrade != null)
+        {
+            var problem = PlanEquipmentUpgrade(craftDescriptor, CraftingState?.UpgradeTarget, out _, out _);
+            if (problem.Length > 0) EquipmentUpgradeNotice(problem);
+            return problem.Length > 0;
         }
 
         //Quickly Look through the inventory and create a catalog of what items we have, and how many
@@ -6255,6 +6273,7 @@ public partial class Player : Entity
         }
 
         EnqueueStartCommonEvent(itemDescriptor.GetEventTrigger(ItemEventTrigger.OnEquip));
+        if (slot >= 0 && slot < Items.Count) QueueEquipmentEvent(Items[slot], ItemEventTrigger.OnEquip);
 
         ProcessEquipmentUpdated(true);
     }
@@ -6294,6 +6313,7 @@ public partial class Player : Entity
         if (TryGetEquippedItem(equipmentSlot, out var prevEquipped))
         {
             EnqueueStartCommonEvent(prevEquipped.Descriptor?.GetEventTrigger(ItemEventTrigger.OnUnequip));
+            QueueEquipmentEvent(prevEquipped, ItemEventTrigger.OnUnequip);
         }
 
         Equipment[equipmentSlot] = -1;
@@ -6339,6 +6359,11 @@ public partial class Player : Entity
 
             var onHit = equippedItem.Descriptor.GetEventTrigger(ItemEventTrigger.OnHit);
             var onDamaged = equippedItem.Descriptor.GetEventTrigger(ItemEventTrigger.OnDamageReceived);
+            if (equippedItem.Properties.Enhancement is {} enhancement && EventDescriptor.Get(enhancement.EventId) is { CommonEvent: true } addedEvent)
+            {
+                if (enhancement.EventTrigger == ItemEventTrigger.OnHit && slot != Options.Instance.Equipment.WeaponSlot) CachedEquipmentOnHitTriggers.Add(addedEvent);
+                if (enhancement.EventTrigger == ItemEventTrigger.OnDamageReceived) CachedEquipmentOnDamageTriggers.Add(addedEvent);
+            }
 
             // We have special logic for handling weapons, so the player can't hot-swap their weapon and get a different on-hit event to proc
             // As a result, don't cache them, instead use property "LastAttackingWeapon"
@@ -8280,6 +8305,7 @@ public partial class Player : Entity
 
 public class CraftingState
 {
+    public EquipmentUpgradeTarget? UpgradeTarget { get; set; }
     public Guid Id { get; set; }
 
     public int CraftCount { get; set; }

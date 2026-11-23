@@ -18,8 +18,12 @@ public partial class ItemProperties
         }
 
         Array.Copy(other.StatModifiers, StatModifiers, Enum.GetValues<Stat>().Length);
+        Enhancement = other.Enhancement?.Copy();
     }
 
     [Key(0)]
     public int[] StatModifiers { get; set; } = new int[Enum.GetValues<Stat>().Length];
+
+    [Key(1)]
+    public EquipmentEnhancement? Enhancement { get; set; }
 }

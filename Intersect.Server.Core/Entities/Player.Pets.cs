@@ -10,6 +10,7 @@ namespace Intersect.Server.Entities;
 
 public sealed class PetCollection
 {
+    public Intersect.Framework.Core.EquipmentLoadouts.EquipmentLoadoutProfile EquipmentLoadouts { get; set; } = new();
     public Intersect.Framework.Core.RoyalSeasons.RoyalSeasonProfile RoyalSeasons { get; set; } = new();
     public Intersect.Framework.Core.RoyalContracts.RoyalContractProfile RoyalContracts { get; set; } = new();
     public Intersect.Server.Archery.PaidMasteryRespec? MasteryRespec { get; set; }
@@ -45,6 +46,11 @@ public partial class Player
         {
             PetCollection = string.IsNullOrWhiteSpace(value) ? new PetCollection() : JsonConvert.DeserializeObject<PetCollection>(value) ?? new PetCollection();
             PetCollection.Mounts ??= new(); PetCollection.Mounts.Owned ??= [];
+            PetCollection.EquipmentLoadouts ??= new();
+            PetCollection.EquipmentLoadouts.Sets ??= [];
+            foreach (var slot in PetCollection.EquipmentLoadouts.Sets.Keys.ToArray())
+                if (!Intersect.Framework.Core.EquipmentLoadouts.EquipmentLoadoutRules.ValidSlot(slot) || PetCollection.EquipmentLoadouts.Sets[slot] == null)
+                    PetCollection.EquipmentLoadouts.Sets.Remove(slot);
             PetCollection.RoyalSeasons ??= new();
             PetCollection.RoyalSeasons.Seasons ??= [];
             foreach (var entry in PetCollection.RoyalSeasons.Seasons.ToArray())

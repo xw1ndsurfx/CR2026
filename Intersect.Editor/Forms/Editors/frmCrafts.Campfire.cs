@@ -20,6 +20,7 @@ public partial class FrmCrafts
         var groups = pnlContainer.Controls.Cast<Control>().ToArray();
         recipe.Controls.AddRange(groups);
         tabs.TabPages.AddRange([recipe, fire]);
+        InitializeEquipmentUpgrade(tabs);
         pnlContainer.Controls.Add(tabs);
         _campfireResult = new Button { Text = CampfireText("Configure campfire result"), Left = 20, Top = 24, Width = 350, Height = 38 };
         _campfireResult.Click += (_, _) => ConfigureCampfireResult();
@@ -28,7 +29,8 @@ public partial class FrmCrafts
     private void UpdateCampfireResultButton()
     {
         var placed = mEditorItem?.Campfire != null;
-        cmbResult.Enabled = nudCraftQuantity.Enabled = !placed;
+        cmbResult.Enabled = !placed;
+        nudCraftQuantity.Enabled = !placed && mEditorItem?.EquipmentUpgrade == null;
         _campfireResult.Text = CampfireText(placed ? "Campfire result configured" : "Configure campfire result");
     }
     private sealed record AnimationChoice(Guid Id, string Name) { public override string ToString() => Name; }
@@ -71,6 +73,7 @@ public partial class FrmCrafts
             if (enabled.Checked && !result.IsValid)
             { MessageBox.Show(dialog, CampfireText("Choose both the fire and ashes animations.")); return; }
             mEditorItem.Campfire = enabled.Checked ? result : null;
+            if (enabled.Checked) mEditorItem.EquipmentUpgrade = null;
             UpdateCampfireResultButton(); dialog.DialogResult = DialogResult.OK;
         };
         dialog.Controls.AddRange([save, cancel]); dialog.CancelButton = cancel;

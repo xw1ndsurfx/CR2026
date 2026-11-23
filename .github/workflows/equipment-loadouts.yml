@@ -1,0 +1,47 @@
+name: Equipment loadouts
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*EquipmentLoadout*'
+      - '**/*EquipmentUpgrade*'
+      - '**/*EquipmentPower*'
+      - '**/*EquipmentEffect*'
+      - '**/*EquipmentPresentation*'
+      - '**/equipment_*_v1.*'
+      - 'Framework/Intersect.Framework.Core/GameObjects/Items/**'
+      - 'Framework/Intersect.Framework.Core/GameObjects/Crafting/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Client/CraftItemPacket.cs'
+      - 'Intersect.Client.Core/Interface/Game/Crafting/**'
+      - 'Intersect.Server.Core/Networking/PacketHandler.cs'
+      - 'Intersect.Server.Core/Entities/Projectile*'
+      - '**/EquipmentLoadouts/**'
+      - '**/EquipmentLoadoutUiTests/**'
+      - 'Intersect.Client.Framework/Input/**'
+      - 'Intersect.Client.Core/Core/Controls/**'
+      - 'Intersect.Client.Core/Entities/Player.cs'
+      - 'Intersect.Client.Core/Interface/Game/MenuContainer*'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.cs'
+      - 'Intersect.Client.Core/Interface/Shared/SettingsWindow.cs'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Intersect.Server.Core/Entities/Player.Pets.cs'
+      - '.github/workflows/equipment-loadouts.yml'
+jobs:
+  loadouts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Equipment" --nologo
+      - run: dotnet run --project Utilities/EquipmentLoadoutUiTests/EquipmentLoadoutUiTests.csproj -c Release
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Release -p:RuntimeIdentifiers=win-x64 -- --equipment-only
+      - run: dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: equipment-loadouts-ui
+          path: validation-local/equipment-loadouts-ui/*.png

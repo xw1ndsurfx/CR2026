@@ -1058,7 +1058,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             // Set up all information we need to draw this name.
             var name = mapItemInstance.Descriptor.Name;
             var quantity = mapItemInstance.Quantity;
-            var rarity = itemDescriptor.Rarity;
+            var rarity = itemDescriptor.EffectiveRarity(mapItemInstance.ItemProperties);
             if (mapItemInstance.Quantity > 1)
             {
                 name = Strings.General.MapItemStackable.ToString(

@@ -5,6 +5,7 @@
   <ItemGroup><EmbeddedResource Include="RoyalContracts/Text.json" LogicalName="Intersect.RoyalContracts.Text" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="GuildHeadquarters/Text.json" LogicalName="Intersect.GuildHeadquarters.Text" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="RoyalSeasons/Text.json" LogicalName="Intersect.RoyalSeasons.Text" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="EquipmentLoadouts/Text.json" LogicalName="Intersect.EquipmentLoadouts.Text" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="Exportation/Text.json" LogicalName="Intersect.Exportation.Text" /></ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Fishing/Text.json" LogicalName="Intersect.Fishing.Text" />
