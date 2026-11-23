@@ -85,6 +85,7 @@ public partial class Dragger : Base
 
     protected override void OnMouseUp(MouseButton mouseButton, Point mousePosition, bool userAction = true)
     {
+        if (userAction && Target is SliderBar or ScrollBarBar) QueueInterfaceSound(UiCue.Slider);
         base.OnMouseUp(mouseButton, mousePosition, userAction);
 
         if (userAction && _stateSoundNames.TryGetValue(ButtonSoundState.MouseUp, out var value))

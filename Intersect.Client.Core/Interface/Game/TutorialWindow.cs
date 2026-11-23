@@ -193,7 +193,7 @@ internal sealed class TutorialWindow : Window
         var display = RequestedOpen && (!_combatDrill || _combatGuideExplicitlyOpened) && !suspended;
         if (!suspended && (display || _state.Finished) && _pendingSound.Length > 0)
         {
-            if (General.Globals.ContentManager != null) Core.Audio.AddGameSound(_pendingSound, false);
+            if (General.Globals.ContentManager != null) Intersect.Client.Interface.InterfaceAudio.PlayConfigured(_pendingSound, false);
             _pendingSound = "";
         }
 

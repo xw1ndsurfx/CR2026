@@ -1,0 +1,28 @@
+name: Interface audio
+on:
+  pull_request:
+    paths:
+      - 'Intersect.Client.Framework/Gwen/**'
+      - 'Intersect.Client.Framework/Audio/**'
+      - 'Intersect.Client.Core/Interface/**'
+      - 'Intersect.Client/resources/sounds/interface/**'
+      - 'Shared/InterfaceAudioAssets.props'
+      - 'Utilities/InterfaceAudio*/**'
+      - 'Documentation/Interface-Audio-Assets.json'
+      - '.github/workflows/interface-audio.yml'
+  workflow_dispatch:
+jobs:
+  interface-audio:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python Utilities/InterfaceAudioAssets/generate_audio.py --check
+      - run: dotnet run --project Utilities/InterfaceAudioTests/InterfaceAudioTests.csproj -c Release
+      - run: dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo

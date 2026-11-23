@@ -6,7 +6,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class JoustAudio : IDisposable
 {
     internal Func<JoustSound, bool, Action?> Start = (sound, loop) => {
-        var instance = Audio.AddGameSound(sound.File, loop);
+        var instance = Intersect.Client.Interface.InterfaceAudio.PlayConfigured(sound.File, loop);
         if (instance == null) return null;
         instance.Volume = sound.Volume; return instance.Stop;
     };

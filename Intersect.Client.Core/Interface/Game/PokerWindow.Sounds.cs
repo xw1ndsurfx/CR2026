@@ -55,7 +55,7 @@ internal sealed partial class PokerWindow
     private static void PlayPokerSound(string? file)
     {
         if (!string.IsNullOrWhiteSpace(file))
-            Intersect.Client.Core.Audio.AddGameSound(file, false);
+            Intersect.Client.Interface.InterfaceAudio.PlayConfigured(file, false);
     }
 
     private void RequestExit()
