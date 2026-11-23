@@ -19,6 +19,12 @@
 
 ## État des fonctionnalités — distinction code / validation
 
+### Ajout du 23 novembre 2026 : configurations, sorts d’armes et forge
+
+Les [configurations rapides d’équipement](Documentation/EquipmentLoadouts.fr.md) sont développées sur `codex/equipment-loadouts`, à partir de `main` après la PR 279 : cinq ensembles nommés par personnage, touches configurables dans les paramètres, changement complet hors combat contrôlé par le serveur, et restauration en cas d’échec de sauvegarde. Les interfaces et messages couvrent EN/FR/ES. Ce travail est local, sans publication ni déploiement ; la recette connectée avec reconnexion, redémarrage et second client reste à effectuer. La branche et le client installé Intel HD 3000 restent séparés. Les constats historiques ci-dessous ne sont pas réévalués par cet ajout.
+
+Le même chantier ajoute un sort d’arme manuel ou automatique au choix dans Items Editor, ainsi que les recettes d’amélioration d’un exemplaire dans Crafts Editor (rareté, sort, événement commun). Les propriétés existantes et les autres exemplaires sont conservés ; l’échec de fabrication protège l’objet et l’échec de sauvegarde restaure les matériaux. Deux fonds royaux, un atlas de quatre icônes et neuf sons originaux accompagnent les interfaces, avec copie aux builds client/éditeur. La suite serveur complète atteint 777 tests réussis ; les contrôles des éditeurs passent dans les trois langues. Les aperçus Gwen sont des validations locales, distinctes d’une recette connectée.
+
 ### Ajout du 21 novembre 2026 : quartier général de guilde
 
 Le [quartier général de guilde](Documentation/GuildHeadquarters.fr.md) est développé sur `codex/guild-headquarters`, depuis `main` après la PR 277 : instance privée pour les membres, visiteurs sur invitation, coffre existant et améliorations collectives configurables. Un pack de six images, huit WAV et un thème OGG accompagne l’éditeur. Ce travail n’est pas encore publié ou déployé ; les cartes dédiées et la recette multijoueur restent à configurer et vérifier. Le client Intel HD 3000 reste séparé. Les autres constats datés ci-dessous ne sont pas réévalués par cet ajout.
@@ -74,7 +80,7 @@ L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.f
 
 ### P2 — pistes de conception, non engagées comme fonctionnalités livrées
 
-Les idées discutées pour une étape ultérieure comprennent les **configurations rapides d'équipement**, **matchmaking amélioré**, **courses de montures**, **donjons à modificateurs** et **saisons royales**. Les expéditions navales coopératives ont rejoint la référence de travail par la PR 277 ; le quartier général est décrit dans l’ajout du 21 novembre ci-dessus. L’intégration de code ne vaut pas validation en production. Priorité, périmètre et faisabilité des autres pistes restent à valider séparément.
+Les idées discutées pour une étape ultérieure comprennent le **matchmaking amélioré** et les **courses de montures**. Les expéditions navales coopératives ont rejoint la référence de travail par la PR 277, le quartier général par la PR 278, et les donjons à modificateurs et saisons royales par la PR 279. Les configurations rapides d’équipement sont décrites dans l’ajout du 23 novembre ci-dessus. L’intégration de code ne vaut pas validation en production. Priorité, périmètre et faisabilité des autres pistes restent à valider séparément.
 
 ## Reprise sur une nouvelle session de développement
 

@@ -102,7 +102,7 @@ public partial class ProjectileSpawn
             {
                 if (Parent.Owner != Parent.Target)
                 {
-                    Parent.Owner.TryAttack(targetEntity, Parent.Descriptor, Parent.Spell, Parent.Item, Dir);
+                    Parent.Owner.TryAttack(targetEntity, Parent.Descriptor, Parent.Spell, Parent.Item, Dir, Parent.SourceEquipmentProperties);
 
                     if (Dir <= Direction.Right && ShouldHook(targetEntity) && !Parent.HasGrappled)
                     {
@@ -132,7 +132,7 @@ public partial class ProjectileSpawn
                 }
                 else if (!ProjectileDescriptor.IgnoreActiveResources)
                 {
-                    Parent.Owner.TryAttack(targetResource, Parent.Descriptor, Parent.Spell, Parent.Item, Dir);
+                    Parent.Owner.TryAttack(targetResource, Parent.Descriptor, Parent.Spell, Parent.Item, Dir, Parent.SourceEquipmentProperties);
 
                     if (Dir <= Direction.Right && ShouldHook(targetResource) && !Parent.HasGrappled)
                     {
@@ -147,7 +147,7 @@ public partial class ProjectileSpawn
                 if (Parent.Owner is not Npc ownerNpc ||
                     ownerNpc.CanNpcCombat(targetEntity, Parent.Spell != null && Parent.Spell.Combat.Friendly))
                 {
-                    Parent.Owner.TryAttack(targetEntity, Parent.Descriptor, Parent.Spell, Parent.Item, Dir);
+                    Parent.Owner.TryAttack(targetEntity, Parent.Descriptor, Parent.Spell, Parent.Item, Dir, Parent.SourceEquipmentProperties);
 
                     if (Dir <= Direction.Right && ShouldHook(targetEntity) && !Parent.HasGrappled)
                     {

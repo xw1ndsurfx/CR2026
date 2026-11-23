@@ -91,7 +91,9 @@ public sealed partial class NavalTests
     {
         using var world=new EnemyTestWorld();var ship=world.Add(8.5,10.5,false);var enemy=world.Add(18.5,10.5,true);
         var captain=world.State(ship).CaptainId;var crew=Guid.NewGuid();var stale=Guid.NewGuid();var now=Timing.Global.Milliseconds;
-        AddCrewPresence(world,ship,crew,now);AddCrewPresence(world,ship,stale,now-3000);
+        // Keep the explicitly active fixture present even if JIT or a loaded CI worker
+        // takes longer than the live 1.5-second heartbeat window. Stale crew still expire.
+        AddCrewPresence(world,ship,crew,now+60000);AddCrewPresence(world,ship,stale,now-3000);
         var patrol=world.Field<HerboniaPatrol>(enemy,"Enemy");patrol.SailingExperienceReward=275;
         var item=Guid.NewGuid();patrol.Loot=[new(){ItemId=item,MinimumQuantity=4,MaximumQuantity=4,ChancePercent=100}];
         world.Field<Dictionary<Guid,long>>(enemy,"Contributions")[crew]=40;

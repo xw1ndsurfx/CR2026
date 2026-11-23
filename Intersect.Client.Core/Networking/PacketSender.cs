@@ -333,9 +333,9 @@ public static partial class PacketSender
         Network.SendPacket(new SwapBankItemsPacket(slot1, slot2));
     }
 
-    public static void SendCraftItem(Guid id, int count)
+    public static void SendCraftItem(Guid id, int count, int equipmentSlot = -1, Intersect.Framework.Core.GameObjects.Items.ItemProperties? expectedEquipment = null)
     {
-        Network.SendPacket(new CraftItemPacket(id, count));
+        Network.SendPacket(new CraftItemPacket(id, count) { EquipmentSlot = equipmentSlot, ExpectedEquipment = expectedEquipment });
     }
 
     public static void SendPartyInvite(Guid targetId)

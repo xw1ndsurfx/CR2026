@@ -439,6 +439,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideRoyalContracts();
         Interface.GameUi.HideRoyalSeasons();
+        Interface.GameUi.HideEquipmentLoadouts();
         Interface.GameUi.HideLogiCoinShop();
         Interface.GameUi.HideHarbour();
         Interface.GameUi.HideMarketplace();

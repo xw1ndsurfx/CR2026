@@ -461,6 +461,7 @@ public partial class GameInterface : MutableInterface
         UpdateNavalExpeditionInterface();
         UpdateHeadquarters();
         _royalSeasons?.UpdateState();
+        _equipmentLoadouts?.UpdateState();
         _royalContractsWindow?.Update();
         UpdateContractJournal();
         GuildEmblems.Update();
@@ -468,6 +469,7 @@ public partial class GameInterface : MutableInterface
         UpdateAdvancedCombatHud();
         _archeryWindow?.CheckClosed();
         UpdateWeaponSkills();
+        UpdateEquipmentPower();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {
             PlayerBox?.SetEntity(Globals.Me);

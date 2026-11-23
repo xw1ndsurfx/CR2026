@@ -1618,7 +1618,7 @@ public abstract partial class Entity : IEntity
         ProjectileDescriptor projectile,
         SpellDescriptor parentSpell,
         ItemDescriptor parentItem,
-        Direction projectileDir)
+        Direction projectileDir, ItemProperties? sourceProperties = null)
     {
         if (target is Resource && parentSpell != null)
         {

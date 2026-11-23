@@ -1487,6 +1487,8 @@ public partial class Player : Entity, IPlayer
             DirectionMoving = inputDirection;
         }
 
+        if (Interface.Interface.InGameUiOrNull?.TryHandleEquipmentLoadoutHotkey() == true) return;
+        if (Interface.Interface.InGameUiOrNull?.TryHandleEquipmentSpellHotkey() == true) return;
         if (Interface.Interface.InGameUiOrNull?.TryHandleWeaponSkillHotkey() == true) return;
 
         var castInput = -1;

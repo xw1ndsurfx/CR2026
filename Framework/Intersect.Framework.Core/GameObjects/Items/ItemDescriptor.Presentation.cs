@@ -10,6 +10,7 @@ public sealed class ItemPresentationSettings
     public bool ShowRequiredLevel {get;set;}=true;
     public int NavalAmmoKind {get;set;}=-1;
     public string NavalAmmoIcon {get;set;}="";
+    public WeaponSpellBinding? WeaponSpell {get;set;}
 }
 public partial class ItemDescriptor
 {

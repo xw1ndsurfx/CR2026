@@ -114,6 +114,14 @@ internal sealed class BuiltinControlsProvider : IControlsProvider
             { Control.WeaponSkill9, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D9), ControlBinding.Default) },
             { Control.WeaponSkill10, new ControlMapping(new ControlBinding(Keys.Alt, Keys.D0), ControlBinding.Default) },
 
+            // Unassigned by default: existing player bindings keep their current meaning.
+            { Control.EquipmentSet1, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+            { Control.EquipmentSet2, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+            { Control.EquipmentSet3, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+            { Control.EquipmentSet4, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+            { Control.EquipmentSet5, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+            { Control.WeaponSpell, new ControlMapping(ControlBinding.Default, ControlBinding.Default) },
+
             // Hotkeys should be at the end of the list
             { Control.Hotkey1, new ControlMapping(new ControlBinding(Keys.None, Keys.D1), ControlBinding.Default) },
             { Control.Hotkey2, new ControlMapping(new ControlBinding(Keys.None, Keys.D2), ControlBinding.Default) },

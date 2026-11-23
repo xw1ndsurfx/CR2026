@@ -22,4 +22,10 @@ public partial class CraftItemPacket : IntersectPacket
     [Key(1)]
     public int Count { get; set; }
 
+    [Key(2)]
+    public int EquipmentSlot { get; set; } = -1;
+
+    [Key(3)]
+    public Intersect.Framework.Core.GameObjects.Items.ItemProperties? ExpectedEquipment { get; set; }
+
 }
