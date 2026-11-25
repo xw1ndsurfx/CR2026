@@ -9,8 +9,11 @@ public sealed class LobbyPresentation
 public sealed class LobbyConfiguration
 {
     public List<LobbyPresentation> Activities { get; set; } = [];
+    public Matchmaking.MatchmakingConfiguration Matchmaking { get; set; } = new();
     public void Validate()
     {
+        if (Matchmaking == null) throw new InvalidDataException();
+        Matchmaking.Validate();
         if (Activities == null || Activities.Count > Enum.GetValues<LobbyActivity>().Length || Activities.Any(a => a == null) || Activities.Select(a => a.Activity).Distinct().Count() != Activities.Count) throw new InvalidDataException();
         foreach(var a in Activities)
             if (!Enum.IsDefined(a.Activity) || a.MaximumMembers is < 1 or > 100 || a.Image == null || a.Image.Length > 160 || a.Image.StartsWith('/') || a.Image.StartsWith('\\') || a.Image.Contains(':') || a.Image.Contains("..") || a.Image.Any(char.IsControl)) throw new InvalidDataException();

@@ -1,0 +1,44 @@
+name: Adventure matchmaking
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*Matchmaking*'
+      - '**/Matchmaking/**'
+      - '**/MatchmakingAssets/**'
+      - '**/MatchmakingUiTests/**'
+      - '**/PartyLobbies/**'
+      - '**/*LobbyConfiguration*'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Intersect.Server.Core/Dungeons/DungeonRunRuntime.cs'
+      - 'Intersect.Server.Core/Naval/NavalSystem.Expeditions.cs'
+      - 'Intersect.Server.Core/Core/LogicService.LogicThread.cs'
+      - 'Intersect.Client.Core/Interface/Game/PartyLobbyWindow.cs'
+      - 'Intersect.Client/resources/gui/matchmaking_*'
+      - 'Intersect.Client/resources/sounds/matchmaking/**'
+      - 'Framework/Intersect.Framework.Core/QualityOfLife/**'
+      - '.github/workflows/matchmaking.yml'
+jobs:
+  matchmaking:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python Utilities/MatchmakingAssets/generate_audio.py --check
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Matchmaking|FullyQualifiedName~MatchedNaval|FullyQualifiedName~Dungeon|FullyQualifiedName~Naval" --nologo
+      - run: dotnet run --project Utilities/MatchmakingUiTests/MatchmakingUiTests.csproj -c Release
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Release -p:RuntimeIdentifiers=win-x64 -- --matchmaking-only
+      - run: dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matchmaking-ui
+          path: validation-local/matchmaking-ui/*.png

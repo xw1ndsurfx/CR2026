@@ -5065,6 +5065,381 @@
       "en": "Please wait before updating the quickbar.",
       "fr": "Patientez avant de modifier à nouveau la barre rapide.",
       "es": "Espera antes de volver a modificar la barra rápida."
+    },
+    "Confirm only when you are ready to travel with this group. Decline to leave the search.": {
+      "en": "Confirm only when you are ready to travel with this group. Decline to leave the search.",
+      "fr": "Confirme quand tu es prêt à partir avec ce groupe. Refuse pour quitter la recherche.",
+      "es": "Confirma cuando estés listo para viajar con este grupo. Rechaza para salir de la búsqueda."
+    },
+    "Your party leader enrolls the whole group. Every player confirms departure individually.": {
+      "en": "Your party leader enrolls the whole group. Every player confirms departure individually.",
+      "fr": "Le chef inscrit le groupe entier. Chaque joueur confirme son départ individuellement.",
+      "es": "El líder inscribe al grupo entero. Cada jugador confirma su salida individualmente."
+    },
+    "{0} lobbies": {
+      "en": "{0} lobbies",
+      "fr": "{0} salons",
+      "es": "{0} salas"
+    },
+    "Find an adventure": {
+      "en": "Find an adventure",
+      "fr": "Trouver une aventure",
+      "es": "Buscar una aventura"
+    },
+    "Matchmaking": {
+      "en": "Matchmaking",
+      "fr": "Recherche de groupe",
+      "es": "Búsqueda de grupo"
+    },
+    "Find a group": {
+      "en": "Find a group",
+      "fr": "Trouver un groupe",
+      "es": "Buscar un grupo"
+    },
+    "Leave search": {
+      "en": "Leave search",
+      "fr": "Quitter la recherche",
+      "es": "Salir de la búsqueda"
+    },
+    "I am ready": {
+      "en": "I am ready",
+      "fr": "Je suis prêt",
+      "es": "Estoy listo"
+    },
+    "Decline": {
+      "en": "Decline",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Ready": {
+      "en": "Ready",
+      "fr": "Prêt",
+      "es": "Listo"
+    },
+    "Searching": {
+      "en": "Searching",
+      "fr": "Recherche en cours",
+      "es": "Buscando"
+    },
+    "Waiting for confirmation": {
+      "en": "Waiting for confirmation",
+      "fr": "Confirmation attendue",
+      "es": "Esperando confirmación"
+    },
+    "Captain": {
+      "en": "Captain",
+      "fr": "Capitaine",
+      "es": "Capitán"
+    },
+    "Naval expedition": {
+      "en": "Naval expedition",
+      "fr": "Expédition navale",
+      "es": "Expedición naval"
+    },
+    "Choose an activity. Solo players and existing groups can join.": {
+      "en": "Choose an activity. Solo players and existing groups can join.",
+      "fr": "Choisis une activité, seul ou avec ton groupe.",
+      "es": "Elige una actividad, solo o con tu grupo."
+    },
+    "Searching for compatible players…": {
+      "en": "Searching for compatible players…",
+      "fr": "Recherche de joueurs compatibles…",
+      "es": "Buscando jugadores compatibles…"
+    },
+    "Group found! Everyone must confirm before departure.": {
+      "en": "Group found! Everyone must confirm before departure.",
+      "fr": "Groupe trouvé ! Tous doivent confirmer le départ.",
+      "es": "¡Grupo encontrado! Todos deben confirmar la salida."
+    },
+    "Preparing departure…": {
+      "en": "Preparing departure…",
+      "fr": "Préparation du départ…",
+      "es": "Preparando la salida…"
+    },
+    "Your adventure has started!": {
+      "en": "Your adventure has started!",
+      "fr": "Ton aventure a commencé !",
+      "es": "¡Tu aventura ha comenzado!"
+    },
+    "No activities are configured or available right now.": {
+      "en": "No activities are configured or available right now.",
+      "fr": "Aucune activité configurée ou disponible pour le moment.",
+      "es": "No hay actividades configuradas o disponibles ahora."
+    },
+    "Sailing level {0}+": {
+      "en": "Sailing level {0}+",
+      "fr": "Navigation niveau {0}+",
+      "es": "Navegación nivel {0}+"
+    },
+    "Level {0}+": {
+      "en": "Level {0}+",
+      "fr": "Niveau {0}+",
+      "es": "Nivel {0}+"
+    },
+    "Level {0}–{1}": {
+      "en": "Level {0}–{1}",
+      "fr": "Niveau {0}–{1}",
+      "es": "Nivel {0}–{1}"
+    },
+    "Target: {0} players · Waiting: {1} · {2}": {
+      "en": "Target: {0} players · Waiting: {1} · {2}",
+      "fr": "Objectif : {0} joueurs · En attente : {1} · {2}",
+      "es": "Objetivo: {0} jugadores · En espera: {1} · {2}"
+    },
+    "{0}–{1} ships": {
+      "en": "{0}–{1} ships",
+      "fr": "{0}–{1} navires",
+      "es": "{0}–{1} barcos"
+    },
+    "Closing this window keeps you in the search. Use Leave search to cancel.": {
+      "en": "Closing this window keeps you in the search. Use Leave search to cancel.",
+      "fr": "Fermer cette fenêtre maintient la recherche. Utilise Quitter la recherche pour annuler.",
+      "es": "Cerrar esta ventana mantiene la búsqueda. Usa Salir de la búsqueda para cancelar."
+    },
+    "Confirm within {0}s · {1}/{2} ready": {
+      "en": "Confirm within {0}s · {1}/{2} ready",
+      "fr": "Confirme dans {0}s · {1}/{2} prêts",
+      "es": "Confirma en {0}s · {1}/{2} listos"
+    },
+    "Searching: {0}s": {
+      "en": "Searching: {0}s",
+      "fr": "Recherche : {0}s",
+      "es": "Buscando: {0}s"
+    },
+    "Matchmaking is unavailable for this activity.": {
+      "en": "Matchmaking is unavailable for this activity.",
+      "fr": "La recherche de groupe est indisponible pour cette activité.",
+      "es": "La búsqueda de grupo no está disponible para esta actividad."
+    },
+    "Your group, activity or boarding conditions changed. Please join again.": {
+      "en": "Your group, activity or boarding conditions changed. Please join again.",
+      "fr": "Ton groupe, l'activité ou les conditions d'embarquement ont changé. Relance la recherche.",
+      "es": "Tu grupo, la actividad o las condiciones de embarque han cambiado. Vuelve a buscar."
+    },
+    "Return to the open world and finish combat or your current activity first.": {
+      "en": "Return to the open world and finish combat or your current activity first.",
+      "fr": "Retourne dans le monde ouvert et termine le combat ou ton activité en cours.",
+      "es": "Vuelve al mundo abierto y termina el combate o tu actividad actual."
+    },
+    "Leave your ship before queuing for a dungeon.": {
+      "en": "Leave your ship before queuing for a dungeon.",
+      "fr": "Quitte ton navire avant de chercher un groupe de donjon.",
+      "es": "Baja de tu barco antes de buscar un grupo de mazmorra."
+    },
+    "A group member does not meet the dungeon requirements.": {
+      "en": "A group member does not meet the dungeon requirements.",
+      "fr": "Un membre du groupe ne remplit pas les conditions du donjon.",
+      "es": "Un miembro del grupo no cumple los requisitos de la mazmorra."
+    },
+    "Matchmaking travel is unavailable in this zone.": {
+      "en": "Matchmaking travel is unavailable in this zone.",
+      "fr": "Le déplacement vers l'activité est indisponible dans cette zone.",
+      "es": "El traslado a la actividad no está disponible en esta zona."
+    },
+    "Meet the Sailing requirements and gather your whole crew aboard stopped ships at a port. Claim pending expedition rewards first.": {
+      "en": "Meet the Sailing requirements and gather your whole crew aboard stopped ships at a port. Claim pending expedition rewards first.",
+      "fr": "Respectez le niveau de Navigation et réunissez tout l'équipage sur des navires arrêtés au port. Récupérez d'abord les récompenses d'expédition en attente.",
+      "es": "Cumplid el nivel de Navegación y reunid a toda la tripulación en barcos parados en un puerto. Recoged antes las recompensas de expedición pendientes."
+    },
+    "These players cannot be matched together.": {
+      "en": "These players cannot be matched together.",
+      "fr": "Ces joueurs ne peuvent pas être réunis.",
+      "es": "Estos jugadores no pueden formar un grupo juntos."
+    },
+    "The search expired. Join again when you are ready.": {
+      "en": "The search expired. Join again when you are ready.",
+      "fr": "La recherche a expiré. Relance-la quand tu es prêt.",
+      "es": "La búsqueda ha caducado. Vuelve a buscar cuando estés listo."
+    },
+    "The ready check expired. Ready groups return to the search.": {
+      "en": "The ready check expired. Ready groups return to the search.",
+      "fr": "La confirmation a expiré. Les groupes prêts reprennent la recherche.",
+      "es": "La confirmación ha caducado. Los grupos listos vuelven a la búsqueda."
+    },
+    "Only the party leader can queue the whole group.": {
+      "en": "Only the party leader can queue the whole group.",
+      "fr": "Seul le chef peut inscrire tout le groupe.",
+      "es": "Solo el líder puede inscribir a todo el grupo."
+    },
+    "A group member is already queued, or the search queue is full.": {
+      "en": "A group member is already queued, or the search queue is full.",
+      "fr": "Un membre est déjà inscrit ou la file de recherche est pleine.",
+      "es": "Un miembro ya está inscrito o la cola está llena."
+    },
+    "The group left the search.": {
+      "en": "The group left the search.",
+      "fr": "Le groupe a quitté la recherche.",
+      "es": "El grupo ha salido de la búsqueda."
+    },
+    "A participant declined. Other groups return to the search.": {
+      "en": "A participant declined. Other groups return to the search.",
+      "fr": "Un participant a refusé. Les autres groupes reprennent la recherche.",
+      "es": "Un participante ha rechazado. Los demás grupos vuelven a la búsqueda."
+    },
+    "This ready check is no longer available.": {
+      "en": "This ready check is no longer available.",
+      "fr": "Cette confirmation n'est plus disponible.",
+      "es": "Esta confirmación ya no está disponible."
+    },
+    "Everyone is ready. Your adventure has started!": {
+      "en": "Everyone is ready. Your adventure has started!",
+      "fr": "Tout le monde est prêt. Ton aventure a commencé !",
+      "es": "Todos están listos. ¡Tu aventura ha comenzado!"
+    },
+    "Departure failed. Your original groups have been restored.": {
+      "en": "Departure failed. Your original groups have been restored.",
+      "fr": "Le départ a échoué. Les groupes d'origine ont été rétablis.",
+      "es": "La salida ha fallado. Se han restaurado los grupos originales."
+    },
+    "Enable matchmaking": {
+      "en": "Enable matchmaking",
+      "fr": "Activer la recherche de groupe",
+      "es": "Activar la búsqueda de grupo"
+    },
+    "Ready timeout (seconds)": {
+      "en": "Ready timeout (seconds)",
+      "fr": "Délai de confirmation (secondes)",
+      "es": "Plazo de confirmación (segundos)"
+    },
+    "Search timeout (seconds)": {
+      "en": "Search timeout (seconds)",
+      "fr": "Durée de recherche (secondes)",
+      "es": "Duración de búsqueda (segundos)"
+    },
+    "Maximum queued players": {
+      "en": "Maximum queued players",
+      "fr": "Joueurs maximum dans la file",
+      "es": "Máximo de jugadores en cola"
+    },
+    "Background image": {
+      "en": "Background image",
+      "fr": "Image de fond",
+      "es": "Imagen de fondo"
+    },
+    "Icons atlas (3 × 2)": {
+      "en": "Icons atlas (3 × 2)",
+      "fr": "Planche d'icônes (3 × 2)",
+      "es": "Atlas de iconos (3 × 2)"
+    },
+    "Open sound": {
+      "en": "Open sound",
+      "fr": "Son d'ouverture",
+      "es": "Son de apertura"
+    },
+    "Search sound": {
+      "en": "Search sound",
+      "fr": "Son de recherche",
+      "es": "Sonido de búsqueda"
+    },
+    "Group found sound": {
+      "en": "Group found sound",
+      "fr": "Son de groupe trouvé",
+      "es": "Sonido de grupo encontrado"
+    },
+    "Ready sound": {
+      "en": "Ready sound",
+      "fr": "Son de confirmation",
+      "es": "Sonido de confirmación"
+    },
+    "Cancel sound": {
+      "en": "Cancel sound",
+      "fr": "Son d'annulation",
+      "es": "Sonido de cancelación"
+    },
+    "Departure sound": {
+      "en": "Departure sound",
+      "fr": "Son de départ",
+      "es": "Sonido de salida"
+    },
+    "Error sound": {
+      "en": "Error sound",
+      "fr": "Son d'erreur",
+      "es": "Sonido de error"
+    },
+    "Activities": {
+      "en": "Activities",
+      "fr": "Activités",
+      "es": "Actividades"
+    },
+    "Add activity": {
+      "en": "Add activity",
+      "fr": "Ajouter une activité",
+      "es": "Añadir actividad"
+    },
+    "Remove activity": {
+      "en": "Remove activity",
+      "fr": "Retirer l'activité",
+      "es": "Quitar actividad"
+    },
+    "Choose an activity": {
+      "en": "Choose an activity",
+      "fr": "Choisir une activité",
+      "es": "Elegir actividad"
+    },
+    "Activity type": {
+      "en": "Activity type",
+      "fr": "Type d'activité",
+      "es": "Tipo de actividad"
+    },
+    "Missing activity": {
+      "en": "Missing activity",
+      "fr": "Activité manquante",
+      "es": "Actividad ausente"
+    },
+    "Target players": {
+      "en": "Target players",
+      "fr": "Nombre de joueurs visé",
+      "es": "Jugadores deseados"
+    },
+    "Maximum level difference (0 = any)": {
+      "en": "Maximum level difference (0 = any)",
+      "fr": "Écart de niveaux maximal (0 = tous)",
+      "es": "Diferencia máxima de nivel (0 = cualquiera)"
+    },
+    "Activity image": {
+      "en": "Activity image",
+      "fr": "Image de l'activité",
+      "es": "Imagen de la actividad"
+    },
+    "Choose a map": {
+      "en": "Choose a map",
+      "fr": "Choisir une carte",
+      "es": "Elegir mapa"
+    },
+    "Missing map": {
+      "en": "Missing map",
+      "fr": "Carte manquante",
+      "es": "Mapa ausente"
+    },
+    "Dungeon entry map": {
+      "en": "Dungeon entry map",
+      "fr": "Carte d'entrée du donjon",
+      "es": "Mapa de entrada a la mazmorra"
+    },
+    "Entry direction": {
+      "en": "Entry direction",
+      "fr": "Direction d'entrée",
+      "es": "Dirección de entrada"
+    },
+    "Target players must respect the activity limits. Dungeon entry must be a walkable tile on one of its maps. Naval crews depart together from stopped ships at the same port.": {
+      "en": "Target players must respect the activity limits. Dungeon entry must be a walkable tile on one of its maps. Naval crews depart together from stopped ships at the same port.",
+      "fr": "Le nombre de joueurs doit respecter les limites de l'activité. L'entrée du donjon doit être une case praticable sur une de ses cartes. Les équipages partent de navires arrêtés au même port.",
+      "es": "El número de jugadores debe respetar los límites de la actividad. La entrada debe ser una casilla transitable en un mapa de la mazmorra. Las tripulaciones salen de barcos parados en el mismo puerto."
+    },
+    "Enabled": {
+      "en": "Enabled",
+      "fr": "Activé",
+      "es": "Activado"
+    },
+    "Retain": {
+      "en": "Retain",
+      "fr": "Conserver",
+      "es": "Conservar"
+    },
+    "Random": {
+      "en": "Random",
+      "fr": "Aléatoire",
+      "es": "Aleatorio"
     }
   }
 }

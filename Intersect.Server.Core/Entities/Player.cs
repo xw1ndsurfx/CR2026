@@ -5498,7 +5498,7 @@ public partial class Player : Entity
 
     public bool TryAddParty(Player target)
     {
-        lock (PartyMembershipLock) { return TryAddPartyCore(target); }
+        lock (PartyMembershipLock) { return !MatchmakingDeparting && !target.MatchmakingDeparting && TryAddPartyCore(target); }
     }
 
     private bool TryAddPartyCore(Player target)
@@ -5551,7 +5551,7 @@ public partial class Player : Entity
 
     public void KickParty(Guid target)
     {
-        lock (PartyMembershipLock) { KickPartyCore(target); }
+        lock (PartyMembershipLock) { if (!MatchmakingDeparting) KickPartyCore(target); }
     }
 
     private void KickPartyCore(Guid target)
@@ -5605,7 +5605,7 @@ public partial class Player : Entity
 
     public void LeaveParty()
     {
-        lock (PartyMembershipLock) { LeavePartyCore(); }
+        lock (PartyMembershipLock) { if (!MatchmakingDeparting) LeavePartyCore(); }
     }
 
     private void LeavePartyCore(bool preserveDungeon = false)

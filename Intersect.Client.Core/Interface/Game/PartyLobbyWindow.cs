@@ -40,7 +40,9 @@ internal sealed class PartyLobbyWindow : Window
         _search.PlaceholderText=ClientLanguages.Text("Search host, lobby or dungeon");
         _search.SetBounds(199,14,width-295,28); _search.SetToolTipText(ClientLanguages.Text("Search host, lobby or dungeon"));
         Button(this,"Refresh",Width-110,14,94,()=>Request(LobbyAction.Browse));
-        _summary=Label(this,"LobbySummary",16,49,width-180,26,Gold);
+        _summary=Label(this,"LobbySummary",16,49,width-350,26,Gold);
+        var matchmaking=Button(this,"Find an adventure",Width-350,45,166,()=>{Hide();Intersect.Client.Interface.Interface.EnqueueInGame(ui=>ui.OpenMatchmaking());});
+        matchmaking.Text=MatchmakingWindow.T("Find an adventure");
         Button(this,"Royal Jousting",Width-178,45,160,()=>{Hide();JoustWindow.Open();});
         _rows=new ScrollControl(this,"LobbyRows") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
         _rows.SetBounds(16,81,width,Height-328);
@@ -127,7 +129,8 @@ internal sealed class PartyLobbyWindow : Window
         if(_applying) return;
         _rows.DeleteAll();
         var entries=_state.Lobbies.Where(l=>Matches(l,_filter.SelectedItem?.UserData as int? ?? -1,_search.Text)).ToArray();
-        _summary.Text=ClientLanguages.Format("{0} lobbies - Find companions and use party chat",entries.Length);
+        _summary.Text=string.Format(MatchmakingWindow.T("{0} lobbies"),entries.Length);
+        _summary.SetToolTipText(ClientLanguages.Format("{0} lobbies - Find companions and use party chat",entries.Length));
         var width=_rows.Width-22; var actionX=width-122; var y=0;
         foreach(var lobby in entries)
         {

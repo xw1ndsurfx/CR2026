@@ -161,13 +161,14 @@ internal static partial class NavalSystem
         }
     }
 
-    private static string ProposeExpedition(Player leader, Guid definitionId, long utc)
+    private static string ProposeExpedition(Player leader, Guid definitionId, long utc, IReadOnlySet<Guid>? confirmed = null)
     {
         if (!_enabled || leader.PartyLeader != leader || leader.IsDead || leader.HasPendingDeath)
             return "Only the party leader can prepare a naval expedition.";
         var definition = _settings.Expeditions.FirstOrDefault(e => e.Enabled && e.Id == definitionId);
         if (definition == null) return "This expedition is no longer available.";
         var players = leader.Party.Append(leader).DistinctBy(p => p.Id).ToArray();
+        if (confirmed != null && !confirmed.SetEquals(players.Select(p => p.Id))) return "Every participant must be ready at the port before departure.";
         if (players.Any(p => ExpeditionFor(p.Id) != null))
             return "A participant already has an expedition or an unclaimed reward.";
         if (players.Any(p => !p.InGame || p.IsDead || p.HasPendingDeath || p.NavalBusy || p.NavalShipId == Guid.Empty ||
@@ -181,6 +182,12 @@ internal static partial class NavalSystem
         };
         if (!definition.AcceptsFleet(run.Members.Count, run.Ships.Length)) return "The group does not match this expedition's player and ship limits.";
         if (!ExpeditionAtLaunch(run)) return "Gather the whole group aboard stopped ships beside the same port.";
+        if (confirmed != null)
+        {
+            foreach (var member in run.Members) member.Ready = true;
+            run.Status = NavalExpeditionStatus.Active;
+            run.Deadline = utc + definition.TimeLimitMinutes * 60000L;
+        }
         // Completed runs are retained until every member has received the durable reward.
         var removable = Expeditions.Values.Where(r => r.Status == NavalExpeditionStatus.Completed && r.Members.All(m => m.Claimed) ||
             r.Status == NavalExpeditionStatus.Failed && utc - r.Created > 3600000).ToArray();
@@ -190,7 +197,7 @@ internal static partial class NavalSystem
         try { ExpeditionStore.Save(Expeditions.Values); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or InvalidDataException)
         { Expeditions.Remove(run.Id); foreach (var old in removable) Expeditions[old.Id] = old; return ExpeditionStorageError; }
-        return "Expedition proposed. Each participant must confirm readiness.";
+        return confirmed != null ? "" : "Expedition proposed. Each participant must confirm readiness.";
     }
 
     private static void UpdateNavalExpeditions(Player player, long now)

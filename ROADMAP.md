@@ -11,6 +11,8 @@ Le [suivi de reconnexion et de sauvegarde après redémarrage](Documentation/Pla
 
 ## État technique au 11 novembre 2026
 
+Ajout du 25 novembre : [recherche de groupe pour donjons et expéditions](Documentation/Matchmaking.fr.md) développée localement sur `codex/activity-matchmaking`, avec accord individuel de tous les participants, réglages dans Lobby Editor et pack de deux images/sept sons installé dans CURRENT CLIENT & EDITOR. Publication, configuration des activités et recette multijoueur connectée restent distinctes de cette livraison locale. Le client Intel HD 3000 reste séparé.
+
 La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Référence vérifiée : `main` à `69670d777` (PR #265). La reprise choisie le 11 novembre est **P0 : stabilité et préparation du playtest**. Les contrôles et les validations restantes sont consignés dans le [point de préparation du 11 novembre](Documentation/Playtests/Readiness-2026-11-11.fr.md).
 
 | Statut GitHub | Travail récent | Suite nécessaire |
