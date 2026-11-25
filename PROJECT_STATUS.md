@@ -19,6 +19,10 @@
 
 ## État des fonctionnalités — distinction code / validation
 
+### Ajout du 25 novembre 2026 : validation des commandes d’artisanat
+
+Les [correctifs et leur validation](Documentation/CraftingOrders/Validation-2026-11-25.fr.md) sont préparés localement sur `codex/crafting-orders-validation`, depuis `main` après la PR 240 (`fce73d368`). Les dépôts et inventaires sont sauvegardés ensemble, les exemplaires livrés conservent leurs propriétés et les récupérations en attente sont visibles. Dix-neuf tests ciblés passent sur des sauvegardes de la copie isolée, ainsi que neuf parcours de l’interface EN/FR/ES et les contrôles des quatre PNG et dix WAV. La fabrication native et la recette à deux clients connectés restent à effectuer ; les captures logicielles ne remplacent pas cet essai. Aucun client installé n’est remplacé ; Intel HD 3000 reste séparé. Cette branche n’est pas encore publiée ni fusionnée.
+
 ### Ajout du 25 novembre 2026 : courses royales de montures
 
 Les [courses royales](Documentation/Mount-Racing.fr.md) sont regroupées dans la [PR 283](https://github.com/xw1ndsurfx/CR2026/pull/283), depuis `main` après la PR 282 (`a3ff262ed`). Le serveur contrôle inscriptions, consentements individuels, instance privée, vitesse identique, passages, tours, temps et prix. L'éditeur règle les circuits, montures prêtées, récompenses et médias. L'entraînement solo est sans prix. Les résultats/prix en attente et le retour du personnage survivent au redémarrage ; une course interrompue ne reprend pas.

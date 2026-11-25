@@ -60,6 +60,21 @@ internal sealed class CraftingOrdersWindow : Window
     private bool _urgent;
     private int _tab;
     private long _postedAt;
+    private Guid _postRequestId;
+    private bool _pending;
+    private readonly Dictionary<Base, (int X, int Y, int W, int H)> _design = [];
+    private readonly Dictionary<Label, int> _fonts = [];
+    private readonly Dictionary<Label, (int Size, float Scale)> _appliedFonts = [];
+    private readonly Dictionary<ScrollControl, (int W, int H)> _scrolls = [];
+    private readonly Dictionary<ImagePanel, (int X, int Y, int W, int H)> _art = [];
+    private readonly HashSet<Label> _inkLabels = [];
+    private float _scale = 1;
+    private readonly Label _pendingLabel;
+    internal Action<string>? AudioCue { get; set; }
+    internal Action? RequestState { get; set; }
+    internal Action<Guid, int, int, int, Guid>? SendPost { get; set; }
+    internal Action<Guid, byte>? SendAction { get; set; }
+    private void Play(string cue) { if (AudioCue != null) AudioCue(cue); else _audio.Play(cue); }
 
     private static string T(string text) =>
         Intersect.Framework.Core.CraftingOrders.CraftingOrdersText.Get(text, ClientLanguages.Current);
@@ -69,14 +84,17 @@ internal sealed class CraftingOrdersWindow : Window
     public CraftingOrdersWindow(Canvas parent)
         : base(parent, T("Crafting Orders"), false, nameof(CraftingOrdersWindow))
     {
-        SetSize(1120, 765);
+        _scale = Math.Min(1f, Math.Min((parent.Width - 12) / 1120f, (parent.Height - 42) / 765f));
+        SetSize((int)(1120 * _scale), (int)(765 * _scale) + 24);
+        BeforeLayout += (_, _) => UpdateLayout();
+        Closed += (_, _) => Play("ui_close");
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
         // Actual fragments from 1195.png: ornate window corners, crowned crest,
         // and parchment. The original baked-in French text is NOT used as UI.
-        Chrome(this, "RoyalOuterFrame", MarketplaceWindow.FrameStyle.Window, 11, 27, 1097, 727);
+        Chrome(this, "RoyalOuterFrame", MarketplaceWindow.FrameStyle.Window, 11, 27, 1097, 727).DrawHeaderDivider = false;
         Art(this, "TopLeftCorner", 171, 0, 48, 48, 12, 35, 65, 65);
         Art(this, "TopRightCorner", 222, 0, 48, 48, 1040, 35, 65, 65);
         Art(this, "BottomLeftCorner", 273, 0, 48, 48, 12, 689, 65, 65);
@@ -96,7 +114,7 @@ internal sealed class CraftingOrdersWindow : Window
             var index = i;
             var x = 39 + i * 252;
             _tabs[i] = ButtonAt(this, "Tab_" + i, T(tabNames[i]),
-                x, 184, 241, 47, () => { _audio.Play("ui_select"); SetTab(index); },
+                x, 184, 241, 47, () => { Play("ui_select"); SetTab(index); },
                 MarketplaceWindow.FrameStyle.Tab, 13, out var tabFrame);
             _tabFrames[i] = tabFrame;
             var icon = tabIcons[i];
@@ -104,14 +122,14 @@ internal sealed class CraftingOrdersWindow : Window
         }
 
         ButtonAt(this, "OpenComposer", T("Post an Order"), 820, 184, 264, 47,
-            () => { _audio.Play("ui_select"); SetTab(3); },
+            () => { Play("ui_select"); SetTab(3); },
             MarketplaceWindow.FrameStyle.PrimaryAction, 14, out _);
 
         _message = LabelAt(this, "BoardMessage", T("Commissions are backed by secure Aureons escrow."),
             47, 237, 1016, 30, 12, Cream);
 
         _browsePanel = new Base(this, "BrowsePanel");
-        _browsePanel.SetBounds(35, 276, 1049, 445);
+        BoundsAt(_browsePanel, 35, 276, 1049, 445);
         Chrome(_browsePanel, "FiltersFrame", MarketplaceWindow.FrameStyle.Section, 0, 0, 229, 433);
         Chrome(_browsePanel, "ListFrame", MarketplaceWindow.FrameStyle.Section, 237, 0, 512, 433);
         Chrome(_browsePanel, "DetailsFrame", MarketplaceWindow.FrameStyle.Section, 758, 0, 290, 433);
@@ -125,11 +143,11 @@ internal sealed class CraftingOrdersWindow : Window
             {
                 _urgent = !_urgent;
                 _urgentLabel.Text = T(_urgent ? "CraftingOrders.UrgentOn" : "CraftingOrders.UrgentOff");
-                _audio.Play("ui_select");
+                Play("ui_select");
                 RenderOrders();
             }, MarketplaceWindow.FrameStyle.SecondaryAction, 12, out _, out _urgentLabel);
         ButtonAt(_browsePanel, "RefreshOrders", T("Refresh"),
-            17, 369, 194, 45, () => { _audio.Play("ui_select"); Networking.PacketSender.RequestCraftingOrders(); },
+            17, 369, 194, 45, () => { Play("ui_select"); _pending = false; if (RequestState != null) RequestState(); else Networking.PacketSender.RequestCraftingOrders(); RefreshRecipeSelection(); },
             MarketplaceWindow.FrameStyle.SecondaryAction, 14, out _);
 
         LabelAt(_browsePanel, "BrowseListTitle", T("CraftingOrders.Commissions"), 255, 13, 330, 30, 16, Gold, bold: true);
@@ -138,7 +156,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true,
         };
-        _orders.SetBounds(251, 49, 482, 368);
+        BoundsAt(_orders, 251, 49, 482, 368);
 
         // Parchment artwork from 1195.png, not a screenshot mockup.
         Art(_browsePanel, "Parchment", 0, 73, 135, 164, 765, 4, 278, 424);
@@ -149,7 +167,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             MaintainAspectRatio = true, MouseInputEnabled = false, ShouldDrawBackground = false,
         };
-        _detailIcon.SetBounds(778, 84, 52, 52);
+        BoundsAt(_detailIcon, 778, 84, 52, 52);
         _detailStatus = LabelAt(_browsePanel, "DetailStatus", "",
             837, 78, 188, 56, 13, Ink, bold: true);
         _detailCustomer = LabelAt(_browsePanel, "DetailCustomer", "",
@@ -163,7 +181,7 @@ internal sealed class CraftingOrdersWindow : Window
             MarketplaceWindow.FrameStyle.PrimaryAction, 13, out _, out _detailActionLabel);
 
         _postPanel = new Base(this, "PostPanel");
-        _postPanel.SetBounds(35, 276, 1049, 445);
+        BoundsAt(_postPanel, 35, 276, 1049, 445);
         Chrome(_postPanel, "PostRecipesFrame", MarketplaceWindow.FrameStyle.Section, 0, 0, 519, 433);
         Chrome(_postPanel, "PostTermsFrame", MarketplaceWindow.FrameStyle.Section, 528, 0, 519, 433);
         Art(_postPanel, "PostScroll", 192, 132, 43, 52, 16, 7, 34, 41);
@@ -178,7 +196,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true,
         };
-        _recipes.SetBounds(16, 120, 486, 294);
+        BoundsAt(_recipes, 16, 120, 486, 294);
 
         Art(_postPanel, "TermsParchment", 0, 73, 135, 164, 534, 5, 507, 422);
         Art(_postPanel, "TermsBanner", 138, 73, 190, 52, 544, 7, 487, 56);
@@ -188,7 +206,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             MaintainAspectRatio = true, MouseInputEnabled = false, ShouldDrawBackground = false,
         };
-        _chosenIcon.SetBounds(558, 73, 55, 55);
+        BoundsAt(_chosenIcon, 558, 73, 55, 55);
         _chosenName = LabelAt(_postPanel, "ChosenName", T("CraftingOrders.SelectItem"),
             623, 76, 393, 52, 14, Ink, bold: true);
         LabelAt(_postPanel, "QuantityLabel", T("Quantity"), 555, 142, 189, 25, 12, Ink, bold: true);
@@ -208,8 +226,50 @@ internal sealed class CraftingOrdersWindow : Window
         _reward.TextChanged += (_, _) => RefreshRecipeSelection();
         _hours.TextChanged += (_, _) => RefreshRecipeSelection();
 
+        _pendingLabel = LabelAt(this, "PendingDelivery", "", 47, 722, 1016, 29, 12, Gold);
         SetTab(0);
         Hide();
+    }
+
+
+    private static CraftingOrdersWindow? Owner(Base control)
+    { for (Base? p = control; p != null; p = p.Parent) if (p is CraftingOrdersWindow window) return window; return null; }
+    private static void BoundsAt(Base control, int x, int y, int width, int height)
+    {
+        var owner = Owner(control); var scale = owner?._scale ?? 1;
+        if (owner != null) owner._design[control] = (x, y, width, height);
+        control.SetBounds((int)(x * scale), (int)(y * scale), Math.Max(1, (int)(width * scale)), Math.Max(1, (int)(height * scale)));
+    }
+    private void ScrollSize(ScrollControl control, int width, int height)
+    { _scrolls[control] = (width, height); control.SetInnerSize((int)(width * _scale), (int)(height * _scale)); }
+    private void UpdateLayout()
+    {
+        var canvas = Canvas; if (canvas == null) return;
+        var atlas = GameContentManager.Current.GetTexture(TextureType.Gui, "crafting-orders/royal-crafting-atlas.png");
+        foreach (var (image, rect) in _art)
+            if (!image.IsDisposed && image.Texture != atlas)
+            { image.Texture = atlas; if (atlas != null) image.SetTextureRect(rect.X, rect.Y, rect.W, rect.H); }
+        foreach (var label in _inkLabels) if (!label.IsDisposed) label.TextColorOverride = atlas == null ? Cream : Ink;
+        var scale = Math.Min(1f, Math.Min((canvas.Width - 12) / 1120f, (canvas.Height - 42) / 765f));
+        if (Math.Abs(scale - _scale) > .001f)
+        {
+            _scale = scale; SetSize((int)(1120 * scale), (int)(765 * scale) + 24);
+            foreach (var (control, rect) in _design.ToArray())
+                if (!control.IsDisposed) BoundsAt(control, rect.X, rect.Y, rect.W, rect.H);
+            foreach (var (control, rect) in _scrolls.ToArray()) ScrollSize(control, rect.W, rect.H);
+        }
+        foreach (var control in _design.Keys.Where(c => c.IsDisposed).ToArray()) _design.Remove(control);
+        foreach (var (label, size) in _fonts.ToArray())
+        {
+            if (label.IsDisposed) { _fonts.Remove(label); _appliedFonts.Remove(label); continue; }
+            var font = label.Font ?? Skin.DefaultFont; if (font == null) continue;
+            var wanted = Math.Max(12, (int)(size * _scale));
+            var (native, _) = ExportationWindow.ResolvePixelFont(font, wanted);
+            var height = Skin.Renderer.MeasureText(font, native, "Hg", 1f).Y;
+            var factor = ExportationWindow.ScaleForMeasuredFont(wanted, height);
+            if (!_appliedFonts.TryGetValue(label, out var applied) || applied != (native, factor))
+            { label.FontSize = native; label.SetTextScale(factor); _appliedFonts[label] = (native, factor); }
+        }
     }
 
     protected override void EnsureInitialized() { }
@@ -218,7 +278,7 @@ internal sealed class CraftingOrdersWindow : Window
         MarketplaceWindow.FrameStyle style, int x, int y, int width, int height)
     {
         var frame = new MarketplaceWindow.MarketChrome(parent, name, style);
-        frame.SetBounds(x, y, width, height);
+        BoundsAt(frame, x, y, width, height);
         return frame;
     }
 
@@ -233,7 +293,8 @@ internal sealed class CraftingOrdersWindow : Window
             ShouldDrawBackground = false,
         };
         if (image.Texture != null) image.SetTextureRect(sx, sy, sw, sh);
-        image.SetBounds(x, y, width, height);
+        BoundsAt(image, x, y, width, height);
+        if (Owner(image) is { } owner) owner._art[image] = (sx, sy, sw, sh);
     }
 
     private static Label LabelAt(Base parent, string name, string text,
@@ -250,13 +311,17 @@ internal sealed class CraftingOrdersWindow : Window
             TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
-        label.SetBounds(x, y, width, height);
+        BoundsAt(label, x, y, width, height);
+        Owner(label)?._fonts.TryAdd(label, fontSize);
+        if (color == Ink) Owner(label)?._inkLabels.Add(label);
         return label;
     }
 
     private static TextBox Input(Base parent, string name, string value,
         int x, int y, int width, int height)
     {
+        var backing = new FieldBackground(parent, name + "Background") { MouseInputEnabled = false, KeyboardInputEnabled = false };
+        BoundsAt(backing, x, y, width, height);
         var box = new TextBox(parent, name)
         {
             Text = value, FontSize = 14,
@@ -264,8 +329,18 @@ internal sealed class CraftingOrdersWindow : Window
             TextColorOverride = Cream,
             TextAlign = Pos.Left | Pos.CenterV,
         };
-        box.SetBounds(x, y, width, height);
+        BoundsAt(box, x, y, width, height);
+        Owner(box)?._fonts.TryAdd(box, 14);
         return box;
+    }
+
+    private sealed class FieldBackground(Base parent, string name) : Base(parent, name)
+    {
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            skin.Renderer.DrawColor = new Color(255, 45, 29, 22);
+            skin.Renderer.DrawFilledRect(RenderBounds);
+        }
     }
 
     private static Button ButtonAt(Base parent, string name, string caption,
@@ -283,7 +358,7 @@ internal sealed class CraftingOrdersWindow : Window
         out MarketplaceWindow.MarketChrome chrome, out Label label)
     {
         var button = new Button(parent, name) { Text = string.Empty };
-        button.SetBounds(x, y, width, height);
+        BoundsAt(button, x, y, width, height);
         chrome = Chrome(button, name + "Frame", style, 0, 0, width, height);
         label = LabelAt(button, name + "Caption", caption, 8, 3, width - 16, height - 6,
             fontSize, Cream, bold: true, center: true);
@@ -293,7 +368,7 @@ internal sealed class CraftingOrdersWindow : Window
 
     public void Apply(CraftingOrdersStatePacket packet)
     {
-        if (packet.OpenWindow && IsHidden) _audio.Play("ui_open");
+        if (packet.OpenWindow && IsHidden) Play("ui_open");
         if (!string.IsNullOrWhiteSpace(packet.MessageKey))
         {
             var cue = packet.MessageKey switch
@@ -303,14 +378,20 @@ internal sealed class CraftingOrdersWindow : Window
                 "Delivered" => "order_delivered",
                 "Cancelled" => "order_cancelled",
                 "MissingItems" or "InsufficientFunds" or "InvalidTerms" or "InvalidRecipe"
-                    or "Unavailable" or "MissingCurrency" => "ui_error",
+                    or "Unavailable" or "MissingCurrency" or "SaveFailed" or "Busy" => "ui_error",
                 _ => "",
             };
-            if (cue.Length > 0) _audio.Play(cue);
-            if (packet.MessageKey == "Delivered") _audio.Play("reward_aureons");
+            if (cue.Length > 0) Play(cue);
+            if (packet.MessageKey == "Delivered" && packet.PendingAureons == 0) Play("reward_aureons");
         }
 
+        if (!string.IsNullOrEmpty(packet.MessageKey)) _pending = false;
+        if (packet.MessageKey is "Posted" or "AlreadyPosted") _postRequestId = Guid.Empty;
+        if (packet.MessageKey == "SaveFailed")
+        { _message.Text = T("CraftingOrders.SaveFailed"); _message.TextColorOverride = Bad; RefreshTab(); return; }
         _state = packet;
+        _pendingLabel.Text = packet.PendingItems > 0 || packet.PendingAureons > 0
+            ? F("CraftingOrders.Pending", packet.PendingItems, packet.PendingAureons) : "";
         _balance.Text = $"{packet.Aureons:N0} {T("Aureons")}";
         _message.Text = packet.MessageKey.Length == 0
             ? T("Commissions are backed by secure Aureons escrow.")
@@ -319,13 +400,13 @@ internal sealed class CraftingOrdersWindow : Window
         {
             "Posted" or "Accepted" or "Delivered" or "Cancelled" => Good,
             "MissingItems" or "InsufficientFunds" or "InvalidTerms" or "InvalidRecipe"
-                or "Unavailable" or "MissingCurrency" => Bad,
+                or "Unavailable" or "MissingCurrency" or "SaveFailed" or "Busy" => Bad,
             _ => Cream,
         };
 
         if (!packet.CraftableItemIds.Contains(_chosenItemId))
             _chosenItemId = packet.CraftableItemIds.FirstOrDefault();
-        if (packet.MessageKey == "Posted") _tab = 1;
+        if (packet.MessageKey is "Posted" or "AlreadyPosted") _tab = 1;
         if (packet.MessageKey == "Accepted") _tab = 2;
         RefreshTab();
     }
@@ -395,7 +476,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             var currentOrder = order;
             var row = new Button(_orders, "Order_" + order.Id.ToString("N")) { Text = string.Empty };
-            row.SetBounds(4, y, 454, 86);
+            BoundsAt(row, 4, y, 454, 86);
             Chrome(row, "RowFrame",
                 order.Id == _selectedOrderId ? MarketplaceWindow.FrameStyle.SelectedTab
                                              : MarketplaceWindow.FrameStyle.Card, 0, 0, 454, 86);
@@ -410,7 +491,7 @@ internal sealed class CraftingOrdersWindow : Window
                     MouseInputEnabled = false,
                     ShouldDrawBackground = false,
                 };
-                icon.SetBounds(12, 14, 58, 58);
+                BoundsAt(icon, 12, 14, 58, 58);
             }
             LabelAt(row, "Name", $"{order.Quantity:N0} × {ItemName(order.ItemId)}",
                 79, 9, 256, 28, 13, Cream, bold: true);
@@ -423,7 +504,7 @@ internal sealed class CraftingOrdersWindow : Window
             row.Clicked += (_, _) =>
             {
                 _selectedOrderId = currentOrder.Id;
-                _audio.Play("ui_select");
+                Play("ui_select");
                 RenderOrders();
             };
             y += 91;
@@ -432,7 +513,7 @@ internal sealed class CraftingOrdersWindow : Window
         if (rows.Length == 0)
             LabelAt(_orders, "Empty", T("No crafting orders to show."),
                 21, 60, 413, 75, 14, Muted, center: true);
-        _orders.SetInnerSize(464, Math.Max(364, y + 9));
+        ScrollSize(_orders, 464, Math.Max(364, y + 9));
         _orders.UpdateScrollBars();
         RenderDetails(rows.FirstOrDefault(row => row.Id == _selectedOrderId));
     }
@@ -474,6 +555,7 @@ internal sealed class CraftingOrdersWindow : Window
         else
         {
             _detailAction.Show();
+            _detailAction.IsDisabled = _pending;
             _detailActionLabel.Text = T(action);
         }
     }
@@ -490,8 +572,11 @@ internal sealed class CraftingOrdersWindow : Window
             _ => null,
         };
         if (!action.HasValue) return;
-        _audio.Play(action.Value == 1 ? "craft_hit" : "ui_select");
-        Networking.PacketSender.CraftingOrderAction(order.Id, action.Value);
+        Play(action.Value == 1 ? "craft_hit" : "ui_select");
+        if (_pending) return;
+        _pending = true; _detailAction.IsDisabled = true;
+        if (SendAction != null) SendAction(order.Id, action.Value);
+        else Networking.PacketSender.CraftingOrderAction(order.Id, action.Value);
     }
 
     private void RenderRecipes()
@@ -510,7 +595,7 @@ internal sealed class CraftingOrdersWindow : Window
         {
             var itemId = id;
             var row = new Button(_recipes, "Recipe_" + id.ToString("N")) { Text = string.Empty };
-            row.SetBounds(4, y, 462, 62);
+            BoundsAt(row, 4, y, 462, 62);
             var frame = Chrome(row, "RecipeFrame",
                 id == _chosenItemId ? MarketplaceWindow.FrameStyle.SelectedTab
                                     : MarketplaceWindow.FrameStyle.Card, 0, 0, 462, 62);
@@ -525,13 +610,13 @@ internal sealed class CraftingOrdersWindow : Window
                     ShouldDrawBackground = false,
                     MouseInputEnabled = false,
                 };
-                icon.SetBounds(11, 9, 45, 45);
+                BoundsAt(icon, 11, 9, 45, 45);
             }
             LabelAt(row, "ItemName", ItemName(id), 68, 10, 376, 42, 14, Cream, bold: true);
             row.Clicked += (_, _) =>
             {
                 _chosenItemId = itemId;
-                _audio.Play("ui_select");
+                Play("ui_select");
                 RefreshRecipeSelection();
             };
             y += 68;
@@ -544,7 +629,7 @@ internal sealed class CraftingOrdersWindow : Window
                 21, 27, 415, 119, 13, Muted, center: true);
             y = 180;
         }
-        _recipes.SetInnerSize(468, Math.Max(287, y + 6));
+        ScrollSize(_recipes, 468, Math.Max(287, y + 6));
         _recipes.UpdateScrollBars();
         RefreshRecipeSelection();
     }
@@ -560,7 +645,7 @@ internal sealed class CraftingOrdersWindow : Window
         _chosenIcon.Texture = valid ? ItemIconTexture.Get(item!) : null;
         if (valid) _chosenIcon.RenderColor = item!.Color;
         _chosenName.Text = valid ? ItemName(_chosenItemId) : T("CraftingOrders.SelectItem");
-        _postAction.IsDisabled = !valid;
+        _postAction.IsDisabled = !valid || _pending;
         _postSummary.Text = valid
             ? F("CraftingOrders.Summary", _quantity.Text, ItemName(_chosenItemId), _reward.Text, _hours.Text)
             : T("CraftingOrders.SelectBeforePublishing");
@@ -585,18 +670,21 @@ internal sealed class CraftingOrdersWindow : Window
             Error("CraftingOrders.InsufficientFunds");
             return;
         }
-        if (Environment.TickCount64 - _postedAt < 1200) return;
+        if (_pending || Environment.TickCount64 - _postedAt < 1200) return;
         _postedAt = Environment.TickCount64;
         _message.Text = T("CraftingOrders.Sending");
         _message.TextColorOverride = Cream;
-        _audio.Play("ui_select");
-        Networking.PacketSender.PostCraftingOrder(_chosenItemId, quantity, reward, hours);
+        Play("ui_select");
+        _pending = true; _postAction.IsDisabled = true;
+        if (_postRequestId == Guid.Empty) _postRequestId = Guid.NewGuid();
+        if (SendPost != null) SendPost(_chosenItemId, quantity, reward, hours, _postRequestId);
+        else Networking.PacketSender.PostCraftingOrder(_chosenItemId, quantity, reward, hours, _postRequestId);
     }
 
     private void Error(string key)
     {
         _message.Text = T(key);
         _message.TextColorOverride = Bad;
-        _audio.Play("ui_error");
+        Play("ui_error");
     }
 }

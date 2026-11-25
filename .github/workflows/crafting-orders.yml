@@ -1,0 +1,47 @@
+name: Crafting orders transactions, interface and assets
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*CraftingOrder*'
+      - '**/CraftingOrders/**'
+      - '**/CraftingOrdersUiTests/**'
+      - '**/PlayerContext.cs'
+      - '**/Player/*ModelSnapshot.cs'
+      - 'resources/**/crafting-orders/**'
+      - 'scripts/crafting-orders/**'
+      - '.github/workflows/crafting-orders.yml'
+jobs:
+  crafting-orders:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify approved graphics and audio
+        run: python scripts/crafting-orders/validate_assets.py
+      - name: Verify transactions, failures, concurrency and locales
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~CraftingOrders" --nologo
+      - name: Exercise and render production interface controls
+        run: dotnet run --project Utilities/CraftingOrdersUiTests/CraftingOrdersUiTests.csproj -c Release
+      - name: Build standard client and editor with resources
+        run: |
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Release --nologo
+      - name: Verify packaged graphics and sounds in both builds
+        run: python scripts/crafting-orders/validate_assets.py --output Intersect.Client/bin/Release/net8.0/win-x64 --output Intersect.Editor/bin/Release/net8.0-windows/win-x64
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crafting-orders-validation
+          path: |
+            validation-local/crafting-ui/*.png
+            validation-local/crafting-assets.json
