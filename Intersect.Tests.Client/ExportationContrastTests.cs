@@ -165,6 +165,27 @@ public sealed class ExportationContrastTests
             Is.EqualTo("Cerrar ayuda"));
     }
 
+    [TestCase(.5f)]
+    [TestCase(1f)]
+    [TestCase(2f)]
+    public void ScaledCargoNamesWrapAtTheirRenderedWidth(float scale)
+    {
+        var metrics = new UniformTextMetrics();
+        var font = new TestBitmapFont(10);
+        const string text = "Royal supplies for the distant island";
+        var lines = Intersect.Client.Framework.Gwen.ControlInternal.Text.WrapText(text, 200, font, 10, metrics, scale);
+        Assert.That(string.Join(" ", lines), Is.EqualTo(text));
+        Assert.That(lines.All(line => metrics.MeasureText(line, font, 10, scale).X <= 200), Is.True,
+            "Magnified text must wrap before overflowing its panel.");
+        if (scale == .5f) Assert.That(lines.Length, Is.EqualTo(1), "Reduced text must not keep excess unscaled line breaks.");
+    }
+
+    private sealed class UniformTextMetrics : ITextHelper
+    {
+        public System.Numerics.Vector2 MeasureText(string? text, IFont? font, int size, float fontScale) =>
+            new((text?.Length ?? 0) * 10 * fontScale, 16 * fontScale);
+    }
+
     private sealed class TestBitmapFont(params int[] sizes) : IFont
     {
         public string Name => "Empire";

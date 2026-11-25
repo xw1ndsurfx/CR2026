@@ -146,7 +146,8 @@ public partial class Text : Base
                 parentInnerWidth,
                 Font,
                 FontSize,
-                Skin.Renderer
+                Skin.Renderer,
+                _scale
             ),
             WrappingBehavior.NoWrap => _displayedText == null ? [] : [_displayedText],
             _ => throw new NotImplementedException($"{nameof(WrappingBehavior)} '{wrappingBehavior}' not implemented"),
@@ -408,7 +409,7 @@ public partial class Text : Base
         return closestIndex;
     }
 
-    public static string[] WrapText(string? input, int width, IFont? font, int size, ITextHelper textHelper)
+    public static string[] WrapText(string? input, int width, IFont? font, int size, ITextHelper textHelper, float scale = 1f)
     {
         var sanitizedInput = input?.ReplaceLineEndings("\n");
         var inputLines = (sanitizedInput ?? string.Empty).Split('\n', StringSplitOptions.TrimEntries);
@@ -433,7 +434,7 @@ public partial class Text : Base
                 continue;
             }
 
-            float measured = textHelper.MeasureText(inputLine, font, size, 1).X;
+            float measured = textHelper.MeasureText(inputLine, font, size, scale).X;
             if (measured <= width)
             {
                 lines.Add(inputLine);
@@ -451,7 +452,7 @@ public partial class Text : Base
             while (curPos + curLen < inputLine.Length)
             {
                 line = inputLine.Substring(curPos, curLen);
-                measured = textHelper.MeasureText(line, font, size, 1).X;
+                measured = textHelper.MeasureText(line, font, size, scale).X;
                 if (measured < width)
                 {
                     lastOk = lastSpace;

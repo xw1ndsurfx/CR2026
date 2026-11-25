@@ -20,6 +20,8 @@ public sealed class JoustClientTests
     public void SharedArenaActorReusesValidatedIntegratedMountsAndRejectsOtherSheets()
     {
         var entity = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
+        // This fixture never creates the animation/audio resources disposed by Entity's finalizer.
+        GC.SuppressFinalize(entity);
         var field = typeof(Entity).GetField("_arenaMount", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var config = MountConfiguration.Prototype();
         entity.ApplyArenaMount(config.ToJson());
@@ -39,6 +41,7 @@ public sealed class JoustClientTests
         player.ServerMovementMilliseconds = 564;
         Assert.That(player.GetMovementTime(), Is.EqualTo(564));
         var actor = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
+        GC.SuppressFinalize(actor);
         actor.ServerMovementMilliseconds = 236;
         Assert.That(actor.GetMovementTime(), Is.EqualTo(236));
         var clock = new MountAnimationClock(); var mount = MountConfiguration.Prototype().Mounts[0];

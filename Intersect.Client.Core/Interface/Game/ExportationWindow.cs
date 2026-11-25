@@ -18,7 +18,7 @@ namespace Intersect.Client.Interface.Game;
 /// <summary>
 /// Asset-backed Exportation crate preparation surface. All mutations are
 /// requested through callbacks; only the server may change ExportationRun.
-/// This is not automatically enabled until the server packet handler is wired.
+/// Opened by the server's Exportation state packet.
 /// </summary>
 internal sealed class ExportationWindow : Base
 {
@@ -81,6 +81,14 @@ internal sealed class ExportationWindow : Base
     private int _left, _top;
 
     internal bool ExitRequested { get; private set; }
+    internal Func<Guid> CurrentMapId { get; set; } = () => Globals.Me?.MapId ?? Guid.Empty;
+    internal Action<string>? AudioCue { get; set; }
+
+    private void Play(string cue)
+    {
+        if (AudioCue is { } observer) observer(cue);
+        else _audio.Play(cue);
+    }
 
     private static string T(string source) => ExportationText.Get(source, ClientLanguages.Current);
     private static string F(string source, params object[] args) =>
@@ -170,13 +178,13 @@ internal sealed class ExportationWindow : Base
 
         _seal = Button("Seal", "SEAL THE CARGO", 1118, 825, 400, 54, 23, RequestSeal);
         Button("Exit", "Close", 153, 845, 147, 39, 22, () => ExitRequested = true);
-        _previousGoods = Button("PreviousGoods", "‹", 690, 795, 28, 22,
+        _previousGoods = Button("PreviousGoods", "<", 690, 795, 28, 22,
             24, () => ChangeGoodsPage(-1));
-        _nextGoods = Button("NextGoods", "›", 895, 795, 28, 22,
+        _nextGoods = Button("NextGoods", ">", 895, 795, 28, 22,
             24, () => ChangeGoodsPage(1));
-        _previousOrder = Button("PreviousOrders", "‹", 143, 644, 36, 30,
+        _previousOrder = Button("PreviousOrders", "<", 143, 644, 36, 30,
             20, () => ChangeOrderPage(-1));
-        _nextOrder = Button("NextOrders", "›", 407, 644, 38, 30,
+        _nextOrder = Button("NextOrders", ">", 407, 644, 38, 30,
             20, () => ChangeOrderPage(1));
 
         // Functional help: the final ? plaque in the original artwork now
@@ -211,7 +219,7 @@ internal sealed class ExportationWindow : Base
         Place(_helpClose, 694, 694, 291, 48, 22);
         _translated.Add((_helpClose, "Close help"));
         UpdateLayout();
-        _audio.Play("ui_open");
+        Play("ui_open");
         BringToFront();
         Focus();
     }
@@ -288,7 +296,7 @@ internal sealed class ExportationWindow : Base
 
         if (priorStage.HasValue && priorStage != run.Stage)
         {
-            _audio.Play(run.Stage switch
+            Play(run.Stage switch
             {
                 DeliveryStage.InTransit => "cargo_seal",
                 DeliveryStage.Lost => "cargo_lost",
@@ -302,9 +310,8 @@ internal sealed class ExportationWindow : Base
             {
                 var delta = ExportationRules.Packed(run, line.ItemId) - before.GetValueOrDefault(line.ItemId);
                 if (delta == 0) continue;
-                _audio.Play(delta < 0 ? "item_remove" : line.Group == CargoGroup.Fragile ? "item_glass" :
-                    line.Group == CargoGroup.Materials ? "item_wood" : "item_metal");
-                if (ExportationRules.ReadyToSeal(route, run)) _audio.Play("order_complete");
+                Play(delta < 0 ? "item_remove" : ExportationUiPresentation.PackingSound(line));
+                if (ExportationRules.ReadyToSeal(route, run)) Play("order_complete");
                 break;
             }
         }
@@ -337,9 +344,8 @@ internal sealed class ExportationWindow : Base
         _reward.Text = route.RewardQuantity > 0 ?
             $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : T("No item reward");
         _experience.Text = F("+{0:N0} Exportation XP", route.ExperienceReward);
-        var total = route.Lines.Sum(line => line.Quantity);
-        var packed = route.Lines.Sum(line => ExportationRules.Packed(run, line.ItemId));
-        _progress.Text = F("{0} / {1} items packed", packed, total);
+        var progress = ExportationUiPresentation.Cargo(route, run);
+        _progress.Text = F("{0} / {1} items packed", progress.Packed, progress.Required);
         var crates = CountCrates(route, run);
         _materialCrate.Text = crates.MaterialsTotal == 0
             ? T("Empty crate") : F("Materials: {0}/{1}", crates.MaterialsPacked, crates.MaterialsTotal);
@@ -356,8 +362,8 @@ internal sealed class ExportationWindow : Base
         _step2.Text = T(steps[1]);
         _step3.Text = T(steps[2]);
         _warning.Text = T("Death or sinking destroys the cargo");
-        var onRecipientIsland = Globals.Me?.MapId == route.RecipientMapId;
-        var onSourceIsland = Globals.Me?.MapId == route.SourceMapId;
+        var onRecipientIsland = CurrentMapId() == route.RecipientMapId;
+        var onSourceIsland = CurrentMapId() == route.SourceMapId;
         _seal.Text = T(run.Stage switch
         {
             DeliveryStage.InTransit => onRecipientIsland ? "DELIVER CARGO" : "SAIL TO DESTINATION",
@@ -400,23 +406,22 @@ internal sealed class ExportationWindow : Base
             _shelfButtons[i].IsHidden = line is null;
             _shelfButtons[i].TooltipText = line is null ? "" :
                 F("Pack {0}: {1}/{2}", ItemName(line.ItemId), amount, line.Quantity);
-            _shelfButtons[i].IsDisabled = line is null ||
-                run.Stage != DeliveryStage.Preparing || amount >= line.Quantity;
+            _shelfButtons[i].IsDisabled = !ExportationUiPresentation.CanPack(route, run, _goodsPage * ShelfSize + i);
         }
     }
 
     private void RequestPack(int i)
     {
-        if (_route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
         var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
-        if (line is null || ExportationRules.Packed(s, line.ItemId) >= line.Quantity) return;
+        if (line is null || !ExportationUiPresentation.CanPack(r, s, _goodsPage * ShelfSize + i)) return;
         _selectedGoodItem = line.ItemId;
         _packRequested(line.ItemId, line.Group, 1);
     }
 
     private void RequestRemove(int i)
     {
-        if (_route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
         var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
         if (line is null || ExportationRules.Packed(s, line.ItemId) <= 0) return;
         _packRequested(line.ItemId, line.Group, -1);
@@ -424,16 +429,16 @@ internal sealed class ExportationWindow : Base
 
     private void RequestSeal()
     {
-        if (_route is not { } r || _run is not { } s || _seal.IsDisabled) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { } s || _seal.IsDisabled) return;
         switch (s.Stage)
         {
             case DeliveryStage.Preparing when _boatReady && ExportationRules.ReadyToSeal(r, s):
                 _sealRequested();
                 break;
-            case DeliveryStage.InTransit when s.ArrivedByShip && Globals.Me?.MapId == r.RecipientMapId:
+            case DeliveryStage.InTransit when s.ArrivedByShip && CurrentMapId() == r.RecipientMapId:
                 _deliverRequested();
                 break;
-            case DeliveryStage.Lost when _boatReady && Globals.Me?.MapId == r.SourceMapId:
+            case DeliveryStage.Lost when _boatReady && CurrentMapId() == r.SourceMapId:
                 _restartRequested();
                 break;
         }
@@ -444,25 +449,9 @@ internal sealed class ExportationWindow : Base
     internal static (int MaterialsPacked, int MaterialsTotal, int OtherPacked, int OtherTotal)
         CountCrates(ExportationRoute route, ExportationRun run)
     {
-        var materialsPacked = 0;
-        var materialsTotal = 0;
-        var otherPacked = 0;
-        var otherTotal = 0;
-        foreach (var line in route.Lines)
-        {
-            var count = ExportationRules.Packed(run, line.ItemId);
-            if (line.Group == CargoGroup.Materials)
-            {
-                materialsPacked += count;
-                materialsTotal += line.Quantity;
-            }
-            else
-            {
-                otherPacked += count;
-                otherTotal += line.Quantity;
-            }
-        }
-        return (materialsPacked, materialsTotal, otherPacked, otherTotal);
+        var materials = ExportationUiPresentation.Cargo(route, run, true);
+        var other = ExportationUiPresentation.Cargo(route, run, false);
+        return (materials.Packed, materials.Required, other.Packed, other.Required);
     }
 
     /// <summary>
@@ -586,7 +575,7 @@ internal sealed class ExportationWindow : Base
                 if (line is null) continue;
                 var y = 421 + i * 78;
                 DrawGood(skin, line, 150, y, 44, 40);
-                var amount = ExportationRules.Packed(s, line.ItemId);
+                var amount = Math.Clamp(ExportationRules.Packed(s, line.ItemId), 0, line.Quantity);
                 FillScene(skin, new Color(150, 97, 66, 44), 208, y + 44, 205, 3);
                 if (amount > 0)
                     FillScene(skin, Green, 208, y + 44,
@@ -616,11 +605,11 @@ internal sealed class ExportationWindow : Base
                         SceneRect(1169, 587, 42, 42), Color.White);
             }
             DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 1184, 630, 28, 28);
-            var total = r.Lines.Sum(l => l.Quantity);
-            var completed = r.Lines.Sum(l => ExportationRules.Packed(s, l.ItemId));
+            var progress = ExportationUiPresentation.Cargo(r, s);
             skin.Renderer.DrawColor = Green;
-            var bar = SceneRect(600, 624, (int)(405d * completed / Math.Max(1, total)), 8);
-            if (bar.Width > 0) skin.Renderer.DrawFilledRect(bar);
+            if (progress.Packed > 0)
+                skin.Renderer.DrawFilledRect(SceneRect(600, 624,
+                    (int)(405d * progress.Packed / Math.Max(1, progress.Required)), 8));
             if (s.Stage == DeliveryStage.InTransit) DrawTexture(skin, SpriteDirectory + "caisse_scellee.png", 783, 381, 118, 116);
         }
         base.Render(skin);
@@ -663,8 +652,7 @@ internal sealed class ExportationWindow : Base
             FillScene(skin, new Color(42, 103, 76, 50), x, y, w, h);
         if (!string.IsNullOrEmpty(line.Sprite) && ExportationArt.IsGoodsSprite(line.Sprite))
         {
-            DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h);
-            return;
+            if (DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h)) return;
         }
         if (ItemDescriptor.TryGet(line.ItemId, out var item))
         {
@@ -694,11 +682,13 @@ internal sealed class ExportationWindow : Base
         FillScene(skin, new Color(125, 235, 191, 115), x + 7, y + 6, w - 14, 2);
     }
 
-    private void DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
+    private bool DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
     {
-        if (!_textures.TryGetValue(name, out var image))
+        if (!_textures.TryGetValue(name, out var image) || image is null || image.IsDisposed)
             _textures[name] = image = GameContentManager.Current.GetTexture(TextureType.Gui, name);
-        if (image is not null) skin.Renderer.DrawTexturedRect(image, SceneRect(x, y, w, h), Color.White);
+        if (image is null || image.IsMissingOrCorrupt) return false;
+        skin.Renderer.DrawTexturedRect(image, SceneRect(x, y, w, h), Color.White);
+        return true;
     }
 
     private Rect SceneRect(int x, int y, int width, int height) =>
@@ -785,21 +775,11 @@ internal sealed class ExportationWindow : Base
             var measured = Skin.Renderer.MeasureText(font, nativeSize, label.Text, textScale);
             if (label.WrappingBehavior == WrappingBehavior.NoWrap && measured.X > maxWidth)
                 textScale *= maxWidth / (float)measured.X;
-            var lines = 0;
-            foreach (var explicitLine in label.Text.Replace("\r", "").Split('\n'))
-            {
-                lines++;
-                if (label.WrappingBehavior == WrappingBehavior.NoWrap) continue;
-                var current = "";
-                foreach (var word in explicitLine.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    var candidate = current.Length == 0 ? word : current + " " + word;
-                    if (current.Length > 0 && Skin.Renderer.MeasureText(font, nativeSize, candidate, textScale).X > maxWidth)
-                    { lines++; current = word; }
-                    else current = candidate;
-                }
-            }
-            var visibleHeight = naturalHeight * textScale * (Math.Max(1, lines) - 1 + ink.HeightFraction);
+            var lines = label.WrappingBehavior == WrappingBehavior.Wrapped
+                ? Text.WrapText(label.Text, maxWidth, font, nativeSize, Skin.Renderer, textScale)
+                : label.Text.Replace("\r", "").Split('\n');
+            var lineHeights = lines.Select(line => Skin.Renderer.MeasureText(font, nativeSize, line.Length == 0 ? "Hg" : line, textScale).Y).ToArray();
+            var visibleHeight = lineHeights.Sum() - lineHeights.LastOrDefault() * (1 - ink.HeightFraction);
             if (visibleHeight <= maxHeight || visibleHeight <= 0) break;
             textScale *= maxHeight / visibleHeight;
         }
@@ -849,7 +829,7 @@ internal sealed class ExportationWindow : Base
     {
         if (_destroyed) return;
         _destroyed = true;
-        _audio.Play("ui_close");
+        Play("ui_close");
         Interface.InputBlockingComponents.Remove(this);
         Hide();
         Parent?.RemoveChild(this, false);

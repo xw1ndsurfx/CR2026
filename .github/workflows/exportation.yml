@@ -1,0 +1,44 @@
+name: Exportation interface and assets
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*Exportation*'
+      - '**/Exportation/**'
+      - '**/ExportationUiTests/**'
+      - 'Intersect.Client.Framework/Gwen/ControlInternal/Text.cs'
+      - 'resources/**/exportation/**'
+      - 'scripts/exportation/**'
+      - '.github/workflows/exportation.yml'
+jobs:
+  exportation:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify approved graphics, audio and translations
+        run: python scripts/exportation/validate_assets.py
+      - name: Verify client presentation and shared text wrapping
+        run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Release --nologo
+      - name: Verify authoritative exportation and naval rules
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Exportation|FullyQualifiedName~Naval" --nologo
+      - name: Exercise and render the actual interface
+        run: dotnet run --project Utilities/ExportationUiTests/ExportationUiTests.csproj -c Release
+      - name: Build standard client and editor with approved resources
+        run: |
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exportation-interface-validation
+          path: validation-local/exportation-ui/*.png

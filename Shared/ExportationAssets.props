@@ -1,6 +1,6 @@
 <Project>
   <!-- Runtime GUI sprites and one-shot WAV cues. Both client and editor use these assets.
-       Glob paths are optional until scripts/exportation/install_assets.py installs the pack. -->
+       The approved pack is tracked and verified by scripts/exportation/validate_assets.py. -->
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)../resources/gui/exportation/**/*.png">
       <Link>resources/gui/exportation/%(RecursiveDir)%(Filename)%(Extension)</Link>
