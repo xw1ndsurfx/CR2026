@@ -29,7 +29,7 @@ public partial class Player
             var now=Timing.Global.Milliseconds;
             if(now-_weaponSkillRequestAt<100) return false;
             _weaponSkillRequestAt=now;
-            if(IsDead || HasPendingDeath || IsCasting || IsBlocking || IsAttacking || IsArcheryActive || IsJoustProtected ||
+            if(IsMountRacing || IsDead || HasPendingDeath || IsCasting || IsBlocking || IsAttacking || IsArcheryActive || IsJoustProtected ||
                 CachedStatuses.Any(s=>s.Type is SpellEffect.Stun or SpellEffect.Sleep)) return false;
             if(!RecoverMasteryRespec()) return false;
             if(!TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot,out var equipped) || equipped.Descriptor is not {} weapon) return false;

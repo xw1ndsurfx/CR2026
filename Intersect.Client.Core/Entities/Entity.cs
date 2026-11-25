@@ -2584,6 +2584,7 @@ public partial class Entity : IEntity
                                     break;
 
                                 case Player player:
+                                    if (Interface.Interface.InGameUiOrNull?.RaceRider(Id) == true) continue;
                                     // Return the entity key as this should block the player.  Only exception is if the MapZone this entity is on is passable.
                                     if (Maps.MapInstance.TryGet(player.MapId, out var playerMapInstance) &&
                                         Options.Instance.Passability.IsPassable(playerMapInstance.ZoneType))

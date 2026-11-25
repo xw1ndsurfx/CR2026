@@ -18,6 +18,11 @@ internal static class Program
     }
     private static void Run()
     {
+        if (Environment.GetCommandLineArgs().Any(a => a is "--racing-only" or "--mount-racing-only"))
+        {
+            typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+            MountRaceEditorTests.Run(); return;
+        }
         if (Environment.GetCommandLineArgs().Contains("--matchmaking-only"))
         {
             typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());

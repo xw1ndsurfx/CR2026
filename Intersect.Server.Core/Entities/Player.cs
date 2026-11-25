@@ -553,7 +553,8 @@ public partial class Player : Entity
         RemoveFromInstanceController(MapInstanceId);
 
         // A disconnect keeps dungeon membership and instance identity for recovery.
-        if (DungeonRunRuntime.PrepareDisconnect(this)) LeavePartyForDungeonDisconnect();
+        if (PrepareRaceDisconnect()) { }
+        else if (DungeonRunRuntime.PrepareDisconnect(this)) LeavePartyForDungeonDisconnect();
         else LeaveParty();
 
         //Update trade
@@ -2172,7 +2173,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
-        if (IsArcheryActive || IsJoustProtected || entity is JoustOpponent or JoustAudienceActor || entity is Player { IsJoustProtected: true }) return false;
+        if (IsArcheryActive || IsActivityCombatProtected || entity is JoustOpponent or JoustAudienceActor || entity is Player { IsActivityCombatProtected: true }) return false;
         Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
@@ -2402,6 +2403,7 @@ public partial class Player : Entity
 
     public void AdminWarp(Guid newMapId, float newX, float newY, Guid newMapInstanceId, MapInstanceType instanceType, bool force)
     {
+        if (IsMountRacing && !_raceTravel) return;
         if (!Intersect.Server.GuildHeadquarters.HeadquartersRuntime.CanWarp(this, newMapId, newMapInstanceId, instanceType)) return;
         PreviousMapInstanceId = MapInstanceId;
         PreviousMapInstanceType = InstanceType;
@@ -2430,6 +2432,7 @@ public partial class Player : Entity
         bool forceInstanceChange = false)
     {
         if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("warp-request", this, new { newMapId, newX, newY, fromLogin });
+        if (IsMountRacing && !_raceTravel) return;
         if (!Intersect.Server.GuildHeadquarters.HeadquartersRuntime.CanWarp(this, newMapId, MapInstanceId, mapInstanceType)) return;
         // Event/death warps leaving the headquarters must not carry its private instance into public maps.
         if (Intersect.Server.GuildHeadquarters.HeadquartersRuntime.ExitsPrivateInstance(this, newMapId))
@@ -2581,6 +2584,7 @@ public partial class Player : Entity
     /// </summary>
     public void LoginWarp()
     {
+        if (RecoverRaceLogin()) return;
         if(Intersect.Server.Pvp.PvpRuntime.RecoverLogin(this))return;
         if(DungeonRunRuntime.RecoverLogin(this))return;
         if(Intersect.Server.Naval.NavalSystem.RecoverLogin(this))return;
@@ -3773,6 +3777,7 @@ public partial class Player : Entity
 
     public void UseItem(int slot, Entity target = null)
     {
+        if (IsMountRacing) return;
         var equipped = false;
         var Item = Items[slot];
         var itemBase = ItemDescriptor.Get(Item.ItemId);
@@ -4675,6 +4680,7 @@ public partial class Player : Entity
 
     //Business
     private bool IsBusy() =>
+        IsMountRacing ||
         InShop != default ||
         InBank ||
         OpenCraftingTableId != default ||
@@ -5498,7 +5504,7 @@ public partial class Player : Entity
 
     public bool TryAddParty(Player target)
     {
-        lock (PartyMembershipLock) { return !MatchmakingDeparting && !target.MatchmakingDeparting && TryAddPartyCore(target); }
+        lock (PartyMembershipLock) { return !IsMountRacing && !target.IsMountRacing && !MatchmakingDeparting && !target.MatchmakingDeparting && TryAddPartyCore(target); }
     }
 
     private bool TryAddPartyCore(Player target)
@@ -5551,7 +5557,7 @@ public partial class Player : Entity
 
     public void KickParty(Guid target)
     {
-        lock (PartyMembershipLock) { if (!MatchmakingDeparting) KickPartyCore(target); }
+        lock (PartyMembershipLock) { if (!IsMountRacing && !MatchmakingDeparting && !Party.Any(p => p.IsMountRacing)) KickPartyCore(target); }
     }
 
     private void KickPartyCore(Guid target)
@@ -5605,7 +5611,7 @@ public partial class Player : Entity
 
     public void LeaveParty()
     {
-        lock (PartyMembershipLock) { if (!MatchmakingDeparting) LeavePartyCore(); }
+        lock (PartyMembershipLock) { if (!IsMountRacing && !MatchmakingDeparting) LeavePartyCore(); }
     }
 
     private void LeavePartyCore(bool preserveDungeon = false)
@@ -7658,6 +7664,14 @@ public partial class Player : Entity
     {
         entityType = default;
 
+        if (IsMountRacing && (!RaceDirectionAllowed(direction) || RaceBlocksMovement))
+        { blockerType = MovementBlockerType.OutOfBounds; return false; }
+        if (IsMountRacing)
+        {
+            var nx = X + (direction == Direction.Right ? 1 : direction == Direction.Left ? -1 : 0);
+            var ny = Y + (direction == Direction.Down ? 1 : direction == Direction.Up ? -1 : 0);
+            if (!RaceTileAllowed(nx, ny)) { blockerType = MovementBlockerType.OutOfBounds; return false; }
+        }
         if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(Id) || IsArcheryActive || JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
@@ -7682,7 +7696,7 @@ public partial class Player : Entity
 
     protected override bool CanPassPlayer(MapController targetMap)
     {
-        return Options.Instance.Passability.IsPassable(Map.ZoneType);
+        return IsMountRacing || Options.Instance.Passability.IsPassable(Map.ZoneType);
     }
 
     protected override bool IsBlockedByEvent(
@@ -7739,8 +7753,16 @@ public partial class Player : Entity
         lock (EntityLock)
         {
             if (JoustBlocksMovement || NavalShipId != Guid.Empty) return;
+            var race = RaceRound;
+            if (IsMountRacing && (RaceBlocksMovement || !RaceDirectionAllowed(moveDir) || !CanMoveInDirection(moveDir, out _, out _))) return;
+            var raceX = X; var raceY = Y;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
+            if (race != null)
+            {
+                if (X != raceX || Y != raceY) race.Step(Id, raceX, raceY, X, Y, Timing.Global.Milliseconds);
+                return;
+            }
 
             // Check for a warp, if so warp the player.
             var attribute = MapController.Get(MapId).Attributes[X, Y];

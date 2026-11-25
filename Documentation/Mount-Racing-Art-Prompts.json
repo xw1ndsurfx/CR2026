@@ -1,0 +1,13 @@
+{
+  "tool": "OpenAI built-in image generation",
+  "background": {
+    "file": "resources/gui/racing_background_v1.png",
+    "transparent_background": false,
+    "prompt": "Use case: stylized-concept. Asset type: original production UI background for the Royal Races mount racing activity in Corps Royaux, a medieval fantasy pixel-art MMORPG. Landscape 4:3 flat rectangular game interface panel, straight-on, crisp detailed hand-painted pixel art matching brown wood/leather game inventory panels with antique gold trim and royal blue fleur-de-lis accents. Very narrow decorative header occupying only TOP 15 PERCENT: two elegant horse-head medallions at the left and right, small central gold laurel crown, tiny racing pennants. The entire remaining center and bottom must be quiet dark brown leather, empty and high contrast for software-rendered lists and text. Thin gold border, small restrained corner ornaments. Completely opaque rectangular background reaching the edges. No painted text, no letters, no numbers, no buttons, no placeholder slots, no watermark, no characters inside the content area. Rich original medieval craftsmanship, readable and tasteful, not photorealistic. This is a reusable texture, not a screenshot or interface mockup."
+  },
+  "icons": {
+    "file": "resources/gui/racing_icons_v1.png",
+    "transparent_background": true,
+    "prompt": "Use case: stylized-concept. Asset type: original transparent game icon sprite atlas for Royal Races in Corps Royaux, medieval fantasy hand-painted pixel art. Exact regular grid THREE columns by TWO rows, landscape 3:2 canvas, six square equal cells. Each icon centered, occupying at most 65% of its cell with wide transparent margins. TOP ROW: left a silver horse head wearing blue royal tack inside a small golden horseshoe, middle a gold-rimmed emerald ready seal with ivory checkmark, right a compact medieval brass hourglass with cream sand. BOTTOM ROW: left a blue-and-gold racing flag on a short wooden post with a gold pointed base (checkpoint marker, transparent empty space around it), middle a beautiful golden trophy cup with blue ribbon and laurel leaves, right a red wax seal with an ivory X for withdrawal. Cohesive crisp pixel art, warm gold, deep royal blue, brown leather, readable silhouettes even small. True alpha-transparent background across all empty space, no white background, no painted checkerboard, no grid lines, no floor, no external shadows, no frames, no lettering, no numerals, no watermark. Six separate objects, no cropping or objects straddling cells. Production RGBA sprite sheet."
+  }
+}

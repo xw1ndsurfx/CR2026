@@ -590,6 +590,22 @@
     "subcategory": "WorldAndProgression"
   },
   {
+    "id": "mountRaceEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": ["Gameplay", "World"],
+    "title": {"en": "Royal Races Editor", "fr": "Éditeur des courses royales", "es": "Editor de carreras reales"},
+    "description": {
+      "en": "Configure circuits, checkpoints, provided mounts, timing, prizes and race media.",
+      "fr": "Configurez les circuits, passages, montures, chronométrages, prix et médias des courses.",
+      "es": "Configura circuitos, puntos de control, monturas, tiempos, premios y recursos de las carreras."
+    },
+    "sign": "Horse",
+    "art": "mountEditorToolStripMenuItem.png",
+    "keywords": "race racing courses circuit checkpoints carreras monturas chevaux chronometre podium",
+    "subcategory": "WorldAndProgression"
+  },
+  {
     "id": "dungeonEditorToolStripMenuItem",
     "oldMenu": "Game Editors",
     "category": "Game",

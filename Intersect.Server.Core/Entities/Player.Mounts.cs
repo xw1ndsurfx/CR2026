@@ -36,7 +36,8 @@ public partial class Player
     internal bool CanRide(MountDefinition definition) => !IsDead && !HasPendingDeath && !IsCasting && !IsBlocking &&
         !CachedStatuses.Any(s => s.Type == Intersect.Enums.SpellEffect.Transform) &&
         CombatTimer <= Timing.Global.Milliseconds && CaptainedShipId == Guid.Empty && BoardedShipId == Guid.Empty &&
-        MapInstanceId == MapInstance.OverworldInstanceId && MapController.Get(MapId) is { } map && (!map.IsIndoors || definition.AllowIndoors);
+        (MapInstanceId == MapInstance.OverworldInstanceId || RaceRound is {} race && MapInstanceId == race.Id && MapId == race.Course.MapId) &&
+        MapController.Get(MapId) is { } map && (!map.IsIndoors || definition.AllowIndoors);
     internal void Dismount()
     {
         if (ActiveMountId == Guid.Empty) return;
@@ -44,7 +45,7 @@ public partial class Player
     }
     internal void UpdateMount()
     {
-        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || (!MountRuntime.Owns(this, mount) && !(_joust is { Done: false } && _joustArena?.MountId == mount.Id) && _joustPvp?.Arena.MountId != mount.Id) || !CanRide(mount))) Dismount();
+        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || (!MountRuntime.Owns(this, mount) && !(_joust is { Done: false } && _joustArena?.MountId == mount.Id) && _joustPvp?.Arena.MountId != mount.Id && RaceRound?.Course.MountId != mount.Id) || !CanRide(mount))) Dismount();
     }
     internal void SendMountState(bool open = false, string message = "") => SendPacket(new MountStatePacket
     {
@@ -63,7 +64,7 @@ public partial class Player
                 _lastMountList = requested; SendMountState(true); return;
             }
             if (packet.Action is not (MountAction.Toggle or MountAction.Favorite)) return;
-            if (IsJoustProtected && packet.Action == MountAction.Toggle) return;
+            if ((IsJoustProtected || IsMountRacing) && packet.Action == MountAction.Toggle) return;
             var now = Timing.Global.Milliseconds;
             if (_lastMountAction > 0 && now - _lastMountAction < 700) return;
             _lastMountAction = now;

@@ -1785,7 +1785,7 @@ public abstract partial class Entity : IEntity
 
     private void ApplySpellAttack(Entity target, SpellDescriptor spellDescriptor, bool onHitTrigger, bool trapTrigger, ItemDescriptor sourceWeapon)
     {
-        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true })
+        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsActivityCombatProtected: true } || this is Player { IsActivityCombatProtected: true })
         {
             return;
         }
@@ -2008,7 +2008,7 @@ public abstract partial class Entity : IEntity
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
         ItemDescriptor weapon = null)
     {
-        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true }) return;
+        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsActivityCombatProtected: true } || this is Player { IsActivityCombatProtected: true }) return;
         if (IsAttacking)
         {
             return;

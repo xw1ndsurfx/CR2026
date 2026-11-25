@@ -156,7 +156,7 @@ public partial class Npc
         foreach (var entity in mapInstance.GetEntities().ToArray())
         {
             if (entity is not Player player || !player.InGame || player.IsDead ||
-                player.HasPendingDeath || player.IsDisposed || player.IsJoustProtected ||
+                player.HasPendingDeath || player.IsDisposed || player.IsActivityCombatProtected ||
                 player.MapId != impactMap || player.MapInstanceId != impactInstance ||
                 !_advancedTelegraphTiles.Contains(new CombatTelegraphTile(player.X, player.Y)) ||
                 !CanAttack(player, null))
