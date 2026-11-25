@@ -19,6 +19,7 @@ on:
       - 'Intersect.Client.Core/Networking/PacketSender.cs'
       - 'Intersect.Client.Core/MonoGame/File Management/MonoContentManager.cs'
       - 'Intersect.Tests.Client/Fishing*Tests.cs'
+      - 'Intersect.Tests.Server/FishingPersistenceTests.cs'
       - 'Intersect.Editor/**/*Fishing*'
       - 'Intersect.Editor/Forms/EditorHub/**'
       - 'Intersect.Editor/Forms/frmMain.EditorHub.cs'
@@ -28,6 +29,7 @@ on:
       - 'resources/fishing/**'
       - 'resources/sounds/fishing/**'
       - 'Utilities/FishingRulesTests/**'
+      - 'Utilities/FishingUiTests/**'
       - 'Utilities/InterfaceEditorTests/FishingEditorTests.cs'
       - 'Utilities/InterfaceEditorTests/EditorHubTests.cs'
       - 'scripts/fishing/**'
@@ -54,3 +56,10 @@ jobs:
       - name: Build server, client and editor; verify rules, rewards, controls and assets
         shell: pwsh
         run: ./scripts/Verify-Fishing.ps1
+      - name: Retain fishing UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fishing-ui
+          path: validation-local/fishing-ui/*.png
+          if-no-files-found: ignore

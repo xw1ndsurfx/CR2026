@@ -66,9 +66,15 @@ internal sealed class TestFont : IFont
     public int GetNextFontSize(int startSize, int direction, int limit = 0) => startSize + direction;
 }
 
-internal sealed class BitmapTexture(string path) : IGameTexture
+internal sealed class BitmapTexture(string path, SD.Rectangle? source = null) : IGameTexture
 {
-    internal readonly SD.Bitmap Bitmap = new(path);
+    internal readonly SD.Bitmap Bitmap = LoadBitmap(path, source);
+    private static SD.Bitmap LoadBitmap(string path, SD.Rectangle? source)
+    {
+        var bitmap = new SD.Bitmap(path);
+        if (source == null) return bitmap;
+        using (bitmap) return bitmap.Clone(source.Value, SD.Imaging.PixelFormat.Format32bppArgb);
+    }
     public string Id => path;
     public string Name => Path.GetFileName(path);
     public override string ToString() => Name;
