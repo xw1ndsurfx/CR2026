@@ -15,6 +15,8 @@ public abstract partial class PlayerContext : IntersectDbContext<PlayerContext>,
 
     public DbSet<User> Users { get; set; }
 
+    public DbSet<CraftingOrdersLedger> CraftingOrdersLedger { get; set; }
+
     public DbSet<Mute> Mutes { get; set; }
 
     public DbSet<Ban> Bans { get; set; }

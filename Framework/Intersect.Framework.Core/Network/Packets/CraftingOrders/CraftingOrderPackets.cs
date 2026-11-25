@@ -30,6 +30,7 @@ namespace Intersect.Network.Packets.Client
         [Key(1)] public int Quantity { get; set; }
         [Key(2)] public int Reward { get; set; }
         [Key(3)] public int DurationHours { get; set; }
+        [Key(4)] public Guid RequestId { get; set; }
     }
 
     [MessagePackObject]
@@ -51,5 +52,7 @@ namespace Intersect.Network.Packets.Server
         [Key(2)] public int Aureons { get; set; }
         [Key(3)] public string MessageKey { get; set; } = string.Empty;
         [Key(4)] public bool OpenWindow { get; set; }
+        [Key(5)] public long PendingAureons { get; set; }
+        [Key(6)] public long PendingItems { get; set; }
     }
 }

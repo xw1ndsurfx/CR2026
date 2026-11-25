@@ -15,7 +15,7 @@ internal sealed partial class PacketHandler
     {
         if (client.IsEditor || client.Entity is not { } player) return;
         lock (player.EntityLock)
-            client.Send(CraftingOrdersRuntime.Post(player, packet.ItemId, packet.Quantity, packet.Reward, packet.DurationHours));
+            client.Send(CraftingOrdersRuntime.Post(player, packet.ItemId, packet.Quantity, packet.Reward, packet.DurationHours, packet.RequestId));
     }
 
     public void HandlePacket(Client client, CraftingOrderActionPacket packet)
