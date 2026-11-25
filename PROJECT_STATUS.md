@@ -21,9 +21,9 @@
 
 ### Ajout du 25 novembre 2026 : courses royales de montures
 
-Les [courses royales](Documentation/Mount-Racing.fr.md) sont implémentées localement sur `codex/mount-racing`, depuis `main` après la PR 282 (`a3ff262ed`). Le serveur contrôle inscriptions, consentements individuels, instance privée, vitesse identique, passages, tours, temps et prix. L'éditeur règle les circuits, montures prêtées, récompenses et médias. L'entraînement solo est sans prix. Les résultats/prix en attente et le retour du personnage survivent au redémarrage ; une course interrompue ne reprend pas.
+Les [courses royales](Documentation/Mount-Racing.fr.md) sont regroupées dans la [PR 283](https://github.com/xw1ndsurfx/CR2026/pull/283), depuis `main` après la PR 282 (`a3ff262ed`). Le serveur contrôle inscriptions, consentements individuels, instance privée, vitesse identique, passages, tours, temps et prix. L'éditeur règle les circuits, montures prêtées, récompenses et médias. L'entraînement solo est sans prix. Les résultats/prix en attente et le retour du personnage survivent au redémarrage ; une course interrompue ne reprend pas.
 
-Deux PNG et neuf WAV originaux ont été installés et vérifiés dans CURRENT CLIENT & EDITOR. Les interfaces sont traduites et contrôlées dans les trois langues. La validation couvre les règles, collisions serveur, sauvegardes en échec, double attribution, inventaire plein et retour après déconnexion ; la recette connectée à plusieurs clients reste à faire avec un circuit configuré. Aucun exécutable installé ni client Intel HD 3000 n'a été remplacé. La branche n'est pas encore publiée.
+Deux PNG et neuf WAV originaux ont été installés et vérifiés dans CURRENT CLIENT & EDITOR. Les interfaces sont traduites et contrôlées dans les trois langues. La validation couvre les règles, collisions serveur, sauvegardes en échec, double attribution, inventaire plein et retour après déconnexion ; la recette connectée à plusieurs clients reste à faire avec un circuit configuré. Aucun exécutable installé ni client Intel HD 3000 n'a été remplacé. Un contrôle GitHub dédié vérifie les courses, les activités existantes, les interfaces, l'éditeur et les ressources.
 
 ### Ajout du 25 novembre 2026 : matchmaking donjons et expéditions
 

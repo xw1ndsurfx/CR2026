@@ -1,6 +1,6 @@
 # Courses royales de montures
 
-Implémentation locale du 25 novembre 2026 sur `codex/mount-racing`, depuis `main` après la PR 282 (`a3ff262ed`). La configuration des circuits et la recette multijoueur connectée restent à effectuer avant activation en production. Le client Intel HD 3000 conserve sa branche et son installation séparées.
+Implémentation du 25 novembre 2026 regroupée dans la [PR 283](https://github.com/xw1ndsurfx/CR2026/pull/283), depuis `main` après la PR 282 (`a3ff262ed`). La configuration des circuits et la recette multijoueur connectée restent à effectuer avant activation en production. Le client Intel HD 3000 conserve sa branche et son installation séparées.
 
 ## Parcours joueur
 
@@ -52,7 +52,7 @@ L'installateur `Utilities/MountRacingAssets/install_assets.py` ne sélectionne q
 
 ## Contrôles et recette restante
 
-Les 98 tests de la sélection montures/joutes/matchmaking passent, dont 15 cas dédiés aux courses. Ces derniers couvrent confirmation individuelle, invitations périmées, départ anticipé, vitesse serveur, diagonales/téléportation, ordre des passages, tours/classement, abandon/délai, règles figées, pistes bloquées, protocole, langues, inventaire plein, erreurs d'écriture, double remise, retour après déconnexion et nettoyage du groupe. Un test utilise les collisions serveur réelles avec deux cavaliers et vérifie les restrictions de combat. Les contrôles de retour simulent le transfert et la persistance ; ils ne remplacent pas une connexion à une base serveur et à plusieurs clients.
+Les 451 tests de la sélection montures/joutes/matchmaking/naval/donjons passent, dont 16 cas dédiés aux courses, ainsi que les 10 tests de déplacements en cinématique. Les tests des courses couvrent confirmation individuelle, invitations périmées, départ anticipé, vitesse serveur, diagonales/téléportation, ordre des passages, tours/classement, abandon/délai, règles figées, pistes bloquées, protocole, langues, inventaire plein, erreurs d'écriture, double remise, retour après déconnexion et nettoyage du groupe. La vérification de participation accepte les profils non initialisés sans bloquer les autres activités. Un test utilise les collisions serveur réelles avec deux cavaliers et vérifie les restrictions de combat. Les contrôles de retour simulent le transfert et la persistance ; ils ne remplacent pas une connexion à une base serveur et à plusieurs clients.
 
 Les interfaces Gwen sont contrôlées en EN/FR/ES à 640×480, 1280×720 et 1920×1080, avec captures du panneau et du chronomètre. L'éditeur est contrôlé dans les trois langues, notamment les coordonnées, médias, modifications de passage et la confirmation de sauvegarde. L'atlas possède une vraie transparence ; les sons sont vérifiés pour format, durée, marge avant saturation et extrémités silencieuses.
 

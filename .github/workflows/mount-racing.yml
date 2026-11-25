@@ -38,8 +38,8 @@ jobs:
           python-version: '3.x'
       - name: Verify racing artwork and sounds
         run: python Utilities/MountRacingAssets/generate_audio.py --check
-      - name: Verify racing, mounts, jousting and matchmaking
-        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Mount|FullyQualifiedName~Joust|FullyQualifiedName~Matchmaking" --nologo
+      - name: Verify racing and compatibility with existing activities
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Mount|FullyQualifiedName~Joust|FullyQualifiedName~Matchmaking|FullyQualifiedName~Naval|FullyQualifiedName~Dungeon|FullyQualifiedName~CinematicPlayerRouteTests" --nologo
       - name: Verify race interface in three languages and resolutions
         run: dotnet run --project Utilities/MountRacingUiTests/MountRacingUiTests.csproj -c Release
       - name: Verify race editor in three languages

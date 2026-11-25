@@ -94,7 +94,7 @@ internal static class MountRaceRuntime
         if (now >= _nextRecovery)
         {
             _nextRecovery = now + 5000;
-            foreach (var p in Player.OnlinePlayersSnapshot().Where(p => p.PetCollection.Racing.Return != null && SessionFor(p.Id) == null))
+            foreach (var p in Player.OnlinePlayersSnapshot().Where(p => p.PetCollection?.Racing?.Return != null && SessionFor(p.Id) == null))
             if (Monitor.TryEnter(p.EntityLock))
                 try { p.ReturnFromMountRace(); } catch (Exception e) { Log(e); } finally { Monitor.Exit(p.EntityLock); }
         }

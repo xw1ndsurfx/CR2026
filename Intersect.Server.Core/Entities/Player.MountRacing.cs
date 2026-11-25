@@ -33,7 +33,7 @@ public sealed class RacingProfile
 public partial class Player
 {
     [NotMapped, JsonIgnore] internal MountRaceRound? RaceRound { get; private set; }
-    [NotMapped, JsonIgnore] internal bool IsMountRacing => RaceRound != null || PetCollection.Racing?.Return != null;
+    [NotMapped, JsonIgnore] internal bool IsMountRacing => RaceRound != null || PetCollection?.Racing?.Return != null;
     internal bool IsActivityCombatProtected => IsJoustProtected || IsMountRacing;
     private bool _raceTravel;
     internal bool RaceBlocksMovement => IsMountRacing && (RaceRound == null || !RaceRound.CanMove(Id, Timing.Global.Milliseconds));

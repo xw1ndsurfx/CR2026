@@ -107,6 +107,18 @@ public sealed class MountRaceTests
     { var p = new Player { Id = Guid.NewGuid(), Items = new(Options.Instance.Player.MaxInventory, InventorySlot.Create) }; p.Items.FillToCapacity(); GC.SuppressFinalize(p); return p; }
     private ItemDescriptor Prize()
     { var item = new ItemDescriptor(Guid.NewGuid()) { Name = "Race token", ItemType = ItemType.Crafting, Stackable = true, MaxInventoryStack = 10 }; ItemDescriptor.Lookup.Set(item.Id, item); _items.Add(item); return item; }
+    [Test] public void MissingOrLegacyCollectionDoesNotLockUnrelatedActivities()
+    {
+        var p = Player(); p.PetCollection = null!;
+        Assert.That(p.IsMountRacing, Is.False);
+        Assert.That(p.RaceBlocksMovement, Is.False);
+        Assert.That(p.PrepareRaceDisconnect(), Is.False);
+        p.PetsJson = "{\"Racing\":null}";
+        Assert.That(p.PetCollection.Racing, Is.Not.Null);
+        Assert.That(p.IsMountRacing, Is.False);
+        p.PetCollection.Racing.Return = new() { MapId = Guid.NewGuid() };
+        Assert.That(p.IsMountRacing, Is.True, "A durable return still protects a reconnecting racer.");
+    }
     [Test] public void JournalSurvivesReloadDeduplicatesAndAppliesCooldownWithoutErasingRecords()
     {
         var journal = Journal(); var id = Guid.NewGuid(); var item = Guid.NewGuid(); var first = Record(id, item);
