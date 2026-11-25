@@ -15,7 +15,7 @@ internal static class HeadquartersPresentation
     internal static void Play(string file, int volume)
     {
         if (!HeadquartersAssets.File(file, ".wav") || string.IsNullOrEmpty(file) || volume <= 0 || Globals.ContentManager == null) return;
-        var sound = Audio.AddGameSound(file, false);
+        var sound = Intersect.Client.Interface.InterfaceAudio.PlayConfigured(file, false);
         if (sound is { Loaded: true }) sound.Volume = volume;
     }
     internal static void Apply(HeadquartersView view, bool open)
@@ -34,7 +34,7 @@ internal static class HeadquartersPresentation
         if (_ambienceFile != file)
         {
             _ambience?.Stop(); _ambience = null; _ambienceFile = file;
-            if (!string.IsNullOrEmpty(file) && Globals.ContentManager != null) _ambience = Audio.AddGameSound(file, true);
+            if (!string.IsNullOrEmpty(file) && Globals.ContentManager != null) _ambience = Intersect.Client.Interface.InterfaceAudio.PlayConfigured(file, true);
         }
         if (_ambience is { Loaded: true }) _ambience.Volume = View.Assets.AmbienceVolume;
     }

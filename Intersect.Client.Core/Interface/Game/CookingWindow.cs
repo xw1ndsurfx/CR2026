@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
@@ -223,7 +223,7 @@ internal sealed partial class CookingWindow : Base
         if (_model?.Pending == true || _state?.YourTurn != true) return;
         _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false, input);
     }
-    private static void Play(string? sound) { if (!string.IsNullOrWhiteSpace(sound)) Intersect.Client.Core.Audio.AddGameSound(sound, false); }
+    private static void Play(string? sound) { if (!string.IsNullOrWhiteSpace(sound)) Intersect.Client.Interface.InterfaceAudio.PlayConfigured(sound, false); }
     private static string ErrorText(string code) => code switch
     {
         "RecipeNotFound" => "That recipe no longer exists.",

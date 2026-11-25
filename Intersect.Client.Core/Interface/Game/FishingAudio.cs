@@ -50,7 +50,7 @@ internal sealed class FishingAudio : IDisposable
         var me = Globals.Me;
         var sound = cue.Spatial && me != null
             ? Audio.AddMapSound(cue.File, (int)me.X, (int)me.Y, me.MapId, cue.Loop, 0, Math.Max(1, cue.Range), me)
-            : Audio.AddGameSound(cue.File, cue.Loop);
+            : Intersect.Client.Interface.InterfaceAudio.PlayConfigured(cue.File, cue.Loop);
         if (sound is not { Loaded: true }) return null;
         SetVolume(sound, cue.Volume);
         return sound;
@@ -180,7 +180,7 @@ internal sealed class FishingAudio : IDisposable
                 Notices.Count(n => n.File == cue.File) >= Math.Clamp(cue.MaximumInstances, 1, 16)) return;
             var me = Globals.Me;
             var sound = cue.Spatial && me != null ? Audio.AddMapSound(cue.File, me.X, me.Y, me.MapId, false, 0, Math.Clamp(cue.Range, 1, 100), me)
-                : Audio.AddGameSound(cue.File, false);
+                : Intersect.Client.Interface.InterfaceAudio.PlayConfigured(cue.File, false);
             if (sound is not { Loaded: true }) return;
             SetVolume(sound, cue.Volume);
             LastNotice[cue.File] = now; Notices.Add((cue.File, sound));

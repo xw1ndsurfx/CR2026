@@ -20,7 +20,7 @@ internal sealed class CraftingOrdersAudio
         _last[cue] = now;
         try
         {
-            var sound = Audio.AddGameSound("crafting-orders/" + cue + ".wav", false);
+            var sound = Intersect.Client.Interface.InterfaceAudio.PlayConfigured("crafting-orders/" + cue + ".wav", false);
             if (sound is { Loaded: true }) sound.Volume = 58;
         }
         catch (Exception exception) when (exception is IOException or InvalidOperationException or

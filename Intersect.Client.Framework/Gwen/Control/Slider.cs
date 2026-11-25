@@ -206,7 +206,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = Value + 1;
+            ApplyUserValue(Value + 1);
         }
 
         return true;
@@ -223,7 +223,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = Value + 1;
+            ApplyUserValue(Value + 1);
         }
 
         return true;
@@ -240,7 +240,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = Value - 1;
+            ApplyUserValue(Value - 1);
         }
 
         return true;
@@ -257,7 +257,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = Value - 1;
+            ApplyUserValue(Value - 1);
         }
 
         return true;
@@ -274,7 +274,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = _minimumValue;
+            ApplyUserValue(_minimumValue);
         }
 
         return true;
@@ -291,7 +291,7 @@ public partial class Slider : Base
     {
         if (down)
         {
-            Value = _maximumValue;
+            ApplyUserValue(_maximumValue);
         }
 
         return true;
@@ -300,6 +300,13 @@ public partial class Slider : Base
     protected virtual void SliderBarOnDragged(Base control, EventArgs args)
     {
         SetValueInternal(CalculateValue(), forceUpdate: true);
+    }
+
+    private void ApplyUserValue(double value)
+    {
+        var previous = Value;
+        Value = value;
+        if (!Value.Equals(previous)) QueueInterfaceSound(UiCue.Slider);
     }
 
     protected override void OnMouseDown(MouseButton mouseButton, Point mousePosition, bool userAction = true)
@@ -336,6 +343,7 @@ public partial class Slider : Base
         SliderBarOnDragged(_sliderBar, EventArgs.Empty);
 
         InputHandler.PassMouseFocusTo(Canvas!, _sliderBar);
+        if (userAction) QueueInterfaceSound(UiCue.Slider);
     }
 
     protected virtual float CalculateValue()

@@ -596,6 +596,7 @@ public partial class InputBox : Window
 
     public void CancelInput()
     {
+        QueueInterfaceSound(Framework.Gwen.UiCue.Back);
         OnCanceled(this, EventArgs.Empty);
         Canceled?.Invoke(this, EventArgs.Empty);
         Close();
@@ -603,6 +604,7 @@ public partial class InputBox : Window
 
     public void SubmitInput()
     {
+        QueueInterfaceSound(Framework.Gwen.UiCue.Submit);
         var args = new InputSubmissionEventArgs(Value);
         OnSubmitted(this, args);
         Submitted?.Invoke(this, args);

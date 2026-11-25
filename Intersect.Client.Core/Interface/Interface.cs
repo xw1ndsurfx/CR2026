@@ -80,6 +80,9 @@ public static partial class Interface
 
     private static MutableInterface? NullableCurrentInterface => _uiInGame as MutableInterface ?? _uiMainMenu?.MainMenu;
 
+    internal static void NotifyDedicatedInterfaceSound() =>
+        (Globals.GameState == GameStates.InGame ? _canvasInGame : _canvasMainMenu)?.DedicatedInterfaceSoundPlayed();
+
     public static MutableInterface CurrentInterface => NullableCurrentInterface ??
                                                        throw new InvalidOperationException("No current UI initialized");
 
@@ -223,6 +226,8 @@ public static partial class Interface
 
         // Create the game Canvas (it's root, on which all other GWEN controls are created)
         _canvasInGame = new Canvas(Skin, "InGame");
+        InterfaceAudio.Configure(_canvasMainMenu);
+        InterfaceAudio.Configure(_canvasInGame);
 #if ANDROID
         _canvasInGame.Scale = MobileUiScale;
         UpdateMobileCanvasBounds(_canvasInGame);

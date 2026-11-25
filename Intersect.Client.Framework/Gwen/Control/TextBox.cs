@@ -946,6 +946,7 @@ public partial class TextBox : Label
     /// </summary>
     protected virtual void OnReturn()
     {
+        if (SubmitPressed != null) QueueInterfaceSound(UiCue.Submit);
         SubmitPressed?.Invoke(this, EventArgs.Empty);
         base.PlaySound(_soundNameSubmit);
     }

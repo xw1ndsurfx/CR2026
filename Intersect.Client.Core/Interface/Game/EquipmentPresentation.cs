@@ -35,7 +35,7 @@ internal static class EquipmentPresentation
     {
         if (!Cues.Contains(cue) || Globals.ContentManager == null || Environment.TickCount64 - LastCue.GetValueOrDefault(cue, -10000) < 180) return;
         LastCue[cue] = Environment.TickCount64;
-        try { var sound = Audio.AddGameSound("equipment_" + cue + "_v1.wav", false); if (sound is { Loaded: true }) sound.Volume = 48; }
+        try { var sound = Intersect.Client.Interface.InterfaceAudio.PlayConfigured("equipment_" + cue + "_v1.wav", false); if (sound is { Loaded: true }) sound.Volume = 48; }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or NotSupportedException) { }
     }
     internal static ImagePanel Background(Base parent, bool forge, int width, int height)

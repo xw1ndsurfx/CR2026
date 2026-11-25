@@ -1022,7 +1022,7 @@ internal sealed class PotionWindow : Base
 
     private static void PlayPotionSound(string file)
     {
-        if (Globals.ContentManager != null && !string.IsNullOrWhiteSpace(file)) Intersect.Client.Core.Audio.AddGameSound(file, false);
+        if (Globals.ContentManager != null && !string.IsNullOrWhiteSpace(file)) Intersect.Client.Interface.InterfaceAudio.PlayConfigured(file, false);
     }
 
     private void UpdateFx()
