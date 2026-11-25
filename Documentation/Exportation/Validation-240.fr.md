@@ -18,6 +18,8 @@ Résultats locaux : **352 tests client réussis**, 6 tests GPU ignorés par leur
 
 Un premier passage de la suite client pendant les compilations a échoué sur la fraîcheur d'un instantané naval (expiration à 1,5 seconde). La suite navale isolée passe ses 20 tests et le second passage complet passe ses 352 tests. Aucun comportement naval n'a été modifié pour contourner cet échec.
 
+Le passage complet sur GitHub a également révélé deux acteurs de joute construits sans initialisation dans les tests et laissés avec leur finaliseur actif. Leur nettoyage pouvait interrompre le processus de test. Le finaliseur est désormais désactivé pour ces deux objets factices, comme pour les autres personnages de test; le code du jeu n'est pas modifié.
+
 ```sh
 python scripts/exportation/validate_assets.py
 dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Release
