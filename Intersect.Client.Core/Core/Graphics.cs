@@ -45,8 +45,8 @@ public static partial class Graphics
         }
     }
 
-    public static float WorldScale => Cinematics.CinematicCamera.Zoom is { } cinematicZoom
-        ? _cinematicWorldScale ?? cinematicZoom : Globals.Database?.WorldZoom ?? 1;
+    private static float PreferredWorldScale => Globals.Database?.WorldZoom ?? 1;
+    public static float WorldScale => _preparedWorldScale ?? Cinematics.CinematicCamera.Zoom ?? PreferredWorldScale;
     // UpdateView stores the display size alongside the world-space origin.
     // Cinematic zoom uses the same renderer transform as ordinary world zoom:
     // the visible world grows when zooming out, including neighbouring maps.
@@ -599,7 +599,7 @@ public static partial class Graphics
 
         // Begin may refresh the display dimensions. Fit the current frame only
         // after that refresh, and retain the scale the renderer really accepted.
-        PrepareCinematicFraming();
+        PrepareWorldFraming();
         ApplyPreparedWorldScale(gameState);
 
         if (renderer.ScreenWidth != sOldWidth ||
@@ -699,6 +699,7 @@ public static partial class Graphics
         }
 
         if(layer==0)map.DrawGeneratedBoardingDeck();
+        if(layer==2)map.DrawGeneratedBoardingForeground();
         map.Draw(layer);
         if (layer == 0) map.DrawRainPuddles();
 
@@ -986,8 +987,8 @@ public static partial class Graphics
 
         var w = x1 - x;
         var h = y1 - y;
-        var restrictView = Cinematics.CinematicCamera.Zoom != null && _cinematicWorldBounds is { } cinematicBounds
-            ? cinematicBounds : new FloatRect(x, y, w, h);
+        var restrictView = _preparedWorldBounds is { } preparedBounds
+            ? preparedBounds : new FloatRect(x, y, w, h);
         var navalCamera = Naval.NavalWorld.TryCamera(out var navalX, out var navalY);
         if (Cinematics.CinematicCamera.TryPosition(out var cinematicX, out var cinematicY))
         { navalCamera = true; navalX = cinematicX; navalY = cinematicY; }
@@ -1452,6 +1453,7 @@ public static partial class Graphics
             return;
         }
 
+        if(CollectAtmosphere(texture,source,screenTarget,color,blendMode,0,true))return;
         var view = renderer.CurrentView;
         var target = Cinematics.CinematicScreenGeometry.ToWorld(
             new(screenTarget.X, screenTarget.Y, screenTarget.Width, screenTarget.Height),
@@ -1588,6 +1590,8 @@ public static partial class Graphics
             return;
         }
 
+        if(CollectAtmosphere(tex,srcRectangle,targetRect,renderColor,blendMode,rotationDegrees,false))return;
+        targetRect=ScaledSpriteRectangle(targetRect);
         if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 
         Renderer?.DrawTexture(

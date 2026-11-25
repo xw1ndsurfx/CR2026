@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Shared/InterfaceAudioAssets.props" />
+  <Import Project="../Shared/MatchmakingAssets.props" />
+  <Import Project="../Shared/MountRacingAssets.props" />
+  <Import Project="../Shared/EquipmentAssets.props" />
+  <Import Project="../Shared/GuildHeadquartersAssets.props" />
+  <Import Project="../Shared/RoyalAlchemistAssets.props" />
   <Import Project="../Shared/FishingAssets.props" />
+  <Import Project="../Shared/NavalDeckAssets.props" />
   <Import Project="../Shared/ExportationAssets.props" />
   <Import Project="../Shared/JoustingAssets.props" />
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments.InputSubmissionEvent;
@@ -53,10 +53,12 @@ internal sealed partial class UserListWindow
             ranked.Length + " MEMBERS  /  " + ranked.Count(member => member.Online) + " ONLINE",
             13, 43, 445, 22, 11, Gold, true);
 
+        AddAction(_body, "OpenHeadquarters", HeadquartersWindow.T("Guild headquarters"), 13, 71, 435, 34,
+            () => HeadquartersWindow.Request(Intersect.Framework.Core.GuildHeadquarters.HeadquartersAction.Open));
         AddLabel(_body, "GuildTableHead", "NAME          LV     RANK          ONLINE",
-            13, 70, 444, 24, 12, Gold, true);
+            13, 112, 444, 24, 12, Gold, true);
 
-        var y = 101;
+        var y = 143;
         foreach (var member in ranked)
         {
             var statusColor = member.Online ? Cream : Muted;
@@ -149,7 +151,7 @@ internal sealed partial class UserListWindow
         _partyVitals.Clear();
 
         AddLabel(_body, "PartyHeader",
-            count > 0 ? "PARTY   " + count + " / " + Options.Instance.Party.MaximumMembers
+            count > 0 ? "PARTY   " + count + " / " + Naval.NavalWorld.PartyCapacity
                       : "NO PARTY FORMED",
             7, 4, 446, 26, 13, Gold, true);
 

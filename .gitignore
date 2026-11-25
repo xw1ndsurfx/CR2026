@@ -2,6 +2,11 @@
 ## Eclipse
 #################
 
+# Local verification output and temporary tooling
+/validation-local/
+mount-races.json
+mount-race-results.json
+
 *.pydevproject
 .project
 .metadata
@@ -234,6 +239,12 @@ Custom*.props
 
 # Local per-executable build counters
 /.build-versions/
+/artifacts/android/
+/artifacts/distribution/
+__pycache__/
+/android-build.log
+/android-restore.log
+/android-library-build.log
 
 # Locally imported mount spritesheets
 /resources/images/mounts/
@@ -248,3 +259,4 @@ Custom*.props
 /resources/playerdata.db*
 /resources/gamedata.db*
 /resources/logging.db*
+/resources/naval-expedition-runs.json

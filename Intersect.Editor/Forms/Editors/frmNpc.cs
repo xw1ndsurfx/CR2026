@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Drawing.Imaging;
 using DarkUI.Controls;
 using DarkUI.Forms;
@@ -69,7 +69,11 @@ public partial class FrmNpc : EditorForm
         ApplyHooks();
         InitializeComponent();
         BuildBossControls();
+        BuildNpcSoundControls();
         BuildCombatAiControls();
+        BuildCombatTelegraphControls();
+        BuildSpellTelegraphControls();
+        BuildBossComboControls();
         BuildPetControls();
         BuildNpcSpellTimingControls();
         BuildNpcAutoCreator();
@@ -164,6 +168,10 @@ public partial class FrmNpc : EditorForm
         _chkIsBoss.CheckedChanged += (_, _) =>
         {
             UpdateBossControlState();
+            if (_grpCombatTelegraph.Controls.Count > 0)
+                UpdateCombatTelegraphControlState();
+            if (_grpBossCombo.Controls.Count > 0)
+                UpdateBossComboControlState();
             if (mEditorItem != null)
             {
                 mEditorItem.IsBoss = _chkIsBoss.Checked;
@@ -873,6 +881,7 @@ public partial class FrmNpc : EditorForm
             );
             _npcDeathSeconds.Value = Math.Clamp(mEditorItem.DeathAnimationDurationSeconds, 0, 600);
             UpdateBossControlState();
+            LoadNpcSounds();
 
             _chkSmartCombatMovement.Checked = mEditorItem.SmartCombatMovement;
             _cmbCombatMovementMode.SelectedIndex = Math.Clamp(
@@ -886,6 +895,9 @@ public partial class FrmNpc : EditorForm
                 (int)_nudPreferredCombatRange.Maximum
             );
             UpdateCombatAiControlState();
+            LoadCombatTelegraphControls();
+            LoadSpellTelegraphControls();
+            LoadBossComboControls();
             _chkIsPet.Checked = mEditorItem.IsPet;
             _cmbPetItem.SelectedIndex = ItemDescriptor.ListIndex(mEditorItem.PetSummonItemId) + 1;
             _nudPetLootRadius.Value = Math.Clamp(mEditorItem.PetLootRadius, 0, 8);

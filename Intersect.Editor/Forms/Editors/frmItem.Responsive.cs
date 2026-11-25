@@ -53,6 +53,7 @@ public partial class FrmItem
             AddItemEditorTab("Consumables", grpConsumable);
             AddItemEditorTab("Paperdolls", grpPaperdoll);
             AddItemEditorTab("Weapon & Shield", grpWeaponProperties, grpShieldProperties);
+            AddItemEditorTab(EquipmentEffectsDialog.T("Weapon spell"), BuildEquipmentPowerGroup());
 
             var creatorTab = new TabPage("Auto Creator")
             {

@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
@@ -122,6 +122,7 @@ public partial class CraftingWindow : Window
         }
 
         Interface.InputBlockingComponents.Add(this);
+        Disposed += (_, _) => { if (Interface.InGameUiOrNull?.GameCanvas is { IsDisposed: false } canvas && _equipmentUpgrade is { IsDisposed: false }) canvas.RemoveChild(_equipmentUpgrade, true); };
 
         if (Globals.Me is { } player)
         {
@@ -327,7 +328,7 @@ public partial class CraftingWindow : Window
             }
         }
 
-        mCraftAll.IsHidden = mJournalMode || craftableQuantity < 2;
+        mCraftAll.IsHidden = mJournalMode || craftableQuantity < 2 || craftDescriptor.EquipmentUpgrade != null || craftDescriptor.Campfire != null;
         if (!mCraftAll.IsHidden)
         {
             mCraftAll.SetText(Strings.Crafting.CraftAll.ToString(craftableQuantity));
@@ -343,6 +344,7 @@ public partial class CraftingWindow : Window
             return;
         }
 
+        _equipmentUpgrade?.Hide();
         base.Hide();
     }
 
@@ -431,6 +433,10 @@ public partial class CraftingWindow : Window
             return;
         }
 
+        if (CraftingRecipeDescriptor.Get(_craftRecipeDescriptorId) is { EquipmentUpgrade: not null } upgradeRecipe)
+        {
+            OpenEquipmentUpgrade(upgradeRecipe); return;
+        }
         if (CanCraft())
         {
             if (CraftingRecipeDescriptor.Get(_craftRecipeDescriptorId)?.Campfire != null) count = 1;

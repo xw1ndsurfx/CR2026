@@ -1,11 +1,34 @@
 # Corps Royaux — Roadmap 2026–2027
 
-> **Statut : planification interne — mis à jour le 2 novembre 2026.**
+> **Statut : planification interne — suivi actualisé le 11 novembre 2026 (calendrier établi le 2 novembre).**
 > Les dates de playtest et de bêta sont des **objectifs**, et non des ouvertures déjà configurées dans Steamworks. Leur maintien dépend des validations techniques. Les volumes indiquent des **joueurs ciblés / invités**, pas un nombre de connexions simultanées garanti.
 
 Cette feuille de route accompagne le développement de **Corps Royaux**, MMORPG 2D de Studio Logiklik, et son moteur personnalisé **Logiklik 2D Engine**, basé sur Intersect. Elle sépare les tests fermés (Steam Playtest), la démo destinée au Steam Next Fest et la bêta ouverte du jeu principal.
 
-[Retour au README](README.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
+[Retour au README](README.md) · [État technique et reprise du projet](PROJECT_STATUS.md) · [Documentation de la stabilité serveur](docs/server-crash-diagnostics.md) · [Documentation du tutoriel](docs/tutorial-guide.md)
+
+Le [suivi de reconnexion et de sauvegarde après redémarrage](Documentation/Playtests/Reconnexion-2026-11-11.fr.md) confirme la conservation des états enregistrés sur la copie isolée. Les changements inattendus apparus pendant la session restent à expliquer avant l’acceptation du playtest.
+
+## État technique au 11 novembre 2026
+
+Ajout du 25 novembre : [recherche de groupe pour donjons et expéditions](Documentation/Matchmaking.fr.md) fusionnée par la PR 282 (`a3ff262ed`), avec accord individuel de tous les participants, réglages dans Lobby Editor et pack de deux images/sept sons installé dans CURRENT CLIENT & EDITOR. La configuration des activités et la recette multijoueur connectée restent à effectuer. Le client Intel HD 3000 reste séparé.
+
+Suite du 25 novembre : [courses royales de montures](Documentation/Mount-Racing.fr.md), regroupées dans la [PR 283](https://github.com/xw1ndsurfx/CR2026/pull/283). Inscription, départ confirmé par chacun, circuit privé, vitesse commune, passages/tours, classement et prix persistants sont configurables dans l'éditeur. Entraînement solo, interface EN/FR/ES et pack de deux images/neuf sons sont inclus ; ces onze médias sont installés dans CURRENT CLIENT & EDITOR. La configuration d'un circuit et la recette connectée restent à faire avant activation. Le client Intel HD 3000 n'a pas été modifié.
+
+La synthèse datée et les preuves GitHub (PR fusionnées, PR ouvertes, limites de validation et plan de reprise) sont détaillées dans **[PROJECT_STATUS.md](PROJECT_STATUS.md)**. Référence vérifiée : `main` à `69670d777` (PR #265). La reprise choisie le 11 novembre est **P0 : stabilité et préparation du playtest**. Les contrôles et les validations restantes sont consignés dans le [point de préparation du 11 novembre](Documentation/Playtests/Readiness-2026-11-11.fr.md).
+
+| Statut GitHub | Travail récent | Suite nécessaire |
+| --- | --- | --- |
+| **Fonctionnement confirmé par l’utilisateur le 11 novembre** | Agriculture de la maison : cultures et ouvriers, reliés au métier Agriculteur. [Documentation](Documentation/features/farming.md). | Recette détaillée hors connexion, après redémarrage, inventaire plein et protections de propriété à consigner. |
+| **Correctif local séparé ; client testé par l’utilisateur** | Client Intel HD 3000 : correctif audio privé installé ; le profil reste séparé de `main` et du client normal. | Confirmer la stabilité prolongée sur le laptop ; ne pas assimiler ce retour à une validation des autres clients. |
+| **Fusionné ; contrôles automatisés réussis** | [#264](https://github.com/xw1ndsurfx/CR2026/pull/264) : actualisation des ressources, suivi visible des imports et abandon de donjon ; [#265](https://github.com/xw1ndsurfx/CR2026/pull/265) : choix du sprite des ouvriers. | Attester les versions réellement déployées et rejouer le parcours en jeu. |
+| **Fusionné dans `main`, mais désactivé par défaut** | Combat PvE avancé, phases 1 à 7 ([#238](https://github.com/xw1ndsurfx/CR2026/pull/238), [#241–246](https://github.com/xw1ndsurfx/CR2026/pull/246)) : esquive, parade, riposte, télégraphes, endurance, combos et exercices. | Tests en jeu sur staging, migrations et activation contrôlée de `Combat.EnableAdvancedCombat`. |
+| **Fusionné dans `main`, validation à compléter** | Pêche, profession/éditeur et mode auto rééquilibré ([#218](https://github.com/xw1ndsurfx/CR2026/pull/218), [#227](https://github.com/xw1ndsurfx/CR2026/pull/227)). | Régression sessions réelles, prises, EXP et équipement. |
+| **Fusionné en partie ; PR ouverte** | Exportation, éditeur unifié, métier et ajustements UI ([#228](https://github.com/xw1ndsurfx/CR2026/pull/228), [#239](https://github.com/xw1ndsurfx/CR2026/pull/239)); nouvelle interface [#240](https://github.com/xw1ndsurfx/CR2026/pull/240) **non fusionnée**. | Tester livraison/naufrage et rendu visuel ; examiner #240. |
+| **Fusionné dans `main`, validation à compléter** | Commandes d'artisanat, panneau via Event, GFX/SFX et habillage ([#230](https://github.com/xw1ndsurfx/CR2026/pull/230), [#237](https://github.com/xw1ndsurfx/CR2026/pull/237)). | Recette à deux joueurs et résilience des sauvegardes. |
+| **PR en brouillon, non fusionnées** | Royal Guide visuel : [#247](https://github.com/xw1ndsurfx/CR2026/pull/247) → [#248](https://github.com/xw1ndsurfx/CR2026/pull/248) → [#249](https://github.com/xw1ndsurfx/CR2026/pull/249). | Compilation, essais UI/serveur, intégration ordonnée après revue. |
+
+**Règle de suivi :** `PR fusionnée` ≠ `jeu testé` ≠ `jeu déployé`. Les cases de recette ci-dessous restent ouvertes tant qu'aucune preuve d'acceptation correspondante n'a été consignée.
 
 ## Calendrier de diffusion et de tests
 
@@ -87,6 +110,7 @@ Ces éléments sont des **domaines de travail**, pas une affirmation que chaque 
 | **P1** | Interface, navigation et outils de l'éditeur | Régression des workflows essentiels du Logiklik 2D Engine |
 | **P1** | Démo Steam Next Fest | Une boucle de jeu autonome, compréhensible et stable, avec configuration de publication distincte |
 | **P2** | Naval, joutes, cinématiques, concours d'archerie, montures, maisons | Périmètre publié défini par la validation en conditions réelles, sans annoncer un prototype comme terminé |
+| **P2 — en validation** | Expéditions navales coopératives : équipage unique et flotte | Configuration, objectifs partagés et récompenses implémentés; recette multijoueur sur copie isolée encore requise. [Configuration et recette](Documentation/NavalExpeditions.fr.md) |
 | **P2** | Équilibrage, économie, artisanat, compagnons et systèmes sociaux | Économie/XP cohérentes, abus et exploitations prioritaires corrigés |
 
 Documents techniques existants :
@@ -96,6 +120,7 @@ Documents techniques existants :
 - [Royal Weapon Mastery / Archery : état et travaux restants](Documentation/RoyalCombat/README.md)
 - [Montures : prototype](docs/mount-prototype.md)
 - [Maisons et mobilier](Documentation/features/housing.md)
+- [Quartier général de guilde : développement, GFX/audio et recette à effectuer](Documentation/GuildHeadquarters.fr.md)
 - [Familiers](Documentation/features/pets.md)
 - [Brouillard d'exploration](docs/world-map-exploration.md)
 - [Outil de diagnostic des crashes](docs/server-crash-diagnostics.md)

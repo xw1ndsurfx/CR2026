@@ -30,7 +30,7 @@ public partial class Player
     private readonly HashSet<Guid> _joustNativeEvents = [];
     internal bool IsJousting => _joust is { Done: false } || _joustPvp != null;
     [System.ComponentModel.DataAnnotations.Schema.NotMapped, Newtonsoft.Json.JsonIgnore]
-    public override int ScriptedMovementMilliseconds => _joustPvp != null ? _pvpJoustMoveMs : _joust is { Done: false } ? _joustMoveMs : 0;
+    public override int ScriptedMovementMilliseconds => RaceRound?.Course.MovementMilliseconds ?? (_joustPvp != null ? _pvpJoustMoveMs : _joust is { Done: false } ? _joustMoveMs : 0);
     private bool JoustBlocksMovement => IsJoustSeated || PvpJoustBlocksMovement || (_joust is { Done: false } && _joustRouteThread != Environment.CurrentManagedThreadId &&
         !(_joust.Phase == JoustPhase.Preparation && _cinematicRouteScope?.ThreadId == Environment.CurrentManagedThreadId));
     internal void HandleJoustRequest(JoustRequestPacket packet)

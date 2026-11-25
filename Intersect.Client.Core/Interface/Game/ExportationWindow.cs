@@ -1,4 +1,5 @@
 using System.Globalization;
+using Intersect.Configuration;
 using Intersect.Client.General;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
@@ -17,7 +18,7 @@ namespace Intersect.Client.Interface.Game;
 /// <summary>
 /// Asset-backed Exportation crate preparation surface. All mutations are
 /// requested through callbacks; only the server may change ExportationRun.
-/// This is not automatically enabled until the server packet handler is wired.
+/// Opened by the server's Exportation state packet.
 /// </summary>
 internal sealed class ExportationWindow : Base
 {
@@ -39,9 +40,10 @@ internal sealed class ExportationWindow : Base
     private static readonly Color DarkInk = new(255, 69, 41, 23);
     private static readonly Color Gold = new(255, 255, 222, 134);
     private static readonly Color Green = new(255, 142, 236, 107);
-    private static readonly Color SuccessGreen = new(255, 42, 126, 56);
-    private static readonly Color Bronze = new(255, 207, 156, 82);
-    private static readonly Color Ember = new(255, 190, 77, 47);
+    private static readonly Color RoyalGold = new(255, 225, 174, 82);
+    private static readonly Color SealGreen = new(255, 40, 112, 47);
+    private static readonly Color RibbonRed = new(255, 101, 24, 30);
+    private static readonly Color WarningRed = new(255, 145, 33, 39);
 
     private readonly Canvas _canvas;
     private readonly Action<Guid, CargoGroup, int> _packRequested;
@@ -52,16 +54,20 @@ internal sealed class ExportationWindow : Base
     private readonly Dictionary<string, IGameTexture?> _textures = new(StringComparer.Ordinal);
     private readonly List<(Base Control, int X, int Y, int Width, int Height, int Font)> _placements = [];
     private readonly Dictionary<Label, float> _textScaleCache = [];
+    private readonly Dictionary<Label, (string Text, int Wanted, int Width, int Height, IFont Font, string Family, int ForcedSize)> _fitRequests = [];
     private readonly Label[] _orderLabels = new Label[OrderSize];
     private readonly Label[] _shelfLabels = new Label[ShelfSize];
-    private readonly Label[] _journeySteps = new Label[3];
-    private readonly Label[] _helpLines = new Label[6];
     private readonly Button[] _shelfButtons = new Button[ShelfSize];
     private readonly Button[] _removeButtons = new Button[OrderSize];
     private readonly Label _merchant, _recipient, _routeName, _boat, _reward, _experience;
     private readonly Label _level, _professionXp, _progress, _warning, _sourceMap, _destinationMap, _status, _shelfPageLabel, _orderPageLabel;
-    private readonly Label _leftCrate, _rightCrate;
     private readonly Button _seal, _nextGoods, _previousGoods, _nextOrder, _previousOrder, _helpButton;
+    private readonly Label _materialCrate, _otherCrate, _step2, _step3;
+    private readonly Label _merchantInstruction, _shelfSummary, _leftCrateDone, _rightCrateDone;
+    private readonly ExportationHelpOverlay _helpOverlay;
+    private readonly Label _helpHeading;
+    private readonly Button _helpClose;
+    private Guid _selectedGoodItem;
     private readonly List<(Base Control, string Source)> _translated = [];
     private ExportationRoute? _route;
     private ExportationRun? _run;
@@ -70,11 +76,19 @@ internal sealed class ExportationWindow : Base
     private bool _maximumLevel;
     private string _merchantName = "", _recipientName = "", _sourceMapName = "", _destinationMapName = "";
     private string _language = "";
-    private bool _boatReady, _destroyed, _helpOpen;
+    private bool _boatReady, _destroyed;
     private double _scale;
     private int _left, _top;
 
     internal bool ExitRequested { get; private set; }
+    internal Func<Guid> CurrentMapId { get; set; } = () => Globals.Me?.MapId ?? Guid.Empty;
+    internal Action<string>? AudioCue { get; set; }
+
+    private void Play(string cue)
+    {
+        if (AudioCue is { } observer) observer(cue);
+        else _audio.Play(cue);
+    }
 
     private static string T(string source) => ExportationText.Get(source, ClientLanguages.Current);
     private static string F(string source, params object[] args) =>
@@ -96,56 +110,59 @@ internal sealed class ExportationWindow : Base
         // generated preview. Text must sit inside the original plaque artwork.
         Title("Title", "Exportation", 586, 69, 506, 54, 40, center: true);
         Title("Subtitle", "Cargo preparation", 632, 126, 410, 31, 24, center: true);
-        _level = Title("Profession", "Level {0}", 1245, 78, 210, 33, 22);
-        _professionXp = Title("ProfessionXp", "", 1245, 112, 252, 31, 16);
+        _level = Title("Profession", "Level {0}", 1290, 82, 112, 22, 20);
+        _professionXp = Title("ProfessionXp", "", 1290, 105, 112, 17, 14);
 
-        Title("OrderTitle", "ORDER SLIP", 143, 199, 322, 45, 28, dark: true, center: true);
-        Title("CrateTitle", "PACK THE CRATES", 510, 200, 532, 43, 28, center: true);
-        Title("DeliveryTitle", "DELIVERY", 1099, 200, 395, 44, 27, center: true);
-        Title("Instruction", "Click the goods below to fill the crates",
-            526, 249, 526, 31, 19, center: true);
-        Title("Provided", "Prepare the order, seal it, then sail to the recipient.",
-            150, 685, 310, 48, 16, dark: true, center: true, wrap: true);
-        Title("AtDelivery", "At delivery", 1155, 543, 300, 34, 20, center: true);
+        Title("OrderTitle", "ORDER SLIP", 145, 220, 294, 35, 24, center: true);
+        Title("CrateTitle", "PACK THE CRATES", 572, 185, 468, 38, 29, center: true);
+        Title("DeliveryTitle", "DELIVERY", 1143, 186, 385, 38, 27, center: true);
+        Title("Instruction", "Click goods to pack a matching crate",
+            535, 235, 540, 32, 20, center: true);
+        _merchantInstruction = Title("Provided", "Goods provided by the merchant",
+            145, 682, 315, 30, 18, dark: true, center: true, wrap: true);
+        Title("AtDelivery", "At delivery", 1183, 547, 300, 30, 23, center: true);
 
         // Preserve the portrait, parchment and route art, while adding the
         // missing headings from the original concept in their own empty areas.
-        Title("MerchantCaption", "MERCHANT", 252, 280, 204, 23, 14, dark: true);
-        _merchant = Title("Merchant", "", 252, 308, 215, 40, 22, dark: true, wrap: true);
-        Title("DestinationCaption", "DESTINATION", 252, 350, 204, 22, 14, dark: true);
-        _routeName = Title("Route", "", 252, 371, 215, 29, 17, dark: true, wrap: true);
+        Title("MerchantCaption", "MERCHANT", 257, 276, 204, 21, 14, dark: true);
+        _merchant = Title("Merchant", "", 257, 298, 205, 32, 22, dark: true, wrap: true);
+        Title("DestinationCaption", "DESTINATION", 257, 336, 204, 20, 14, dark: true);
+        _routeName = Title("Route", "", 257, 357, 205, 29, 20, dark: true, wrap: true);
         Title("GoodsCaption", "REQUESTED GOODS",
             144, 400, 319, 23, 17, dark: true, center: true);
 
-        _sourceMap = Title("Source", "", 1117, 254, 181, 42, 17, center: true, wrap: true);
+        _sourceMap = Title("Source", "", 1142, 251, 150, 42, 17, center: true, wrap: true);
         _destinationMap = Title("Destination", "",
-            1334, 349, 178, 52, 17, center: true, wrap: true);
-        _recipient = Title("Recipient", "", 1211, 423, 284, 54, 19, wrap: true);
-        _boat = Title("Boat", "", 1183, 485, 283, 35, 19, center: true);
-        _reward = Title("Reward", "", 1196, 578, 302, 36, 21, center: true, wrap: true);
+            1356, 367, 165, 42, 17, center: true, wrap: true);
+        _recipient = Title("Recipient", "", 1201, 434, 316, 34, 19, wrap: true);
+        _boat = Title("Boat", "", 1264, 497, 195, 25, 19, center: true);
+        _reward = Title("Reward", "", 1224, 586, 282, 32, 22, center: true, wrap: true);
         _experience = Title("Experience", "",
-            1200, 613, 298, 36, 19, center: true);
-        _status = Title("Status", "", 1171, 686, 326, 27, 18, dark: true, center: true);
-        _journeySteps[0] = Title("JourneyOne", "", 1164, 713, 336, 24, 15, dark: true);
-        _journeySteps[1] = Title("JourneyTwo", "", 1164, 738, 336, 24, 15, dark: true);
-        _journeySteps[2] = Title("JourneyThree", "", 1164, 762, 336, 24, 15, dark: true);
-        _progress = Title("Progress", "", 590, 573, 386, 39, 22, center: true);
-        _leftCrate = Title("MaterialsCrate", "", 552, 516, 205, 40, 18, center: true);
-        _rightCrate = Title("OtherCrate", "", 798, 516, 232, 40, 18, center: true);
+            1225, 627, 290, 28, 20, center: true);
+        Title("AfterSeal", "After sealing", 1214, 687, 288, 24, 21, dark: true);
+        _status = Title("Status", "", 1214, 716, 290, 18, 17, dark: true);
+        _step2 = Title("DeliveryStepTwo", "", 1214, 735, 290, 18, 17, dark: true);
+        _step3 = Title("DeliveryStepThree", "", 1214, 754, 290, 18, 17, dark: true);
+        _progress = Title("Progress", "", 590, 579, 424, 30, 23, center: true);
+        _materialCrate = Title("MaterialCrateCount", "", 571, 522, 182, 38, 19, center: true);
+        _otherCrate = Title("OtherCrateCount", "", 885, 522, 180, 38, 19, center: true);
+        _leftCrateDone = Title("LeftCrateDone", "", 748, 285, 44, 32, 20, center: true);
+        _rightCrateDone = Title("RightCrateDone", "", 1040, 285, 44, 32, 20, center: true);
+        _shelfSummary = Title("ShelfSummary", "", 612, 640, 384, 15, 14, center: true);
         _warning = Title("Warning", "Death or sinking destroys the cargo",
-            407, 819, 633, 44, 20, center: true);
-        _shelfPageLabel = Title("ShelfPage", "", 794, 760, 173, 32, 17, center: true);
+            373, 844, 666, 34, 20, center: true);
+        _shelfPageLabel = Title("ShelfPage", "", 734, 795, 146, 22, 14, center: true);
         _orderPageLabel = Title("OrderPage", "", 196, 644, 182, 31, 16,
             dark: true, center: true);
 
         for (var i = 0; i < OrderSize; ++i)
         {
             var index = i;
-            _orderLabels[i] = Title("OrderLine" + i, "", 229, 426 + i * 78,
-                192, 52, 18, dark: true, wrap: true);
+            _orderLabels[i] = Title("OrderLine" + i, "", 208, 418 + i * 78,
+                205, 42, 18, dark: true, wrap: true);
             // This bitmap font does not contain the Unicode minus glyph:
             // the old button rendered '?' even in empty order lines.
-            _removeButtons[i] = Button("Remove" + i, "X", 425, 432 + i * 78, 34, 29, 17,
+            _removeButtons[i] = Button("Remove" + i, "X", 436, 426 + i * 78, 26, 28, 17,
                 () => RequestRemove(index));
             _removeButtons[i].TextColorOverride = new Color(255, 255, 199, 153);
             _removeButtons[i].IsHidden = true;
@@ -153,44 +170,108 @@ internal sealed class ExportationWindow : Base
         for (var i = 0; i < ShelfSize; ++i)
         {
             var index = i;
-            _shelfButtons[i] = Button("Good" + i, "", 497 + i * 111,
-                656, 105, 87, 18, () => RequestPack(index));
-            _shelfLabels[i] = Title("GoodLabel" + i, "", 500 + i * 111,
-                728, 104, 49, 15, center: true, wrap: true);
+            _shelfButtons[i] = Button("Good" + i, "", 526 + i * 113,
+                663, 98, 112, 18, () => RequestPack(index));
+            _shelfLabels[i] = Title("GoodLabel" + i, "", 526 + i * 113,
+                735, 98, 42, 14, center: true, wrap: false);
         }
 
-        _seal = Button("Seal", "SEAL THE CARGO", 1106, 806, 391, 61, 23, RequestSeal);
-        Button("Exit", "Close", 146, 812, 155, 55, 22, () => ExitRequested = true);
-        _previousGoods = Button("PreviousGoods", "<", 506, 761, 45, 33,
+        _seal = Button("Seal", "SEAL THE CARGO", 1118, 825, 400, 54, 23, RequestSeal);
+        Button("Exit", "Close", 153, 845, 147, 39, 22, () => ExitRequested = true);
+        _previousGoods = Button("PreviousGoods", "<", 690, 795, 28, 22,
             24, () => ChangeGoodsPage(-1));
-        _nextGoods = Button("NextGoods", ">", 1010, 761, 45, 33,
+        _nextGoods = Button("NextGoods", ">", 895, 795, 28, 22,
             24, () => ChangeGoodsPage(1));
         _previousOrder = Button("PreviousOrders", "<", 143, 644, 36, 30,
             20, () => ChangeOrderPage(-1));
         _nextOrder = Button("NextOrders", ">", 407, 644, 38, 30,
             20, () => ChangeOrderPage(1));
-        _helpButton = Button("Help", "?", 1435, 74, 70, 60, 32, ToggleHelp);
-        // Help is a real, clickable in-game overlay, not a static image.
-        // Created last so these labels render above all existing game labels.
-        var helpText = new[]
+
+        // Functional help: the final ? plaque in the original artwork now
+        // opens an in-game modal with accurate Exportation rules.
+        _helpButton = Button("Help", "?", 1500, 48, 49, 49, 28, ToggleHelp);
+        _helpButton.TooltipText = T("Exportation help");
+        _helpOverlay = new ExportationHelpOverlay(this)
         {
-            "EXPORTATION GUIDE",
-            "1. Own a ship that has not sunk; it can be docked elsewhere.",
-            "2. Pack every requested item. Use X to remove one.",
-            "3. Seal the order, board your ship, and sail to the other island.",
-            "4. Dock and speak to the recipient to earn the item and profession XP.",
-            "Death or shipwreck loses the cargo. Press ? to close this guide.",
+            IsHidden = true, MouseInputEnabled = true, KeyboardInputEnabled = true,
+            ShouldDrawBackground = false,
         };
-        for (var i = 0; i < _helpLines.Length; ++i)
+        _helpHeading = HelpLabel("HelpHeading", "How Exportation works",
+            520, 274, 635, 56, 31);
+        HelpLabel("HelpOne", "Help 1: Own an unsunk ship and talk to the merchant.",
+            514, 345, 656, 54, 21);
+        HelpLabel("HelpTwo", "Help 2: Select goods to fill the merchant's crates.",
+            514, 413, 656, 54, 21);
+        HelpLabel("HelpThree", "Help 3: Seal the order and board your ship.",
+            514, 481, 656, 54, 21);
+        HelpLabel("HelpFour", "Help 4: Sail, dock, and speak to the recipient for rewards.",
+            514, 549, 656, 54, 21);
+        HelpLabel("HelpWarning", "Death or shipwreck loses the cargo.",
+            514, 616, 656, 47, 20);
+        _helpClose = new InkAlignedButton(_helpOverlay, "ExportationHelpClose")
         {
-            _helpLines[i] = Title("HelpLine" + i, helpText[i], 532, 310 + i * 46,
-                486, 44, i == 0 ? 29 : 19, center: i == 0, wrap: true);
-            _helpLines[i].IsHidden = true;
-        }
+            Text = T("Close help"), Font = Skin.DefaultFont, FontSize = 22,
+            TextColorOverride = Gold, ShouldDrawBackground = false,
+        };
+        foreach (var state in Enum.GetValues<ButtonSoundState>())
+            _helpClose.SetSound(state, null);
+        _helpClose.Clicked += (_, _) => ToggleHelp();
+        Place(_helpClose, 694, 694, 291, 48, 22);
+        _translated.Add((_helpClose, "Close help"));
         UpdateLayout();
-        _audio.Play("ui_open");
+        Play("ui_open");
         BringToFront();
         Focus();
+    }
+
+    private void ToggleHelp()
+    {
+        _helpOverlay.IsHidden = !_helpOverlay.IsHidden;
+        if (!_helpOverlay.IsHidden)
+        {
+            _helpOverlay.BringToFront();
+            _helpOverlay.Focus();
+        }
+        else Focus();
+    }
+
+    private Label HelpLabel(string name, string key, int x, int y, int w, int h, int font)
+    {
+        var label = new InkAlignedLabel(_helpOverlay, "Exportation" + name)
+        {
+            Text = T(key), Font = Skin.DefaultFont, FontSize = font,
+            AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped,
+            TextColorOverride = name == "HelpWarning" ? new Color(255, 255, 183, 113) : Cream,
+            TextAlign = name == "HelpHeading" ? Pos.Center : Pos.Left | Pos.CenterV,
+            MouseInputEnabled = false, KeyboardInputEnabled = false,
+        };
+        Place(label, x, y, w, h, font);
+        _translated.Add((label, key));
+        return label;
+    }
+
+    private sealed class ExportationHelpOverlay(Base parent) : Base(parent, "ExportationHelpOverlay")
+    {
+        internal Rect Frame { get; set; } = new(0, 0, 1, 1);
+        internal Rect CloseFrame { get; set; } = new(0, 0, 1, 1);
+
+        protected override void Render(SkinBase skin)
+        {
+            skin.Renderer.DrawColor = new Color(212, 11, 13, 14);
+            skin.Renderer.DrawFilledRect(new Rect(0, 0, Width, Height));
+            skin.Renderer.DrawColor = RoyalGold;
+            skin.Renderer.DrawFilledRect(Frame);
+            skin.Renderer.DrawColor = new Color(255, 42, 29, 21);
+            skin.Renderer.DrawFilledRect(new Rect(Frame.X + 5, Frame.Y + 5,
+                Math.Max(1, Frame.Width - 10), Math.Max(1, Frame.Height - 10)));
+            // The close action is a real GWEN button with a drawn surface.
+            skin.Renderer.DrawColor = RoyalGold;
+            skin.Renderer.DrawFilledRect(CloseFrame);
+            skin.Renderer.DrawColor = SealGreen;
+            skin.Renderer.DrawFilledRect(new Rect(CloseFrame.X + 4, CloseFrame.Y + 4,
+                Math.Max(1, CloseFrame.Width - 8), Math.Max(1, CloseFrame.Height - 8)));
+            base.Render(skin);
+        }
     }
 
     internal void Apply(ExportationRoute route, ExportationRun run,
@@ -215,7 +296,7 @@ internal sealed class ExportationWindow : Base
 
         if (priorStage.HasValue && priorStage != run.Stage)
         {
-            _audio.Play(run.Stage switch
+            Play(run.Stage switch
             {
                 DeliveryStage.InTransit => "cargo_seal",
                 DeliveryStage.Lost => "cargo_lost",
@@ -229,9 +310,8 @@ internal sealed class ExportationWindow : Base
             {
                 var delta = ExportationRules.Packed(run, line.ItemId) - before.GetValueOrDefault(line.ItemId);
                 if (delta == 0) continue;
-                _audio.Play(delta < 0 ? "item_remove" : line.Group == CargoGroup.Fragile ? "item_glass" :
-                    line.Group == CargoGroup.Materials ? "item_wood" : "item_metal");
-                if (ExportationRules.ReadyToSeal(route, run)) _audio.Play("order_complete");
+                Play(delta < 0 ? "item_remove" : ExportationUiPresentation.PackingSound(line));
+                if (ExportationRules.ReadyToSeal(route, run)) Play("order_complete");
                 break;
             }
         }
@@ -262,46 +342,28 @@ internal sealed class ExportationWindow : Base
         _boat.Text = T(_boatReady ? "Boat owned" : "Boat required");
         _boat.TextColorOverride = _boatReady ? Green : new Color(255, 255, 155, 138);
         _reward.Text = route.RewardQuantity > 0 ?
-            $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : "";
+            $"{route.RewardQuantity:N0} {ItemName(route.RewardItemId)}" : T("No item reward");
         _experience.Text = F("+{0:N0} Exportation XP", route.ExperienceReward);
-        var total = route.Lines.Sum(line => line.Quantity);
-        var packed = route.Lines.Sum(line => ExportationRules.Packed(run, line.ItemId));
-        _progress.Text = F("{0} / {1} items packed", packed, total);
-        var materialProgress = ExportationUiPresentation.Cargo(route, run, true);
-        var otherProgress = ExportationUiPresentation.Cargo(route, run, false);
-        _leftCrate.Text = F("{0}: {1}/{2}", T("Materials"), materialProgress.Packed, materialProgress.Required);
-        _rightCrate.Text = F("{0}: {1}/{2}", T("Other goods"), otherProgress.Packed, otherProgress.Required);
-        _leftCrate.TextColorOverride = materialProgress.Complete ? Green : Cream;
-        _rightCrate.TextColorOverride = otherProgress.Complete ? Green : Cream;
-        _status.Text = T(run.Stage switch
-        {
-            DeliveryStage.Preparing => "Complete the order",
-            DeliveryStage.InTransit => "Delivery quest started",
-            DeliveryStage.Lost => "Cargo lost — return to the merchant",
-            DeliveryStage.Delivered => "Delivery successful",
-            _ => "Cargo preparation",
-        });
+        var progress = ExportationUiPresentation.Cargo(route, run);
+        _progress.Text = F("{0} / {1} items packed", progress.Packed, progress.Required);
+        var crates = CountCrates(route, run);
+        _materialCrate.Text = crates.MaterialsTotal == 0
+            ? T("Empty crate") : F("Materials: {0}/{1}", crates.MaterialsPacked, crates.MaterialsTotal);
+        _otherCrate.Text = crates.OtherTotal == 0
+            ? T("Empty crate") : F("Other cargo: {0}/{1}", crates.OtherPacked, crates.OtherTotal);
+        _leftCrateDone.Text = crates.MaterialsTotal > 0 &&
+            crates.MaterialsPacked == crates.MaterialsTotal ? "OK" : "";
+        _rightCrateDone.Text = crates.OtherTotal > 0 &&
+            crates.OtherPacked == crates.OtherTotal ? "OK" : "";
+        _shelfSummary.Text = run.Stage == DeliveryStage.Preparing
+            ? T("Select the goods below") : T("Cargo manifest");
+        var steps = DeliveryStepKeys(run.Stage, run.BoardedByShip, run.ArrivedByShip);
+        _status.Text = T(steps[0]);
+        _step2.Text = T(steps[1]);
+        _step3.Text = T(steps[2]);
         _warning.Text = T("Death or sinking destroys the cargo");
-        var steps = new[]
-        {
-            T("1. Prepare and seal the cargo"),
-            T("2. Sail to the destination"),
-            T("3. Deliver to the recipient"),
-        };
-        for (var i = 0; i < _journeySteps.Length; i++)
-        {
-            _journeySteps[i].Text = steps[i];
-            _journeySteps[i].TextColorOverride = ExportationUiPresentation.Step(run, i) switch
-            {
-                ExportationUiPresentation.StepState.Complete => SuccessGreen,
-                ExportationUiPresentation.StepState.Active => DarkInk,
-                _ => new Color(255, 125, 94, 65),
-            };
-        }
-        if (run.Stage == DeliveryStage.Lost)
-            _journeySteps[0].Text = T("1. Return to the merchant and repack");
-        var onRecipientIsland = Globals.Me?.MapId == route.RecipientMapId;
-        var onSourceIsland = Globals.Me?.MapId == route.SourceMapId;
+        var onRecipientIsland = CurrentMapId() == route.RecipientMapId;
+        var onSourceIsland = CurrentMapId() == route.SourceMapId;
         _seal.Text = T(run.Stage switch
         {
             DeliveryStage.InTransit => onRecipientIsland ? "DELIVER CARGO" : "SAIL TO DESTINATION",
@@ -309,7 +371,6 @@ internal sealed class ExportationWindow : Base
             _ => "SEAL THE CARGO",
         });
         _seal.IsHidden = run.Stage is DeliveryStage.Delivered or DeliveryStage.Abandoned;
-        _seal.TextColorOverride = _seal.IsDisabled ? Gold : Cream;
         _seal.IsDisabled = run.Stage switch
         {
             DeliveryStage.Preparing => !_boatReady || !ExportationRules.ReadyToSeal(route, run),
@@ -317,13 +378,14 @@ internal sealed class ExportationWindow : Base
             DeliveryStage.Lost => !onSourceIsland || !_boatReady,
             _ => true,
         };
-        _seal.TextColorOverride = _seal.IsDisabled ? Bronze : Cream;
         _orderPage = Math.Min(_orderPage, Math.Max(0, (route.Lines.Length - 1) / OrderSize));
         _goodsPage = Math.Min(_goodsPage, Math.Max(0, (route.Lines.Length - 1) / ShelfSize));
         _previousOrder.IsDisabled = _orderPage == 0;
         _nextOrder.IsDisabled = (_orderPage + 1) * OrderSize >= route.Lines.Length;
         _previousGoods.IsDisabled = _goodsPage == 0;
         _nextGoods.IsDisabled = (_goodsPage + 1) * ShelfSize >= route.Lines.Length;
+        _previousOrder.IsHidden = _nextOrder.IsHidden = _orderPageLabel.IsHidden = route.Lines.Length <= OrderSize;
+        _previousGoods.IsHidden = _nextGoods.IsHidden = _shelfPageLabel.IsHidden = route.Lines.Length <= ShelfSize;
         _orderPageLabel.Text = $"{_orderPage + 1} / {(route.Lines.Length + OrderSize - 1) / OrderSize}";
         _shelfPageLabel.Text = $"{_goodsPage + 1} / {(route.Lines.Length + ShelfSize - 1) / ShelfSize}";
         for (var i = 0; i < OrderSize; ++i)
@@ -338,32 +400,28 @@ internal sealed class ExportationWindow : Base
         for (var i = 0; i < ShelfSize; ++i)
         {
             var line = route.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
+            var amount = line is null ? 0 : ExportationRules.Packed(run, line.ItemId);
             _shelfLabels[i].Text = line is null ? "" :
-                ItemName(line.ItemId) + "\n" +
-                ExportationRules.Packed(run, line.ItemId).ToString(CultureInfo.CurrentCulture) +
-                " / " + line.Quantity.ToString(CultureInfo.CurrentCulture);
-            _shelfLabels[i].TextColorOverride = line is not null &&
-                ExportationRules.Packed(run, line.ItemId) >= line.Quantity ? Green : Cream;
-            _shelfButtons[i].IsDisabled = line is null ||
-                !ExportationUiPresentation.CanPack(route, run, _goodsPage * ShelfSize + i);
+                $"{ItemName(line.ItemId)}\n{amount} / {line.Quantity}";
+            _shelfButtons[i].IsHidden = line is null;
             _shelfButtons[i].TooltipText = line is null ? "" :
-                F("Click to pack {0} ({1}/{2})", ItemName(line.ItemId),
-                    ExportationRules.Packed(run, line.ItemId), line.Quantity);
+                F("Pack {0}: {1}/{2}", ItemName(line.ItemId), amount, line.Quantity);
+            _shelfButtons[i].IsDisabled = !ExportationUiPresentation.CanPack(route, run, _goodsPage * ShelfSize + i);
         }
-        UpdateHelpVisibility();
     }
 
     private void RequestPack(int i)
     {
-        if (_route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
         var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
-        if (line is null || ExportationRules.Packed(s, line.ItemId) >= line.Quantity) return;
+        if (line is null || !ExportationUiPresentation.CanPack(r, s, _goodsPage * ShelfSize + i)) return;
+        _selectedGoodItem = line.ItemId;
         _packRequested(line.ItemId, line.Group, 1);
     }
 
     private void RequestRemove(int i)
     {
-        if (_route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { Stage: DeliveryStage.Preparing } s) return;
         var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
         if (line is null || ExportationRules.Packed(s, line.ItemId) <= 0) return;
         _packRequested(line.ItemId, line.Group, -1);
@@ -371,44 +429,70 @@ internal sealed class ExportationWindow : Base
 
     private void RequestSeal()
     {
-        if (_route is not { } r || _run is not { } s || _seal.IsDisabled) return;
+        if (!_helpOverlay.IsHidden || _route is not { } r || _run is not { } s || _seal.IsDisabled) return;
         switch (s.Stage)
         {
             case DeliveryStage.Preparing when _boatReady && ExportationRules.ReadyToSeal(r, s):
                 _sealRequested();
                 break;
-            case DeliveryStage.InTransit when s.ArrivedByShip && Globals.Me?.MapId == r.RecipientMapId:
+            case DeliveryStage.InTransit when s.ArrivedByShip && CurrentMapId() == r.RecipientMapId:
                 _deliverRequested();
                 break;
-            case DeliveryStage.Lost when _boatReady && Globals.Me?.MapId == r.SourceMapId:
+            case DeliveryStage.Lost when _boatReady && CurrentMapId() == r.SourceMapId:
                 _restartRequested();
                 break;
         }
     }
-    private void ToggleHelp()
-    {
-        _helpOpen = !_helpOpen;
-        UpdateHelpVisibility();
-    }
-
-    private void UpdateHelpVisibility()
-    {
-        foreach (var line in _helpLines) line.IsHidden = !_helpOpen;
-        _leftCrate.IsHidden = _rightCrate.IsHidden = _helpOpen;
-        for (var i = 0; i < ShelfSize; i++)
-            _shelfButtons[i].IsDisabled = _helpOpen || _shelfButtons[i].IsDisabled;
-        for (var i = 0; i < OrderSize; i++)
-            _removeButtons[i].IsDisabled = _helpOpen;
-        if (_helpOpen)
-        {
-            _seal.IsDisabled = true;
-            _previousGoods.IsDisabled = _nextGoods.IsDisabled =
-                _previousOrder.IsDisabled = _nextOrder.IsDisabled = true;
-        }
-    }
-
     private void ChangeGoodsPage(int direction) { _goodsPage = Math.Max(0, _goodsPage + direction); }
     private void ChangeOrderPage(int direction) { _orderPage = Math.Max(0, _orderPage + direction); }
+
+    internal static (int MaterialsPacked, int MaterialsTotal, int OtherPacked, int OtherTotal)
+        CountCrates(ExportationRoute route, ExportationRun run)
+    {
+        var materials = ExportationUiPresentation.Cargo(route, run, true);
+        var other = ExportationUiPresentation.Cargo(route, run, false);
+        return (materials.Packed, materials.Required, other.Packed, other.Required);
+    }
+
+    /// <summary>
+    /// Only observed run stage and server-authoritative voyage flags determine
+    /// the on-screen instructions. No quest progress is invented on the client.
+    /// </summary>
+    internal static string[] DeliveryStepKeys(DeliveryStage stage, bool boarded, bool arrived) =>
+        stage switch
+        {
+            DeliveryStage.Preparing =>
+            [
+                "1. Prepare the merchant order",
+                "2. Seal the cargo",
+                "3. Sail and deliver the order",
+            ],
+            DeliveryStage.InTransit =>
+            [
+                "1. Cargo sealed",
+                arrived ? "2. Sea arrival confirmed" :
+                    boarded ? "2. Sailing to destination" : "2. Board your ship",
+                "3. Speak to the recipient",
+            ],
+            DeliveryStage.Lost =>
+            [
+                "1. Cargo lost",
+                "2. Return to the merchant",
+                "3. Prepare the order again",
+            ],
+            DeliveryStage.Delivered =>
+            [
+                "1. Sea voyage completed",
+                "2. Cargo delivered",
+                "3. Rewards received",
+            ],
+            _ =>
+            [
+                "1. Order closed",
+                "2. No active shipment",
+                "3. Speak to the merchant",
+            ],
+        };
 
     private static string ItemName(Guid id) =>
         ItemDescriptor.TryGet(id, out var item) ? ClientLanguages.ContentText(item.Name) : id.ToString("N")[..8];
@@ -426,126 +510,136 @@ internal sealed class ExportationWindow : Base
         FillScene(skin, DeliveryBacking, 1087, 201, 428, 594);
         DrawTexture(skin, Background, 0, 0, DesignWidth, DesignHeight);
 
-        // This light wash lifts the dark pixels of the semi-transparent mockup
-        // without replacing its medieval wood/parchment detail or textures.
-        FillScene(skin, WarmParchmentWash, 131, 211, 329, 561);
+        // The approved art is the structural frame; the overlays below add
+        // only dynamic interactive elements, not another full mockup image.
+        FillScene(skin, RoyalGold, 141, 217, 302, 42);
+        FillScene(skin, RibbonRed, 145, 220, 294, 35);
+        FillScene(skin, new Color(255, 179, 81, 66), 153, 222, 278, 2);
         FillScene(skin, WarmWoodWash, 489, 212, 570, 568);
         FillScene(skin, WarmWoodWash, 1098, 213, 405, 568);
 
-        // Explicit button surfaces remain visible over the detailed sprite
-        // sheet. The GWEN buttons stay fully clickable over these rectangles.
-        PaintAction(skin, 143, 808, 160, 62, new Color(75, 83, 56, 29));
+        // Main call-to-action is intentionally green, never purple; it is
+        // subdued while sealed cargo is awaiting an actual sea arrival.
+        PaintAction(skin, 148, 839, 164, 53, new Color(115, 76, 51, 29));
         if (!_seal.IsHidden)
-            PaintAction(skin, 1103, 802, 396, 68,
-                _seal.IsDisabled ? new Color(80, 88, 63, 38) : new Color(205, 28, 112, 47));
+        {
+            var sealFill = _seal.IsDisabled
+                ? new Color(255, 85, 68, 42) : SealGreen;
+            PaintAction(skin, 1114, 824, 410, 58, sealFill);
+        }
+
+        // Fixed top-right help button; it opens a real overlay with rules.
+        // The original red plaque at (1500,48) supplies its own border.
+        // Do not paint a second displaced square over the header.
+
+        // Keep the warning legible on the existing ruby-coloured banner.
+        FillScene(skin, new Color(45, 105, 24, 27), 366, 840, 680, 42);
         // Profession experience is the server-authoritative custom profession
         // progression, not mini-game-only points.
         skin.Renderer.DrawColor = new Color(200, 38, 49, 40);
-        skin.Renderer.DrawFilledRect(SceneRect(1245, 149, 236, 11));
+        skin.Renderer.DrawFilledRect(SceneRect(1284, 132, 124, 8));
         if (_maximumLevel || _experienceRequired > 0)
         {
-            var progress = _maximumLevel ? 236 :
-                (int)Math.Clamp((decimal)_experienceInLevel * 236m /
-                    Math.Max(1L, _experienceRequired), 0m, 236m);
+            var progress = _maximumLevel ? 124 :
+                (int)Math.Clamp((decimal)_experienceInLevel * 124m /
+                    Math.Max(1L, _experienceRequired), 0m, 124m);
             if (progress > 0)
             {
                 skin.Renderer.DrawColor = Green;
-                skin.Renderer.DrawFilledRect(SceneRect(1245, 149, progress, 11));
+                skin.Renderer.DrawFilledRect(SceneRect(1284, 132, progress, 8));
             }
         }
         if (_route is { } r && _run is { } s)
         {
+            // Completed crates use a simple green badge, based entirely on
+            // packed quantities, and never claim completion prematurely.
+            if (!string.IsNullOrEmpty(_leftCrateDone.Text))
+                FillScene(skin, SealGreen, 741, 285, 51, 32);
+            if (!string.IsNullOrEmpty(_rightCrateDone.Text))
+                FillScene(skin, SealGreen, 1033, 285, 51, 32);
             DrawTexture(skin, SpriteDirectory + "marchand.png", 146, 282, 96, 95);
-            DrawTexture(skin, SpriteDirectory + "destinataire.png", 1128, 427, 62, 63);
-            FillScene(skin, _boatReady ? new Color(59, 24, 112, 45) : new Color(72, 138, 44, 33),
-                1168, 493, 283, 39);
-            DrawTexture(skin, SpriteDirectory + "bateau.png", 1182, 476, 58, 50);
-            DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1100, 684, 52, 52);
-            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 307, 737, 45, 47);
+            DrawTexture(skin, SpriteDirectory + "destinataire.png", 1152, 434, 40, 40);
+            DrawTexture(skin, SpriteDirectory + "bateau.png", 1220, 494, 36, 30);
+            if (s.Stage == DeliveryStage.InTransit && s.BoardedByShip && !s.ArrivedByShip)
+                DrawTexture(skin, SpriteDirectory + "bateau.png", 1267, 306, 55, 50);
+            DrawTexture(skin, SpriteDirectory + "parchemin_quete.png", 1160, 690, 38, 38);
+            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 304, 719, 51, 58);
+            // Real configured cargo only: never draw mock items or invented
+            // quantities. The two illustrated crates represent Materials and
+            // Fragile/Provisions, with up to four clear stacks per crate.
+            DrawCrateContents(skin, r, s, CargoGroup.Materials, 551, 327);
+            DrawCrateContents(skin, r, s, null, 854, 327);
             for (var i = 0; i < OrderSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_orderPage * OrderSize + i);
                 if (line is null) continue;
-                var have = ExportationRules.Packed(s, line.ItemId);
-                var tint = have >= line.Quantity
-                    ? new Color(98, 35, 124, 54)
-                    : new Color(55, 100, 71, 37);
-                FillScene(skin, tint, 141, 418 + i * 78, 305, 73);
-                DrawGood(skin, line, 147, 421 + i * 78, 74, 65);
-                if (have >= line.Quantity)
-                {
-                    FillScene(skin, new Color(255, 37, 133, 57), 397, 443 + i * 78, 15, 15);
-                    FillScene(skin, new Color(255, 218, 255, 207), 401, 448 + i * 78, 7, 4);
-                }
+                var y = 421 + i * 78;
+                DrawGood(skin, line, 150, y, 44, 40);
+                var amount = Math.Clamp(ExportationRules.Packed(s, line.ItemId), 0, line.Quantity);
+                FillScene(skin, new Color(150, 97, 66, 44), 208, y + 44, 205, 3);
+                if (amount > 0)
+                    FillScene(skin, Green, 208, y + 44,
+                        (int)Math.Round(205d * amount / line.Quantity), 3);
             }
             for (var i = 0; i < ShelfSize; ++i)
             {
                 var line = r.Lines.ElementAtOrDefault(_goodsPage * ShelfSize + i);
                 if (line is null) continue;
-                var current = ExportationRules.Packed(s, line.ItemId);
-                var complete = current >= line.Quantity;
-                FillScene(skin, complete
-                    ? new Color(112, 42, 153, 57)
-                    : new Color(70, 193, 137, 63),
-                    496 + i * 111, 654, 107, 120);
-                FillScene(skin, complete ? Green : Bronze, 499 + i * 111, 655, 102, 3);
-                DrawGood(skin, line, 510 + i * 111, 657, 79, 65);
-                var itemBar = (int)(97L * current / Math.Max(1, line.Quantity));
-                if (itemBar > 0)
-                    FillScene(skin, Green, 502 + i * 111, 725, itemBar, 4);
+                var x = 526 + i * 113;
+                var active = line.ItemId == _selectedGoodItem;
+                if (active)
+                {
+                    FillScene(skin, RoyalGold, x - 2, 661, 102, 116);
+                    FillScene(skin, new Color(255, 77, 53, 32),
+                        x + 2, 665, 94, 108);
+                }
+                DrawGood(skin, line, x + 15, 670, 68, 61);
             }
-            // Each unit visibly fills a crate slot. At most four icons are
-            // drawn per crate; counters below use the complete server counts.
-            // This works for both approved Exportation sprites and item icons.
-            var materials = r.Lines.Where(line => line.Group == CargoGroup.Materials)
-                .SelectMany(line => Enumerable.Repeat(line,
-                    Math.Min(4, ExportationRules.Packed(s, line.ItemId)))).Take(4).ToArray();
-            var otherGoods = r.Lines.Where(line => line.Group != CargoGroup.Materials)
-                .SelectMany(line => Enumerable.Repeat(line,
-                    Math.Min(4, ExportationRules.Packed(s, line.ItemId)))).Take(4).ToArray();
-            for (var i = 0; i < materials.Length; ++i)
-                DrawGood(skin, materials[i], 534 + i % 2 * 109, 330 + i / 2 * 83, 88, 75);
-            for (var i = 0; i < otherGoods.Length; ++i)
-                DrawGood(skin, otherGoods[i], 807 + i % 2 * 106, 330 + i / 2 * 83, 85, 75);
-            var materialProgress = ExportationUiPresentation.Cargo(r, s, true);
-            var otherProgress = ExportationUiPresentation.Cargo(r, s, false);
-            DrawCrateBar(skin, 558, 561, 178, materialProgress);
-            DrawCrateBar(skin, 814, 561, 186, otherProgress);
-            var total = r.Lines.Sum(l => l.Quantity);
-            var completed = r.Lines.Sum(l => ExportationRules.Packed(s, l.ItemId));
-            skin.Renderer.DrawColor = Green;
-            var bar = SceneRect(582, 615, (int)(407d * completed / Math.Max(1, total)), 14);
-            if (bar.Width > 0) skin.Renderer.DrawFilledRect(bar);
-            if (s.Stage == DeliveryStage.InTransit)
-                DrawTexture(skin, SpriteDirectory + "caisse_scellee.png", 783, 381, 118, 116);
-            // Genuine reward icon from the configured item, not a fake coin.
-            if (r.RewardQuantity > 0 && ItemDescriptor.TryGet(r.RewardItemId, out var reward))
+            // The server's actual item definition determines the payout icon.
+            if (r.RewardQuantity > 0 && ItemDescriptor.TryGet(r.RewardItemId, out var rewardItem))
             {
-                var texture = GameContentManager.Current.GetTexture(TextureType.Item, reward.Icon);
-                if (texture is not null)
-                    skin.Renderer.DrawTexturedRect(texture, SceneRect(1112, 570, 49, 49), Color.White);
+                var rewardIcon = GameContentManager.Current.GetTexture(
+                    TextureType.Item, rewardItem.Icon);
+                if (rewardIcon is not null)
+                    skin.Renderer.DrawTexturedRect(rewardIcon,
+                        SceneRect(1169, 587, 42, 42), Color.White);
             }
-
-        }
-        if (_helpOpen)
-        {
-            FillScene(skin, new Color(251, 25, 38, 35), 498, 292, 556, 304);
-            FillScene(skin, Bronze, 498, 292, 556, 4);
-            FillScene(skin, Bronze, 498, 592, 556, 4);
-            FillScene(skin, Bronze, 498, 292, 4, 304);
-            FillScene(skin, Bronze, 1050, 292, 4, 304);
+            DrawTexture(skin, SpriteDirectory + "sceau_royal.png", 1184, 630, 28, 28);
+            var progress = ExportationUiPresentation.Cargo(r, s);
+            skin.Renderer.DrawColor = Green;
+            if (progress.Packed > 0)
+                skin.Renderer.DrawFilledRect(SceneRect(600, 624,
+                    (int)(405d * progress.Packed / Math.Max(1, progress.Required)), 8));
+            if (s.Stage == DeliveryStage.InTransit) DrawTexture(skin, SpriteDirectory + "caisse_scellee.png", 783, 381, 118, 116);
         }
         base.Render(skin);
     }
 
-    private void DrawCrateBar(SkinBase skin, int x, int y, int width,
-        ExportationUiPresentation.Progress progress)
+    private void DrawCrateContents(SkinBase skin, ExportationRoute route,
+        ExportationRun run, CargoGroup? group, int x, int y)
     {
-        FillScene(skin, new Color(255, 31, 41, 31), x, y, width, 7);
-        if (progress.Required > 0)
+        var slot = 0;
+        foreach (var line in route.Lines)
         {
-            var filled = (int)(width * (long)progress.Percent / 100);
-            FillScene(skin, progress.Complete ? Green : Bronze, x, y, filled, 7);
+            if (group == CargoGroup.Materials && line.Group != CargoGroup.Materials)
+                continue;
+            if (group is null && line.Group == CargoGroup.Materials)
+                continue;
+
+            // Show at most four bundles inside the illustrated crate; the
+            // numerical label above the plaque reports the full true quantity.
+            var packed = ExportationRules.Packed(run, line.ItemId);
+            for (var count = 0; count < packed && slot < 4; count++, slot++)
+            {
+                DrawGood(skin, line, x + slot % 2 * 108,
+                    y + slot / 2 * 96, 78, 66);
+            }
+            if (slot >= 4) break;
+        }
+        if (slot == 0)
+        {
+            // A quiet hint instead of a fabricated default item.
+            FillScene(skin, new Color(75, 40, 31, 24), x + 12, y + 62, 191, 51);
         }
     }
 
@@ -555,17 +649,21 @@ internal sealed class ExportationWindow : Base
         // Previous opaque square covers made packed crates look like UI errors.
         // Give transparent item sprites a subtle backing on the shelf only.
         if (y >= 640)
-            FillScene(skin, new Color(74, 103, 76, 50), x, y, w, h);
+            FillScene(skin, new Color(42, 103, 76, 50), x, y, w, h);
         if (!string.IsNullOrEmpty(line.Sprite) && ExportationArt.IsGoodsSprite(line.Sprite))
         {
-            DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h);
-            return;
+            if (DrawTexture(skin, SpriteDirectory + line.Sprite + ".png", x, y, w, h)) return;
         }
         if (ItemDescriptor.TryGet(line.ItemId, out var item))
         {
             var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
             if (texture is not null)
-                skin.Renderer.DrawTexturedRect(texture, SceneRect(x, y, w, h), Color.White);
+            {
+                var ratio = Math.Min(w / (double)Math.Max(1, texture.Width), h / (double)Math.Max(1, texture.Height));
+                var width = Math.Max(1, (int)(texture.Width * ratio));
+                var height = Math.Max(1, (int)(texture.Height * ratio));
+                skin.Renderer.DrawTexturedRect(texture, SceneRect(x + (w - width) / 2, y + (h - height) / 2, width, height), Color.White);
+            }
         }
     }
 
@@ -584,11 +682,13 @@ internal sealed class ExportationWindow : Base
         FillScene(skin, new Color(125, 235, 191, 115), x + 7, y + 6, w - 14, 2);
     }
 
-    private void DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
+    private bool DrawTexture(SkinBase skin, string name, int x, int y, int w, int h)
     {
-        if (!_textures.TryGetValue(name, out var image))
+        if (!_textures.TryGetValue(name, out var image) || image is null || image.IsDisposed)
             _textures[name] = image = GameContentManager.Current.GetTexture(TextureType.Gui, name);
-        if (image is not null) skin.Renderer.DrawTexturedRect(image, SceneRect(x, y, w, h), Color.White);
+        if (image is null || image.IsMissingOrCorrupt) return false;
+        skin.Renderer.DrawTexturedRect(image, SceneRect(x, y, w, h), Color.White);
+        return true;
     }
 
     private Rect SceneRect(int x, int y, int width, int height) =>
@@ -598,7 +698,7 @@ internal sealed class ExportationWindow : Base
     private Label Title(string name, string source, int x, int y, int w, int h, int font,
         bool dark = false, bool center = false, bool wrap = false)
     {
-        var label = new Label(this, "Exportation" + name)
+        var label = new InkAlignedLabel(this, "Exportation" + name)
         {
             Text = T(source), Font = Skin.DefaultFont, FontSize = font,
             AutoSizeToContents = false,
@@ -614,7 +714,7 @@ internal sealed class ExportationWindow : Base
 
     private Button Button(string name, string source, int x, int y, int w, int h, int font, Action click)
     {
-        var button = new Button(this, "Exportation" + name)
+        var button = new InkAlignedButton(this, "Exportation" + name)
         {
             Text = T(source), Font = Skin.DefaultFont, FontSize = font, TextColorOverride = Gold,
             ShouldDrawBackground = false,
@@ -652,37 +752,44 @@ internal sealed class ExportationWindow : Base
     internal static float ScaleForMeasuredFont(int desiredHeight, int actualHeight) =>
         Math.Clamp(Math.Max(8, desiredHeight) / (float)Math.Max(1, actualHeight), 0.35f, 5f);
 
+    internal static float ScaleForVisibleInk(int wanted, int cellHeight, FontInkMetrics ink) =>
+        Math.Clamp(wanted * .75f / Math.Max(1, cellHeight * ink.HeightFraction), .35f, 5f);
+
     private void FitLabel(Label label, int designFont, int availableWidth)
     {
         var wanted = Math.Max(8, (int)Math.Round(designFont * _scale));
         var font = label.Font ?? Skin.DefaultFont;
         if (font is null) { label.FontSize = wanted; return; }
-
+        var request = (label.Text ?? "", wanted, availableWidth, label.Height, font,
+            ClientConfiguration.Instance.GlobalFontFamily ?? "", ClientConfiguration.Instance.GlobalFontSize);
+        if (_fitRequests.TryGetValue(label, out var previous) && previous == request) return;
         var (nativeSize, fallbackScale) = ResolvePixelFont(font, wanted);
-        // MeasureText goes through the same size override, bitmap scale and
-        // UI scale as the real text renderer. Avoid a hardcoded 10px assumption.
         var naturalHeight = Skin.Renderer.MeasureText(font, nativeSize, "Hg", 1f).Y;
-        var textScale = naturalHeight > 0
-            ? ScaleForMeasuredFont(wanted, naturalHeight)
-            : fallbackScale;
-
-        if (!string.IsNullOrWhiteSpace(label.Text))
+        var ink = font is IFontInkMetrics metrics ? metrics.InkMetrics : new FontInkMetrics(0, 1);
+        var textScale = naturalHeight <= 0 ? fallbackScale : font is IFontInkMetrics
+            ? ScaleForVisibleInk(wanted, naturalHeight, ink) : ScaleForMeasuredFont(wanted, naturalHeight);
+        var maxWidth = Math.Max(12, availableWidth - Math.Max(2, (int)(6 * _scale)));
+        var maxHeight = Math.Max(8, label.Height - Math.Max(2, (int)(2 * _scale)));
+        for (var attempt = 0; attempt < 4 && label.Text.Length > 0; attempt++)
         {
-            // Fit the full label horizontally without letting it overlap a
-            // neighboring panel. The explicit multiline slots keep wrapping.
             var measured = Skin.Renderer.MeasureText(font, nativeSize, label.Text, textScale);
-            var maxWidth = Math.Max(12, availableWidth - 12);
-            if (measured.X > maxWidth && label.WrappingBehavior == WrappingBehavior.NoWrap)
+            if (label.WrappingBehavior == WrappingBehavior.NoWrap && measured.X > maxWidth)
                 textScale *= maxWidth / (float)measured.X;
+            var lines = label.WrappingBehavior == WrappingBehavior.Wrapped
+                ? Text.WrapText(label.Text, maxWidth, font, nativeSize, Skin.Renderer, textScale)
+                : label.Text.Replace("\r", "").Split('\n');
+            var lineHeights = lines.Select(line => Skin.Renderer.MeasureText(font, nativeSize, line.Length == 0 ? "Hg" : line, textScale).Y).ToArray();
+            var visibleHeight = lineHeights.Sum() - lineHeights.LastOrDefault() * (1 - ink.HeightFraction);
+            if (visibleHeight <= maxHeight || visibleHeight <= 0) break;
+            textScale *= maxHeight / visibleHeight;
         }
-
         label.FontSize = nativeSize;
-        if (!_textScaleCache.TryGetValue(label, out var last) ||
-            Math.Abs(last - textScale) > .005f)
-        {
-            label.SetTextScale(textScale);
-            _textScaleCache[label] = textScale;
-        }
+        if (!_textScaleCache.TryGetValue(label, out var last) || Math.Abs(last - textScale) > .005f)
+        { label.SetTextScale(textScale); _textScaleCache[label] = textScale; }
+        if (label is IInkAlignedText aligned)
+            aligned.InkOffsetY = font is IFontInkMetrics
+                ? (int)Math.Round(naturalHeight * textScale * (.5f - ink.TopFraction - ink.HeightFraction / 2)) : 0;
+        _fitRequests[label] = request;
     }
 
     private void UpdateLayout()
@@ -702,6 +809,9 @@ internal sealed class ExportationWindow : Base
             }
         }
 
+        _helpOverlay.SetBounds(0, 0, _canvas.Width, _canvas.Height);
+        _helpOverlay.Frame = SceneRect(480, 250, 721, 522);
+        _helpOverlay.CloseFrame = SceneRect(694, 694, 291, 48);
         foreach (var (control, x, y, w, h, font) in _placements)
         {
             var rect = SceneRect(x, y, w, h);
@@ -719,7 +829,7 @@ internal sealed class ExportationWindow : Base
     {
         if (_destroyed) return;
         _destroyed = true;
-        _audio.Play("ui_close");
+        Play("ui_close");
         Interface.InputBlockingComponents.Remove(this);
         Hide();
         Parent?.RemoveChild(this, false);

@@ -103,6 +103,96 @@ public sealed class FishingWindowTests
         Assert.That(fixture.Window?.IsVisibleInTree, Is.True);
     }
 
+    [Test]
+    public void LootRequiresAChoiceAndPremiumDestinationIsServerControlled()
+    {
+        using var fixture = new ClientFixture(800, 600);
+        var config = Configuration();
+        var state = Ready(config);
+        state.Phase = FishingPhase.Loot;
+        state.CatchQuantity = 1;
+        fixture.Receive(OpenPacket(config, state));
+        var buttons = Descendants(fixture.Window!).OfType<Button>().ToDictionary(b => b.Name!);
+        Assert.That(buttons["FishingTakeLoot"].IsVisibleInTree, Is.True);
+        Assert.That(buttons["FishingDiscardLoot"].IsVisibleInTree, Is.True);
+        Assert.That(buttons["FishingCast"].IsVisibleInTree, Is.False);
+        Assert.That(buttons["FishingLootDestination"].IsVisibleInTree, Is.False);
+        Assert.That(fixture.Socket.Packets.OfType<FishingRequestPacket>(), Is.Empty,
+            "Showing manual loot must not silently accept or discard it.");
+        state.CanBankLoot = true;
+        state.Revision++;
+        fixture.Receive(new FishingStatePacket { StateJson = state.ToJson() });
+        Assert.That(buttons["FishingLootDestination"].IsVisibleInTree, Is.True);
+        typeof(FishingWindow).GetMethod("Render", Hidden)!.Invoke(fixture.Window, [fixture.Skin]);
+        Assert.That(buttons["FishingTakeLoot"].Right, Is.LessThanOrEqualTo(800));
+        Assert.That(buttons["FishingDiscardLoot"].Bottom, Is.LessThanOrEqualTo(600));
+    }
+
+    [Test]
+    public void MultiItemLootListsEveryRewardAndSupportsLocalPagination()
+    {
+        using var fixture = new ClientFixture(800, 600);
+        var state = Ready(Configuration());
+        state.Phase = FishingPhase.Loot;
+        state.Loot = Enumerable.Range(1, 4).Select(i => new FishingInventoryEntry { ItemId = Guid.NewGuid(), Quantity = i }).ToList();
+        fixture.Receive(OpenPacket(Configuration(), state));
+        var controls = Descendants(fixture.Window!).OfType<Label>().ToDictionary(label => label.Name!);
+        Assert.That(controls["FishingLootRow0"].IsVisibleInTree, Is.True);
+        Assert.That(controls["FishingLootRow2"].Text, Does.EndWith("×3"));
+        var next = (Button)controls["FishingLootNext"];
+        Assert.That(next.IsVisibleInTree && !next.IsDisabled, Is.True);
+        InputHandler.HoveredControl = next;
+        var mouseInput = typeof(ControlBase).GetMethod("InputMouseButtonState", Hidden)!;
+        var position = next.ToCanvas(next.Width / 2, next.Height / 2);
+        mouseInput.Invoke(next, [MouseButton.Left, position, true, true]);
+        mouseInput.Invoke(next, [MouseButton.Left, position, false, true]);
+        Assert.That(controls["FishingLootRow0"].Text, Does.EndWith("×4"));
+        Assert.That(controls["FishingLootRow1"].IsVisibleInTree, Is.False);
+        Assert.That(fixture.Socket.Packets.OfType<FishingRequestPacket>(), Is.Empty,
+            "Viewing all loot pages must never accept, discard or reroll rewards.");
+    }
+
+    [Test]
+    public void FishingLineUsesVisiblePixelsEvenWhenRendererHasNoLineImplementation()
+    {
+        using var fixture = new ClientFixture(1670, 941);
+        var config = Configuration();
+        var state = Ready(config); state.Phase = FishingPhase.Fighting;
+        fixture.Receive(OpenPacket(config, state));
+        fixture.Renderer.Fills.Clear();
+        typeof(FishingWindow).GetMethod("Render", Hidden)!.Invoke(fixture.Window, [fixture.Skin]);
+        Assert.That(fixture.Renderer.Fills.Any(rect => rect.X == FishingSceneGeometry.LineStartX &&
+            rect.Y == FishingSceneGeometry.LineStartY && rect.Width == 1 && rect.Height == 1), Is.True);
+        Assert.That(fixture.Renderer.Fills.Count(rect => rect.Width <= 3 && rect.Height <= 3), Is.GreaterThan(100));
+    }
+
+    [TestCase(1280, 720)]
+    [TestCase(800, 600)]
+    public void ExportationActionsAndCaptionsStayOnTheirArtworkPlaques(int width, int height)
+    {
+        using var fixture = new ClientFixture(width, height);
+        var window = new ExportationWindow(fixture.Canvas, (_, _, _) => { }, () => { }, () => { }, () => { });
+        try
+        {
+            window.Update();
+            var controls = Descendants(window).OfType<Label>().ToDictionary(label => label.Name!);
+            var scale = Math.Min(width / 1672d, height / 941d);
+            var left = (int)((width - 1672 * scale) / 2);
+            var top = (int)((height - 941 * scale) / 2);
+            var help = controls["ExportationHelp"];
+            Assert.That(help.X, Is.EqualTo(left + (int)Math.Round(1500 * scale)));
+            Assert.That(help.Y, Is.EqualTo(top + (int)Math.Round(48 * scale)));
+            Assert.That(controls["ExportationExit"].Y, Is.GreaterThan(top + 835 * scale));
+            Assert.That(controls["ExportationSeal"].Y, Is.GreaterThan(top + 820 * scale));
+            Assert.That(controls["ExportationSeal"].Right, Is.LessThanOrEqualTo(width));
+            Assert.That(controls["ExportationMaterialCrateCount"].X, Is.GreaterThan(left + 560 * scale));
+            Assert.That(controls["ExportationOtherCrateCount"].X, Is.GreaterThan(left + 875 * scale));
+            Assert.That(controls["ExportationGoodLabel0"].Bottom, Is.LessThan(controls["ExportationPreviousGoods"].Y));
+            typeof(ExportationWindow).GetMethod("Render", Hidden)!.Invoke(window, [fixture.Skin]);
+        }
+        finally { window.Destroy(); }
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void OpeningRefusalIsVisibleEvenWithAnAbsentOrBrokenNoticeSound(bool brokenAudio)

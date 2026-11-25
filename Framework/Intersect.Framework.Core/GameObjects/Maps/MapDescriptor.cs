@@ -37,6 +37,7 @@ public partial class MapDescriptor : DatabaseObject<MapDescriptor>
     public List<Guid> EventIds { get; set; } = [];
 
     [NotMapped] public bool GeneratedBoardingDeck {get;set;}
+    [NotMapped] public Intersect.Framework.Core.Naval.NavalBoardingScene? BoardingScene {get;set;}
 
     //Core Data
     [JsonIgnore]
@@ -96,6 +97,7 @@ public partial class MapDescriptor : DatabaseObject<MapDescriptor>
             {
                 Name = mapDescriptor.Name;
                 GeneratedBoardingDeck=mapDescriptor.GeneratedBoardingDeck;
+                BoardingScene=mapDescriptor.BoardingScene;
                 Brightness = mapDescriptor.Brightness;
                 IsIndoors = mapDescriptor.IsIndoors;
                 if (Layers != null && mapDescriptor.Layers != null)

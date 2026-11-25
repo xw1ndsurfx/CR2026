@@ -214,6 +214,361 @@
       "en": "Save timed out. Reopen the editor before retrying.",
       "fr": "Délai d’enregistrement dépassé. Rouvre l’éditeur avant de réessayer.",
       "es": "Se agotó el tiempo de guardado. Vuelve a abrir el editor antes de intentarlo de nuevo."
+    },
+    "Add combat lessons": {
+      "en": "Add combat lessons",
+      "fr": "Ajouter les leçons de combat",
+      "es": "Añadir lecciones de combate"
+    },
+    "Combat lessons already added.": {
+      "en": "Combat lessons already added.",
+      "fr": "Les leçons de combat sont déjà ajoutées.",
+      "es": "Las lecciones de combate ya están añadidas."
+    },
+    "Combat lessons require advanced combat to be enabled.": {
+      "en": "Combat lessons require advanced combat to be enabled.",
+      "fr": "Les leçons nécessitent le combat avancé activé.",
+      "es": "Las lecciones requieren el combate avanzado activado."
+    },
+    "Combat drill: dodge": {
+      "en": "Combat drill: dodge",
+      "fr": "Entraînement : esquive",
+      "es": "Práctica: esquivar"
+    },
+    "Dodge a monster's attack by pressing Left Shift while moving (default key). Watch your endurance and find a safe tile.": {
+      "en": "Dodge a monster's attack by pressing Left Shift while moving (default key). Watch your endurance and find a safe tile.",
+      "fr": "Esquive l'attaque d'un monstre avec Maj gauche en te déplaçant (touche par défaut). Surveille ton endurance et trouve une case sûre.",
+      "es": "Esquiva el ataque de un monstruo pulsando Mayús izquierda mientras te mueves (tecla predeterminada). Vigila tu resistencia y busca una casilla segura."
+    },
+    "Combat drill: perfect parry": {
+      "en": "Combat drill: perfect parry",
+      "fr": "Entraînement : parade parfaite",
+      "es": "Práctica: parada perfecta"
+    },
+    "Equip a shield and block just as a monster strikes (Q by default) to land a perfect parry.": {
+      "en": "Equip a shield and block just as a monster strikes (Q by default) to land a perfect parry.",
+      "fr": "Équipe un bouclier et bloque juste au moment où le monstre frappe (Q par défaut) pour réussir une parade parfaite.",
+      "es": "Equipa un escudo y bloquea justo cuando ataque el monstruo (Q por defecto) para lograr una parada perfecta."
+    },
+    "Combat drill: counterattack": {
+      "en": "Combat drill: counterattack",
+      "fr": "Entraînement : riposte",
+      "es": "Práctica: contraataque"
+    },
+    "After a perfect parry, press R (default key) to counterattack before your opening expires.": {
+      "en": "After a perfect parry, press R (default key) to counterattack before your opening expires.",
+      "fr": "Après une parade parfaite, appuie sur R (touche par défaut) pour riposter avant la fin de la fenêtre.",
+      "es": "Después de una parada perfecta, pulsa R (tecla predeterminada) para contraatacar antes de que termine la oportunidad."
+    },
+    "Combat drill: finisher": {
+      "en": "Combat drill: finisher",
+      "fr": "Entraînement : coup final",
+      "es": "Práctica: remate"
+    },
+    "Land three consecutive melee hits on the same monster (E by default). The final hit uses endurance.": {
+      "en": "Land three consecutive melee hits on the same monster (E by default). The final hit uses endurance.",
+      "fr": "Réussis trois coups de mêlée consécutifs sur le même monstre (E par défaut). Le coup final consomme de l'endurance.",
+      "es": "Conecta tres golpes cuerpo a cuerpo seguidos al mismo monstruo (E por defecto). El remate consume resistencia."
+    },
+    "Royal Guide": {
+      "en": "Royal Guide",
+      "fr": "Guide royal",
+      "es": "Guía real"
+    },
+    "Visual guide": {
+      "en": "Visual guide",
+      "fr": "Guide visuel",
+      "es": "Guía visual"
+    },
+    "Highlight target": {
+      "en": "Highlight target",
+      "fr": "Cible de surbrillance",
+      "es": "Objetivo del resaltado"
+    },
+    "Highlight shape": {
+      "en": "Highlight shape",
+      "fr": "Forme de surbrillance",
+      "es": "Forma de resaltado"
+    },
+    "Target map": {
+      "en": "Target map",
+      "fr": "Carte ciblée",
+      "es": "Mapa de destino"
+    },
+    "Target NPC": {
+      "en": "Target NPC",
+      "fr": "PNJ ciblé",
+      "es": "PNJ objetivo"
+    },
+    "Target tile X and Y": {
+      "en": "Target tile X and Y",
+      "fr": "Case ciblée X et Y",
+      "es": "Casilla objetivo X e Y"
+    },
+    "Arrival radius": {
+      "en": "Arrival radius",
+      "fr": "Rayon d'arrivée",
+      "es": "Radio de llegada"
+    },
+    "Preview is illustrative. Select a real map, NPC and coordinates.": {
+      "en": "Preview is illustrative. Select a real map, NPC and coordinates.",
+      "fr": "L'aperçu est illustratif. Sélectionnez une vraie carte, un PNJ et des coordonnées.",
+      "es": "La vista previa es ilustrativa. Selecciona un mapa, un PNJ y coordenadas."
+    },
+    "Use open map": {
+      "en": "Use open map",
+      "fr": "Utiliser la carte ouverte",
+      "es": "Usar mapa abierto"
+    },
+    "Highlight style": {
+      "en": "Highlight style",
+      "fr": "Style de surbrillance",
+      "es": "Estilo del resaltado"
+    },
+    "Menu": {
+      "en": "Menu",
+      "fr": "Menu",
+      "es": "Menú"
+    },
+    "Inventory": {
+      "en": "Inventory",
+      "fr": "Inventaire",
+      "es": "Inventario"
+    },
+    "Quests": {
+      "en": "Quests",
+      "fr": "Quêtes",
+      "es": "Misiones"
+    },
+    "Minimap": {
+      "en": "Minimap",
+      "fr": "Mini-carte",
+      "es": "Minimapa"
+    },
+    "Character": {
+      "en": "Character",
+      "fr": "Personnage",
+      "es": "Personaje"
+    },
+    "World map": {
+      "en": "World map",
+      "fr": "Carte du monde",
+      "es": "Mapa del mundo"
+    },
+    "Quickbar": {
+      "en": "Quickbar",
+      "fr": "Barre de raccourcis",
+      "es": "Barra de accesos rápidos"
+    },
+    "Outline": {
+      "en": "Outline",
+      "fr": "Contour",
+      "es": "Contorno"
+    },
+    "Circle": {
+      "en": "Circle",
+      "fr": "Cercle",
+      "es": "Círculo"
+    },
+    "Player": {
+      "en": "Player",
+      "fr": "Joueur",
+      "es": "Jugador"
+    },
+    "World tile": {
+      "en": "World tile",
+      "fr": "Destination sur la carte",
+      "es": "Destino en el mapa"
+    },
+    "World NPC": {
+      "en": "World NPC",
+      "fr": "PNJ sur la carte",
+      "es": "PNJ en el mapa"
+    },
+    "Read": {
+      "en": "Read",
+      "fr": "Lire",
+      "es": "Leer"
+    },
+    "Move": {
+      "en": "Move",
+      "fr": "Se déplacer",
+      "es": "Moverse"
+    },
+    "Reach map": {
+      "en": "Reach map",
+      "fr": "Atteindre la carte",
+      "es": "Llegar al mapa"
+    },
+    "Variable": {
+      "en": "Variable",
+      "fr": "Variable",
+      "es": "Variable"
+    },
+    "Reach tile": {
+      "en": "Reach tile",
+      "fr": "Atteindre une case",
+      "es": "Llegar a una casilla"
+    },
+    "Dodge": {
+      "en": "Dodge",
+      "fr": "Esquive",
+      "es": "Esquiva"
+    },
+    "Perfect parry": {
+      "en": "Perfect parry",
+      "fr": "Parade parfaite",
+      "es": "Parada perfecta"
+    },
+    "Counterattack": {
+      "en": "Counterattack",
+      "fr": "Contre-attaque",
+      "es": "Contraataque"
+    },
+    "Finisher": {
+      "en": "Finisher",
+      "fr": "Coup de grâce",
+      "es": "Golpe final"
+    },
+    "Target X": {
+      "en": "Target X",
+      "fr": "Case X",
+      "es": "Casilla X"
+    },
+    "Target Y": {
+      "en": "Target Y",
+      "fr": "Case Y",
+      "es": "Casilla Y"
+    },
+    "Player variable": {
+      "en": "Player variable",
+      "fr": "Variable du joueur",
+      "es": "Variable del jugador"
+    },
+    "Required value": {
+      "en": "Required value",
+      "fr": "Valeur requise",
+      "es": "Valor requerido"
+    },
+    "NPC": {
+      "en": "NPC",
+      "fr": "PNJ",
+      "es": "PNJ"
+    },
+    "Spells": {
+      "en": "Spells",
+      "fr": "Sorts",
+      "es": "Hechizos"
+    },
+    "Guild": {
+      "en": "Guild",
+      "fr": "Guilde",
+      "es": "Gremio"
+    },
+    "Your next step": {
+      "en": "Your next step",
+      "fr": "Votre prochaine étape",
+      "es": "Tu próximo paso"
+    },
+    "Approach X:{0} Y:{1} (radius {2}).": {
+      "en": "Approach X:{0} Y:{1} (radius {2}).",
+      "fr": "Approchez de X:{0} Y:{1} (rayon {2}).",
+      "es": "Acércate a X:{0} Y:{1} (radio {2})."
+    },
+    "Talk to the indicated character.": {
+      "en": "Talk to the indicated character.",
+      "fr": "Parlez au personnage indiqué.",
+      "es": "Habla con el personaje indicado."
+    },
+    "Move to progress.": {
+      "en": "Move to progress.",
+      "fr": "Déplacez-vous pour progresser.",
+      "es": "Muévete para avanzar."
+    },
+    "Follow the highlighted element.": {
+      "en": "Follow the highlighted element.",
+      "fr": "Suivez l’élément mis en évidence.",
+      "es": "Sigue el elemento resaltado."
+    },
+    "ILLUSTRATIVE PREVIEW - actual positions in game": {
+      "en": "ILLUSTRATIVE PREVIEW - actual positions in game",
+      "fr": "APERÇU ILLUSTRATIF - positions réelles en jeu",
+      "es": "VISTA ILUSTRATIVA - posiciones reales en el juego"
+    },
+    "Royal Guide: select an existing map.": {
+      "en": "Royal Guide: select an existing map.",
+      "fr": "Guide royal : choisissez une carte existante.",
+      "es": "Guía real: elige un mapa existente."
+    },
+    "Royal Guide: target tile is outside the map.": {
+      "en": "Royal Guide: target tile is outside the map.",
+      "fr": "Guide royal : la case cible est hors de la carte.",
+      "es": "Guía real: la casilla de destino está fuera del mapa."
+    },
+    "Royal Guide: select an existing NPC.": {
+      "en": "Royal Guide: select an existing NPC.",
+      "fr": "Guide royal : choisissez un PNJ existant.",
+      "es": "Guía real: elige un PNJ existente."
+    },
+    "Completion objective": {
+      "en": "Completion objective",
+      "fr": "Objectif de validation",
+      "es": "Objetivo de finalización"
+    },
+    "Target map event": {
+      "en": "Target map event",
+      "fr": "Événement de carte ciblé",
+      "es": "Evento del mapa objetivo"
+    },
+    "Create interaction step": {
+      "en": "Create interaction step",
+      "fr": "Créer une étape d'interaction",
+      "es": "Crear paso de interacción"
+    },
+    "Select a map event first.": {
+      "en": "Select a map event first.",
+      "fr": "Choisissez d'abord un événement de carte.",
+      "es": "Selecciona primero un evento del mapa."
+    },
+    "Interact with the highlighted target.": {
+      "en": "Interact with the highlighted target.",
+      "fr": "Interagis avec la cible indiquée.",
+      "es": "Interactúa con el objetivo señalado."
+    },
+    "Map event": {
+      "en": "Map event",
+      "fr": "Événement de carte",
+      "es": "Evento del mapa"
+    },
+    "Interact with map event": {
+      "en": "Interact with map event",
+      "fr": "Interagir avec un événement de carte",
+      "es": "Interactuar con un evento del mapa"
+    },
+    "Require this interaction": {
+      "en": "Require this interaction",
+      "fr": "Exiger cette interaction",
+      "es": "Exigir esta interacción"
+    },
+    "Open this list to load map events": {
+      "en": "Open this list to load map events",
+      "fr": "Ouvrez cette liste pour charger les événements",
+      "es": "Abre esta lista para cargar los eventos"
+    },
+    "Royal Guide clickable highlight preview": {
+      "en": "Royal Guide clickable highlight preview",
+      "fr": "Aperçu cliquable du guide royal",
+      "es": "Vista previa interactiva de la guía real"
+    },
+    "Royal Guide: select an event on the chosen map.": {
+      "en": "Royal Guide: select an event on the chosen map.",
+      "fr": "Guide royal : choisissez un événement de la carte sélectionnée.",
+      "es": "Guía real: elige un evento del mapa seleccionado."
+    },
+    "Royal Guide: choose an event with a player interaction trigger.": {
+      "en": "Royal Guide: choose an event with a player interaction trigger.",
+      "fr": "Guide royal : choisissez un événement déclenché par une interaction du joueur.",
+      "es": "Guía real: elige un evento activado por una interacción del jugador."
     }
   }
 }

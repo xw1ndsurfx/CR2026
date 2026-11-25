@@ -1,6 +1,7 @@
 using System.Reflection;
 using Intersect.Client.Interface.Game;
 using Intersect.Client.Framework.Graphics;
+using Intersect.Framework.Core.Exportation;
 using NUnit.Framework;
 
 namespace Intersect.Tests.Client;
@@ -79,6 +80,110 @@ public sealed class ExportationContrastTests
         var scale = ExportationWindow.ScaleForMeasuredFont(desiredHeight, measuredHeight);
         Assert.That(scale, Is.EqualTo(expectedScale).Within(.001f),
             "Bitmap glyphs must be measured after global UI font size overrides.");
+    }
+
+    [Test]
+    public void BitmapTextFittingUsesVisibleInkInsteadOfTransparentCellPadding()
+    {
+        var sparse = ExportationWindow.ScaleForVisibleInk(16, 16, new FontInkMetrics(3f / 16, 7f / 16));
+        var full = ExportationWindow.ScaleForVisibleInk(16, 16, new FontInkMetrics(0, 1));
+        Assert.That(sparse * 7, Is.EqualTo(12).Within(.001));
+        Assert.That(sparse, Is.GreaterThan(full), "Empire's 7px glyph must not be treated as a 16px visible letter.");
+    }
+
+    [Test]
+    public void CrateCountsMatchActualPackedItemsByGroup()
+    {
+        var wood = Guid.NewGuid();
+        var potion = Guid.NewGuid();
+        var provisions = Guid.NewGuid();
+        var route = new ExportationRoute
+        {
+            Lines =
+            [
+                new() { ItemId = wood, Group = CargoGroup.Materials, Quantity = 5 },
+                new() { ItemId = potion, Group = CargoGroup.Fragile, Quantity = 2 },
+                new() { ItemId = provisions, Group = CargoGroup.Provisions, Quantity = 7 },
+            ],
+        };
+        var run = new ExportationRun
+        {
+            Packed = new Dictionary<Guid, int>
+            {
+                [wood] = 4,
+                [potion] = 2,
+                [provisions] = 3,
+            },
+        };
+        var counts = ExportationWindow.CountCrates(route, run);
+        Assert.Multiple(() =>
+        {
+            Assert.That(counts.MaterialsPacked, Is.EqualTo(4));
+            Assert.That(counts.MaterialsTotal, Is.EqualTo(5));
+            Assert.That(counts.OtherPacked, Is.EqualTo(5));
+            Assert.That(counts.OtherTotal, Is.EqualTo(9));
+        });
+    }
+
+    [Test]
+    public void VoyageInstructionsNeverPretendThePlayerDockedEarly()
+    {
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Preparing,
+            false, false)[1], Is.EqualTo("2. Seal the cargo"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            false, false)[1], Is.EqualTo("2. Board your ship"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            true, false)[1], Is.EqualTo("2. Sailing to destination"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.InTransit,
+            true, true)[1], Is.EqualTo("2. Sea arrival confirmed"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Delivered,
+            true, true)[2], Is.EqualTo("3. Rewards received"));
+        Assert.That(ExportationWindow.DeliveryStepKeys(DeliveryStage.Lost,
+            false, false)[0], Is.EqualTo("1. Cargo lost"));
+    }
+
+    [Test]
+    public void HelpIsAnActualInteractiveControlRatherThanArtwork()
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var window = typeof(ExportationWindow);
+        foreach (var field in new[]
+        {
+            "_helpOverlay", "_helpButton", "_helpClose", "_materialCrate",
+            "_otherCrate", "_step2", "_step3", "_shelfSummary",
+        })
+            Assert.That(window.GetField(field, flags), Is.Not.Null,
+                $"Missing real Exportation UI control {field}");
+    }
+
+    [Test]
+    public void ExportationHelpIsLocalized()
+    {
+        Assert.That(ExportationText.Get("How Exportation works", "fr"),
+            Is.EqualTo("Comment fonctionne l’Exportation"));
+        Assert.That(ExportationText.Get("Close help", "es"),
+            Is.EqualTo("Cerrar ayuda"));
+    }
+
+    [TestCase(.5f)]
+    [TestCase(1f)]
+    [TestCase(2f)]
+    public void ScaledCargoNamesWrapAtTheirRenderedWidth(float scale)
+    {
+        var metrics = new UniformTextMetrics();
+        var font = new TestBitmapFont(10);
+        const string text = "Royal supplies for the distant island";
+        var lines = Intersect.Client.Framework.Gwen.ControlInternal.Text.WrapText(text, 200, font, 10, metrics, scale);
+        Assert.That(string.Join(" ", lines), Is.EqualTo(text));
+        Assert.That(lines.All(line => metrics.MeasureText(line, font, 10, scale).X <= 200), Is.True,
+            "Magnified text must wrap before overflowing its panel.");
+        if (scale == .5f) Assert.That(lines.Length, Is.EqualTo(1), "Reduced text must not keep excess unscaled line breaks.");
+    }
+
+    private sealed class UniformTextMetrics : ITextHelper
+    {
+        public System.Numerics.Vector2 MeasureText(string? text, IFont? font, int size, float fontScale) =>
+            new((text?.Length ?? 0) * 10 * fontScale, 16 * fontScale);
     }
 
     private sealed class TestBitmapFont(params int[] sizes) : IFont

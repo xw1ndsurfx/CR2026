@@ -14,7 +14,8 @@ internal static partial class NavalSystem
 
     // Gate is held. Credit the captain who fired the killing shot, only if still at this helm.
     // Respawn constructs a new Vessel, so a second death earns its own single reward.
-    private static void CreditEnemySink(Vessel victim,Guid attackerId,Guid captainId)
+    private static void CreditEnemySink(Vessel victim,Guid attackerId,Guid captainId)=>CreditNavalVictory(victim,attackerId,captainId,true);
+    private static void CreditNavalVictory(Vessel victim,Guid attackerId,Guid captainId,bool shipKill)
     {
         if(victim.Enemy==null || victim.Health!=0 || victim.RewardClaimed) return;
         victim.RewardClaimed=true;
@@ -22,6 +23,8 @@ internal static partial class NavalSystem
         {ship.CombatTargetId=Guid.Empty;ship.CombatUntil=0;}
         if(captainId==Guid.Empty || !Ships.TryGetValue(attackerId,out var attacker) || attacker.Enemy!=null ||
             attacker.State.CaptainId!=captainId) return;
+        if (shipKill) RecordExpeditionVictory(NavalExpeditionObjective.DefeatPatrol, victim.Enemy.Ship.Id, victim.State.MapId,
+            victim.CombatLifeId, attackerId, victim.State.X, victim.State.Y);
         var now=Intersect.Framework.Core.Timing.Global.Milliseconds;
         var loot=NavalCargo.Roll(victim.Enemy.Loot,Random.Shared.NextDouble,Random.Shared.Next);
         var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct().ToArray();
@@ -42,7 +45,7 @@ internal static partial class NavalSystem
             }
         foreach(var participant in participants.Where(id=>weights[id]>0))
         {
-            QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
+            if(shipKill)QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
             PendingSailingRewards.TryGetValue(participant,out var pending);
             PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+experience.GetValueOrDefault(participant)),
                 Cargo:(pending?.Cargo??[]).Concat(awards[participant]).Take(6400).ToArray(),
@@ -90,7 +93,7 @@ internal static partial class NavalSystem
         try
         {
             player.SailingExperience=Math.Min(_settings.Sailing.Cap,previous+Math.Min(earned,200000000000000L));
-            committed=save();return committed;
+            committed=RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(player, Intersect.Framework.Core.Naval.NavalProfessions.Sailing, player.SailingExperience-previous, save);return committed;
         }
         finally {if(!committed) player.SailingExperience=previous;}
     }

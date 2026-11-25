@@ -115,7 +115,7 @@ internal sealed class MetalworkWindow : Window
         {
             _scene.PulseAt = _received;
             if (!string.IsNullOrWhiteSpace(state.Sound))
-                Intersect.Client.Core.Audio.AddGameSound(state.Sound, false);
+                Intersect.Client.Interface.InterfaceAudio.PlayConfigured(state.Sound, false);
             _soundAction = state.ActionNumber;
         }
         _stage.Text = ClientLanguages.Text(!state.Running ? "Prepare your materials" : state.Stage switch

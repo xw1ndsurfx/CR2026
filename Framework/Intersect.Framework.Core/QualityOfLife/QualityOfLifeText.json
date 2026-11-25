@@ -1,5 +1,125 @@
 {
   "Entries": {
+    "Attack telegraphs": {
+      "en": "Attack telegraphs",
+      "fr": "Attaques annoncées",
+      "es": "Ataques anunciados"
+    },
+    "Warn before this NPC attacks": {
+      "en": "Warn before this NPC attacks",
+      "fr": "Annoncer les attaques de ce PNJ",
+      "es": "Avisar antes de que ataque este PNJ"
+    },
+    "Bosses already warn by default.": {
+      "en": "Bosses already warn by default.",
+      "fr": "Les boss annoncent déjà leurs attaques par défaut.",
+      "es": "Los jefes ya avisan de sus ataques."
+    },
+    "Area pattern:": {
+      "en": "Area pattern :",
+      "fr": "Forme de la zone :",
+      "es": "Forma del área:"
+    },
+    "Target tile": {
+      "en": "Target tile",
+      "fr": "Case ciblée",
+      "es": "Casilla objetivo"
+    },
+    "Straight line": {
+      "en": "Straight line",
+      "fr": "Ligne droite",
+      "es": "Línea recta"
+    },
+    "Forward cone": {
+      "en": "Forward cone",
+      "fr": "Cône devant le monstre",
+      "es": "Cono frontal"
+    },
+    "Circle around target": {
+      "en": "Circle around target",
+      "fr": "Cercle autour de la cible",
+      "es": "Círculo alrededor del objetivo"
+    },
+    "Reach (tiles):": {
+      "en": "Reach (tiles):",
+      "fr": "Portée (cases) :",
+      "es": "Alcance (casillas):"
+    },
+    "Warning duration (ms, 0 = server):": {
+      "en": "Warning duration (ms, 0 = server):",
+      "fr": "Durée (ms, 0 = serveur) :",
+      "es": "Duración (ms, 0 = servidor):"
+    },
+    "Preview (gold: monster, blue: target)": {
+      "en": "Preview (gold: monster, blue: target)",
+      "fr": "Aperçu (or : monstre, bleu : cible)",
+      "es": "Vista previa (dorado: monstruo, azul: objetivo)"
+    },
+    "Enrage under 35% HP (boss only)": {
+      "en": "Enrage under 35% HP (boss only)",
+      "fr": "Rage sous 35 % de vie (boss uniquement)",
+      "es": "Furia bajo 35 % de vida (solo jefes)"
+    },
+    "Faster warnings and stronger hits in phase two.": {
+      "en": "Faster warnings and stronger hits in phase two.",
+      "fr": "Attaques plus rapides et plus puissantes en phase deux.",
+      "es": "Ataques más rápidos y fuertes en fase dos."
+    },
+    "Boss attack combos": {
+      "en": "Boss attack combos",
+      "fr": "Enchaînements d'attaques de boss",
+      "es": "Combos de ataques del jefe"
+    },
+    "Enable multi-hit boss attacks": {
+      "en": "Enable multi-hit boss attacks",
+      "fr": "Activer les enchaînements du boss",
+      "es": "Activar combos del jefe"
+    },
+    "Warn before each strike; no invisible hits.": {
+      "en": "Warn before each strike; no invisible hits.",
+      "fr": "Chaque coup est annoncé visuellement.",
+      "es": "Cada golpe tiene aviso visual."
+    },
+    "Number of attacks:": {
+      "en": "Number of attacks:",
+      "fr": "Nombre d'attaques :",
+      "es": "Número de ataques:"
+    },
+    "Attack 2 shape:": {
+      "en": "Attack 2 shape:",
+      "fr": "Forme de l'attaque 2 :",
+      "es": "Forma del ataque 2:"
+    },
+    "Attack 3 shape:": {
+      "en": "Attack 3 shape:",
+      "fr": "Forme de l'attaque 3 :",
+      "es": "Forma del ataque 3:"
+    },
+    "Next warning duration (ms):": {
+      "en": "Next warning duration (ms):",
+      "fr": "Avertissement suivant (ms) :",
+      "es": "Siguiente aviso (ms):"
+    },
+    "Preview attack number:": {
+      "en": "Preview attack number:",
+      "fr": "Prévisualiser l'attaque :",
+      "es": "Vista previa del ataque:"
+    },
+    "Warn before targeted hostile spells": {
+      "en": "Warn before targeted hostile spells",
+      "fr": "Annoncer les sorts hostiles ciblés",
+      "es": "Avisar sobre hechizos hostiles dirigidos"
+    },
+    "Spell warning duration (ms):": {
+      "en": "Spell warning duration (ms):",
+      "fr": "Durée d'avertissement du sort (ms) :",
+      "es": "Duración del aviso del hechizo (ms):"
+    },
+    "Only single-target spells without splash; native AoE and projectiles are unchanged.": {
+      "en": "Only single-target spells without splash; native AoE and projectiles are unchanged.",
+      "fr": "Seulement les sorts sur une cible, sans zone. Les zones et projectiles restent inchangés.",
+      "es": "Solo hechizos dirigidos sin área; los efectos de área y proyectiles no cambian."
+    },
     "Roll the Dice": {
       "en": "Roll the Dice",
       "fr": "Roll the Dice",
@@ -4673,6 +4793,1078 @@
     "Granary capacity": {"en": "Granary capacity", "fr": "Capacité du grenier", "es": "Capacidad del granero"},
     "Hiring price": {"en": "Hiring price", "fr": "Coût de recrutement", "es": "Coste de contratación"},
     "Wage per cycle": {"en": "Wage per cycle", "fr": "Salaire par cycle", "es": "Salario por ciclo"},
-    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"}
+    "Worker sprite": {"en": "Worker sprite", "fr": "Sprite des ouvriers", "es": "Sprite de los trabajadores"},
+    "Checking import status...": {"en": "Checking import status...", "fr": "Vérification de l’import...", "es": "Comprobando la importación..."},
+    "Already imported: {0}": {"en": "Already imported: {0}", "fr": "Déjà importé : {0}", "es": "Ya importado: {0}"},
+    "No matching game copy detected.": {"en": "No matching game copy detected.", "fr": "Aucune copie correspondante détectée dans le jeu.", "es": "No se detectó una copia correspondiente en el juego."},
+    "Import status unavailable.": {"en": "Import status unavailable.", "fr": "État de l’import indisponible.", "es": "Estado de importación no disponible."},
+    "Sound ambience": {"en": "Sound ambience", "fr": "Ambiance sonore", "es": "Ambiente sonoro"},
+    "Death sound": {"en": "Death sound", "fr": "Son à la mort", "es": "Sonido al morir"},
+    "Player proximity sound": {"en": "Player proximity sound", "fr": "Son à proximité du joueur", "es": "Sonido de proximidad al jugador"},
+    "Trigger distance (tiles)": {"en": "Trigger distance (tiles)", "fr": "Distance de déclenchement (cases)", "es": "Distancia de activación (casillas)"},
+    "Plays on entering range; resets after leaving. Empty sound disables it.": {"en": "Plays on entering range; resets after leaving. Empty sound disables it.", "fr": "Joué à l’entrée dans la zone, réarmé après en être sorti. Un son vide le désactive.", "es": "Se reproduce al entrar en el radio y se rearma al salir. Un sonido vacío lo desactiva."},
+    "Declare import status...": {"en":"Declare import status...","fr":"Déclarer le statut d’import…","es":"Declarar estado de importación…"},
+    "Has this resource already been imported into the game?": {"en":"Has this resource already been imported into the game?","fr":"Cette ressource a-t-elle déjà été importée dans le jeu ?","es":"¿Este recurso ya se ha importado al juego?"},
+    "Import tracking": {"en":"Import tracking","fr":"Suivi des imports","es":"Seguimiento de importaciones"},
+    "Import completed. Mark the {0} imported resource(s) as already imported?": {"en":"Import completed. Mark the {0} imported resource(s) as already imported?","fr":"Import terminé. Déclarer les {0} ressources importées comme déjà importées ?","es":"Importación completada. ¿Marcar los {0} recursos importados como ya importados?"},
+    "Import tracking could not be saved. Check write access to the game folder.": {"en":"Import tracking could not be saved. Check write access to the game folder.","fr":"Le suivi d’import n’a pas pu être enregistré. Vérifie les droits d’écriture du dossier du jeu.","es":"No se pudo guardar el seguimiento. Comprueba el permiso de escritura en la carpeta del juego."},
+    "Marked as imported.": {"en":"Marked as imported.","fr":"Déclaré déjà importé.","es":"Marcado como importado."},
+    "Not marked as imported.": {"en":"Not marked as imported.","fr":"Non déclaré comme importé.","es":"Sin marcar como importado."},
+    "Not marked; matching game copy: {0}": {"en":"Not marked; matching game copy: {0}","fr":"Non déclaré ; copie identique dans le jeu : {0}","es":"Sin marcar; copia idéntica en el juego: {0}"},
+    "[Imported] ": {"en":"[Imported] ","fr":"[Importé] ","es":"[Importado] "},
+    "IMPORTED": {"en":"IMPORTED","fr":"IMPORTÉ","es":"IMPORTADO"},
+    "Not marked": {"en":"Not marked","fr":"Non déclaré","es":"Sin marcar"},
+    "Import status": {"en":"Import status","fr":"État d’import","es":"Estado de importación"},
+    "Unable to abandon: no matching active dungeon run was found.": { "en": "Unable to abandon: no matching active dungeon run was found.", "fr": "Abandon impossible : aucune session active correspondante du donjon n’a été trouvée.", "es": "No se puede abandonar: no se ha encontrado una sesión activa del calabozo correspondiente." },
+    "Artwork and sounds": {
+      "en": "Artwork and sounds",
+      "fr": "Images et sons",
+      "es": "Imágenes y sonidos"
+    },
+    "Preview": {
+      "en": "Preview",
+      "fr": "Aperçu",
+      "es": "Vista previa"
+    },
+    "Workshop background": {
+      "en": "Workshop background",
+      "fr": "Décor de l’atelier",
+      "es": "Fondo del taller"
+    },
+    "Ingredient atlas (4 x 4)": {
+      "en": "Ingredient atlas (4 x 4)",
+      "fr": "Planche des ingrédients (4 x 4)",
+      "es": "Atlas de ingredientes (4 x 4)"
+    },
+    "Rotate ingredients": {
+      "en": "Rotate ingredients",
+      "fr": "Rotation des ingrédients",
+      "es": "Girar ingredientes"
+    },
+    "Drop ingredients": {
+      "en": "Drop ingredients",
+      "fr": "Pose des ingrédients",
+      "es": "Colocar ingredientes"
+    },
+    "Ingredient fusion": {
+      "en": "Ingredient fusion",
+      "fr": "Fusion des ingrédients",
+      "es": "Fusión de ingredientes"
+    },
+    "Recipe complete": {
+      "en": "Recipe complete",
+      "fr": "Recette terminée",
+      "es": "Receta completada"
+    },
+    "Board full": {
+      "en": "Board full",
+      "fr": "Plateau rempli",
+      "es": "Tablero lleno"
+    },
+    "Empty selection disables the asset. Atlas: rows = Verdant, Ember, Arcane, Radiant; columns = tiers 1 to 4. Install the files on every client. Missing images use the original drawing.": {
+      "en": "Empty selection disables the asset. Atlas: rows = Verdant, Ember, Arcane, Radiant; columns = tiers 1 to 4. Install the files on every client. Missing images use the original drawing.",
+      "fr": "Une sélection vide désactive la ressource. Planche : lignes = Verdant, Ember, Arcane, Radiant ; colonnes = niveaux 1 à 4. Installer les fichiers sur chaque client. Les images absentes utilisent le dessin original.",
+      "es": "Una selección vacía desactiva el recurso. Atlas: filas = Verdant, Ember, Arcane, Radiant; columnas = niveles 1 a 4. Instala los archivos en cada cliente. Las imágenes ausentes usan el dibujo original."
+    },
+    "EXPORT CLASS BASES (MALE + FEMALE)": {
+      "en": "EXPORT CLASS BASES (MALE + FEMALE)",
+      "fr": "EXPORTER LES BASES (MASCULIN + FÉMININ)",
+      "es": "EXPORTAR BASES (MASCULINA + FEMENINA)"
+    },
+    "Class base sprites": {
+      "en": "Class base sprites",
+      "fr": "Sprites de base des classes",
+      "es": "Sprites base de las clases"
+    },
+    "Import a male base and a female base into Base or Body first.": {
+      "en": "Import a male base and a female base into Base or Body first.",
+      "fr": "Importe d’abord une base masculine et une base féminine dans Base ou Body.",
+      "es": "Primero importa una base masculina y una femenina en Base o Body."
+    },
+    "Export name": {
+      "en": "Export name",
+      "fr": "Nom de l’export",
+      "es": "Nombre de exportación"
+    },
+    "Male base": {
+      "en": "Male base",
+      "fr": "Base masculine",
+      "es": "Base masculina"
+    },
+    "Female base": {
+      "en": "Female base",
+      "fr": "Base féminine",
+      "es": "Base femenina"
+    },
+    "Export both bases": {
+      "en": "Export both bases",
+      "fr": "Exporter les deux bases",
+      "es": "Exportar ambas bases"
+    },
+    "Exports only the two bodies and their six animations to resources/entities. Clothing, hair and equipment stay separate. Choose the male and female sprites in Class Editor afterwards.": {
+      "en": "Exports only the two bodies and their six animations to resources/entities. Clothing, hair and equipment stay separate. Choose the male and female sprites in Class Editor afterwards.",
+      "fr": "Exporte uniquement les deux corps et leurs six animations dans resources/entities. Les vêtements, cheveux et équipements restent séparés. Choisis ensuite les sprites masculin et féminin dans l’éditeur de classes.",
+      "es": "Exporta solo los dos cuerpos y sus seis animaciones a resources/entities. La ropa, el pelo y el equipo permanecen separados. Después elige los sprites masculino y femenino en el editor de clases."
+    },
+    "Enter a valid filename and select distinct male and female bases.": {
+      "en": "Enter a valid filename and select distinct male and female bases.",
+      "fr": "Saisis un nom de fichier valide et sélectionne deux bases distinctes, masculine et féminine.",
+      "es": "Introduce un nombre de archivo válido y selecciona bases masculina y femenina distintas."
+    },
+    "Some class base files already exist. Replace this male/female export?": {
+      "en": "Some class base files already exist. Replace this male/female export?",
+      "fr": "Certains fichiers de base existent déjà. Remplacer cet export masculin/féminin ?",
+      "es": "Ya existen algunos archivos base. ¿Reemplazar esta exportación masculina/femenina?"
+    },
+    "Exported class bases: {0}_male.png and {0}_female.png (+ animation variants).": {
+      "en": "Exported class bases: {0}_male.png and {0}_female.png (+ animation variants).",
+      "fr": "Bases exportées : {0}_male.png et {0}_female.png (+ variantes d’animation).",
+      "es": "Bases exportadas: {0}_male.png y {0}_female.png (+ variantes de animación)."
+    },
+    "Choose these two sprites for the male and female appearances in Class Editor.": {
+      "en": "Choose these two sprites for the male and female appearances in Class Editor.",
+      "fr": "Choisis ces deux sprites pour les apparences masculine et féminine dans l’éditeur de classes.",
+      "es": "Elige estos dos sprites para las apariencias masculina y femenina en el editor de clases."
+    },
+    "Class base export failed: {0}": {
+      "en": "Class base export failed: {0}",
+      "fr": "Échec de l’export des bases de classe : {0}",
+      "es": "Error al exportar las bases de clase: {0}"
+    },
+    "Character Creation accepts clothing and hair. For class body sprites, use Export class bases (male + female).": {
+      "en": "Character Creation accepts clothing and hair. For class body sprites, use Export class bases (male + female).",
+      "fr": "La création de personnage accepte les vêtements et les cheveux. Pour les corps des classes, utilise Exporter les bases (masculin + féminin).",
+      "es": "La creación de personajes acepta ropa y pelo. Para los cuerpos de las clases, usa Exportar bases (masculina + femenina)."
+    },
+    "Invalid class base export.": {
+      "en": "Invalid class base export.",
+      "fr": "Export de bases de classe invalide.",
+      "es": "Exportación de bases de clase no válida."
+    },
+    "Missing body animation: {0}": {
+      "en": "Missing body animation: {0}",
+      "fr": "Animation de corps manquante : {0}",
+      "es": "Falta la animación del cuerpo: {0}"
+    },
+    "Class base export already exists.": {
+      "en": "Class base export already exists.",
+      "fr": "Cet export de bases de classe existe déjà.",
+      "es": "Esta exportación de bases de clase ya existe."
+    },
+    "Generate NPC profile": {
+      "en": "Generate NPC profile",
+      "fr": "Générer le profil du PNJ",
+      "es": "Generar el perfil del PNJ"
+    },
+    "Keep NPC changes": {
+      "en": "Keep NPC changes",
+      "fr": "Conserver les modifications du PNJ",
+      "es": "Conservar los cambios del PNJ"
+    },
+    "Generate and review": {
+      "en": "Generate and review",
+      "fr": "Générer et vérifier",
+      "es": "Generar y revisar"
+    },
+    "Generate the combat preset, then review all NPC parameters in the other tabs. Changes are kept only when you confirm; save the NPC editor to send them to the server.": {
+      "en": "Generate the combat preset, then review all NPC parameters in the other tabs. Changes are kept only when you confirm; save the NPC editor to send them to the server.",
+      "fr": "Générez le profil de combat, puis vérifiez tous les paramètres du PNJ dans les autres onglets. Confirmez pour conserver les modifications, puis enregistrez dans l’éditeur de PNJ pour les envoyer au serveur.",
+      "es": "Genera el perfil de combate y revisa todos los parámetros del PNJ en las otras pestañas. Confirma para conservar los cambios y guarda en el editor de PNJ para enviarlos al servidor."
+    },
+    "Weapon skill quickbar": {
+      "en": "Weapon skill quickbar",
+      "fr": "Barre rapide des compétences d’arme",
+      "es": "Barra rápida de habilidades de arma"
+    },
+    "Show weapon skill quickbar": {
+      "en": "Show weapon skill quickbar",
+      "fr": "Afficher la barre des compétences d’arme",
+      "es": "Mostrar la barra de habilidades de arma"
+    },
+    "Slot size (pixels)": {
+      "en": "Slot size (pixels)",
+      "fr": "Taille des cases (pixels)",
+      "es": "Tamaño de las casillas (píxeles)"
+    },
+    "Slot spacing (pixels)": {
+      "en": "Slot spacing (pixels)",
+      "fr": "Espacement des cases (pixels)",
+      "es": "Separación entre casillas (píxeles)"
+    },
+    "Maximum columns": {
+      "en": "Maximum columns",
+      "fr": "Nombre maximal de colonnes",
+      "es": "Número máximo de columnas"
+    },
+    "Space above hotbar (pixels)": {
+      "en": "Space above hotbar (pixels)",
+      "fr": "Espace au-dessus de la barre rapide (pixels)",
+      "es": "Espacio sobre la barra rápida (píxeles)"
+    },
+    "Choose each skill icon in the mastery talent tree. The bar is hidden aboard ships, in mini-games and while a window is open.": {
+      "en": "Choose each skill icon in the mastery talent tree. The bar is hidden aboard ships, in mini-games and while a window is open.",
+      "fr": "Choisissez l’icône de chaque compétence dans l’arbre de maîtrise. La barre est masquée en bateau, dans les mini-jeux et lorsqu’une fenêtre est ouverte.",
+      "es": "Elige el icono de cada habilidad en el árbol de maestría. La barra se oculta en barcos, minijuegos y cuando hay una ventana abierta."
+    },
+    "Skill icon (resources/spells)": {
+      "en": "Skill icon (resources/spells)",
+      "fr": "Icône de compétence (resources/spells)",
+      "es": "Icono de habilidad (resources/spells)"
+    },
+    "Disable pet mode before generating a combat preset.": {
+      "en": "Disable pet mode before generating a combat preset.",
+      "fr": "Désactivez le mode familier avant de générer un profil de combat.",
+      "es": "Desactiva el modo mascota antes de generar un perfil de combate."
+    },
+    "Weapon skill slot {0}": {
+      "en": "Weapon skill slot {0}",
+      "fr": "Compétence d’arme — case {0}",
+      "es": "Habilidad de arma — casilla {0}"
+    },
+    "Choose a skill in Weapon Masteries.": {
+      "en": "Choose a skill in Weapon Masteries.",
+      "fr": "Choisissez une compétence dans Maîtrises des armes.",
+      "es": "Elige una habilidad en Maestrías de armas."
+    },
+    "Choose a slot, then add a learned skill.": {
+      "en": "Choose a slot, then add a learned skill.",
+      "fr": "Choisissez une case, puis ajoutez une compétence apprise.",
+      "es": "Elige una casilla y añade una habilidad aprendida."
+    },
+    "Clear selected slot": {
+      "en": "Clear selected slot",
+      "fr": "Vider la case sélectionnée",
+      "es": "Vaciar la casilla seleccionada"
+    },
+    "Empty slot": {
+      "en": "Empty slot",
+      "fr": "Case vide",
+      "es": "Casilla vacía"
+    },
+    "Add to slot {0}": {
+      "en": "Add to slot {0}",
+      "fr": "Ajouter à la case {0}",
+      "es": "Añadir a la casilla {0}"
+    },
+    "Learn this weapon skill before adding it to the quickbar.": {
+      "en": "Learn this weapon skill before adding it to the quickbar.",
+      "fr": "Apprenez cette compétence d’arme avant de l’ajouter à la barre rapide.",
+      "es": "Aprende esta habilidad de arma antes de añadirla a la barra rápida."
+    },
+    "Weapon skill quickbar saved.": {
+      "en": "Weapon skill quickbar saved.",
+      "fr": "Barre des compétences d’arme enregistrée.",
+      "es": "Barra de habilidades de arma guardada."
+    },
+    "Weapon skill quickbar could not be saved. Try again.": {
+      "en": "Weapon skill quickbar could not be saved. Try again.",
+      "fr": "Impossible d’enregistrer la barre des compétences d’arme. Réessayez.",
+      "es": "No se pudo guardar la barra de habilidades de arma. Inténtalo de nuevo."
+    },
+    "Please wait before updating the quickbar.": {
+      "en": "Please wait before updating the quickbar.",
+      "fr": "Patientez avant de modifier à nouveau la barre rapide.",
+      "es": "Espera antes de volver a modificar la barra rápida."
+    },
+    "Confirm only when you are ready to travel with this group. Decline to leave the search.": {
+      "en": "Confirm only when you are ready to travel with this group. Decline to leave the search.",
+      "fr": "Confirme quand tu es prêt à partir avec ce groupe. Refuse pour quitter la recherche.",
+      "es": "Confirma cuando estés listo para viajar con este grupo. Rechaza para salir de la búsqueda."
+    },
+    "Your party leader enrolls the whole group. Every player confirms departure individually.": {
+      "en": "Your party leader enrolls the whole group. Every player confirms departure individually.",
+      "fr": "Le chef inscrit le groupe entier. Chaque joueur confirme son départ individuellement.",
+      "es": "El líder inscribe al grupo entero. Cada jugador confirma su salida individualmente."
+    },
+    "{0} lobbies": {
+      "en": "{0} lobbies",
+      "fr": "{0} salons",
+      "es": "{0} salas"
+    },
+    "Find an adventure": {
+      "en": "Find an adventure",
+      "fr": "Trouver une aventure",
+      "es": "Buscar una aventura"
+    },
+    "Matchmaking": {
+      "en": "Matchmaking",
+      "fr": "Recherche de groupe",
+      "es": "Búsqueda de grupo"
+    },
+    "Find a group": {
+      "en": "Find a group",
+      "fr": "Trouver un groupe",
+      "es": "Buscar un grupo"
+    },
+    "Leave search": {
+      "en": "Leave search",
+      "fr": "Quitter la recherche",
+      "es": "Salir de la búsqueda"
+    },
+    "I am ready": {
+      "en": "I am ready",
+      "fr": "Je suis prêt",
+      "es": "Estoy listo"
+    },
+    "Decline": {
+      "en": "Decline",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Ready": {
+      "en": "Ready",
+      "fr": "Prêt",
+      "es": "Listo"
+    },
+    "Searching": {
+      "en": "Searching",
+      "fr": "Recherche en cours",
+      "es": "Buscando"
+    },
+    "Waiting for confirmation": {
+      "en": "Waiting for confirmation",
+      "fr": "Confirmation attendue",
+      "es": "Esperando confirmación"
+    },
+    "Captain": {
+      "en": "Captain",
+      "fr": "Capitaine",
+      "es": "Capitán"
+    },
+    "Naval expedition": {
+      "en": "Naval expedition",
+      "fr": "Expédition navale",
+      "es": "Expedición naval"
+    },
+    "Choose an activity. Solo players and existing groups can join.": {
+      "en": "Choose an activity. Solo players and existing groups can join.",
+      "fr": "Choisis une activité, seul ou avec ton groupe.",
+      "es": "Elige una actividad, solo o con tu grupo."
+    },
+    "Searching for compatible players…": {
+      "en": "Searching for compatible players…",
+      "fr": "Recherche de joueurs compatibles…",
+      "es": "Buscando jugadores compatibles…"
+    },
+    "Group found! Everyone must confirm before departure.": {
+      "en": "Group found! Everyone must confirm before departure.",
+      "fr": "Groupe trouvé ! Tous doivent confirmer le départ.",
+      "es": "¡Grupo encontrado! Todos deben confirmar la salida."
+    },
+    "Preparing departure…": {
+      "en": "Preparing departure…",
+      "fr": "Préparation du départ…",
+      "es": "Preparando la salida…"
+    },
+    "Your adventure has started!": {
+      "en": "Your adventure has started!",
+      "fr": "Ton aventure a commencé !",
+      "es": "¡Tu aventura ha comenzado!"
+    },
+    "No activities are configured or available right now.": {
+      "en": "No activities are configured or available right now.",
+      "fr": "Aucune activité configurée ou disponible pour le moment.",
+      "es": "No hay actividades configuradas o disponibles ahora."
+    },
+    "Sailing level {0}+": {
+      "en": "Sailing level {0}+",
+      "fr": "Navigation niveau {0}+",
+      "es": "Navegación nivel {0}+"
+    },
+    "Level {0}+": {
+      "en": "Level {0}+",
+      "fr": "Niveau {0}+",
+      "es": "Nivel {0}+"
+    },
+    "Level {0}–{1}": {
+      "en": "Level {0}–{1}",
+      "fr": "Niveau {0}–{1}",
+      "es": "Nivel {0}–{1}"
+    },
+    "Target: {0} players · Waiting: {1} · {2}": {
+      "en": "Target: {0} players · Waiting: {1} · {2}",
+      "fr": "Objectif : {0} joueurs · En attente : {1} · {2}",
+      "es": "Objetivo: {0} jugadores · En espera: {1} · {2}"
+    },
+    "{0}–{1} ships": {
+      "en": "{0}–{1} ships",
+      "fr": "{0}–{1} navires",
+      "es": "{0}–{1} barcos"
+    },
+    "Closing this window keeps you in the search. Use Leave search to cancel.": {
+      "en": "Closing this window keeps you in the search. Use Leave search to cancel.",
+      "fr": "Fermer cette fenêtre maintient la recherche. Utilise Quitter la recherche pour annuler.",
+      "es": "Cerrar esta ventana mantiene la búsqueda. Usa Salir de la búsqueda para cancelar."
+    },
+    "Confirm within {0}s · {1}/{2} ready": {
+      "en": "Confirm within {0}s · {1}/{2} ready",
+      "fr": "Confirme dans {0}s · {1}/{2} prêts",
+      "es": "Confirma en {0}s · {1}/{2} listos"
+    },
+    "Searching: {0}s": {
+      "en": "Searching: {0}s",
+      "fr": "Recherche : {0}s",
+      "es": "Buscando: {0}s"
+    },
+    "Matchmaking is unavailable for this activity.": {
+      "en": "Matchmaking is unavailable for this activity.",
+      "fr": "La recherche de groupe est indisponible pour cette activité.",
+      "es": "La búsqueda de grupo no está disponible para esta actividad."
+    },
+    "Your group, activity or boarding conditions changed. Please join again.": {
+      "en": "Your group, activity or boarding conditions changed. Please join again.",
+      "fr": "Ton groupe, l'activité ou les conditions d'embarquement ont changé. Relance la recherche.",
+      "es": "Tu grupo, la actividad o las condiciones de embarque han cambiado. Vuelve a buscar."
+    },
+    "Return to the open world and finish combat or your current activity first.": {
+      "en": "Return to the open world and finish combat or your current activity first.",
+      "fr": "Retourne dans le monde ouvert et termine le combat ou ton activité en cours.",
+      "es": "Vuelve al mundo abierto y termina el combate o tu actividad actual."
+    },
+    "Leave your ship before queuing for a dungeon.": {
+      "en": "Leave your ship before queuing for a dungeon.",
+      "fr": "Quitte ton navire avant de chercher un groupe de donjon.",
+      "es": "Baja de tu barco antes de buscar un grupo de mazmorra."
+    },
+    "A group member does not meet the dungeon requirements.": {
+      "en": "A group member does not meet the dungeon requirements.",
+      "fr": "Un membre du groupe ne remplit pas les conditions du donjon.",
+      "es": "Un miembro del grupo no cumple los requisitos de la mazmorra."
+    },
+    "Matchmaking travel is unavailable in this zone.": {
+      "en": "Matchmaking travel is unavailable in this zone.",
+      "fr": "Le déplacement vers l'activité est indisponible dans cette zone.",
+      "es": "El traslado a la actividad no está disponible en esta zona."
+    },
+    "Meet the Sailing requirements and gather your whole crew aboard stopped ships at a port. Claim pending expedition rewards first.": {
+      "en": "Meet the Sailing requirements and gather your whole crew aboard stopped ships at a port. Claim pending expedition rewards first.",
+      "fr": "Respectez le niveau de Navigation et réunissez tout l'équipage sur des navires arrêtés au port. Récupérez d'abord les récompenses d'expédition en attente.",
+      "es": "Cumplid el nivel de Navegación y reunid a toda la tripulación en barcos parados en un puerto. Recoged antes las recompensas de expedición pendientes."
+    },
+    "These players cannot be matched together.": {
+      "en": "These players cannot be matched together.",
+      "fr": "Ces joueurs ne peuvent pas être réunis.",
+      "es": "Estos jugadores no pueden formar un grupo juntos."
+    },
+    "The search expired. Join again when you are ready.": {
+      "en": "The search expired. Join again when you are ready.",
+      "fr": "La recherche a expiré. Relance-la quand tu es prêt.",
+      "es": "La búsqueda ha caducado. Vuelve a buscar cuando estés listo."
+    },
+    "The ready check expired. Ready groups return to the search.": {
+      "en": "The ready check expired. Ready groups return to the search.",
+      "fr": "La confirmation a expiré. Les groupes prêts reprennent la recherche.",
+      "es": "La confirmación ha caducado. Los grupos listos vuelven a la búsqueda."
+    },
+    "Only the party leader can queue the whole group.": {
+      "en": "Only the party leader can queue the whole group.",
+      "fr": "Seul le chef peut inscrire tout le groupe.",
+      "es": "Solo el líder puede inscribir a todo el grupo."
+    },
+    "A group member is already queued, or the search queue is full.": {
+      "en": "A group member is already queued, or the search queue is full.",
+      "fr": "Un membre est déjà inscrit ou la file de recherche est pleine.",
+      "es": "Un miembro ya está inscrito o la cola está llena."
+    },
+    "The group left the search.": {
+      "en": "The group left the search.",
+      "fr": "Le groupe a quitté la recherche.",
+      "es": "El grupo ha salido de la búsqueda."
+    },
+    "A participant declined. Other groups return to the search.": {
+      "en": "A participant declined. Other groups return to the search.",
+      "fr": "Un participant a refusé. Les autres groupes reprennent la recherche.",
+      "es": "Un participante ha rechazado. Los demás grupos vuelven a la búsqueda."
+    },
+    "This ready check is no longer available.": {
+      "en": "This ready check is no longer available.",
+      "fr": "Cette confirmation n'est plus disponible.",
+      "es": "Esta confirmación ya no está disponible."
+    },
+    "Everyone is ready. Your adventure has started!": {
+      "en": "Everyone is ready. Your adventure has started!",
+      "fr": "Tout le monde est prêt. Ton aventure a commencé !",
+      "es": "Todos están listos. ¡Tu aventura ha comenzado!"
+    },
+    "Departure failed. Your original groups have been restored.": {
+      "en": "Departure failed. Your original groups have been restored.",
+      "fr": "Le départ a échoué. Les groupes d'origine ont été rétablis.",
+      "es": "La salida ha fallado. Se han restaurado los grupos originales."
+    },
+    "Enable matchmaking": {
+      "en": "Enable matchmaking",
+      "fr": "Activer la recherche de groupe",
+      "es": "Activar la búsqueda de grupo"
+    },
+    "Ready timeout (seconds)": {
+      "en": "Ready timeout (seconds)",
+      "fr": "Délai de confirmation (secondes)",
+      "es": "Plazo de confirmación (segundos)"
+    },
+    "Search timeout (seconds)": {
+      "en": "Search timeout (seconds)",
+      "fr": "Durée de recherche (secondes)",
+      "es": "Duración de búsqueda (segundos)"
+    },
+    "Maximum queued players": {
+      "en": "Maximum queued players",
+      "fr": "Joueurs maximum dans la file",
+      "es": "Máximo de jugadores en cola"
+    },
+    "Background image": {
+      "en": "Background image",
+      "fr": "Image de fond",
+      "es": "Imagen de fondo"
+    },
+    "Icons atlas (3 × 2)": {
+      "en": "Icons atlas (3 × 2)",
+      "fr": "Planche d'icônes (3 × 2)",
+      "es": "Atlas de iconos (3 × 2)"
+    },
+    "Open sound": {
+      "en": "Open sound",
+      "fr": "Son d'ouverture",
+      "es": "Son de apertura"
+    },
+    "Search sound": {
+      "en": "Search sound",
+      "fr": "Son de recherche",
+      "es": "Sonido de búsqueda"
+    },
+    "Group found sound": {
+      "en": "Group found sound",
+      "fr": "Son de groupe trouvé",
+      "es": "Sonido de grupo encontrado"
+    },
+    "Ready sound": {
+      "en": "Ready sound",
+      "fr": "Son de confirmation",
+      "es": "Sonido de confirmación"
+    },
+    "Cancel sound": {
+      "en": "Cancel sound",
+      "fr": "Son d'annulation",
+      "es": "Sonido de cancelación"
+    },
+    "Departure sound": {
+      "en": "Departure sound",
+      "fr": "Son de départ",
+      "es": "Sonido de salida"
+    },
+    "Error sound": {
+      "en": "Error sound",
+      "fr": "Son d'erreur",
+      "es": "Sonido de error"
+    },
+    "Activities": {
+      "en": "Activities",
+      "fr": "Activités",
+      "es": "Actividades"
+    },
+    "Add activity": {
+      "en": "Add activity",
+      "fr": "Ajouter une activité",
+      "es": "Añadir actividad"
+    },
+    "Remove activity": {
+      "en": "Remove activity",
+      "fr": "Retirer l'activité",
+      "es": "Quitar actividad"
+    },
+    "Choose an activity": {
+      "en": "Choose an activity",
+      "fr": "Choisir une activité",
+      "es": "Elegir actividad"
+    },
+    "Activity type": {
+      "en": "Activity type",
+      "fr": "Type d'activité",
+      "es": "Tipo de actividad"
+    },
+    "Missing activity": {
+      "en": "Missing activity",
+      "fr": "Activité manquante",
+      "es": "Actividad ausente"
+    },
+    "Target players": {
+      "en": "Target players",
+      "fr": "Nombre de joueurs visé",
+      "es": "Jugadores deseados"
+    },
+    "Maximum level difference (0 = any)": {
+      "en": "Maximum level difference (0 = any)",
+      "fr": "Écart de niveaux maximal (0 = tous)",
+      "es": "Diferencia máxima de nivel (0 = cualquiera)"
+    },
+    "Activity image": {
+      "en": "Activity image",
+      "fr": "Image de l'activité",
+      "es": "Imagen de la actividad"
+    },
+    "Choose a map": {
+      "en": "Choose a map",
+      "fr": "Choisir une carte",
+      "es": "Elegir mapa"
+    },
+    "Missing map": {
+      "en": "Missing map",
+      "fr": "Carte manquante",
+      "es": "Mapa ausente"
+    },
+    "Dungeon entry map": {
+      "en": "Dungeon entry map",
+      "fr": "Carte d'entrée du donjon",
+      "es": "Mapa de entrada a la mazmorra"
+    },
+    "Entry direction": {
+      "en": "Entry direction",
+      "fr": "Direction d'entrée",
+      "es": "Dirección de entrada"
+    },
+    "Target players must respect the activity limits. Dungeon entry must be a walkable tile on one of its maps. Naval crews depart together from stopped ships at the same port.": {
+      "en": "Target players must respect the activity limits. Dungeon entry must be a walkable tile on one of its maps. Naval crews depart together from stopped ships at the same port.",
+      "fr": "Le nombre de joueurs doit respecter les limites de l'activité. L'entrée du donjon doit être une case praticable sur une de ses cartes. Les équipages partent de navires arrêtés au même port.",
+      "es": "El número de jugadores debe respetar los límites de la actividad. La entrada debe ser una casilla transitable en un mapa de la mazmorra. Las tripulaciones salen de barcos parados en el mismo puerto."
+    },
+    "Enabled": {
+      "en": "Enabled",
+      "fr": "Activé",
+      "es": "Activado"
+    },
+    "Retain": {
+      "en": "Retain",
+      "fr": "Conserver",
+      "es": "Conservar"
+    },
+    "Random": {
+      "en": "Random",
+      "fr": "Aléatoire",
+      "es": "Aleatorio"
+    },
+    "Back": {
+      "en": "Back",
+      "fr": "Retour",
+      "es": "Volver"
+    },
+    "Royal Races": {
+      "en": "Royal Races",
+      "fr": "Courses royales",
+      "es": "Carreras reales"
+    },
+    "Royal Races Editor": {
+      "en": "Royal Races Editor",
+      "fr": "Éditeur des courses royales",
+      "es": "Editor de carreras reales"
+    },
+    "A mount is provided. Everyone has the same speed. Practice gives no prizes.": {
+      "en": "A mount is provided. Everyone has the same speed. Practice gives no prizes.",
+      "fr": "Une monture est fournie. Tous ont la même vitesse. L'entraînement ne donne pas de prix.",
+      "es": "Se proporciona una montura. Todos tienen la misma velocidad. La práctica no da premios."
+    },
+    "Add circuit": {
+      "en": "Add circuit",
+      "fr": "Ajouter un circuit",
+      "es": "Añadir circuito"
+    },
+    "Add prize": {
+      "en": "Add prize",
+      "fr": "Ajouter un prix",
+      "es": "Añadir premio"
+    },
+    "Allow solo practice": {
+      "en": "Allow solo practice",
+      "fr": "Autoriser l'entraînement solo",
+      "es": "Permitir práctica individual"
+    },
+    "Check circuit settings, ordered checkpoints and prizes before saving.": {
+      "en": "Check circuit settings, ordered checkpoints and prizes before saving.",
+      "fr": "Vérifiez les paramètres, l'ordre des passages et les prix avant d'enregistrer.",
+      "es": "Revisa los ajustes, el orden de los puntos de control y los premios antes de guardar."
+    },
+    "Checkpoint sound": {
+      "en": "Checkpoint sound",
+      "fr": "Son de passage",
+      "es": "Sonido de punto de control"
+    },
+    "Checkpoints in order (last = finish)": {
+      "en": "Checkpoints in order (last = finish)",
+      "fr": "Passages dans l'ordre (dernier = arrivée)",
+      "es": "Puntos en orden (último = meta)"
+    },
+    "Choose a circuit, then enter or practise.": {
+      "en": "Choose a circuit, then enter or practise.",
+      "fr": "Choisissez un circuit pour participer ou vous entraîner.",
+      "es": "Elige un circuito para competir o practicar."
+    },
+    "Choose a mount": {
+      "en": "Choose a mount",
+      "fr": "Choisir une monture",
+      "es": "Elegir montura"
+    },
+    "Choose a safe circuit, registration point, mount and valid prizes.": {
+      "en": "Choose a safe circuit, registration point, mount and valid prizes.",
+      "fr": "Choisissez un circuit sûr, un point d'inscription, une monture et des prix valides.",
+      "es": "Elige un circuito seguro, un punto de inscripción, una montura y premios válidos."
+    },
+    "Circuit map": {
+      "en": "Circuit map",
+      "fr": "Carte du circuit",
+      "es": "Mapa del circuito"
+    },
+    "Circuit name": {
+      "en": "Circuit name",
+      "fr": "Nom du circuit",
+      "es": "Nombre del circuito"
+    },
+    "Claim prize": {
+      "en": "Claim prize",
+      "fr": "Récupérer le prix",
+      "es": "Recoger premio"
+    },
+    "Competition": {
+      "en": "Competition",
+      "fr": "Compétition",
+      "es": "Competición"
+    },
+    "Confirm your place. The race starts only after every rider is ready.": {
+      "en": "Confirm your place. The race starts only after every rider is ready.",
+      "fr": "Confirmez votre place. La course commence quand tous les cavaliers sont prêts.",
+      "es": "Confirma tu plaza. La carrera comienza cuando todos los jinetes estén listos."
+    },
+    "Countdown (seconds)": {
+      "en": "Countdown (seconds)",
+      "fr": "Compte à rebours (secondes)",
+      "es": "Cuenta atrás (segundos)"
+    },
+    "Countdown sound": {
+      "en": "Countdown sound",
+      "fr": "Son du compte à rebours",
+      "es": "Sonido de cuenta atrás"
+    },
+    "Enable mount races": {
+      "en": "Enable mount races",
+      "fr": "Activer les courses de montures",
+      "es": "Activar carreras de monturas"
+    },
+    "Finish sound": {
+      "en": "Finish sound",
+      "fr": "Son d'arrivée",
+      "es": "Sonido de llegada"
+    },
+    "Finish your current activity before entering a race.": {
+      "en": "Finish your current activity before entering a race.",
+      "fr": "Terminez votre activité avant de rejoindre une course.",
+      "es": "Termina tu actividad antes de entrar en una carrera."
+    },
+    "Finish your race before claiming a prize.": {
+      "en": "Finish your race before claiming a prize.",
+      "fr": "Terminez votre course avant de récupérer un prix.",
+      "es": "Termina tu carrera antes de recoger un premio."
+    },
+    "Invalid race configuration.": {
+      "en": "Invalid race configuration.",
+      "fr": "Configuration de course invalide.",
+      "es": "Configuración de carrera no válida."
+    },
+    "Join race": {
+      "en": "Join race",
+      "fr": "Participer",
+      "es": "Participar"
+    },
+    "Lap sound": {
+      "en": "Lap sound",
+      "fr": "Son de tour",
+      "es": "Sonido de vuelta"
+    },
+    "Lap {0}/{1} · Checkpoint {2}/{3} · {4}s left": {
+      "en": "Lap {0}/{1} · Checkpoint {2}/{3} · {4}s left",
+      "fr": "Tour {0}/{1} · Passage {2}/{3} · Reste {4}s",
+      "es": "Vuelta {0}/{1} · Punto {2}/{3} · Quedan {4}s"
+    },
+    "Leave race": {
+      "en": "Leave race",
+      "fr": "Quitter la course",
+      "es": "Salir de la carrera"
+    },
+    "Make room in your inventory to claim this race prize.": {
+      "en": "Make room in your inventory to claim this race prize.",
+      "fr": "Libérez de la place dans votre inventaire pour récupérer ce prix.",
+      "es": "Haz espacio en tu inventario para recoger este premio."
+    },
+    "Maximum racers": {
+      "en": "Maximum racers",
+      "fr": "Cavaliers maximum",
+      "es": "Máximo de jinetes"
+    },
+    "Meet at this circuit's registration point to enter.": {
+      "en": "Meet at this circuit's registration point to enter.",
+      "fr": "Rejoignez le point d'inscription de ce circuit pour participer.",
+      "es": "Acude al punto de inscripción de este circuito para participar."
+    },
+    "Milliseconds per tile": {
+      "en": "Milliseconds per tile",
+      "fr": "Millisecondes par case",
+      "es": "Milisegundos por casilla"
+    },
+    "Minimum racers": {
+      "en": "Minimum racers",
+      "fr": "Cavaliers minimum",
+      "es": "Mínimo de jinetes"
+    },
+    "Missing resource": {
+      "en": "Missing resource",
+      "fr": "Ressource manquante",
+      "es": "Recurso no encontrado"
+    },
+    "Move checkpoint down": {
+      "en": "Move checkpoint down",
+      "fr": "Descendre le passage",
+      "es": "Bajar punto de control"
+    },
+    "Move checkpoint up": {
+      "en": "Move checkpoint up",
+      "fr": "Monter le passage",
+      "es": "Subir punto de control"
+    },
+    "New race circuit": {
+      "en": "New race circuit",
+      "fr": "Nouveau circuit",
+      "es": "Nuevo circuito"
+    },
+    "No race circuits are configured.": {
+      "en": "No race circuits are configured.",
+      "fr": "Aucun circuit n'est configuré.",
+      "es": "No hay circuitos configurados."
+    },
+    "No records or unclaimed prizes yet.": {
+      "en": "No records or unclaimed prizes yet.",
+      "fr": "Aucun record ni prix à récupérer.",
+      "es": "Aún no hay récords ni premios pendientes."
+    },
+    "Place {0} · {1}": {
+      "en": "Place {0} · {1}",
+      "fr": "Place {0} · {1}",
+      "es": "Puesto {0} · {1}"
+    },
+    "Practice": {
+      "en": "Practice",
+      "fr": "Entraînement",
+      "es": "Práctica"
+    },
+    "Practice is disabled for this circuit.": {
+      "en": "Practice is disabled for this circuit.",
+      "fr": "L'entraînement est désactivé pour ce circuit.",
+      "es": "La práctica está desactivada en este circuito."
+    },
+    "Prize cooldown (seconds)": {
+      "en": "Prize cooldown (seconds)",
+      "fr": "Délai entre prix (secondes)",
+      "es": "Espera entre premios (segundos)"
+    },
+    "Prize for place {0} · ×{1}": {
+      "en": "Prize for place {0} · ×{1}",
+      "fr": "Prix de la place {0} · ×{1}",
+      "es": "Premio del puesto {0} · ×{1}"
+    },
+    "Prizes: place, item, quantity": {
+      "en": "Prizes: place, item, quantity",
+      "fr": "Prix : place, objet, quantité",
+      "es": "Premios: puesto, objeto, cantidad"
+    },
+    "Provided race mount": {
+      "en": "Provided race mount",
+      "fr": "Monture de course fournie",
+      "es": "Montura proporcionada"
+    },
+    "Race cancelled": {
+      "en": "Race cancelled",
+      "fr": "Course annulée",
+      "es": "Carrera cancelada"
+    },
+    "Race circuits": {
+      "en": "Race circuits",
+      "fr": "Circuits de course",
+      "es": "Circuitos de carreras"
+    },
+    "Race details": {
+      "en": "Race details",
+      "fr": "Détails de la course",
+      "es": "Detalles de la carrera"
+    },
+    "Race in progress": {
+      "en": "Race in progress",
+      "fr": "Course en cours",
+      "es": "Carrera en curso"
+    },
+    "Race prize already claimed.": {
+      "en": "Race prize already claimed.",
+      "fr": "Prix déjà récupéré.",
+      "es": "Premio ya recogido."
+    },
+    "Race prize claimed!": {
+      "en": "Race prize claimed!",
+      "fr": "Prix récupéré !",
+      "es": "¡Premio recogido!"
+    },
+    "Race results": {
+      "en": "Race results",
+      "fr": "Résultats de la course",
+      "es": "Resultados de la carrera"
+    },
+    "Race results are temporarily unavailable.": {
+      "en": "Race results are temporarily unavailable.",
+      "fr": "Les résultats sont temporairement indisponibles.",
+      "es": "Los resultados no están disponibles temporalmente."
+    },
+    "Race service unavailable. Please try again.": {
+      "en": "Race service unavailable. Please try again.",
+      "fr": "Les courses sont indisponibles. Réessayez.",
+      "es": "Las carreras no están disponibles. Inténtalo de nuevo."
+    },
+    "Race settings could not be saved. Check the circuit, mount and prizes.": {
+      "en": "Race settings could not be saved. Check the circuit, mount and prizes.",
+      "fr": "Impossible d'enregistrer. Vérifiez le circuit, la monture et les prix.",
+      "es": "No se pudo guardar. Revisa el circuito, la montura y los premios."
+    },
+    "Race start sound": {
+      "en": "Race start sound",
+      "fr": "Son du départ",
+      "es": "Sonido de salida"
+    },
+    "Race time limit (seconds)": {
+      "en": "Race time limit (seconds)",
+      "fr": "Durée limite de course (secondes)",
+      "es": "Tiempo límite de carrera (segundos)"
+    },
+    "Radius": {
+      "en": "Radius",
+      "fr": "Rayon",
+      "es": "Radio"
+    },
+    "Records and prizes": {
+      "en": "Records and prizes",
+      "fr": "Records et prix",
+      "es": "Récords y premios"
+    },
+    "Registration X": {
+      "en": "Registration X",
+      "fr": "Inscription X",
+      "es": "Inscripción X"
+    },
+    "Registration Y": {
+      "en": "Registration Y",
+      "fr": "Inscription Y",
+      "es": "Inscripción Y"
+    },
+    "Registration map": {
+      "en": "Registration map",
+      "fr": "Carte d'inscription",
+      "es": "Mapa de inscripción"
+    },
+    "Registration window (seconds)": {
+      "en": "Registration window (seconds)",
+      "fr": "Délai d'inscription (secondes)",
+      "es": "Plazo de inscripción (segundos)"
+    },
+    "Remove circuit": {
+      "en": "Remove circuit",
+      "fr": "Supprimer le circuit",
+      "es": "Eliminar circuito"
+    },
+    "Reward sound": {
+      "en": "Reward sound",
+      "fr": "Son de récompense",
+      "es": "Sonido de recompensa"
+    },
+    "Settings and media": {
+      "en": "Settings and media",
+      "fr": "Paramètres et médias",
+      "es": "Ajustes y recursos"
+    },
+    "Solo practice": {
+      "en": "Solo practice",
+      "fr": "Entraînement solo",
+      "es": "Práctica individual"
+    },
+    "Starting X": {
+      "en": "Starting X",
+      "fr": "Départ X",
+      "es": "Salida X"
+    },
+    "Starting Y": {
+      "en": "Starting Y",
+      "fr": "Départ Y",
+      "es": "Salida Y"
+    },
+    "Starting in {0}…": {
+      "en": "Starting in {0}…",
+      "fr": "Départ dans {0}…",
+      "es": "Salida en {0}…"
+    },
+    "Stay near registration. Closing this window keeps your place in the queue.": {
+      "en": "Stay near registration. Closing this window keeps your place in the queue.",
+      "fr": "Restez près de l'inscription. Fermer cette fenêtre conserve votre place dans la file.",
+      "es": "Quédate cerca de la inscripción. Cerrar esta ventana conserva tu plaza en la cola."
+    },
+    "This race circuit is unavailable.": {
+      "en": "This race circuit is unavailable.",
+      "fr": "Ce circuit est indisponible.",
+      "es": "Este circuito no está disponible."
+    },
+    "This race invitation is no longer available.": {
+      "en": "This race invitation is no longer available.",
+      "fr": "Cette invitation à la course n'est plus valable.",
+      "es": "Esta invitación a la carrera ya no es válida."
+    },
+    "This race prize is currently unavailable.": {
+      "en": "This race prize is currently unavailable.",
+      "fr": "Ce prix est actuellement indisponible.",
+      "es": "Este premio no está disponible actualmente."
+    },
+    "This race prize is no longer available.": {
+      "en": "This race prize is no longer available.",
+      "fr": "Ce prix n'est plus disponible.",
+      "es": "Este premio ya no está disponible."
+    },
+    "Travel to this race circuit is unavailable.": {
+      "en": "Travel to this race circuit is unavailable.",
+      "fr": "Le déplacement vers ce circuit est indisponible.",
+      "es": "El viaje a este circuito no está disponible."
+    },
+    "Use a dedicated map without NPC spawns or events. Finish with a checkpoint at the starting tile. All riders use the same speed; practice awards no prizes.": {
+      "en": "Use a dedicated map without NPC spawns or events. Finish with a checkpoint at the starting tile. All riders use the same speed; practice awards no prizes.",
+      "fr": "Utilisez une carte dédiée sans PNJ ni événements. Le dernier passage doit être sur la case de départ. Tous les cavaliers ont la même vitesse ; l'entraînement ne donne pas de prix.",
+      "es": "Usa un mapa dedicado sin PNJ ni eventos. El último punto debe estar en la casilla de salida. Todos los jinetes tienen la misma velocidad; la práctica no da premios."
+    },
+    "Waiting for riders…": {
+      "en": "Waiting for riders…",
+      "fr": "En attente de cavaliers…",
+      "es": "Esperando jinetes…"
+    },
+    "You are already registered, or the race queue is full.": {
+      "en": "You are already registered, or the race queue is full.",
+      "fr": "Vous êtes déjà inscrit ou la file de course est pleine.",
+      "es": "Ya estás inscrito o la cola de la carrera está llena."
+    },
+    "You left the race.": {
+      "en": "You left the race.",
+      "fr": "Vous avez quitté la course.",
+      "es": "Has salido de la carrera."
+    },
+    "Your race prize could not be saved. Please try again.": {
+      "en": "Your race prize could not be saved. Please try again.",
+      "fr": "Votre prix n'a pas pu être enregistré. Réessayez.",
+      "es": "No se pudo guardar tu premio. Inténtalo de nuevo."
+    },
+    "Your race registration expired or its conditions changed.": {
+      "en": "Your race registration expired or its conditions changed.",
+      "fr": "Votre inscription a expiré ou ses conditions ont changé.",
+      "es": "Tu inscripción ha caducado o sus condiciones han cambiado."
+    },
+    "{0} laps · {1}–{2} riders · {3} waiting": {
+      "en": "{0} laps · {1}–{2} riders · {3} waiting",
+      "fr": "{0} tours · {1}–{2} cavaliers · {3} en attente",
+      "es": "{0} vueltas · {1}–{2} jinetes · {3} en espera"
+    }
   }
 }

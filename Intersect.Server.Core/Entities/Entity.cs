@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Combat;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -1146,6 +1147,8 @@ public abstract partial class Entity : IEntity
             {
                 X = tile.GetX();
                 Y = tile.GetY();
+                if (this is Player tracedMover)
+                    if (Intersect.Server.Core.LocalPlaytestTrace.Enabled) Intersect.Server.Core.LocalPlaytestTrace.Record("move-applied", tracedMover, new { direction = moveDir });
 
                 var currentMap = MapController.Get(tile.GetMapId());
                 if (MapId != tile.GetMapId())
@@ -1615,7 +1618,7 @@ public abstract partial class Entity : IEntity
         ProjectileDescriptor projectile,
         SpellDescriptor parentSpell,
         ItemDescriptor parentItem,
-        Direction projectileDir)
+        Direction projectileDir, ItemProperties? sourceProperties = null)
     {
         if (target is Resource && parentSpell != null)
         {
@@ -1782,7 +1785,7 @@ public abstract partial class Entity : IEntity
 
     private void ApplySpellAttack(Entity target, SpellDescriptor spellDescriptor, bool onHitTrigger, bool trapTrigger, ItemDescriptor sourceWeapon)
     {
-        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true })
+        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsActivityCombatProtected: true } || this is Player { IsActivityCombatProtected: true })
         {
             return;
         }
@@ -1794,6 +1797,9 @@ public abstract partial class Entity : IEntity
 
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
         var aliveAnimations = new List<KeyValuePair<Guid, Direction>>();
+
+        if (this is Npc && target is Player { IsDialogueProtected: true } && !spellDescriptor.Combat.Friendly)
+            return;
 
         //Only count safe zones and friendly fire if its a dangerous spell! (If one has been used)
         if (!spellDescriptor.Combat.Friendly &&
@@ -2002,7 +2008,7 @@ public abstract partial class Entity : IEntity
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
         ItemDescriptor weapon = null)
     {
-        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true }) return;
+        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsActivityCombatProtected: true } || this is Player { IsActivityCombatProtected: true }) return;
         if (IsAttacking)
         {
             return;
@@ -2088,6 +2094,10 @@ public abstract partial class Entity : IEntity
         var damagingAttack = baseDamage > 0;
         var secondaryDamagingAttack = secondaryDamage > 0;
 
+        // Includes projectiles and delayed/telegraphed NPC hits whose target was selected before dialogue opened.
+        if (this is Npc && enemy is Player { IsDialogueProtected: true } && (damagingAttack || secondaryDamagingAttack))
+            return;
+
         if (enemy == null)
         {
             return;
@@ -2165,12 +2175,33 @@ public abstract partial class Entity : IEntity
             );
         }
 
-        if (Options.Instance.Combat.EnableAdvancedCombat && baseDamage > 0 && isAutoAttack &&
-            this is Player counterAttacker && enemy is Npc counterTarget &&
-            counterAttacker.ConsumeAdvancedCounter(counterTarget.Id))
+        baseDamage = Dungeons.DungeonRunRuntime.ScaleNpcDungeonDamage(this, baseDamage);
+
+        // Retaliatory hits retain the existing counter bonus but must not also
+        // build a normal three-hit combo.
+        var wasAdvancedCounter = Options.Instance.Combat.EnableAdvancedCombat &&
+            baseDamage > 0 && isAutoAttack && this is Player counterCandidate &&
+            enemy is Npc counterTarget && counterCandidate.ConsumeAdvancedCounter(counterTarget.Id);
+        if (wasAdvancedCounter)
         {
             baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(
                 baseDamage * (1.0 + Math.Clamp(Options.Instance.Combat.AdvancedCounterBonusPercent, 0, 100) / 100.0)));
+        }
+
+        // Only ordinary direct PvE weapon/unarmed attacks qualify for the
+        // player combo. Compute bonus after armor/mastery and before hit.
+        var comboBonus = 0;
+        var comboFinisherBonus = false;
+        if (!wasAdvancedCounter && isAutoAttack && baseDamage > 0 &&
+            this is Player { IsAdvancedDirectMeleeAttack: true } comboPlayer &&
+            enemy is Npc comboNpc &&
+            Options.Instance.Combat.EnableAdvancedCombat &&
+            Options.Instance.Combat.AdvancedPlayerCombosEnabled)
+        {
+            comboBonus = comboPlayer.GetAdvancedPlayerComboBonus(comboNpc);
+            if (comboBonus > 0)
+                baseDamage = AdvancedPlayerCombo.ApplyBonusLong(baseDamage, comboBonus);
+            comboFinisherBonus = comboBonus > 0;
         }
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2248,6 +2279,16 @@ public abstract partial class Entity : IEntity
                 if (appliedHealthDamage > 0 && (isAutoAttack || masteryWeapon != null) && this is Player masteryAttacker && enemy is Npc masteryTarget)
                     masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
+                if (!wasAdvancedCounter && isAutoAttack && appliedHealthDamage > 0 &&
+                    this is Player { IsAdvancedDirectMeleeAttack: true } comboAttacker &&
+                    enemy is Npc comboVictim &&
+                    Options.Instance.Combat.EnableAdvancedCombat &&
+                    Options.Instance.Combat.AdvancedPlayerCombosEnabled)
+                {
+                    comboAttacker.RegisterAdvancedPlayerComboHit(
+                        comboVictim, comboFinisherBonus &&
+                        comboAttacker.GetAdvancedPlayerComboNextStepForFeedback(comboVictim) == 3);
+                }
                 switch (damageType)
                 {
                     case DamageType.Physical:
@@ -2359,6 +2400,7 @@ public abstract partial class Entity : IEntity
                 );
             }
 
+            secondaryDamage = Dungeons.DungeonRunRuntime.ScaleNpcDungeonDamage(this, secondaryDamage);
             if (secondaryDamage < 0 && secondaryDamagingAttack)
             {
                 secondaryDamage = 0;

@@ -54,7 +54,8 @@ public partial class Player
             journal.TaskProgress = -1;
             journal.Completed = true;
             WriteExportation(run);
-            saved = User?.Save(force: true) == UserSaveResult.Completed;
+            saved = RoyalSeasons.RoyalSeasonRuntime.SaveProfessionProgress(this, id, newXp - oldXp,
+                () => User?.Save(force: true) == UserSaveResult.Completed);
         }
         catch (Exception error)
         {

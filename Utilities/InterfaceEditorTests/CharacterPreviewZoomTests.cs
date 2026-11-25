@@ -23,6 +23,8 @@ internal static class CharacterPreviewZoomTests
         Check(Zoom() == 1 && image.Size == new Size(20, 40) && image.GetPixel(10,20).ToArgb() == Color.Red.ToArgb(), "Zoom preserves source pixels and dimensions");
         for (var x=0;x<200;x++) for(var y=0;y<200;y++) Check(before.GetPixel(x,y)==after.GetPixel(x,y), "Fit restores the original framing");
         CharacterWeaponPaperdollTests.Run();
+        CharacterClassBaseExportTests.Run();
+        NpcAutoCreatorWorkspaceTests.Run();
         VerifyDeathEditors();
         System.Console.WriteLine("PASS character preview wheel zoom, bounds, fit, pixel preservation and exports");
     }

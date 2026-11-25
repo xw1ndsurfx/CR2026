@@ -323,6 +323,7 @@ public partial class ComboBox : Button
 
         if (!args.Automated)
         {
+            QueueInterfaceSound(UiCue.Select);
             base.PlaySound(mSelectItemSound);
         }
 
@@ -465,6 +466,7 @@ public partial class ComboBox : Button
         @this._menu.RestrictToParent = true;
 
         @this.BasePlaySound(@this.mOpenMenuSound);
+        @this.QueueInterfaceSound(UiCue.Tab);
     }
 
     private bool BasePlaySound(string? sound) => base.PlaySound(sound);
@@ -474,6 +476,7 @@ public partial class ComboBox : Button
     /// </summary>
     public virtual void Close()
     {
+        if (IsOpen) QueueInterfaceSound(UiCue.Back);
         _menu.Hide();
 
         base.PlaySound(mCloseMenuSound);

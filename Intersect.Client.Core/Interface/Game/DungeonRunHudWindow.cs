@@ -22,6 +22,7 @@ internal sealed class DungeonRunHudWindow : Base
     private readonly Label _lives;
     private readonly Label _timer;
     private readonly Button _abandon;
+    private readonly Label _modifiers;
     private DungeonAbandonConfirmationWindow? _abandonConfirmation;
 
     private DungeonRunStatePacket? _state;
@@ -72,6 +73,9 @@ internal sealed class DungeonRunHudWindow : Base
             TextColorOverride = new Color(a: 255, r: 225, g: 198, b: 128),
         };
         _timer.SetBounds(10, 88, 410, 22);
+        _modifiers = new Label(this, "DungeonModifiers") { AutoSizeToContents = false,
+            Font = _objective.Font, FontSize = 10, WrappingBehavior = WrappingBehavior.Wrapped, TextColorOverride = Color.White };
+        _modifiers.SetBounds(10, 114, 410, 38);
 
         _abandon = new AbandonButton(this)
         {
@@ -92,12 +96,24 @@ internal sealed class DungeonRunHudWindow : Base
     {
         if (_abandonConfirmation != null && (_state?.RunId != state.RunId || state.Status != DungeonRunStatus.Active))
             _abandonConfirmation.Close();
+        if (state.Status is DungeonRunStatus.None or DungeonRunStatus.Abandoned)
+        {
+            _state = null;
+            _resultHideAt = 0;
+            Hide();
+            return;
+        }
         _state = state;
         _resultHideAt = 0;
         var canAbandon = state.Status == DungeonRunStatus.Active && state.RunId != Guid.Empty;
         _disclosure.SetContentVisible(_abandon, canAbandon);
         _abandon.Text = ClientLanguages.Text("Abandon dungeon");
-        _disclosure.Resize(canAbandon ? 170 : 126);
+        var hasModifiers = state.ModifierNames.Length > 0;
+        _disclosure.SetContentVisible(_modifiers, hasModifiers);
+        _modifiers.Text = string.Join(" · ", state.ModifierNames.Select(ClientLanguages.ContentText));
+        _modifiers.SetToolTipText(string.Format(Intersect.Framework.Core.RoyalSeasons.RoyalSeasonText.Get("Enemy health: {0}% | Enemy damage: {1}% | Completion XP: {2}%", ClientLanguages.Current), state.EnemyHealthPercent, state.EnemyDamagePercent, state.CompletionExperiencePercent));
+        _abandon.SetPosition(85, hasModifiers ? 164 : 122);
+        _disclosure.Resize((canAbandon ? 170 : 126) + (hasModifiers ? 42 : 0));
 
         _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;

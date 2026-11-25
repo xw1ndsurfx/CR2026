@@ -345,6 +345,7 @@ public abstract partial class GameTexture<TPlatformTexture, TPlatformRenderer> :
     }
 
     public abstract Color GetPixel(int x, int y);
+    public virtual byte[]? ReadAlpha() => null;
 
     public override string ToString()
     {

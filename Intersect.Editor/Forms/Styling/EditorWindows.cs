@@ -23,15 +23,21 @@ internal static class EditorWindows
 
     internal static void Show(Form window, Form owner)
     {
-        if (window.IsDisposed) return;
-        if (window != owner && window.Owner == null) window.Owner = owner;
+        if (window.IsDisposed || window.Disposing) return;
+        // A server response may arrive while the target window is active or
+        // while its proposed owner is one of its owned windows.
+        var safeOwner = owner.IsDisposed || owner.Disposing ? null : owner;
+        for (var ancestor = safeOwner; ancestor != null; ancestor = ancestor.Owner)
+            if (ancestor == window) { safeOwner = null; break; }
+        if (safeOwner != null && window.Owner == null) window.Owner = safeOwner;
         if (!window.Visible)
         {
             if (window.StartPosition is FormStartPosition.WindowsDefaultLocation or FormStartPosition.WindowsDefaultBounds or FormStartPosition.CenterScreen)
                 window.StartPosition = FormStartPosition.CenterParent;
             EditorTheme.Apply(window);
-            ConstrainToScreen(window, owner);
-            window.Show(owner);
+            ConstrainToScreen(window, safeOwner);
+            if (safeOwner != null) window.Show(safeOwner);
+            else window.Show();
         }
         if (window.WindowState == FormWindowState.Minimized) window.WindowState = FormWindowState.Normal;
         window.BringToFront();

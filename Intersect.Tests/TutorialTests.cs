@@ -12,6 +12,29 @@ namespace Intersect.Tests;
 public sealed class TutorialTests
 {
     [Test]
+    public void HighlightSettingsRoundTripAndOldGuidesKeepTheirProgress()
+    {
+        var config=TutorialConfiguration.CreateDefault();
+        var progress=new TutorialProgress{Completed=[config.Steps[0].Id]};
+        var json=Newtonsoft.Json.Linq.JObject.FromObject(config);
+        foreach(var step in json["Steps"]!.Children<Newtonsoft.Json.Linq.JObject>())
+        {step.Remove("HighlightTarget");step.Remove("HighlightStyle");}
+        var legacy=json.ToObject<TutorialConfiguration>()!;
+        Assert.That(legacy.IsValid,Is.True);
+        Assert.That(progress.Current(legacy)!.Id,Is.EqualTo(config.Steps[1].Id));
+        Assert.That(legacy.Steps.All(step=>step.HighlightTarget==TutorialHighlightTarget.None),Is.True);
+        legacy.Steps[0].HighlightTarget=TutorialHighlightTarget.WorldMap;
+        legacy.Steps[0].HighlightStyle=TutorialHighlightStyle.Circle;
+        var loaded=JsonConvert.DeserializeObject<TutorialConfiguration>(JsonConvert.SerializeObject(legacy))!;
+        Assert.That(loaded.Steps[0].HighlightTarget,Is.EqualTo(TutorialHighlightTarget.WorldMap));
+        Assert.That(loaded.Steps[0].HighlightStyle,Is.EqualTo(TutorialHighlightStyle.Circle));
+        loaded.Steps[0].HighlightTarget=(TutorialHighlightTarget)999;
+        Assert.That(loaded.IsValid,Is.False);
+        loaded.Steps[0].HighlightTarget=TutorialHighlightTarget.None;
+        loaded.Steps[0].HighlightStyle=(TutorialHighlightStyle)999;
+        Assert.That(loaded.IsValid,Is.False);
+    }
+    [Test]
     public void DefaultIsUsableWithoutGameSpecificIdsAndFullyTranslated()
     {
         var config = TutorialConfiguration.CreateDefault();
@@ -54,6 +77,131 @@ public sealed class TutorialTests
         Assert.That(loaded.Translations.Get(step.Title, "fr"), Is.EqualTo("Mon introduction"));
         Assert.That(loaded.IsValid, Is.True);
     }
+    [Test]
+    public void RoyalGuideWorldTargetsValidateAndRoundTrip()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(guide.Steps.Single(x => x.Objective == TutorialObjective.Move).HighlightTarget,
+            Is.EqualTo(TutorialHighlightTarget.Player));
+
+        step.HighlightTarget = TutorialHighlightTarget.WorldTile;
+        Assert.That(guide.IsValid, Is.False, "World tile needs an explicit map.");
+        step.MapId = Guid.NewGuid();
+        step.TargetX = 12;
+        step.TargetY = 19;
+        Assert.That(guide.IsValid, Is.True);
+
+        step.Objective = TutorialObjective.ReachTile;
+        step.TargetRadius = 7;
+        Assert.That(guide.IsValid, Is.False, "Arrival radius must be bounded.");
+        step.TargetRadius = 2;
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 12, 19), Is.True);
+        Assert.That(step.IsAtTarget(step.MapId, 14, 21), Is.True, "Arrival radius includes 2 tiles.");
+        Assert.That(step.IsAtTarget(step.MapId, 15, 19), Is.False);
+        Assert.That(step.IsAtTarget(Guid.NewGuid(), 12, 19), Is.False);
+        step.TargetRadius = 0;
+        Assert.That(step.IsAtTarget(step.MapId, 13, 19), Is.False);
+        step.TargetRadius = 2;
+
+        step.HighlightTarget = TutorialHighlightTarget.WorldNpc;
+        Assert.That(guide.IsValid, Is.False, "World NPC needs a descriptor.");
+        step.TargetNpcId = Guid.NewGuid();
+        Assert.That(guide.IsValid, Is.True);
+        var reloaded = JsonConvert.DeserializeObject<TutorialConfiguration>(
+            JsonConvert.SerializeObject(guide))!;
+        var saved = reloaded.Steps[0];
+        Assert.That(saved.HighlightTarget, Is.EqualTo(TutorialHighlightTarget.WorldNpc));
+        Assert.That(saved.TargetNpcId, Is.EqualTo(step.TargetNpcId));
+        Assert.That(saved.MapId, Is.EqualTo(step.MapId));
+        Assert.That(saved.TargetRadius, Is.EqualTo(2));
+        Assert.That(reloaded.IsValid, Is.True);
+
+        saved.HighlightTarget = (TutorialHighlightTarget)900;
+        Assert.That(reloaded.IsValid, Is.False);
+    }
+
+    [Test]
+    public void LegacyGuidesWithoutWorldFieldsStayCompatible()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        var json = JsonConvert.SerializeObject(guide);
+        var legacyJson = Newtonsoft.Json.Linq.JObject.Parse(json);
+        foreach (var record in (Newtonsoft.Json.Linq.JArray)legacyJson["Steps"]!)
+        {
+            var entry = (Newtonsoft.Json.Linq.JObject)record;
+            entry.Remove("TargetX");
+            entry.Remove("TargetY");
+            entry.Remove("TargetRadius");
+            entry.Remove("TargetNpcId");
+        }
+        var loaded = legacyJson.ToObject<TutorialConfiguration>()!;
+        Assert.That(loaded.IsValid, Is.True);
+        Assert.That(loaded.Steps[0].Id, Is.EqualTo(step.Id));
+        Assert.That(loaded.Steps[0].TargetRadius, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EventInteractionRequiresAnExactServerApprovedEventAndMap()
+    {
+        var guide = TutorialConfiguration.CreateDefault();
+        var step = guide.Steps[0];
+        var mapId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        step.Objective = TutorialObjective.InteractEvent;
+        step.HighlightTarget = TutorialHighlightTarget.WorldEvent;
+        Assert.That(guide.IsValid, Is.False, "No map or event may satisfy an interaction step.");
+
+        step.MapId = mapId;
+        Assert.That(guide.IsValid, Is.False, "The event must be identified.");
+
+        step.TargetEventId = eventId;
+        Assert.That(guide.IsValid, Is.True);
+        Assert.That(step.MatchesActivatedEvent(eventId, mapId), Is.True);
+        Assert.That(step.MatchesActivatedEvent(Guid.NewGuid(), mapId), Is.False);
+        Assert.That(step.MatchesActivatedEvent(eventId, Guid.NewGuid()), Is.False);
+        Assert.That(step.MatchesActivatedEvent(Guid.Empty, mapId), Is.False);
+
+        // Rendering an event spotlight does not by itself grant credit.
+        step.Objective = TutorialObjective.Read;
+        Assert.That(step.MatchesActivatedEvent(eventId, mapId), Is.False);
+        step.Objective = TutorialObjective.InteractEvent;
+
+        var reloaded = JsonConvert.DeserializeObject<TutorialConfiguration>(
+            JsonConvert.SerializeObject(guide))!;
+        var restored = reloaded.Steps[0];
+        Assert.That(reloaded.IsValid, Is.True);
+        Assert.That(restored.Id, Is.EqualTo(step.Id));
+        Assert.That(restored.TargetEventId, Is.EqualTo(eventId));
+        Assert.That(restored.HighlightTarget, Is.EqualTo(TutorialHighlightTarget.WorldEvent));
+        Assert.That(restored.MatchesActivatedEvent(eventId, mapId), Is.True);
+
+        restored.TargetEventId = Guid.Empty;
+        Assert.That(reloaded.IsValid, Is.False);
+        Assert.That(restored.MatchesActivatedEvent(eventId, mapId), Is.False);
+    }
+
+    [Test]
+    public void EventLessonOnlyAdvancesFromInteractionObjective()
+    {
+        var step = new TutorialStep
+        {
+            Objective = TutorialObjective.ReachTile,
+            MapId = Guid.NewGuid(),
+            TargetEventId = Guid.NewGuid(),
+            HighlightTarget = TutorialHighlightTarget.WorldEvent,
+        };
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, step.MapId), Is.False);
+        step.Objective = TutorialObjective.InteractEvent;
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, step.MapId), Is.True);
+        step.MapId = Guid.Empty;
+        Assert.That(step.MatchesActivatedEvent(step.TargetEventId, Guid.Empty), Is.False);
+    }
+
     [Test]
     public void TutorialPacketsRoundTripIncludingEditorUnion()
     {

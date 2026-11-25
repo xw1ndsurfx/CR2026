@@ -21,17 +21,21 @@ internal static partial class NavalWorld
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime,_voyageReturnUntil;
     private static bool _lastAboard,_lastAboardSinking;
-    internal static void Clear() {ClearCinematicFleet();ClearGunnery();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {ClearCinematicFleet();ClearGunnery();ClearDeck();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipSnapshot? ShoreCargo {get;private set;}
     internal static ShipCrewState CrewState {get;private set;}=new();
-    internal static Guid Driver(ShipSnapshot ship)=>ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
+    internal static Guid Driver(ShipSnapshot ship)=>ship.HelmVacant?Guid.Empty:ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
-    internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
-    internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
+    internal static int CannonCount(ShipSnapshot ship,bool starboard)=>ship.DeckActivity==ShipDeckActivity.Fishing?0:NavalShipModels.Find(ship.Graphics)?.CannonCount(starboard)??3;
+    internal static bool OnBoardingDeck=>Globals.Me?.MapInstance is MapInstance {GeneratedBoardingDeck:true};
+    internal static bool IsAboard(Guid playerId)=>Fresh && !OnBoardingDeck && _ships.Values.Any(v=>HasMember(v.Current,playerId));
+    internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && !OnBoardingDeck && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
     internal static void Apply(NavalSnapshotPacket packet)
     {
+        if(Globals.Me!=null && packet.PartyCapacity>0)Globals.Me.PartyMemberCapacity=Math.Clamp(packet.PartyCapacity,1,100);
+        ObserveMonsters(packet.Monsters??[]);
         var now = Environment.TickCount64;
         var sameViewer=_viewer!=Guid.Empty && _viewer==Globals.Me?.Id;
         var aboard=packet.Ships.FirstOrDefault(s=>HasMember(s,Globals.Me?.Id??Guid.Empty));
@@ -63,9 +67,10 @@ internal static partial class NavalWorld
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         var crewShip=OwnShip;
         var crewId=crewShip!=null && Driver(crewShip)!=_viewer?crewShip.Id:Guid.Empty;
-        if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking)
+        if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking && !crewShip.WalkableDeck)
             {CannonViewOpen=true;AutoPickCannonSide=true;}
         _crewCannonShip=crewId;
+        ApplyDeckMode(crewShip);
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
         // Rendering and camera use the independent interpolated ship center below.
         foreach (var view in next.Values)
@@ -80,12 +85,16 @@ internal static partial class NavalWorld
         if (!Fresh || Globals.Me == null) return;
         ReadActions(busy);
         var own = _ships.Values.FirstOrDefault(v => HasMember(v.Current,Globals.Me.Id))?.Current;
+        if(own?.WalkableDeck==true && InputDeck(own,busy))return;
         if (own == null || Driver(own)!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
-        bool Down(Keys key) => !busy && Globals.InputManager.IsKeyDown(key);
+        var steering = ShipSteeringInput.Read(Globals.InputManager.IsKeyDown, busy);
+#if ANDROID
+        if (Intersect.Client.Android.TouchControls.TryGetSteeringDirection(out var direction))
+            steering = ShipSteeringInput.ReadJoystick(direction, own.Heading, busy, steering.Anchor);
+#endif
         Intersect.Client.Networking.Network.SendPacket(new ShipInputPacket { ShipId = own.Id,
-            Thrust = (sbyte)((Down(Keys.W) ? 1 : 0) - (Down(Keys.S) ? 1 : 0)),
-            Turn = (sbyte)((Down(Keys.D) ? 1 : 0) - (Down(Keys.A) ? 1 : 0)), Anchor = busy || Down(Keys.Space) });
+            Thrust = steering.Thrust, Turn = steering.Turn, Anchor = steering.Anchor });
     }
 
     private static bool Position(View view, out float x, out float y, out double heading)
@@ -137,6 +146,7 @@ internal static partial class NavalWorld
         if (Graphics.Renderer == null || !Fresh && CurrentCinematicFleet == null) return;
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         DrawCannonballs(row);
+        DrawMonsters(row,false);
         foreach (var view in RenderedShipViews())
         {
             if (!Position(view, out var x, out var y, out var heading)) continue;
@@ -160,36 +170,57 @@ internal static partial class NavalWorld
                 {
                     var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
                     var scale = (float)(tw / atlas.PixelsPerTile);
+                    var crushing=CrushingProgress(s.Id);
+                    if(crushing>0)
+                    {
+                        scale*=1-.18f*crushing;
+                        x+=(float)Math.Sin(Environment.TickCount64/75d)*tw*.1f*crushing;
+                        y+=th*.3f*crushing;
+                    }
+                    var waterReference = atlas.Frame(heading, 0, s.FrameMilliseconds);
+                    DrawShipWater(s, ShipWaterBounds(oceanTexture, waterReference, x, y, scale), heading);
                     DrawShipName(ShipNameplate(s),x,y-(float)(pose.AnchorY*scale)-22);
                     foreach(var part in NavalSpriteGeometry.Parts(pose))
                         Graphics.DrawGameTexture(oceanTexture, new FloatRect(part.X, part.Y, part.Width, part.Height),
                             NavalSpriteGeometry.Destination(part,x,y,scale), Color.White);
+                    // Legacy artwork remains unchanged until a matching occlusion layer is available.
+                    if (!string.IsNullOrEmpty(atlas.ForegroundGraphics) && pose.CrewAnchors.Length>0 &&
+                        Globals.ContentManager?.GetTexture(TextureType.Ocean,atlas.ForegroundGraphics) is {} foreground &&
+                        foreground.Width==oceanTexture.Width && foreground.Height==oceanTexture.Height)
+                        DrawDeckCrew(s,atlas,pose,foreground,x,y,scale);
                     continue;
                 }
                 DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
                 // An ocean atlas is never silently interpreted as the legacy regular grid.
-                DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+                DrawPrototype(s, x, y, heading, (float)s.Width * tw, (float)s.Length * th);
                 continue;
             }
             if (texture != null && s.Frames > 0 && texture.Width % s.Frames == 0 && texture.Height % 8 == 0)
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;
                 var frame = (int)(Environment.TickCount64 / Math.Max(50, s.FrameMilliseconds) % s.Frames);
+                DrawShipWater(s, new FloatRect(x - w * .4f, y, w * .8f, h * .45f), heading);
                 DrawShipName(ShipNameplate(s),x,y-h/2f-22);
                 Graphics.DrawGameTexture(texture, new FloatRect(frame * w, ShipMovement.DirectionRow(heading) * h, w, h),
                     new FloatRect(x - w / 2f, y - h / 2f, w, h), Color.White);
                 continue;
             }
             DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
-            DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+            DrawPrototype(s, x, y, heading, (float)s.Width * tw, (float)s.Length * th);
         }
+        DrawMonsters(row,true);
         DrawNavalEffects(row);
     }
 
     // Explicit code-drawn test hull, never presented as the unavailable royal artwork.
-    private static void DrawPrototype(float x, float y, double heading, float width, float length, bool moving)
+    private static void DrawPrototype(ShipSnapshot ship, float x, float y, double heading, float width, float length)
     {
         var angle = ShipMovement.DirectionRow(heading) * Math.PI / 4;
+        var sideX = (float)Math.Abs(Math.Cos(angle)) * width / 2;
+        var foreX = (float)Math.Abs(Math.Sin(angle)) * length / 2;
+        var sideY = (float)Math.Abs(Math.Sin(angle)) * width / 2;
+        var foreY = (float)Math.Abs(Math.Cos(angle)) * length / 2;
+        DrawShipWater(ship, new FloatRect(x - sideX - foreX, y, 2 * (sideX + foreX), sideY + foreY), heading);
         void Pixel(float side, float forward, float size, Color color)
         {
             var px = x + (float)(Math.Cos(angle) * side + Math.Sin(angle) * forward);
@@ -205,8 +236,5 @@ internal static partial class NavalWorld
         }
         for (var side = -width / 2; side <= width / 2; side += 4) Pixel(side, length / 6, 4, new Color(255, 225, 225, 205));
         for (var fore = -length / 4; fore < length / 3; fore += 4) Pixel(0, fore, 4, new Color(255, 195, 155, 55));
-        if (moving)
-            for (var i = 0; i < 3; i++) Pixel((i - 1) * 8, -length / 2 - 8 - Environment.TickCount64 / 150 % 3 * 3,
-                4, new Color(160, 150, 210, 235));
     }
 }

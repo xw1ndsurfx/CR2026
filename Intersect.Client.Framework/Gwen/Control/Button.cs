@@ -20,6 +20,11 @@ public partial class Button : Label
     private bool mCenterImage;
 
     private readonly Dictionary<ButtonSoundState, string> _stateSoundNames = [];
+    protected override bool HasDefaultClickSound => base.HasDefaultClickSound &&
+        (_stateSoundNames.ContainsKey(ButtonSoundState.MouseDown) || _stateSoundNames.ContainsKey(ButtonSoundState.MouseUp) ||
+         _stateSoundNames.ContainsKey(ButtonSoundState.MouseClicked));
+    protected override bool HasDefaultHoverSound => DefaultInterfaceSounds && ShouldDrawHover &&
+        _stateSoundNames.ContainsKey(ButtonSoundState.Hover);
     private readonly Dictionary<ComponentState, IGameTexture> _stateTextures = [];
     private readonly Dictionary<ComponentState, string> _stateTextureNames = [];
 

@@ -50,6 +50,8 @@ public partial class Base : IDisposable
     }
 
     private bool _disposed;
+    /// <summary>True once disposal starts, including while owned children are being released.</summary>
+    public bool IsDisposed => _disposed;
     private bool _disposeCompleted;
     private StackTrace? _disposeStack;
 
@@ -1520,6 +1522,7 @@ public partial class Base : IDisposable
             new JProperty("Hidden", !_visible),
             new JProperty(nameof(RestrictToParent), _restrictToParent),
             new JProperty(nameof(MouseInputEnabled), _mouseInputEnabled),
+            new JProperty(nameof(DefaultInterfaceSounds), DefaultInterfaceSounds),
             new JProperty("HideToolTip", !_tooltipEnabled),
             new JProperty("ToolTipBackground", _tooltipBackgroundName),
             new JProperty("ToolTipFont", _tooltipFontInfo),
@@ -1745,6 +1748,8 @@ public partial class Base : IDisposable
         {
             MouseInputEnabled = (bool) obj[nameof(MouseInputEnabled)];
         }
+        if (obj[nameof(DefaultInterfaceSounds)] is JValue { Type: JTokenType.Boolean } interfaceSounds)
+            DefaultInterfaceSounds = interfaceSounds.Value<bool>();
 
         if (obj["HideToolTip"] != null && (bool) obj["HideToolTip"])
         {
@@ -3118,6 +3123,9 @@ public partial class Base : IDisposable
     /// <param name="skin">Skin to use.</param>
     internal virtual void DoRender(Skin.Base skin)
     {
+        if (InterfaceWindowSounds != null || this is WindowControl || GetType().Name.EndsWith("Window", StringComparison.Ordinal))
+            Canvas?.ObserveInterfaceWindow(this);
+
         // If this control has a different skin,
         // then so does its children.
         if (_skin != null)
@@ -3386,7 +3394,7 @@ public partial class Base : IDisposable
 
     protected bool PlaySound(string? name)
     {
-        if (name == null || this.IsDisabled)
+        if (string.IsNullOrWhiteSpace(name) || IsDisabledByTree)
         {
             return false;
         }
@@ -3396,19 +3404,7 @@ public partial class Base : IDisposable
             return false;
         }
 
-        name = GameContentManager.RemoveExtension(name).ToLower();
-        if (GameContentManager.Current.GetSound(name) is not { } sound)
-        {
-            return false;
-        }
-
-        if (sound.CreateInstance() is not { } soundInstance)
-        {
-            return false;
-        }
-
-        canvas.PlayAndAddSound(soundInstance);
-        return true;
+        return canvas.TryPlayUiSound(name);
     }
 
     public bool IsActive
@@ -3457,10 +3453,12 @@ public partial class Base : IDisposable
 
     protected virtual void OnMouseClicked(MouseButton mouseButton, Point mousePosition, bool userAction = true)
     {
+        if (userAction && HasDefaultClickSound) QueueInterfaceSound(DefaultClickCue);
     }
 
     protected virtual void OnMouseDoubleClicked(MouseButton mouseButton, Point mousePosition, bool userAction = true)
     {
+        if (userAction && HasDefaultClickSound) QueueInterfaceSound(DefaultClickCue);
     }
 
     protected virtual void OnMouseDown(MouseButton mouseButton, Point mousePosition, bool userAction = true)
@@ -3475,6 +3473,7 @@ public partial class Base : IDisposable
 
     protected void EmitVirtualClick(MouseButtonState args)
     {
+        if (HasDefaultClickSound) QueueInterfaceSound(DefaultClickCue);
         Clicked?.Invoke(this, args);
     }
 
@@ -3541,6 +3540,7 @@ public partial class Base : IDisposable
     /// </summary>
     protected virtual void OnMouseEntered()
     {
+        if (HasDefaultHoverSound) QueueInterfaceSound(UiCue.Hover);
         HoverEnter?.Invoke(this, EventArgs.Empty);
 
         Redraw();
@@ -4355,8 +4355,9 @@ public partial class Base : IDisposable
         // ReSharper disable once InvertIf
         if (parent._innerPanel is { } innerPanel && innerPanel.IsChild(this))
         {
-            x += innerPanel.X;
-            y += innerPanel.Y;
+            // The logical owner's content may itself be hosted in a viewport.
+            // Follow that physical chain, including its scroll offsets.
+            return innerPanel.ToCanvas(x, y);
         }
 
         return _host.ToCanvas(x, y);

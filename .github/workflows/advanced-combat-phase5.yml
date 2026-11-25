@@ -1,0 +1,43 @@
+name: Advanced combat phase 5
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/GameObjects/Combat/AdvancedSpellTelegraphRule.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/CombatTelegraphPacket.cs'
+      - 'Framework/Intersect.Framework.Core/GameObjects/NPCs/NPCDescriptor.cs'
+      - 'Intersect.Server.Core/Entities/Npc.SpellTelegraphs.cs'
+      - 'Intersect.Server.Core/Entities/Npc.cs'
+      - 'Intersect.Client.Core/Core/Graphics.AdvancedCombat.cs'
+      - 'Intersect.Client.Core/Networking/PacketHandler.AdvancedCombat.cs'
+      - 'Intersect.Editor/Forms/Editors/frmNpc.SpellTelegraphs.cs'
+      - 'Intersect.Tests/Utilities/AdvancedSpellTelegraphRuleTests.cs'
+      - '.github/workflows/advanced-combat-phase5.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  targeted-spells:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Targeted spell rule and previous combat tests
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter "FullyQualifiedName~AdvancedSpellTelegraphRuleTests|FullyQualifiedName~AdvancedBossComboPlanTests|FullyQualifiedName~AdvancedCombatGeometryTests|FullyQualifiedName~AdvancedCombatStaminaTests" --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build server, client and NPC editor
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Server/Intersect.Server.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

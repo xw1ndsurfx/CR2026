@@ -11,8 +11,11 @@ public partial class Player
     [NotMapped, JsonIgnore] public Guid NavalShipId => CaptainedShipId!=Guid.Empty?CaptainedShipId:BoardedShipId;
     [NotMapped, JsonIgnore] public Guid CaptainedShipId { get; internal set; }
     [NotMapped, JsonIgnore] internal long NavalSnapshotTime { get; set; }
+    [NotMapped, JsonIgnore] internal long NavalExpeditionNextUpdate { get; set; }
+    [NotMapped, JsonIgnore] internal long NavalExpeditionRequestTime { get; set; }
+    [NotMapped, JsonIgnore] internal bool NavalExpeditionVisibleState { get; set; }
     [NotMapped, JsonIgnore] internal bool NavalWarpInProgress { get; set; }
-    [NotMapped, JsonIgnore] internal bool NavalBusy => IsBusy() || MoveRoute != null ||
+    [NotMapped, JsonIgnore] internal bool NavalBusy => IsFishingActive || IsBusy() || MoveRoute != null ||
         EventLookup.Values.Any(e => e.HoldingPlayer) ||
         CachedStatuses.Any(s => s.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep);
     internal bool NavalEventBlocked(MapController map, int x, int y) =>

@@ -12,8 +12,9 @@ internal static class LobbyConfigurationRuntime
     }
     internal static void Save(string json)
     {
-        if(json == null || json.Length>32768)throw new InvalidDataException();
+        if(json == null || json.Length>524288)throw new InvalidDataException();
         var config=JsonConvert.DeserializeObject<LobbyConfiguration>(json)??throw new InvalidDataException();config.Validate();
+        Matchmaking.MatchmakingRuntime.ValidateConfiguration(config.Matchmaking);
         lock(Gate) { Directory.CreateDirectory("resources");File.WriteAllText(FileName+".tmp",JsonConvert.SerializeObject(config));File.Move(FileName+".tmp",FileName,true);_current=config; }
     }
 }

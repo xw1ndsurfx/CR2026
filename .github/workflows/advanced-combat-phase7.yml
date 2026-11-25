@@ -1,0 +1,42 @@
+name: Advanced combat phase 7
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/Tutorials/**'
+      - 'Intersect.Server.Core/Entities/Player.Tutorial.cs'
+      - 'Intersect.Server.Core/Entities/Player.AdvancedCombat.cs'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.Tutorial.cs'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.AdvancedCombat.cs'
+      - 'Intersect.Client.Core/Interface/Game/AdvancedCombatHud.cs'
+      - 'Intersect.Editor/Forms/Tutorials/FrmTutorial.cs'
+      - 'Intersect.Tests/TutorialCombatLessonsTests.cs'
+      - '.github/workflows/advanced-combat-phase7.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  training:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Tutorial and combat rule tests
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter "FullyQualifiedName~TutorialCombatLessonsTests|FullyQualifiedName~TutorialTests|FullyQualifiedName~AdvancedPlayerComboTests|FullyQualifiedName~AdvancedCombatStaminaTests|FullyQualifiedName~AdvancedBossComboPlanTests" --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compile server, client and tutorial editor
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Server/Intersect.Server.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -57,29 +57,24 @@ public sealed class ExportationUiPresentationTests
     }
 
     [Test]
-    public void OnlyARealVoyageAdvancesTheDeliverySteps()
+    public void StaleCountsCannotOverflowTheCrateOrProgressBar()
     {
+        var route = Route();
         var run = new ExportationRun();
-        Assert.That(ExportationUiPresentation.Step(run, 0),
-            Is.EqualTo(ExportationUiPresentation.StepState.Active));
-        Assert.That(ExportationUiPresentation.Step(run, 2),
-            Is.EqualTo(ExportationUiPresentation.StepState.Pending));
-
-        run.Stage = DeliveryStage.InTransit;
-        Assert.That(ExportationUiPresentation.Step(run, 0),
-            Is.EqualTo(ExportationUiPresentation.StepState.Complete));
-        Assert.That(ExportationUiPresentation.Step(run, 1),
-            Is.EqualTo(ExportationUiPresentation.StepState.Active));
-        Assert.That(ExportationUiPresentation.Step(run, 2),
-            Is.EqualTo(ExportationUiPresentation.StepState.Pending));
-        run.ArrivedByShip = true;
-        Assert.That(ExportationUiPresentation.Step(run, 2),
-            Is.EqualTo(ExportationUiPresentation.StepState.Active));
-        run.Stage = DeliveryStage.Delivered;
-        for (var i = 0; i < 3; i++)
-            Assert.That(ExportationUiPresentation.Step(run, i),
-                Is.EqualTo(ExportationUiPresentation.StepState.Complete));
+        run.Packed[route.Lines[0].ItemId] = int.MaxValue;
+        run.Packed[route.Lines[1].ItemId] = -5;
+        var progress = ExportationUiPresentation.Cargo(route, run);
+        Assert.That(progress.Packed, Is.EqualTo(5));
+        Assert.That(progress.Percent, Is.EqualTo(50));
+        Assert.That(run.Packed[route.Lines[0].ItemId], Is.EqualTo(int.MaxValue), "Presentation must not change server state.");
     }
+
+    [TestCase("lingots_fer", CargoGroup.Materials, "item_metal")]
+    [TestCase("planches", CargoGroup.Materials, "item_wood")]
+    [TestCase("potion_rouge", CargoGroup.Fragile, "item_glass")]
+    [TestCase("pommes", CargoGroup.Provisions, "item_wood")]
+    public void PackingAudioMatchesTheVisibleCargo(string sprite, CargoGroup group, string sound) =>
+        Assert.That(ExportationUiPresentation.PackingSound(new CargoLine { Sprite = sprite, Group = group }), Is.EqualTo(sound));
 
     [Test]
     public void ShelfStopsAllowingClicksWhenCompleteOrSealed()

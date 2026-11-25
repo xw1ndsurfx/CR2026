@@ -3,6 +3,9 @@ using System.Text;
 using Intersect.Framework.Core.Tutorials;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Configuration;
+using Intersect.GameObjects;
 using Newtonsoft.Json;
 namespace Intersect.Server.Tutorials;
 internal static class TutorialRuntime
@@ -35,7 +38,29 @@ internal static class TutorialRuntime
         foreach (var step in config.Steps)
         {
             if (step.CinematicEventId != Guid.Empty && EventDescriptor.Get(step.CinematicEventId) is not { CommonEvent: true }) throw new InvalidDataException("Select an existing common event for the cinematic.");
-            if (step.Objective == TutorialObjective.ReachMap && Intersect.Server.Maps.MapController.Get(step.MapId) == null) throw new InvalidDataException("Select an existing map.");
+            if ((step.Objective is TutorialObjective.ReachMap or TutorialObjective.ReachTile or TutorialObjective.InteractEvent ||
+                    step.HighlightTarget is TutorialHighlightTarget.WorldTile or TutorialHighlightTarget.WorldNpc or TutorialHighlightTarget.WorldEvent) &&
+                Intersect.Server.Maps.MapController.Get(step.MapId) == null)
+                throw new InvalidDataException("Royal Guide: select an existing map.");
+            if ((step.Objective == TutorialObjective.ReachTile || step.HighlightTarget == TutorialHighlightTarget.WorldTile) &&
+                (step.TargetX >= Options.Instance.Map.MapWidth || step.TargetY >= Options.Instance.Map.MapHeight))
+                throw new InvalidDataException("Royal Guide: target tile is outside the map.");
+            if (step.HighlightTarget == TutorialHighlightTarget.WorldNpc &&
+                NPCDescriptor.Get(step.TargetNpcId) == null)
+                throw new InvalidDataException("Royal Guide: select an existing NPC.");
+            // Event interactions must resolve to a real non-common map event
+            // on the same map as the authored tutorial destination.
+            if (step.Objective == TutorialObjective.InteractEvent ||
+                step.HighlightTarget == TutorialHighlightTarget.WorldEvent)
+            {
+                var target = EventDescriptor.Get(step.TargetEventId);
+                if (target == null || target.CommonEvent || target.MapId != step.MapId || target.Pages.Count == 0 ||
+                    !Intersect.Server.Maps.MapController.Get(step.MapId).EventIds.Contains(target.Id))
+                    throw new InvalidDataException("Royal Guide: select an event on the chosen map.");
+                if (step.Objective == TutorialObjective.InteractEvent && !target.Pages.Any(page =>
+                        page.Trigger is EventTrigger.ActionButton or EventTrigger.PlayerBump or EventTrigger.PlayerCollide))
+                    throw new InvalidDataException("Royal Guide: choose an event with a player interaction trigger.");
+            }
             if (step.Objective == TutorialObjective.Variable && PlayerVariableDescriptor.Get(step.VariableId) == null) throw new InvalidDataException("Select an existing player variable.");
         }
         lock (Gate)

@@ -590,6 +590,22 @@
     "subcategory": "WorldAndProgression"
   },
   {
+    "id": "mountRaceEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": ["Gameplay", "World"],
+    "title": {"en": "Royal Races Editor", "fr": "Éditeur des courses royales", "es": "Editor de carreras reales"},
+    "description": {
+      "en": "Configure circuits, checkpoints, provided mounts, timing, prizes and race media.",
+      "fr": "Configurez les circuits, passages, montures, chronométrages, prix et médias des courses.",
+      "es": "Configura circuitos, puntos de control, monturas, tiempos, premios y recursos de las carreras."
+    },
+    "sign": "Horse",
+    "art": "mountEditorToolStripMenuItem.png",
+    "keywords": "race racing courses circuit checkpoints carreras monturas chevaux chronometre podium",
+    "subcategory": "WorldAndProgression"
+  },
+  {
     "id": "dungeonEditorToolStripMenuItem",
     "oldMenu": "Game Editors",
     "category": "Game",
@@ -633,6 +649,34 @@
     "sign": "Market",
     "art": "questShopEditorToolStripMenuItem.png",
     "keywords": "questShopEditorToolStripMenuItem Quest Shops Boutiques de quêtes Tiendas de misiones",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "royalSeasonsEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": ["World", "Economy"],
+    "title": { "en": "Royal seasons", "fr": "Saisons royales", "es": "Temporadas reales" },
+    "description": { "en": "Schedule seasonal objectives and free/Premium reward tracks.", "fr": "Planifiez les objectifs saisonniers et les récompenses gratuites/Premium.", "es": "Programa objetivos de temporada y recompensas gratuitas/Premium." },
+    "sign": "Furniture",
+    "art": "housingEditor.png",
+    "keywords": "royal seasons saisons royales temporadas récompenses premium donjons modifiers",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "guildHeadquartersEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": ["World", "Economy"],
+    "title": { "en": "Guild headquarters", "fr": "Quartier général de guilde", "es": "Cuartel de gremio" },
+    "description": {
+      "en": "Configure private halls, collective upgrades, invitations, artwork and audio.",
+      "fr": "Configurez les salles privées, améliorations collectives, invitations, images et sons.",
+      "es": "Configura salas privadas, mejoras colectivas, invitaciones, imágenes y sonidos."
+    },
+    "sign": "Furniture",
+    "art": "housingEditor.png",
+    "keywords": "guild headquarters guildhall guilde quartier général visiteurs invitations gremio cuartel",
     "subcategory": "EconomyAndCommerce"
   },
   {

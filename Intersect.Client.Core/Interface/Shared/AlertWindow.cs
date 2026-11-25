@@ -39,6 +39,12 @@ public class AlertWindow : InputBox
         userData: userData
     )
     {
+        InterfaceWindowSounds = new(alertType switch
+        {
+            AlertType.Error => Framework.Gwen.UiCue.Error,
+            AlertType.Warning => Framework.Gwen.UiCue.Prompt,
+            _ => Framework.Gwen.UiCue.Notice,
+        });
         Icon = GameContentManager.Current.GetTexture(
             TextureType.Gui,
             $"icon.alert.{alertType.ToString().ToLowerInvariant()}.png"

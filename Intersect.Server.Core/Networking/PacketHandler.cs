@@ -449,6 +449,8 @@ internal sealed partial class PacketHandler
 
     private bool ProcessPacketCore(IPacket packet, Client client)
     {
+        if (Intersect.Server.Core.LocalPlaytestTrace.Enabled && client.Entity is { } tracePlayer && packet is MovePacket or AttackPacket or PickupItemPacket or UseItemPacket or UseSpellPacket or ActivateEventPacket)
+            Intersect.Server.Core.LocalPlaytestTrace.Record("gameplay-packet", tracePlayer, new { type = packet.GetType().Name });
         // Correlate an administrator's interaction trace with the server before
         // activity filters or event-page checks can decline the activation.
         if (packet is ActivateEventPacket activation && client.User?.Power.IsAdmin == true)
@@ -2137,11 +2139,20 @@ internal sealed partial class PacketHandler
             }
 
             if (packet.Count is < 1 or > 10000) return;
+            EquipmentUpgradeTarget? upgradeTarget = null;
+            if (craftDescriptor.EquipmentUpgrade != null)
+            {
+                var error = player.EquipmentUpgradeSelectionMatches(craftDescriptor, packet.EquipmentSlot, packet.ExpectedEquipment)
+                    ? player.PrepareEquipmentUpgrade(craftDescriptor, packet.EquipmentSlot, out upgradeTarget)
+                    : "The equipment or recipe changed. Choose it again.";
+                if (error.Length > 0) { player.EquipmentUpgradeNotice(error); return; }
+            }
             player.CraftingState = new CraftingState
             {
                 Id = packet.CraftId,
-                CraftCount = craftDescriptor.Campfire != null ? 1 : packet.Count,
-                RemainingCount = craftDescriptor.Campfire != null ? 1 : packet.Count,
+                UpgradeTarget = upgradeTarget,
+                CraftCount = craftDescriptor.Campfire != null || upgradeTarget != null ? 1 : packet.Count,
+                RemainingCount = craftDescriptor.Campfire != null || upgradeTarget != null ? 1 : packet.Count,
                 DurationPerCraft = Math.Max(100, craftDescriptor.Time),
                 NextCraftCompletionTime = Timing.Global.Milliseconds + Math.Max(100, craftDescriptor.Time)
             };

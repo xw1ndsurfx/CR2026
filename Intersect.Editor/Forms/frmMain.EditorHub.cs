@@ -21,6 +21,7 @@ public partial class FrmMain
         if (requestConfigurations) PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddAchievementEditorMenu();
         AddMountEditorMenu();
+        AddMountRaceEditorMenu();
         AddJoustEditorMenu();
         AddRoyalCombatEditorMenus();
         AddFishingEditorMenu();
@@ -33,6 +34,12 @@ public partial class FrmMain
         var housingEditor = new ToolStripMenuItem("Housing & Furniture Catalog") { Name = "housingEditor" };
         housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
         contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
+        var headquartersEditor = new ToolStripMenuItem(Editors.FrmGuildHeadquarters.T("Guild headquarters")) { Name = "guildHeadquartersEditor" };
+        headquartersEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.GuildHeadquarters.HeadquartersConfigurationRequestPacket());
+        contentEditorsToolStripMenuItem.DropDownItems.Add(headquartersEditor);
+        var seasonsEditor = new ToolStripMenuItem(Editors.RoyalSeasonEditorControls.T("Royal seasons")) { Name = "royalSeasonsEditor" };
+        seasonsEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.RoyalSeasons.RoyalSeasonConfigurationRequestPacket());
+        contentEditorsToolStripMenuItem.DropDownItems.Add(seasonsEditor);
         AddRoyalStylistEditorMenu();
         AddRoyalContractsEditorMenu();
         var lobbyEditor = new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Lobby Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)) { Name = "lobbyEditor" };

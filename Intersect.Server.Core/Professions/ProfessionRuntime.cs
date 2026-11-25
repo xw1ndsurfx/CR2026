@@ -177,6 +177,7 @@ internal static partial class ProfessionRuntime
         );
 
         var experienceGranted = Math.Max(0L, newTotal - oldTotal);
+        RoyalSeasons.RoyalSeasonRuntime.Observe(player, Intersect.Framework.Core.RoyalSeasons.SeasonObjectiveKind.ProfessionExperience, id, experienceGranted);
         Intersect.Server.WorldEvents.WorldActivitiesRuntime.NotifyGain(player, definition.Name, baseAmount, experienceGranted, eventPercent);
         if (experienceGranted > 0)
             PacketSender.SendChatMsg(player, $"[{definition.Name}] +{experienceGranted:N0} profession XP.", ChatMessageType.Notice);

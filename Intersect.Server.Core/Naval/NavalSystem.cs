@@ -18,6 +18,7 @@ internal static partial class NavalSystem
 {
     private sealed class Vessel(ShipDefinition definition)
     {
+        internal readonly Guid CombatLifeId = Guid.NewGuid();
         internal readonly Dictionary<Guid,long> Contributions=[];
         internal readonly Dictionary<CannonAmmoKind,CannonStatus> CannonStatuses=[];
         internal readonly ShipDefinition Definition = definition;
@@ -45,11 +46,15 @@ internal static partial class NavalSystem
         internal int MaximumHealth => Enemy?.MaximumHealth??100;
         internal string Name=definition.Name;
         internal HerboniaPatrol Enemy;
+        internal bool EnemyHasTarget;
+        internal double EnemyTargetX,EnemyTargetY;
         internal int SinkingSerial;
         internal string CaptainName="";
         internal bool BoardingOpen;
         internal readonly Dictionary<Guid,CrewPresence> Crew=[];
         internal readonly Dictionary<int,GunSeat> Guns=[];
+        internal readonly Dictionary<Guid,DeckWalker> Deck=[];
+        internal bool HelmVacant;
         internal int Waypoint;
         internal long RespawnAt, AvoidUntil;
         internal Guid BoardingMap;
@@ -103,6 +108,7 @@ internal static partial class NavalSystem
                 foreach(var gun in vessel.Guns.Values) {gun.Owner=gun.Lease=Guid.Empty;gun.Until=0;}
         _lastAmmoBinding=0;
         _settings = settings;
+        if(!settings.Enabled)DeckPartyCapacities.Clear();
         _enabled = settings.Enabled; _loaded = true;
     }
 
@@ -209,7 +215,7 @@ internal static partial class NavalSystem
                         (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= _settings.DockInteractionRange ||
                         v.Definition.MapId == player.MapId &&
                         Distance(player.X + .5, player.Y + .5, v.Definition.DockX + .5, v.Definition.DockY + .5) <= _settings.DockInteractionRange &&
-                        Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 5));
+                        Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= Math.Max(5,NavalShipAtlas.LaunchClearance(v.Definition)+2)));
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
                     vessel.BoardingMap=player.MapId; vessel.BoardingX=player.X; vessel.BoardingY=player.Y;
@@ -260,6 +266,8 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        UpdateNavalMonsters(player,now);
+        UpdateNavalExpeditions(player, now);
         if(UpdateEnemyBoarding(player,now))return;
         var nearDock=player.NavalShipId==Guid.Empty && player.InGame && !player.IsDead && !player.HasPendingDeath && BesideCrewDock(player);
         if(!nearDock)player.NavalDockPromptSeen=false;
@@ -297,7 +305,7 @@ internal static partial class NavalSystem
                 {
                     var dt = vessel.LastStep == 0 ? 0 : (now - vessel.LastStep) / 1000d;
                     vessel.LastStep = now;
-                    var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.Controls.ForTick(now, player.NavalBusy);
+                    var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.HelmVacant ? new ShipInput(0,0,false) : vessel.Controls.ForTick(now, player.NavalBusy);
                     oldMap = s.MapId; oldX = s.X; oldY = s.Y;
                     ShipMovement.Step(s, MovementDefinition(vessel,now), input, dt, (map, x, y, heading) =>
                     {
@@ -375,6 +383,8 @@ internal static partial class NavalSystem
         if (Ships.TryGetValue(player.CaptainedShipId, out var vessel) && vessel.State.CaptainId == player.Id)
         {
             vessel.HelmsmanId=vessel.HelmOfferTo=vessel.HelmOfferToken=Guid.Empty;vessel.DockRequested=false;
+            vessel.HelmVacant=false;vessel.Deck.Clear();
+            DeckPartyCapacities.TryRemove(player.Id,out _);
             RepairRequests.Remove(vessel.State.Id);
             foreach(var id in Repairs.Where(p=>p.Value.Ship==vessel.State.Id).Select(p=>p.Key).ToArray())Repairs.Remove(id);
             vessel.State.CaptainId = Guid.Empty; vessel.State.Speed = vessel.State.Throttle = 0;
@@ -399,7 +409,7 @@ internal static partial class NavalSystem
         var progress=_settings.Sailing.Progress(player.SailingExperience);
         var targetId=CombatTarget(player.NavalShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { ShoreCargo=ShoreCargo(player),Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket {Monsters=MonsterSnapshots(player,now,visible),PartyCapacity=PartyCapacity(player),ShoreCargo=ShoreCargo(player),Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
@@ -407,16 +417,16 @@ internal static partial class NavalSystem
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
                 .Select(v => new ShipSnapshot { BoardingReady=EnemyBoardingReady(v),CannonStatuses=CannonStatusSnapshot(v,now), EnemyBoardingTargetId=v.State.Id==player.CaptainedShipId?EnemyBoardingTarget(player):Guid.Empty, ActiveSkills=v.State.Id==player.NavalShipId?v.SkillUntil.Where(entry=>entry.Value>now).Select(entry=>new NavalActiveSkill {Kind=entry.Key,Icon=_settings.Skills.FirstOrDefault(def=>def.Kind==entry.Key)?.Icon??"",RemainingMilliseconds=(int)Math.Clamp(entry.Value-now,0,120000)}).ToArray():[], RepairAvailable=_settings.Repair.Enabled && v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && v.LeftLaunchDock && now-v.LaunchedAt>=8000 && ByCrewDock(v),
-                    HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
+                    DamageZones=v.SunkUntil>0?[]:ShipDamageZone.Active(v.Definition,v.Health,v.MaximumHealth).ToArray(),NpcDeckMembers=NpcDeckSnapshot(v),DeckMembers=DeckSnapshot(v,now),WalkableDeck=DeckEnabled(v),HelmVacant=v.HelmVacant,HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),CrewStations=CrewStationSnapshot(v,now),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
                     Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
-                    Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
-                    Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
+                    Graphics = v.SunkUntil > 0 ? SinkingGraphic(v) : ShipDeck.Supports(v.Definition.Graphics)?DeckGraphic(v) : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
+                    Frames = v.Definition.Frames, FrameMilliseconds = v.SunkUntil>0 && NavalShipModels.Find(v.Definition.Graphics)!=null?500:v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
                     PortReloadMilliseconds = (int)Math.Clamp(v.PortReady-now,0,60000),
                     StarboardReloadMilliseconds = (int)Math.Clamp(v.StarboardReady-now,0,60000),
-                    Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled, Sinking = v.SunkUntil > 0,
+                    DeckActivity=ShipDeck.Activity(v.Definition),Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled && ShipDeck.Activity(v.Definition)==ShipDeckActivity.Cannons, Sinking = v.SunkUntil > 0,
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))

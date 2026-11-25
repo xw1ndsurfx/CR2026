@@ -1,5 +1,14 @@
 {
   "Entries": {
+    "Equip": {"en": "Equip", "fr": "Équiper", "es": "Equipar"},
+    "Unequip": {"en": "Unequip", "fr": "Déséquiper", "es": "Desequipar"},
+    "Cast spell": {"en": "Cast spell", "fr": "Lancer le sort", "es": "Lanzar hechizo"},
+    "Learn spell": {"en": "Learn spell", "fr": "Apprendre", "es": "Aprender hechizo"},
+    "Open": {"en": "Open", "fr": "Ouvrir", "es": "Abrir"},
+    "Anchor": { "en": "Anchor", "fr": "Ancre", "es": "Ancla" },
+    "Pick up": {"en": "Pick up", "fr": "Ramasser", "es": "Recoger"},
+    "Block": {"en": "Block", "fr": "Bloquer", "es": "Bloquear"},
+    "Interact": {"en": "Interact", "fr": "Interagir", "es": "Interactuar"},
     "30": {
       "en": "30",
       "fr": "30",
@@ -7274,6 +7283,116 @@
       "en": "Counterattack:",
       "fr": "Contre-attaque :",
       "es": "Contraataque:"
+    },
+    "Endurance": {
+      "en": "Endurance",
+      "fr": "Endurance",
+      "es": "Resistencia"
+    },
+    "DODGE!": {
+      "en": "DODGE!",
+      "fr": "ESQUIVE !",
+      "es": "¡ESQUIVA!"
+    },
+    "PERFECT PARRY!": {
+      "en": "PERFECT PARRY!",
+      "fr": "PARADE PARFAITE !",
+      "es": "¡PARADA PERFECTA!"
+    },
+    "COUNTERATTACK!": {
+      "en": "COUNTERATTACK!",
+      "fr": "CONTRE-ATTAQUE !",
+      "es": "¡CONTRAATAQUE!"
+    },
+    "NOT ENOUGH ENDURANCE": {
+      "en": "NOT ENOUGH ENDURANCE",
+      "fr": "ENDURANCE INSUFFISANTE",
+      "es": "RESISTENCIA INSUFICIENTE"
+    },
+    "Dodge in {0:0.0}s": {
+      "en": "Dodge in {0:0.0}s",
+      "fr": "Esquive dans {0:0.0} s",
+      "es": "Esquivar en {0:0.0} s"
+    },
+    "Dodge ready": {
+      "en": "Dodge ready",
+      "fr": "Esquive disponible",
+      "es": "Esquiva disponible"
+    },
+    "BOSS ENRAGED!": {
+      "en": "BOSS ENRAGED!",
+      "fr": "BOSS ENRAGÉ !",
+      "es": "¡JEFE ENFURECIDO!"
+    },
+    "Boss combo {0}/{1} - MOVE!": {
+      "en": "Boss combo {0}/{1} - MOVE!",
+      "fr": "Boss : coup {0}/{1} - BOUGE !",
+      "es": "Jefe: golpe {0}/{1} - ¡MUÉVETE!"
+    },
+    "INCOMING SPELL - MOVE!": {
+      "en": "INCOMING SPELL - MOVE!",
+      "fr": "SORT EN APPROCHE - BOUGE !",
+      "es": "¡HECHIZO EN CAMINO - MUÉVETE!"
+    },
+    "COMBO!": {
+      "en": "COMBO!",
+      "fr": "ENCHAÎNEMENT !",
+      "es": "¡COMBO!"
+    },
+    "FINISHER 3/3!": {
+      "en": "FINISHER 3/3!",
+      "fr": "COUP FINAL 3/3 !",
+      "es": "¡REMATE 3/3!"
+    },
+    "Combo {0}/3 - {1:0.0}s": {
+      "en": "Combo {0}/3 - {1:0.0}s",
+      "fr": "Combo {0}/3 - {1:0.0} s",
+      "es": "Combo {0}/3 - {1:0.0} s"
+    },
+    "Training: dodge (Shift)": {
+      "en": "Training: dodge (Shift)",
+      "fr": "Entraînement : esquive (Maj)",
+      "es": "Práctica: esquivar (Mayús)"
+    },
+    "Training: parry (Q)": {
+      "en": "Training: parry (Q)",
+      "fr": "Entraînement : parade (Q)",
+      "es": "Práctica: parada (Q)"
+    },
+    "Training: counter (R)": {
+      "en": "Training: counter (R)",
+      "fr": "Entraînement : riposte (R)",
+      "es": "Práctica: contraataque (R)"
+    },
+    "Training: combo (E)": {
+      "en": "Training: combo (E)",
+      "fr": "Entraînement : combo (E)",
+      "es": "Práctica: combo (E)"
+    },
+    "Refresh local resources": {
+      "en": "Refresh local resources",
+      "fr": "Actualiser les ressources locales",
+      "es": "Actualizar recursos locales"
+    },
+    "Find new PNG images, WAV sounds and OGG music in this client's resources folder.": {
+      "en": "Find new PNG images, WAV sounds and OGG music in this client's resources folder.",
+      "fr": "Détecte les nouvelles images PNG, les sons WAV et les musiques OGG dans le dossier ressources de ce client.",
+      "es": "Busca nuevas imágenes PNG, sonidos WAV y música OGG en la carpeta de recursos de este cliente."
+    },
+    "Added: {0} images, {1} sounds, {2} music tracks. Failed: {3}.": {
+      "en": "Added: {0} images, {1} sounds, {2} music tracks. Failed: {3}.",
+      "fr": "Ajouts : {0} images, {1} sons, {2} musiques. Échecs : {3}.",
+      "es": "Añadidos: {0} imágenes, {1} sonidos, {2} pistas. Errores: {3}."
+    },
+    "Resource refresh failed. Check the client log.": {
+      "en": "Resource refresh failed. Check the client log.",
+      "fr": "Échec de l’actualisation. Consulte le journal du client.",
+      "es": "Error al actualizar. Consulta el registro del cliente."
+    },
+    "Refresh resources ({0} added, {1} failed)": {
+      "en": "Refresh resources ({0} added, {1} failed)",
+      "fr": "Actualiser ressources ({0} ajouts, {1} échecs)",
+      "es": "Actualizar recursos ({0} añadidos, {1} errores)"
     }
   }
 }

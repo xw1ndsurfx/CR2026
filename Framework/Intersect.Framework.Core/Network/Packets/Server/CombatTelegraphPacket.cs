@@ -17,4 +17,13 @@ public sealed class CombatTelegraphPacket : IntersectPacket
     [Key(1)] public int X { get; set; }
     [Key(2)] public int Y { get; set; }
     [Key(3)] public int DurationMs { get; set; }
+    // Flattened x/y pairs. Older servers omit this, so the client falls back to X/Y.
+    [Key(4)] public int[] Tiles { get; set; } = [];
+    [Key(5)] public bool Enraged { get; set; }
+    [Key(6)] public bool EnrageStarted { get; set; }
+    // Zero/default remains compatible with prior single-strike warning packets.
+    [Key(7)] public int ComboStep { get; set; }
+    [Key(8)] public int ComboTotal { get; set; }
+    [Key(9)] public bool IsSpell { get; set; }
+
 }

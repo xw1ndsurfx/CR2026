@@ -89,8 +89,10 @@ internal partial class MonoRenderer
                 var x0 = -sprite.AnchorX; var x1 = sprite.Width - sprite.AnchorX;
                 if (sprite.FlipHorizontal) (x0,x1) = (-x1,-x0);
                 var radians=MathHelper.ToRadians(sprite.RotationDegrees);
-                var horizontal=right*(float)Math.Cos(radians)-Vector3.Up*(float)Math.Sin(radians);
-                var vertical=right*(float)Math.Sin(radians)+Vector3.Up*(float)Math.Cos(radians);
+                var c=(float)Math.Cos(radians);var sn=(float)Math.Sin(radians);
+                var shear=float.IsFinite(sprite.ShearY)?Math.Clamp(sprite.ShearY,-1,1):0;
+                var horizontal=right*c+Vector3.Up*(-sn+shear*c);
+                var vertical=right*sn+Vector3.Up*(c+shear*sn);
                 quad[0] = new(center + horizontal*x0 + vertical*sprite.AnchorY, uv[0]);
                 quad[1] = new(center + horizontal*x0 + vertical*(sprite.AnchorY-sprite.Height), uv[1]);
                 quad[2] = new(center + horizontal*x1 + vertical*sprite.AnchorY, uv[2]);

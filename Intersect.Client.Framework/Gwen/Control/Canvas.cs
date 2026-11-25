@@ -97,6 +97,10 @@ public partial class Canvas : Base
 
     protected override void Dispose(bool disposing)
     {
+        _interfaceAudio.Clear();
+        _interfaceWindows.Clear();
+        foreach (var sound in mUISounds) sound.Dispose();
+        mUISounds.Clear();
         ProcessDelayedDeletes();
         base.Dispose(disposing);
     }
@@ -148,6 +152,7 @@ public partial class Canvas : Base
 
         reportPhase?.Invoke("UI/control rendering");
         DoRender(Skin);
+        CompleteInterfaceAudioFrame();
 
         reportPhase?.Invoke("UI/drag overlay and tooltip");
         DragAndDrop.RenderOverlay(this, Skin);
@@ -184,6 +189,7 @@ public partial class Canvas : Base
 
     public void PlayAndAddSound(GameAudioInstance sound)
     {
+        DedicatedInterfaceSoundPlayed();
         // Track the sound - we will check to see when it's done and dispose of it in DoThink()
         mUISounds.Add(sound);
         // And play the sound
@@ -202,6 +208,7 @@ public partial class Canvas : Base
             }
             else
             {
+                item.Update();
                 return false;
             }
         });

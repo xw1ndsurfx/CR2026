@@ -23,8 +23,8 @@ public partial class Entity
         }
         catch (Exception) { }
     }
-    private MountDefinition? RenderedMount => this is Player player ? player.ActiveMount : _arenaMount;
-    internal bool MountMovementActive => IsMoving || ServerMovementMilliseconds > 0;
+    private MountDefinition? RenderedMount => _navalDeckOrigin.HasValue ? null : this is Player player ? player.ActiveMount : _arenaMount;
+    internal bool MountMovementActive => IsMoving || ServerMovementMilliseconds > 0 && Interface.Interface.InGameUiOrNull?.RaceRider(Id) != true;
     private bool _integratedMountRider;
     private MountRiderTransform? _riderTransform;
     private (IGameTexture Texture, FloatRect Source, FloatRect Destination)? _mountForeground;

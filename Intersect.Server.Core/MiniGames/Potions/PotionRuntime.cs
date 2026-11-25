@@ -417,6 +417,7 @@ Send:
             ErrorCode = error,
             State = new PotionSessionState
             {
+                Assets = RewardConfigurationRuntime.Current.PotionAssets,
                 Revision = session.Revision,
                 RecipeRound = session.RecipeRound,
                 Board = board,

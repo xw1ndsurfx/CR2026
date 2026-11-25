@@ -1,0 +1,144 @@
+{
+  "files": [
+    {
+      "path": "gui/guild_hq_bank_v1.png",
+      "bytes": 1484800,
+      "sha256": "95a2ea3fb0ea8b5968d422bf50bd55b9f855f76c98771c047100c397473ee371",
+      "width": 1254,
+      "height": 1254,
+      "color_type": 6
+    },
+    {
+      "path": "gui/guild_hq_citadel_v1.png",
+      "bytes": 1743333,
+      "sha256": "befe0b69eda9507609b4ba969c07b8d794ffe4860da1b6d7925edc36e246fb42",
+      "width": 1254,
+      "height": 1254,
+      "color_type": 6
+    },
+    {
+      "path": "gui/guild_hq_hall_v1.png",
+      "bytes": 2705005,
+      "sha256": "f5871d984f9a07eef999550bbffd2911d630b1ce60c1345ee764fc0fa36d4a13",
+      "width": 1536,
+      "height": 1024,
+      "color_type": 2
+    },
+    {
+      "path": "gui/guild_hq_invitation_v1.png",
+      "bytes": 1198594,
+      "sha256": "71a47eb5f65648e189f23f9d426899eef7d97ca7a488970aa41580179eecd806",
+      "width": 1254,
+      "height": 1254,
+      "color_type": 6
+    },
+    {
+      "path": "gui/guild_hq_lodge_v1.png",
+      "bytes": 1792727,
+      "sha256": "bfa915b4db12c30cf04bddbf67162375cd741e0e9ca746db3a4569bbe504c934",
+      "width": 1254,
+      "height": 1254,
+      "color_type": 6
+    },
+    {
+      "path": "gui/guild_hq_manor_v1.png",
+      "bytes": 2219991,
+      "sha256": "37bbea78b51f44bf31070d681ba7a5676695a0bb85a58e3e200c346be7a5825f",
+      "width": 1254,
+      "height": 1254,
+      "color_type": 6
+    },
+    {
+      "path": "music/guild_hq_theme_v1.ogg",
+      "bytes": 323449,
+      "sha256": "86dcf3aadb87b0e7a68ba9769757f5a54313c390066050aa62422e95a298516f",
+      "seconds": 48.0,
+      "channels": 2,
+      "sample_rate": 44100,
+      "peak": 0.21009577810764313,
+      "rms": 0.04760098863530258,
+      "loop_join_delta": 0.00015115365386009216
+    },
+    {
+      "path": "sounds/guild_hq_bank_v1.wav",
+      "bytes": 97064,
+      "sha256": "505148c7c0dd7715f88ea8d99fbea81b59d1ef0307d3573b2ee331ce5ac0aa3a",
+      "seconds": 1.1,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.52154541015625,
+      "rms": 0.06500244444615529
+    },
+    {
+      "path": "sounds/guild_hq_enter_v1.wav",
+      "bytes": 149984,
+      "sha256": "ffaeae80ad5de48bfb05d60c3b3cc72eb1c2fc56f21d7394044218963de377ad",
+      "seconds": 1.7,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.432403564453125,
+      "rms": 0.05029262135338217
+    },
+    {
+      "path": "sounds/guild_hq_error_v1.wav",
+      "bytes": 57374,
+      "sha256": "b785a62c8289279a109be523912a595124622761a9cd91e292213de13a1134b1",
+      "seconds": 0.65,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.46173095703125,
+      "rms": 0.13503537812550848
+    },
+    {
+      "path": "sounds/guild_hq_hearth_v1.wav",
+      "bytes": 2116844,
+      "sha256": "17147189609150eed661cbf59f33e4305e545463a38456be8d0169df38437cf4",
+      "seconds": 24.0,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.176483154296875,
+      "rms": 0.01167904473942225,
+      "loop_join_delta": 0.0
+    },
+    {
+      "path": "sounds/guild_hq_invitation_v1.wav",
+      "bytes": 141164,
+      "sha256": "e959293d8e83713f0b5dba6882835667b4642ae7b5ca9245f5ed1797d73989da",
+      "seconds": 1.6,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.54644775390625,
+      "rms": 0.10926484145066068
+    },
+    {
+      "path": "sounds/guild_hq_leave_v1.wav",
+      "bytes": 97064,
+      "sha256": "8ab30e0355e3078ca33da2a9cb7e41e6262db0d899ce7f4c645e05e906564517",
+      "seconds": 1.1,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.43231201171875,
+      "rms": 0.06670072604097119
+    },
+    {
+      "path": "sounds/guild_hq_open_v1.wav",
+      "bytes": 57374,
+      "sha256": "04e63a36d5c1d988736b84cd55f091c9d965af21ee2ac8ced17c56bcc6578981",
+      "seconds": 0.65,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.54998779296875,
+      "rms": 0.12925840777966083
+    },
+    {
+      "path": "sounds/guild_hq_upgrade_v1.wav",
+      "bytes": 317564,
+      "sha256": "5121b4c9a846b826049c7a8db70e71ee44a44bad4c6cab393557d4db84f50762",
+      "seconds": 3.6,
+      "channels": 1,
+      "sample_rate": 44100,
+      "peak": 0.54998779296875,
+      "rms": 0.0875548150685192
+    }
+  ]
+}

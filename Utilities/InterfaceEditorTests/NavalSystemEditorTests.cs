@@ -24,7 +24,7 @@ internal static class NavalSystemEditorTests
             using var editor = new FrmNavalConfiguration(packet);
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
-            if (tabs.TabPages.Count != 10) throw new Exception("Navigation, ships, shop, presentation Sailing and AI must be separate sections.");
+            if (tabs.TabPages.Count != 12 || tabs.TabPages[10].Text != "Monstres marins" || tabs.TabPages[11].Text != "Expéditions navales") throw new Exception("The existing naval sections must remain available alongside expeditions.");
             var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
             var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
             cannonEnabled.Checked=true;cannonDamage.Value=17;
@@ -57,7 +57,8 @@ internal static class NavalSystemEditorTests
                 image.Save(preview, System.Drawing.Imaging.ImageFormat.Png);
                 editor.Hide();
             }
-            Console.WriteLine("PASS localized Naval System Editor opens ten sections and keeps independent save versions");
+            Console.WriteLine("PASS localized Naval System Editor opens twelve sections and keeps independent save versions");
+            CheckFleetConfiguration();
             CheckAssetPreview();
             CheckHerboniaEditor();
             CheckLootEditor();
@@ -106,6 +107,23 @@ internal static class NavalSystemEditorTests
             Console.WriteLine("PASS crew cannon and ammunition pages save native impact animation selection with navigation revision");
         }
         finally { CultureInfo.CurrentUICulture = culture; }
+    }
+
+    private static void CheckFleetConfiguration()
+    {
+        var ships=NavalShipModels.All.Select(model=>{var ship=new ShipDefinition {MapId=Guid.NewGuid()};model.ApplyTo(ship);return ship;}).ToArray();
+        var config=new NavalConfiguration {Ships=ships,Monsters=Enum.GetValues<NavalMonsterKind>().Select(kind=>new NavalMonsterDefinition {Kind=kind}).ToArray()};
+        using var editor=new FrmNavalConfiguration(new(){NavigationJson=JsonConvert.SerializeObject(config),CatalogueJson="{}"});
+        var tabs=editor.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=1;
+        var list=Descendants(tabs.TabPages[1]).OfType<ListBox>().Single();
+        foreach(var ship in ships.Where(s=>ShipDeck.Kind(s.Graphics)==ShipDeckKind.ShipOfLine))
+        {
+            list.SelectedIndex=Array.IndexOf(ships,ship);
+            if(Descendants(tabs.TabPages[1]).OfType<NumericUpDown>().Single(c=>c.Name=="CrewCapacity").Value!=13 ||
+                Descendants(tabs.TabPages[1]).OfType<ComboBox>().Single(c=>c.Name=="Graphics").Text!=ship.Graphics)
+                throw new Exception("Every line ship must open its native appearance and thirteen-player capacity.");
+        }
+        Console.WriteLine("PASS full fleet configuration opens all seven line ships and three monster kinds in the native naval editor");
     }
 
     private static void CheckHerboniaEditor()

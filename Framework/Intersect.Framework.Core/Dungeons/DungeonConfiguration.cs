@@ -77,6 +77,7 @@ public sealed class DungeonDefinition
     public Guid FailureCommonEventId { get; set; }
 
     public DungeonCompletionChest Chest { get; set; } = new();
+    public DungeonModifierConfiguration Modifiers { get; set; } = new();
 
     // Exit / completion warp
     public Guid ExitMapId { get; set; }
@@ -122,6 +123,7 @@ public sealed class DungeonDefinition
         (!CompletionRequirements.HasFlag(DungeonCompletionRequirement.CompleteQuest) || CompletionQuestId != Guid.Empty) &&
         TimeLimitMinutes is >= 0 and <= 24 * 60 &&
         Chest is { IsValid: true } &&
+        Modifiers is { IsValid: true } &&
         CompletionExperience is >= 0 and <= 2_000_000_000 &&
         CompletionItemQuantity is >= 0 and <= 1_000_000_000 &&
         StartMinuteOfDay is >= 0 and <= 1439 &&
@@ -171,6 +173,7 @@ public sealed class DungeonConfiguration
             dungeon.MapIds ??= [];
             dungeon.AvailabilityConditions ??= [];
             dungeon.Chest ??= new();
+            dungeon.Modifiers ??= new();
         }
 
         if (!value.IsStructurallyValid)

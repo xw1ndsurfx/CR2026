@@ -56,6 +56,8 @@ internal static class PartyLobbyRuntime
     }
     private static int Capacity(Lobby lobby)
     {
+        if(lobby.Activity==LobbyActivity.Naval && NavalSystem.LobbyShip(lobby.Host) is {} ship && NavalSystem.DeckPartyCapacity(lobby.Host)>0)
+            return Math.Min(7,ship.Capacity);
         var maximum = Math.Min(Math.Clamp(Options.Instance.Party.MaximumMembers, 1, 100), LobbyConfigurationRuntime.Current.Activities.FirstOrDefault(a => a.Activity == lobby.Activity)?.MaximumMembers ?? 100);
         if(lobby.Activity==LobbyActivity.Naval) return Math.Min(maximum,NavalSystem.LobbyShip(lobby.Host)?.Capacity??1);
         if(lobby.Activity==LobbyActivity.RollTheDice) return Math.Min(maximum,6);

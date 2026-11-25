@@ -139,6 +139,7 @@ public partial class TabButton : Button
                 var nextTab = Parent.Children[me + 1];
                 TabControl.OnTabPressed(nextTab, EventArgs.Empty);
                 InputHandler.KeyboardFocus = nextTab;
+                if (HasDefaultClickSound) QueueInterfaceSound(UiCue.Tab);
             }
         }
 
@@ -163,6 +164,7 @@ public partial class TabButton : Button
                 var prevTab = Parent.Children[me - 1];
                 TabControl.OnTabPressed(prevTab, EventArgs.Empty);
                 InputHandler.KeyboardFocus = prevTab;
+                if (HasDefaultClickSound) QueueInterfaceSound(UiCue.Tab);
             }
         }
 

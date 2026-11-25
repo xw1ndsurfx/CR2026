@@ -1,4 +1,4 @@
-﻿using Intersect.Enums;
+using Intersect.Enums;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Core;
@@ -22,7 +22,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
     {
         base.RenderUnder(skin);
         if (_itemDescriptor is { } item && ItemRarityGlow.ResolveColor(
-                item.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities
+                item.EffectiveRarity(_itemProperties), Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities
             ) is { } color)
         {
             ItemRarityGlow.Draw(skin.Renderer, Width, Height, color, Environment.TickCount64);
@@ -36,6 +36,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         string valueLabel = ""
     )
     {
+        if (MobilePinned) return;
         _itemDescriptor = item;
         _amount = amount;
         _itemProperties = itemProperties;
@@ -100,6 +101,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
     public override void Hide()
     {
+        if (MobilePinned) return;
         if (Interface.GameUi.ItemDescriptionWindow == this)
         {
             Interface.GameUi.GameCanvas.RemoveChild(Interface.GameUi.ItemDescriptionWindow, true);
@@ -186,7 +188,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         }
 
         // Set up the header as the item name.
-        CustomColors.Items.Rarities.TryGetValue(_itemDescriptor.Rarity, out var rarityColor);
+        CustomColors.Items.Rarities.TryGetValue(_itemDescriptor.EffectiveRarity(_itemProperties), out var rarityColor);
         header.SetTitle(_itemDescriptor.Name, rarityColor ?? Color.White);
 
         // Set up the description telling us what type of item this is.
@@ -211,7 +213,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Set up the item rarity label.
         try
         {
-            if (Options.Instance.Items.TryGetRarityName(_itemDescriptor.Rarity, out var rarityName))
+            if (Options.Instance.Items.TryGetRarityName(_itemDescriptor.EffectiveRarity(_itemProperties), out var rarityName))
             {
                 _ = Strings.ItemDescription.Rarity.TryGetValue(rarityName, out var rarityLabel);
                 header.SetDescription(rarityLabel, rarityColor ?? Color.White);
@@ -222,7 +224,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             ApplicationContext.Context.Value?.Logger.LogError(
                 exception,
                 "Error setting rarity description for rarity {Rarity}",
-                _itemDescriptor.Rarity
+                _itemDescriptor.EffectiveRarity(_itemProperties)
             );
             throw;
         }
@@ -605,6 +607,8 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         // Our list of data to add, should we need to.
         var data = new List<Tuple<string, string>>();
+
+        foreach (var detail in EquipmentPresentation.Details(_itemDescriptor, _itemProperties)) data.Add(new Tuple<string, string>(detail.Key, detail.Value));
 
         // Display our amount, but only if we are stackable and have more than one.
         if (_itemDescriptor.IsStackable && _amount > 1)

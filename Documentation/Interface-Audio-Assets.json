@@ -1,0 +1,223 @@
+{
+  "sampleRate": 44100,
+  "format": "mono PCM16 WAV",
+  "origin": "Original procedural foley; no external samples",
+  "audio": [
+    {
+      "cue": "hover",
+      "file": "Intersect.Client/resources/sounds/interface/hover_v1.wav",
+      "seconds": 0.07,
+      "peak": 0.28,
+      "rms": 0.072424,
+      "sha256": "59ae5f48e4ad52f7c95f3461d0fd234d154d7e06ebf77e53ac3c4e73262f1c32"
+    },
+    {
+      "cue": "click",
+      "file": "Intersect.Client/resources/sounds/interface/click_v1.wav",
+      "seconds": 0.12,
+      "peak": 0.43,
+      "rms": 0.086195,
+      "sha256": "2ca9cd6931aeaf84a0917efaaf8fbedf13ee39ddf199814d78cdf92606035478"
+    },
+    {
+      "cue": "back",
+      "file": "Intersect.Client/resources/sounds/interface/back_v1.wav",
+      "seconds": 0.18,
+      "peak": 0.43,
+      "rms": 0.077214,
+      "sha256": "20bddaeb02f7e03cc8837bbe2afdc1531f54d6800a0ff1702a2065c34e8be755"
+    },
+    {
+      "cue": "tab",
+      "file": "Intersect.Client/resources/sounds/interface/tab_v1.wav",
+      "seconds": 0.2,
+      "peak": 0.4,
+      "rms": 0.09109,
+      "sha256": "9e5722263a9863c53e01f251dcd96ddf1ced84a55e4f477022c3b47b958afce9"
+    },
+    {
+      "cue": "toggleon",
+      "file": "Intersect.Client/resources/sounds/interface/toggleon_v1.wav",
+      "seconds": 0.14,
+      "peak": 0.43,
+      "rms": 0.079215,
+      "sha256": "71cb4c457b87fd88538af5bd97cd6587fe99e7df81f252a95e0aa12330f0fb67"
+    },
+    {
+      "cue": "toggleoff",
+      "file": "Intersect.Client/resources/sounds/interface/toggleoff_v1.wav",
+      "seconds": 0.14,
+      "peak": 0.4,
+      "rms": 0.078371,
+      "sha256": "94c458e6566497607ff83716241356b4a6b45cf4bf24d7fe04f08b418d85196f"
+    },
+    {
+      "cue": "slider",
+      "file": "Intersect.Client/resources/sounds/interface/slider_v1.wav",
+      "seconds": 0.08,
+      "peak": 0.3,
+      "rms": 0.071547,
+      "sha256": "21c338240e1ac80ef79428115c2351fe0734f6d0654d7ca4975d54c467daf8dd"
+    },
+    {
+      "cue": "select",
+      "file": "Intersect.Client/resources/sounds/interface/select_v1.wav",
+      "seconds": 0.16,
+      "peak": 0.4,
+      "rms": 0.071607,
+      "sha256": "6364f9736dfe892069532e609428f0510815654c747753b200dcb90b0c93f1a2"
+    },
+    {
+      "cue": "submit",
+      "file": "Intersect.Client/resources/sounds/interface/submit_v1.wav",
+      "seconds": 0.27,
+      "peak": 0.46,
+      "rms": 0.063059,
+      "sha256": "2a371b3b10891bc978c172f2198ccad25274c78fd1ca2ad7dfffb9bcdc5f7054"
+    },
+    {
+      "cue": "menuopen",
+      "file": "Intersect.Client/resources/sounds/interface/menuopen_v1.wav",
+      "seconds": 0.72,
+      "peak": 0.48,
+      "rms": 0.097835,
+      "sha256": "68ec176c9e8bc5533de1fae481e7bf6c1036148b7653998fcbef156cc9ce9073"
+    },
+    {
+      "cue": "panelopen",
+      "file": "Intersect.Client/resources/sounds/interface/panelopen_v1.wav",
+      "seconds": 0.28,
+      "peak": 0.43,
+      "rms": 0.070204,
+      "sha256": "fba29e3f111e49237ca4ea8fa31d4002e9fb0748488314a93f97e1febf51293c"
+    },
+    {
+      "cue": "panelclose",
+      "file": "Intersect.Client/resources/sounds/interface/panelclose_v1.wav",
+      "seconds": 0.21,
+      "peak": 0.43,
+      "rms": 0.064258,
+      "sha256": "9621419b635762a70fe3525122ecde6276f36b8b55c5037ca45fda9bec150d0a"
+    },
+    {
+      "cue": "bookopen",
+      "file": "Intersect.Client/resources/sounds/interface/bookopen_v1.wav",
+      "seconds": 0.4,
+      "peak": 0.48,
+      "rms": 0.094055,
+      "sha256": "8428d429b10c96668f511bbd5ae063cec4100914fd35ba4be236f05b317694e3"
+    },
+    {
+      "cue": "bookclose",
+      "file": "Intersect.Client/resources/sounds/interface/bookclose_v1.wav",
+      "seconds": 0.3,
+      "peak": 0.48,
+      "rms": 0.065391,
+      "sha256": "a2aee6cfd80cb560d07c5d07acfdfba4eb28612ff3e236a5af6638b561f12980"
+    },
+    {
+      "cue": "bagopen",
+      "file": "Intersect.Client/resources/sounds/interface/bagopen_v1.wav",
+      "seconds": 0.33,
+      "peak": 0.46,
+      "rms": 0.071839,
+      "sha256": "9ffc71eaa35aedd2d6d42d44c3fcc9b0752d9197e0350d579f48ad2c97945088"
+    },
+    {
+      "cue": "chestopen",
+      "file": "Intersect.Client/resources/sounds/interface/chestopen_v1.wav",
+      "seconds": 0.46,
+      "peak": 0.5,
+      "rms": 0.064637,
+      "sha256": "a5c438a8463054a7a003c5436c4ae1fe284e11802f5ca89a519a98d6375ef4d8"
+    },
+    {
+      "cue": "chestclose",
+      "file": "Intersect.Client/resources/sounds/interface/chestclose_v1.wav",
+      "seconds": 0.33,
+      "peak": 0.5,
+      "rms": 0.072404,
+      "sha256": "7aecff7515450ceb30cf597581dc9c3c59ca0d25c7b8d65d585c26db57a1fc92"
+    },
+    {
+      "cue": "coins",
+      "file": "Intersect.Client/resources/sounds/interface/coins_v1.wav",
+      "seconds": 0.38,
+      "peak": 0.45,
+      "rms": 0.086031,
+      "sha256": "7d2eaef5d977774722de9e0638de40990a22f5122f69f59c58d96f79e15d15a4"
+    },
+    {
+      "cue": "armor",
+      "file": "Intersect.Client/resources/sounds/interface/armor_v1.wav",
+      "seconds": 0.36,
+      "peak": 0.48,
+      "rms": 0.082846,
+      "sha256": "3aa61958e81d6ce0cac6befb30dc341f86a3276f71db618b5aea1f51cf7f9ce5"
+    },
+    {
+      "cue": "map",
+      "file": "Intersect.Client/resources/sounds/interface/map_v1.wav",
+      "seconds": 0.38,
+      "peak": 0.46,
+      "rms": 0.075987,
+      "sha256": "325170a8f1f70c410745d803f14e6f69fa5a3a870a4561ca441737184948d589"
+    },
+    {
+      "cue": "social",
+      "file": "Intersect.Client/resources/sounds/interface/social_v1.wav",
+      "seconds": 0.42,
+      "peak": 0.45,
+      "rms": 0.106324,
+      "sha256": "93fa6f2c074522a1bd9b036bb55cb1f4f68a9642337023a2cd8b62de61e35f40"
+    },
+    {
+      "cue": "prompt",
+      "file": "Intersect.Client/resources/sounds/interface/prompt_v1.wav",
+      "seconds": 0.42,
+      "peak": 0.46,
+      "rms": 0.093493,
+      "sha256": "19e98c162039783d7240a68bac59f861c9c33759c0c212cbb340d72cfb280267"
+    },
+    {
+      "cue": "notice",
+      "file": "Intersect.Client/resources/sounds/interface/notice_v1.wav",
+      "seconds": 0.51,
+      "peak": 0.46,
+      "rms": 0.111596,
+      "sha256": "24b99feefd15e732af38f40d8992fd65f2ff4858fd174dc63a3d2d12851b49d2"
+    },
+    {
+      "cue": "error",
+      "file": "Intersect.Client/resources/sounds/interface/error_v1.wav",
+      "seconds": 0.34,
+      "peak": 0.43,
+      "rms": 0.071403,
+      "sha256": "ae6ea0f6ee0ab6ad7c1df865afea2ab2c77e0d4e695ad294438f5c1cbff57ac9"
+    },
+    {
+      "cue": "reward",
+      "file": "Intersect.Client/resources/sounds/interface/reward_v1.wav",
+      "seconds": 0.85,
+      "peak": 0.52,
+      "rms": 0.088279,
+      "sha256": "a26b11e823ca7859f813887c8efd418382ce2172bc20946f9381e322317bb594"
+    },
+    {
+      "cue": "workshop",
+      "file": "Intersect.Client/resources/sounds/interface/workshop_v1.wav",
+      "seconds": 0.39,
+      "peak": 0.48,
+      "rms": 0.059228,
+      "sha256": "33f72cea29aab795f76ef2939ee069a7943c280bba1bfb98125a94b1e0812aaf"
+    },
+    {
+      "cue": "magic",
+      "file": "Intersect.Client/resources/sounds/interface/magic_v1.wav",
+      "seconds": 0.66,
+      "peak": 0.48,
+      "rms": 0.09719,
+      "sha256": "4a79dd262794884bbf9992cb4a7b4f1113494882e64684c93872861cb33f3c92"
+    }
+  ]
+}

@@ -151,6 +151,30 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
     //Boss configuration
     public bool IsBoss { get; set; }
 
+    // Optional second combat phase for boss NPCs only; existing bosses stay unchanged.
+    public bool AdvancedBossEnrageEnabled { get; set; }
+    // Optional multi-strike boss sequence. Old bosses remain single-strike.
+    public bool AdvancedBossComboEnabled { get; set; }
+    public int AdvancedBossComboCount { get; set; } = 2;
+    public int AdvancedBossComboSecondShape { get; set; } = (int)CombatTelegraphShape.Cone;
+    public int AdvancedBossComboThirdShape { get; set; } = (int)CombatTelegraphShape.Circle;
+    public int AdvancedBossComboFollowupWindupMs { get; set; } = 550;
+    // Optional monster telegraphs; bosses retain their warning by default.
+    public bool AdvancedTelegraphEnabled { get; set; }
+
+    public int AdvancedTelegraphShape { get; set; } = (int)CombatTelegraphShape.TargetTile;
+
+    public int AdvancedTelegraphRange { get; set; } = 1;
+
+    public int AdvancedTelegraphWindupMs { get; set; } // 0 inherits global boss warning time
+
+    // Opt-in warning for native hostile, single-target combat spells only.
+    // Does not affect self spells, friendly spells, projectile spells, or native AoE.
+    public bool AdvancedSpellTelegraphEnabled { get; set; }
+
+    public int AdvancedSpellTelegraphWindupMs { get; set; } = 650;
+
+
     [Column("BossAnimation")]
     public Guid BossAnimationId { get; set; }
 
@@ -171,6 +195,10 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
     [Column("DeathAnimation")]
     public Guid DeathAnimationId { get; set; }
     public int DeathAnimationDurationSeconds { get; set; }
+
+    public string DeathSound { get; set; } = string.Empty;
+    public string ProximitySound { get; set; } = string.Empty;
+    public int ProximitySoundRadius { get; set; } = 5;
 
     [NotMapped]
     [JsonIgnore]

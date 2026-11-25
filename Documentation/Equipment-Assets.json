@@ -1,0 +1,92 @@
+{
+  "sampleRate": 44100,
+  "format": "mono PCM16 WAV",
+  "audio": [
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_open_v1.wav",
+      "seconds": 0.4,
+      "peak": 0.65,
+      "rms": 0.1098,
+      "sha256": "7be1da14344381417cc88fc87ed4fe5d14ad6d5bcb91be6db5f194ffd6eb08bc"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_select_v1.wav",
+      "seconds": 0.16,
+      "peak": 0.65,
+      "rms": 0.1268,
+      "sha256": "0079e145d294ee049eda86cfb56498dab5e2ff7d642eeea8126dcbde7d7ce24a"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_save_v1.wav",
+      "seconds": 0.58,
+      "peak": 0.65,
+      "rms": 0.1857,
+      "sha256": "9a38b709616acb208b9124190faa4fba821fc028e72295be9c429810b545f1bc"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_equip_v1.wav",
+      "seconds": 0.52,
+      "peak": 0.65,
+      "rms": 0.0801,
+      "sha256": "0250c4a5e6ab05233bece1826e731b87009ee21c96878a9265b127df56a9adec"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_delete_v1.wav",
+      "seconds": 0.3,
+      "peak": 0.65,
+      "rms": 0.1412,
+      "sha256": "7957ff9e2806bdad4c7146d2a2c19dbcc529de9cf34803c42749507ddf0e494c"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_error_v1.wav",
+      "seconds": 0.38,
+      "peak": 0.65,
+      "rms": 0.1597,
+      "sha256": "4b453dd220244ad74d6a29c02d3e3339f783fd1af399ca99f9759db237e28284"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_forge_v1.wav",
+      "seconds": 0.95,
+      "peak": 0.65,
+      "rms": 0.0752,
+      "sha256": "6e9c5fe33f0e42db822ee5ed78e71bc60532c3b0d9d72792a717d47691b4b6cb"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_upgrade_v1.wav",
+      "seconds": 1.2,
+      "peak": 0.65,
+      "rms": 0.133,
+      "sha256": "5c26bc3d7064cef16bbeab8c09066b62da4c5c3c93404cc5fee21db171215b4e"
+    },
+    {
+      "file": "Intersect.Client/resources/sounds/equipment_spell_v1.wav",
+      "seconds": 0.75,
+      "peak": 0.65,
+      "rms": 0.1494,
+      "sha256": "1445c07a018fc3fe3e972f56fe3209e154bf6b8fd6b72b2f770e9cdc1e240eed"
+    }
+  ],
+  "images": [
+    {
+      "file": "Intersect.Client/resources/gui/equipment_forge_v1.png",
+      "width": 1254,
+      "height": 1254,
+      "alpha": false,
+      "sha256": "0329d1b5379dca169501c0da936eacf6e39c7cd7c47f488b3ac534a6b4c8a92c"
+    },
+    {
+      "file": "Intersect.Client/resources/gui/equipment_icons_v1.png",
+      "width": 1254,
+      "height": 1254,
+      "alpha": true,
+      "sha256": "cd2eae2ae1ec23b8dcce8167ce2925957322ad35d7edbf724adc521780774bdf"
+    },
+    {
+      "file": "Intersect.Client/resources/gui/equipment_loadouts_v1.png",
+      "width": 1254,
+      "height": 1254,
+      "alpha": false,
+      "sha256": "956a6c2069441c53c33d904876cfe8b93c111271d053d2a44f75c81b7e32f73e"
+    }
+  ]
+}

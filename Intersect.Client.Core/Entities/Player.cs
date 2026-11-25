@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -261,7 +261,7 @@ public partial class Player : Entity, IPlayer
 
     public bool PendingDeath { get; private set; }
 
-    public bool IsBusy => PendingDeath || !(Globals.EventHolds.Count == 0 &&
+    public bool IsBusy => PendingDeath || Interface.Interface.InGameUiOrNull?.RaceMovementBlocked == true || !(Globals.EventHolds.Count == 0 &&
                  !Globals.MoveRouteActive &&
                  Globals.GameShop == null &&
                  Globals.InBank == false &&
@@ -1487,6 +1487,10 @@ public partial class Player : Entity, IPlayer
             DirectionMoving = inputDirection;
         }
 
+        if (Interface.Interface.InGameUiOrNull?.TryHandleEquipmentLoadoutHotkey() == true) return;
+        if (Interface.Interface.InGameUiOrNull?.TryHandleEquipmentSpellHotkey() == true) return;
+        if (Interface.Interface.InGameUiOrNull?.TryHandleWeaponSkillHotkey() == true) return;
+
         var castInput = -1;
 
         // Yes we unfortunately need to do all of this extra logic because multiple hotbar slots could get triggered
@@ -2394,9 +2398,12 @@ public partial class Player : Entity, IPlayer
 
         var dir = DirectionFacing;
         var intendedMoveDir = DirectionMoving;
+        var racing = Interface.Interface.InGameUiOrNull?.RaceView.OnTrack == true;
+        if (racing && intendedMoveDir.IsDiagonal()) intendedMoveDir = intendedMoveDir.GetComponentDirections().First();
         var moveDir = ReferenceEquals(this, Globals.Me)
             ? Intersect.Client.Interface.Game.IntoxicationVisuals.DistortMove(intendedMoveDir)
             : intendedMoveDir;
+        if (racing) moveDir = intendedMoveDir;
 
         var enableCrossingDiagonalBlocks = Options.Instance.Map.EnableCrossingDiagonalBlocks;
 
@@ -2422,6 +2429,7 @@ public partial class Player : Entity, IPlayer
 
             foreach (var possibleDirection in possibleDirections)
             {
+                if (racing && possibleDirection.IsDiagonal()) continue;
                 var delta = possibleDirection.GetDeltaPoint();
                 var target = position + delta;
                 if (IsTileBlocked(target, Z, MapId, ref blockedBy) != -1)

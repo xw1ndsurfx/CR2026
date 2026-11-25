@@ -23,7 +23,7 @@ internal static partial class NavalSystem
         var marked = ShipDock.Tiles(attributes).Any();
         if (marked)
         {
-            var point = ShipDock.FindLandingPoint(attributes, state.X, state.Y, 5, Clear);
+            var point = ShipDock.FindLandingPoint(attributes, state.X, state.Y, Math.Max(5,(int)Math.Ceiling(NavalShipAtlas.LaunchClearance(vessel.Definition))+1), Clear);
             return point is { } selected ? new(state.MapId, selected.X, selected.Y, selected.DockX, selected.DockY) : null;
         }
         var exit = ShipDisembarkation.Find(state, vessel.Definition, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, Clear);

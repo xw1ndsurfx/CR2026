@@ -13,7 +13,7 @@ public partial class Player
     private long _ammoRequestAt;
     private long _ammoSelectionAt;
     private Dictionary<Guid, Guid> SelectedWeaponAmmo => _selectedWeaponAmmo ??= RoyalCombatRuntime.LoadAmmo(Id);
-    internal bool CanFireWorldWeapon => !IsArcheryActive && InShop == default && !InBank &&
+    internal bool CanFireWorldWeapon => !IsMountRacing && !IsArcheryActive && InShop == default && !InBank &&
         OpenCraftingTableId == default && Trading.Counterparty == default;
     internal ProjectileDescriptor[] CompatibleAmmoProjectiles(ItemDescriptor weapon)
     {

@@ -24,6 +24,7 @@ public abstract partial class GameAudioInstance
     protected GameAudioInstance(GameAudioSource source)
     {
         Source = source;
+        _lastSourceTypeVolume = source.TypeVolume;
     }
 
     public GameAudioSource Source { get; }

@@ -701,6 +701,17 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                         .HasColumnType("TEXT")
                         .HasColumnName("DeathAnimation");
 
+                    b.Property<string>("DeathSound")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProximitySound")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProximitySoundRadius")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("EventId")
                         .HasColumnType("TEXT")
                         .HasColumnName("Event");

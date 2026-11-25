@@ -143,7 +143,18 @@ public sealed partial class CinematicAtmosphereGpuTests
                 AssertFrame(expected, actual,
                     $"Fog opacity {alpha} must be applied once above the opaque perspective image.");
                 if (alpha == 128) singleFog = actual;
+                SettleFog(alpha);DrawScene(includeCoveredWorldFog:true);
+                ClientGraphics.DrawPerspectiveAtmosphere(Screen);
+                AssertFrame(expected,Capture($"naval-atmosphere-{alpha}"),"Naval viewport must replay native fog and ambient with the same composition.");
             }
+
+            SettleFog(128);DrawScene();
+            ClientGraphics.DrawPerspectiveAtmosphere(new FloatRect(Width/4,Height/4,Width/2,Height/2));
+            var compact=Capture("naval-compact-fog");
+            for(var y=0;y<Height;y++)for(var x=0;x<Width;x++)
+                if(x<Width/4 || x>=Width*3/4 || y<Height/4 || y>=Height*3/4)
+                    Assert.That(RgbDistance(compact[y*Width+x],baseline[y*Width+x]),Is.LessThanOrEqualTo(2),"Atmosphere must not tint the HUD/outside a compact cannon viewport.");
+            Assert.That(RgbDistance(compact[Height/2*Width+Width/2],baseline[Height/2*Width+Width/2]),Is.GreaterThan(5));
 
             SettleFog(128);
             map.FogTransparency = 0;
@@ -190,6 +201,10 @@ public sealed partial class CinematicAtmosphereGpuTests
             CinematicEnvironment.DrawPerspectiveAtmosphere();
             AssertFrame(native, Capture("04-colored-ambient"),
                 "Colored ambiance must match native GPU lighting and darken the fog together with the terrain.");
+
+            SettleFog(128);DrawScene(includeCoveredWorldFog:true);
+            ClientGraphics.DrawPerspectiveAtmosphere(Screen);
+            AssertFrame(native,Capture("naval-colored-ambient"),"Naval viewport must retain native night/dusk lighting over fog.");
 
             Globals.Database!.EnableLighting = false;
             DrawScene();

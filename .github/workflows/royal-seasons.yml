@@ -1,0 +1,44 @@
+name: Royal seasons and dungeon modifiers
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*RoyalSeason*'
+      - '**/RoyalSeasons/**'
+      - '**/RoyalSeasonUiTests/**'
+      - '**/Dungeons/**'
+      - '**/*Dungeon*'
+      - 'Intersect.Server.Core/Naval/**'
+      - 'Intersect.Server.Core/Professions/**'
+      - 'Intersect.Server.Core/Fishing/**'
+      - 'Intersect.Server.Core/Housing/HousingRuntime.Farming.cs'
+      - 'Intersect.Server.Core/Entities/Entity.cs'
+      - 'Intersect.Server.Core/Entities/Npc.cs'
+      - 'Intersect.Server.Core/Entities/Player.Pets.cs'
+      - 'Intersect.Server.Core/Entities/Player.JoustRewards.cs'
+      - 'Intersect.Server.Core/Entities/Player.Exportation.Delivery.cs'
+      - 'Intersect.Server.Core/Maps/MapInstance.cs'
+      - 'Intersect.Client.Core/Interface/Game/MenuContainer*'
+      - 'Intersect.Client.Core/Interface/Game/GameInterface.cs'
+      - 'Intersect.Editor/Forms/frmMain.EditorHub.cs'
+      - 'Intersect.Editor/Resources/EditorHub/**'
+      - '.github/workflows/royal-seasons.yml'
+jobs:
+  seasons:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Season|FullyQualifiedName~Dungeon|FullyQualifiedName~Expedition|FullyQualifiedName~Fishing|FullyQualifiedName~Exportation|FullyQualifiedName~Farming|FullyQualifiedName~Joust|FullyQualifiedName~Gunnery|FullyQualifiedName~Sailing" --nologo
+      - run: dotnet run --project Utilities/RoyalSeasonUiTests/RoyalSeasonUiTests.csproj -c Release
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Release -p:RuntimeIdentifiers=win-x64 -- --seasons-only
+      - run: dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seasons-ui
+          path: validation-local/seasons-ui/*.png

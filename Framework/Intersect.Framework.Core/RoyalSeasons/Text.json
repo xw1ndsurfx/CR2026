@@ -1,0 +1,469 @@
+{
+  "Entries": {
+    "Royal seasons": {
+      "en": "Royal seasons",
+      "fr": "Saisons royales",
+      "es": "Temporadas reales"
+    },
+    "Previous season": {
+      "en": "Previous season",
+      "fr": "Saison précédente",
+      "es": "Temporada anterior"
+    },
+    "Next season": {
+      "en": "Next season",
+      "fr": "Saison suivante",
+      "es": "Temporada siguiente"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Waiting for the server...": {
+      "en": "Waiting for the server...",
+      "fr": "En attente du serveur…",
+      "es": "Esperando al servidor…"
+    },
+    "Royal seasons are paused.": {
+      "en": "Royal seasons are paused.",
+      "fr": "Les saisons royales sont en pause.",
+      "es": "Las temporadas reales están en pausa."
+    },
+    "Complete objectives to unlock free rewards and Premium bonuses.": {
+      "en": "Complete objectives to unlock free rewards and Premium bonuses.",
+      "fr": "Complétez les objectifs pour débloquer les récompenses gratuites et les bonus Premium.",
+      "es": "Completa objetivos para desbloquear recompensas gratuitas y bonificaciones Premium."
+    },
+    "No season is currently available.": {
+      "en": "No season is currently available.",
+      "fr": "Aucune saison n’est disponible actuellement.",
+      "es": "No hay ninguna temporada disponible actualmente."
+    },
+    "No response. Refresh before trying again.": {
+      "en": "No response. Refresh before trying again.",
+      "fr": "Aucune réponse. Actualisez avant de réessayer.",
+      "es": "Sin respuesta. Actualiza antes de intentarlo de nuevo."
+    },
+    "Season dates (UTC)": {
+      "en": "Season dates (UTC)",
+      "fr": "Dates de la saison (UTC)",
+      "es": "Fechas de la temporada (UTC)"
+    },
+    "Claim rewards before (UTC)": {
+      "en": "Claim rewards before (UTC)",
+      "fr": "Récupérer les récompenses avant (UTC)",
+      "es": "Recoge las recompensas antes de (UTC)"
+    },
+    "Season points": {
+      "en": "Season points",
+      "fr": "Points de saison",
+      "es": "Puntos de temporada"
+    },
+    "Premium active": {
+      "en": "Premium active",
+      "fr": "Premium actif",
+      "es": "Premium activo"
+    },
+    "Free track": {
+      "en": "Free track",
+      "fr": "Parcours gratuit",
+      "es": "Ruta gratuita"
+    },
+    "Objectives": {
+      "en": "Objectives",
+      "fr": "Objectifs",
+      "es": "Objetivos"
+    },
+    "points": {
+      "en": "points",
+      "fr": "points",
+      "es": "puntos"
+    },
+    "Rewards": {
+      "en": "Rewards",
+      "fr": "Récompenses",
+      "es": "Recompensas"
+    },
+    "Premium bonus": {
+      "en": "Premium bonus",
+      "fr": "Bonus Premium",
+      "es": "Bonificación Premium"
+    },
+    "Free reward": {
+      "en": "Free reward",
+      "fr": "Récompense gratuite",
+      "es": "Recompensa gratuita"
+    },
+    "Received": {
+      "en": "Received",
+      "fr": "Reçue",
+      "es": "Recibida"
+    },
+    "Premium required": {
+      "en": "Premium required",
+      "fr": "Premium requis",
+      "es": "Requiere Premium"
+    },
+    "Claim reward": {
+      "en": "Claim reward",
+      "fr": "Récupérer",
+      "es": "Recoger recompensa"
+    },
+    "Locked": {
+      "en": "Locked",
+      "fr": "Verrouillée",
+      "es": "Bloqueada"
+    },
+    "Reward received.": {
+      "en": "Reward received.",
+      "fr": "Récompense reçue.",
+      "es": "Recompensa recibida."
+    },
+    "The reward is not available.": {
+      "en": "The reward is not available.",
+      "fr": "Cette récompense n’est pas disponible.",
+      "es": "Esta recompensa no está disponible."
+    },
+    "Make room in your inventory. Your reward is kept.": {
+      "en": "Make room in your inventory. Your reward is kept.",
+      "fr": "Libérez de la place dans votre inventaire. Votre récompense est conservée.",
+      "es": "Haz espacio en tu inventario. Tu recompensa se conserva."
+    },
+    "Unable to save. Your reward is kept.": {
+      "en": "Unable to save. Your reward is kept.",
+      "fr": "Impossible d’enregistrer. Votre récompense est conservée.",
+      "es": "No se puede guardar. Tu recompensa se conserva."
+    },
+    "Invalid season configuration.": {
+      "en": "Invalid season configuration.",
+      "fr": "Configuration de saison invalide.",
+      "es": "Configuración de temporada no válida."
+    },
+    "The configuration changed. Reopen the editor before saving.": {
+      "en": "The configuration changed. Reopen the editor before saving.",
+      "fr": "La configuration a changé. Rouvrez l’éditeur avant d’enregistrer.",
+      "es": "La configuración ha cambiado. Vuelve a abrir el editor antes de guardar."
+    },
+    "The saved season file is unreadable. Restore it before saving.": {
+      "en": "The saved season file is unreadable. Restore it before saving.",
+      "fr": "Le fichier des saisons enregistré est illisible. Restaurez-le avant d’enregistrer.",
+      "es": "El archivo de temporadas guardado es ilegible. Restáuralo antes de guardar."
+    },
+    "Started seasons are locked. Create a new season; pause using the global switch.": {
+      "en": "Started seasons are locked. Create a new season; pause using the global switch.",
+      "fr": "Les saisons commencées sont verrouillées. Créez une nouvelle saison ; utilisez l’interrupteur global pour mettre en pause.",
+      "es": "Las temporadas iniciadas están bloqueadas. Crea una nueva temporada; usa el interruptor global para pausar."
+    },
+    "Choose existing reward items.": {
+      "en": "Choose existing reward items.",
+      "fr": "Choisissez des objets de récompense existants.",
+      "es": "Elige objetos de recompensa existentes."
+    },
+    "Choose an existing objective target or any target.": {
+      "en": "Choose an existing objective target or any target.",
+      "fr": "Choisissez une cible d’objectif existante ou toute cible.",
+      "es": "Elige un destino de objetivo existente o cualquier destino."
+    },
+    "Unable to save the seasons. Please try again.": {
+      "en": "Unable to save the seasons. Please try again.",
+      "fr": "Impossible d’enregistrer les saisons. Réessayez.",
+      "es": "No se pueden guardar las temporadas. Inténtalo de nuevo."
+    },
+    "Any / none": {
+      "en": "Any / none",
+      "fr": "Tous / aucun",
+      "es": "Cualquiera / ninguno"
+    },
+    "Missing reference": {
+      "en": "Missing reference",
+      "fr": "Référence manquante",
+      "es": "Referencia ausente"
+    },
+    "Dungeon modifiers": {
+      "en": "Dungeon modifiers",
+      "fr": "Modificateurs de donjon",
+      "es": "Modificadores de mazmorra"
+    },
+    "Enable modifiers": {
+      "en": "Enable modifiers",
+      "fr": "Activer les modificateurs",
+      "es": "Activar modificadores"
+    },
+    "Fixed": {
+      "en": "Fixed",
+      "fr": "Fixes",
+      "es": "Fijos"
+    },
+    "Weekly rotation (Monday UTC)": {
+      "en": "Weekly rotation (Monday UTC)",
+      "fr": "Rotation hebdomadaire (lundi UTC)",
+      "es": "Rotación semanal (lunes UTC)"
+    },
+    "Selection": {
+      "en": "Selection",
+      "fr": "Sélection",
+      "es": "Selección"
+    },
+    "Active modifiers in weekly rotation": {
+      "en": "Active modifiers in weekly rotation",
+      "fr": "Modificateurs actifs en rotation",
+      "es": "Modificadores activos en rotación"
+    },
+    "Add modifier": {
+      "en": "Add modifier",
+      "fr": "Ajouter un modificateur",
+      "es": "Añadir modificador"
+    },
+    "New modifier": {
+      "en": "New modifier",
+      "fr": "Nouveau modificateur",
+      "es": "Nuevo modificador"
+    },
+    "Remove": {
+      "en": "Remove",
+      "fr": "Retirer",
+      "es": "Eliminar"
+    },
+    "Apply to dungeon": {
+      "en": "Apply to dungeon",
+      "fr": "Appliquer au donjon",
+      "es": "Aplicar a la mazmorra"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Choose up to three fixed modifiers, or a weekly pool with enough entries.": {
+      "en": "Choose up to three fixed modifiers, or a weekly pool with enough entries.",
+      "fr": "Choisissez jusqu’à trois modificateurs fixes, ou un ensemble hebdomadaire contenant assez d’entrées.",
+      "es": "Elige hasta tres modificadores fijos o un grupo semanal con suficientes entradas."
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Enemy health (%)": {
+      "en": "Enemy health (%)",
+      "fr": "PV ennemis (%)",
+      "es": "Salud enemiga (%)"
+    },
+    "Enemy damage (%)": {
+      "en": "Enemy damage (%)",
+      "fr": "Dégâts ennemis (%)",
+      "es": "Daño enemigo (%)"
+    },
+    "Remaining time (%)": {
+      "en": "Remaining time (%)",
+      "fr": "Temps disponible (%)",
+      "es": "Tiempo disponible (%)"
+    },
+    "Lives removed (minimum one remains)": {
+      "en": "Lives removed (minimum one remains)",
+      "fr": "Vies retirées (au moins une conservée)",
+      "es": "Vidas retiradas (queda al menos una)"
+    },
+    "Completion experience (%)": {
+      "en": "Completion experience (%)",
+      "fr": "EXP de réussite (%)",
+      "es": "EXP al completar (%)"
+    },
+    "Rules": {
+      "en": "Rules",
+      "fr": "Règles",
+      "es": "Reglas"
+    },
+    "Modifiers are fixed at entry. Time reduction requires a dungeon time limit. Bonuses do not change item drops.": {
+      "en": "Modifiers are fixed at entry. Time reduction requires a dungeon time limit. Bonuses do not change item drops.",
+      "fr": "Les modificateurs sont fixés à l’entrée. La réduction du temps nécessite une limite de durée. Les bonus ne modifient pas les objets obtenus.",
+      "es": "Los modificadores se fijan al entrar. La reducción de tiempo requiere un límite de duración. Las bonificaciones no cambian los objetos obtenidos."
+    },
+    "Configure modifiers": {
+      "en": "Configure modifiers",
+      "fr": "Configurer les modificateurs",
+      "es": "Configurar modificadores"
+    },
+    "Enable royal seasons": {
+      "en": "Enable royal seasons",
+      "fr": "Activer les saisons royales",
+      "es": "Activar temporadas reales"
+    },
+    "Set UTC dates, objectives and both reward tracks. Started seasons are locked. Disable the global switch to pause. Characters are never reset.": {
+      "en": "Set UTC dates, objectives and both reward tracks. Started seasons are locked. Disable the global switch to pause. Characters are never reset.",
+      "fr": "Définissez les dates UTC, les objectifs et les deux parcours. Les saisons commencées sont verrouillées. Désactivez l’interrupteur global pour mettre en pause. Les personnages ne sont jamais réinitialisés.",
+      "es": "Define las fechas UTC, los objetivos y las dos rutas. Las temporadas iniciadas están bloqueadas. Desactiva el interruptor global para pausar. Los personajes nunca se reinician."
+    },
+    "Add season": {
+      "en": "Add season",
+      "fr": "Ajouter une saison",
+      "es": "Añadir temporada"
+    },
+    "New season": {
+      "en": "New season",
+      "fr": "Nouvelle saison",
+      "es": "Nueva temporada"
+    },
+    "Dungeon victories": {
+      "en": "Dungeon victories",
+      "fr": "Victoires en donjon",
+      "es": "Victorias en mazmorras"
+    },
+    "First tier": {
+      "en": "First tier",
+      "fr": "Premier palier",
+      "es": "Primer nivel"
+    },
+    "Save seasons": {
+      "en": "Save seasons",
+      "fr": "Enregistrer les saisons",
+      "es": "Guardar temporadas"
+    },
+    "No confirmation. Reopen this editor to read the saved configuration.": {
+      "en": "No confirmation. Reopen this editor to read the saved configuration.",
+      "fr": "Aucune confirmation. Rouvrez cet éditeur pour lire la configuration enregistrée.",
+      "es": "Sin confirmación. Vuelve a abrir este editor para leer la configuración guardada."
+    },
+    "Description": {
+      "en": "Description",
+      "fr": "Description",
+      "es": "Descripción"
+    },
+    "Season enabled": {
+      "en": "Season enabled",
+      "fr": "Saison activée",
+      "es": "Temporada activada"
+    },
+    "Starts at (UTC)": {
+      "en": "Starts at (UTC)",
+      "fr": "Début (UTC)",
+      "es": "Inicio (UTC)"
+    },
+    "Ends at (UTC)": {
+      "en": "Ends at (UTC)",
+      "fr": "Fin (UTC)",
+      "es": "Fin (UTC)"
+    },
+    "Reward claim grace (days)": {
+      "en": "Reward claim grace (days)",
+      "fr": "Délai de récupération après la fin (jours)",
+      "es": "Plazo para recoger tras el final (días)"
+    },
+    "Add objective": {
+      "en": "Add objective",
+      "fr": "Ajouter un objectif",
+      "es": "Añadir objetivo"
+    },
+    "New objective": {
+      "en": "New objective",
+      "fr": "Nouvel objectif",
+      "es": "Nuevo objetivo"
+    },
+    "Objective name": {
+      "en": "Objective name",
+      "fr": "Nom de l’objectif",
+      "es": "Nombre del objetivo"
+    },
+    "Modified dungeon victories": {
+      "en": "Modified dungeon victories",
+      "fr": "Victoires en donjons modifiés",
+      "es": "Victorias en mazmorras modificadas"
+    },
+    "Expedition rewards collected": {
+      "en": "Expedition rewards collected",
+      "fr": "Récompenses d’expédition récupérées",
+      "es": "Recompensas de expedición recogidas"
+    },
+    "Profession experience earned": {
+      "en": "Profession experience earned",
+      "fr": "EXP de métier gagnée",
+      "es": "EXP de profesión obtenida"
+    },
+    "Activity": {
+      "en": "Activity",
+      "fr": "Activité",
+      "es": "Actividad"
+    },
+    "Target (any if empty)": {
+      "en": "Target (any if empty)",
+      "fr": "Cible (toutes si vide)",
+      "es": "Destino (todos si vacío)"
+    },
+    "Required amount": {
+      "en": "Required amount",
+      "fr": "Quantité requise",
+      "es": "Cantidad requerida"
+    },
+    "Remove objective": {
+      "en": "Remove objective",
+      "fr": "Retirer l’objectif",
+      "es": "Eliminar objetivo"
+    },
+    "Add tier": {
+      "en": "Add tier",
+      "fr": "Ajouter un palier",
+      "es": "Añadir nivel"
+    },
+    "New tier": {
+      "en": "New tier",
+      "fr": "Nouveau palier",
+      "es": "Nuevo nivel"
+    },
+    "Tier name": {
+      "en": "Tier name",
+      "fr": "Nom du palier",
+      "es": "Nombre del nivel"
+    },
+    "Required points": {
+      "en": "Required points",
+      "fr": "Points requis",
+      "es": "Puntos requeridos"
+    },
+    "Quantity": {
+      "en": "Quantity",
+      "fr": "Quantité",
+      "es": "Cantidad"
+    },
+    "Remove tier": {
+      "en": "Remove tier",
+      "fr": "Retirer le palier",
+      "es": "Eliminar nivel"
+    },
+    "This season has started and is read-only.": {
+      "en": "This season has started and is read-only.",
+      "fr": "Cette saison a commencé et ne peut plus être modifiée.",
+      "es": "Esta temporada ha comenzado y ya no se puede modificar."
+    },
+    "Check season dates, non-overlap, objectives, reward items and increasing reachable tier points.": {
+      "en": "Check season dates, non-overlap, objectives, reward items and increasing reachable tier points.",
+      "fr": "Vérifiez les dates sans chevauchement, les objectifs, les récompenses et les paliers croissants et atteignables.",
+      "es": "Comprueba las fechas sin solapamientos, los objetivos, las recompensas y los niveles crecientes y alcanzables."
+    },
+    "Seasons saved.": {
+      "en": "Seasons saved.",
+      "fr": "Saisons enregistrées.",
+      "es": "Temporadas guardadas."
+    },
+    "Enemy health: {0}% | Enemy damage: {1}% | Completion XP: {2}%": {
+      "en": "Enemy health: {0}% | Enemy damage: {1}% | Completion XP: {2}%",
+      "fr": "PV ennemis : {0}% | Dégâts ennemis : {1}% | EXP de réussite : {2}%",
+      "es": "Salud enemiga: {0}% | Daño enemigo: {1}% | EXP al completar: {2}%"
+    },
+    "Preview: rules are fixed when the attempt starts.": {
+      "en": "Preview: rules are fixed when the attempt starts.",
+      "fr": "Aperçu : les règles sont fixées au début de la tentative.",
+      "es": "Vista previa: las reglas se fijan al iniciar el intento."
+    },
+    "Time limit: {0} seconds": {
+      "en": "Time limit: {0} seconds",
+      "fr": "Temps limite : {0} secondes",
+      "es": "Límite de tiempo: {0} segundos"
+    }
+  }
+}

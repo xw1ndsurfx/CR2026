@@ -1389,6 +1389,18 @@ public static partial class PacketSender
             return;
         }
 
+        // Character selection happens before the player's Guild navigation is loaded.
+        // Resolve the persisted memberships in one query without attaching navigation
+        // objects or clearing GuildId when a guild has since been deleted.
+        var guildIds = clientCharacters.Where(p => p.GuildId.HasValue)
+            .Select(p => p.GuildId!.Value).Distinct().ToArray();
+        Dictionary<Guid, string> characterGuildNames = [];
+        if (guildIds.Length > 0)
+        {
+            using var context = DbInterface.CreatePlayerContext();
+            characterGuildNames = CharacterSelectionGuildLookup.LoadNames(context.Guilds, guildIds);
+        }
+
         foreach (var character in clientCharacters.OrderByDescending(p => p.LastOnline))
         {
             var equipmentArray = character.Equipment;
@@ -1443,7 +1455,9 @@ public static partial class PacketSender
                     character.Level,
                     ClassDescriptor.GetName(character.ClassId),
                     equipment,
-                    character.Guild?.Name ?? string.Empty,
+                    character.GuildId is { } guildId
+                        ? characterGuildNames.GetValueOrDefault(guildId, string.Empty)
+                        : string.Empty,
                     character.Appearance?.SanitizedCopy() ?? new CharacterAppearance(), (int)character.Gender
                 )
             );
@@ -2130,7 +2144,7 @@ public static partial class PacketSender
             );
         }
 
-        player.SendPacket(new PartyPacket(memberPackets));
+        player.SendPacket(new PartyPacket(memberPackets) {MaximumMembers=Intersect.Server.Naval.NavalSystem.PartyCapacity(player.Party.FirstOrDefault()??player)});
     }
 
     //PartyUpdatePacket

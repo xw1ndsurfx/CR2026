@@ -2,14 +2,14 @@
 
 ## État de l'intégration
 
-**PR #228 en brouillon. Le parcours complet est codé, mais non compilé ni testé en conditions réelles. Ne pas merger dans main avant vérification.**
+La PR #240 est remise à jour avec `main`. Elle conserve les corrections de contraste, de police et d'aide déjà intégrées, inclut les **13 PNG et 10 WAV approuvés**, et ajoute une validation reproductible de l'interface. Voir [le rapport de validation](Validation-240.fr.md) pour les résultats et la distinction entre les contrôles automatisés et la recette en jeu connecté.
 
 ### Fonctionnalités ajoutées au code
 
 - Routes enregistrées côté serveur dans `resources/exportation.json`. Chaque route référence deux personnages **EventDescriptor**, deux maps d'îles distinctes, une **quête existante à une seule tâche**, les marchandises (identifiants, catégories, quantités), une profession personnalisée (`ProfessionId`), une récompense en objet monétaire empilable et de l'XP.
 - Commande d'événement **Open Exportation**, accessible dans l'éditeur d'événements. La même route est liée au marchand de départ et au destinataire, chacun sur sa carte.
 - Le serveur autorise les commandes grâce à un événement réel, un identifiant de cargaison, une position, une session et une séquence. Les objets sont fournis *virtuellement* par le marchand : les autres objets de l'inventaire du joueur ne sont pas consommés.
-- Au scellement, l'instance de cargaison est liée au bateau sélectionné et la quête existante démarre. La sauvegarde de la cargaison utilise une extension JSON persistée dans la colonne de flotte navale de la sauvegarde du personnage, avec les autres états du compte.
+- Au scellement, la quête existante démarre. La cargaison est liée au bateau lors de l'embarquement confirmé. La sauvegarde de la cargaison utilise une extension JSON persistée dans la colonne de flotte navale de la sauvegarde du personnage, avec les autres états du compte.
 - L'embarquement, la traversée et le débarquement doivent être confirmés par le système naval natif. Un voyage par téléportation seul ne satisfait pas l'objectif.
 - Livraison au bon personnage : la récompense et l'XP du métier sont inscrites avec la conclusion de la quête; une répétition du même scellement est refusée, avec tentative de restauration en cas de sauvegarde échouée.
 - Mort ou naufrage du bateau lié à la commande : cargaison perdue, retour au marchand pour refaire les caisses sans XP. Un abandon de la quête est aussi réconcilié, pour éviter de bloquer le joueur.
@@ -29,16 +29,22 @@
 
 ### Installer les ressources
 
-Les **23 fichiers binaires** (13 images + 10 WAV) sont distribués dans le ZIP de cette conversation; ils **ne sont pas encore committés** dans la PR. La copie lors du build et du publish est configurée dans `Shared/ExportationAssets.props`.
+Les **23 fichiers binaires** (13 images + 10 WAV) sont inclus dans le dépôt. Leur copie lors du build et du publish du client standard et de l'éditeur est configurée dans `Shared/ExportationAssets.props`. Les noms et empreintes du pack approuvé sont conservés.
 
-Depuis la racine du dépôt, avec `Corps_Royaux_Exportation_Ressources_Pretes.zip` téléchargé :
+Vérifier les ressources présentes et les traductions :
+
+```sh
+python scripts/exportation/validate_assets.py
+```
+
+L'ancien ZIP peut aussi être contrôlé ou réinstallé depuis la racine du dépôt :
 
 ```sh
 python scripts/exportation/install_assets.py "C:/Downloads/Corps_Royaux_Exportation_Ressources_Pretes.zip" --check
 python scripts/exportation/install_assets.py "C:/Downloads/Corps_Royaux_Exportation_Ressources_Pretes.zip"
 ```
 
-L'installateur vérifie SHA-256, dimensions des PNG et format audio avant d'écrire dans `resources/gui/exportation/` et `resources/sounds/exportation/`. Pour des builds Steam/CI reproductibles, ajoute ces fichiers au dépôt ou provisionne le ZIP via un pipeline contrôlé.
+L'installateur vérifie SHA-256, dimensions des PNG et format audio avant d'écrire dans `resources/gui/exportation/` et `resources/sounds/exportation/`.
 
 ### Vérifications obligatoires avant fusion
 
@@ -53,12 +59,12 @@ dotnet build Intersect.Editor/Intersect.Editor.csproj -c Release
 
 Puis effectuer des tests en jeu client + serveur + base de données : quête réelle, XP, inventaire plein, perte sur mort et naufrage, mauvais bateau, déconnexion/reconnexion, redémarrage du serveur, abandon de quête, double livraison et sauvegarde échouée.
 
-**Aucun résultat de compilation ou de tests .NET n'a été obtenu dans cet environnement; cette PR reste donc en brouillon.**
+La recette connectée complète reste distincte du banc de validation de l'interface. Ne pas présenter des réponses serveur simulées comme une traversée réellement jouée.
 
 ### Limites connues
 
 - Aucun glisser-déposer (clic pour mettre/retirer des objets).
-- Choix automatique d'un bateau utilisable lors du scellement; une sélection manuelle serait préférable si le joueur possède plusieurs bateaux.
+- Le bateau est choisi par l'embarquement effectif, après scellement.
 - Éditeur de routes encore en JSON, pas en interface à champs guidés.
 - Les cas spéciaux de récompenses de la quête et d'événements de niveau de métier doivent être validés lors des tests d'intégration; éviter les paiements supplémentaires configurés dans la quête.
 
@@ -92,3 +98,47 @@ Validation manuelle à faire après build : tester 1600×900 et 1280×720
 avec de vrais GFX (jour et nuit); navire possédé et amarré ailleurs;
 aucun bateau; bateau coulé; puis préparation, scellement, embarquement,
 accostage, livraison et mort/naufrage.
+
+
+
+## Interface Exportation — intégration de la maquette V2
+
+La maquette est maintenant un **véritable écran C# jouable** dans
+`Intersect.Client.Core/Interface/Game/ExportationWindow.cs`. Aucun nouvel
+écran figé ni fausse monnaie/EXP n'est utilisé : le GFX médiéval approuvé est
+conservé et enrichi par des contrôles dynamiques.
+
+- Bon de commande : bandeau rouge, détails du marchand, noms de cartes,
+  icônes des marchandises, quantités empaquetées et mini-barres réelles.
+- Caisses : matériaux à gauche, autres groupes à droite. Jusqu'à quatre
+  icônes par caisse représentent les objets réellement empaquetés, avec
+  les compteurs exacts et « OK » uniquement si le groupe est complet.
+- Rangée d'objets : sélection visible, icônes, état restant et info-bulles
+  sur les boutons cliquables. Les boutons de retrait restent accessibles.
+- Livraison : récompense (icône réelle de l'objet), EXP du métier
+  serveur, statut bateau possédé et trois étapes dépendant de l'état réel
+  de la cargaison (préparation, scellement, embarquement, accostage, remise).
+- Navigation : bouton principal vert lorsqu'une action est disponible,
+  avertissement de perte, bouton « ? » fonctionnel ouvrant une aide
+  superposée et fermable.
+- Multilingue : textes français / anglais / espagnol.
+
+### QA visuelle / fonctionnelle
+
+1. Installer le pack approuvé `assets.json` et lancer le client compilé.
+2. Ouvrir Exportation à 1672×941, 1600×900 et 1280×720, de jour et de nuit.
+3. Vérifier langues FR/EN/ES et textes longs : ni débordement ni recouvrement.
+4. Vérifier un ordre à un objet puis à plusieurs objets avec pagination.
+5. Cliquer sur les objets, retirer un objet et contrôler les compteurs,
+   barres, caisses et info-bulles.
+6. Tester « ? » puis « Fermer l'aide » et l'impossibilité de cliquer sur
+   une caisse derrière l'aide.
+7. Sceller, embarquer, accoster et livrer. L'EXP et les récompenses
+   doivent provenir des données serveur, jamais du dessin d'exemple.
+8. Tester la perte par mort ou naufrage et les étapes de réessai.
+
+Les tests NUnit protègent les compteurs, les étapes et les règles navales.
+`Utilities/ExportationUiTests` utilise la vraie fenêtre Gwen avec les PNG du
+dépôt pour exercer les contrôles et produire des captures en EN/FR/ES.
+Le rendu logiciel de ce banc ne remplace pas la vérification du rendu GPU,
+de la police Empire et du mixage audio sur le client connecté.

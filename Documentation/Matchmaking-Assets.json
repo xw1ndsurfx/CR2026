@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "origin": "Original procedural foley and generated artwork; no external samples",
+  "audio": [
+    {
+      "cue": "open",
+      "file": "Intersect.Client/resources/sounds/matchmaking/open_v1.wav",
+      "seconds": 0.62,
+      "peak": 0.44,
+      "rms": 0.094939,
+      "sha256": "6866a570d1451989f26c24e29bea52bc3449b136012e4a0143b6e283ca006d35"
+    },
+    {
+      "cue": "queued",
+      "file": "Intersect.Client/resources/sounds/matchmaking/queued_v1.wav",
+      "seconds": 0.48,
+      "peak": 0.43,
+      "rms": 0.091031,
+      "sha256": "e2604d02cba94513e07f254826a5461de90df6f142b17008afd0fbc628d0aac2"
+    },
+    {
+      "cue": "found",
+      "file": "Intersect.Client/resources/sounds/matchmaking/found_v1.wav",
+      "seconds": 1.18,
+      "peak": 0.5,
+      "rms": 0.089518,
+      "sha256": "4f39bb902b44fa5c598b25c2ade6d248cfcd49ae82214d2848c22a51629aafd1"
+    },
+    {
+      "cue": "ready",
+      "file": "Intersect.Client/resources/sounds/matchmaking/ready_v1.wav",
+      "seconds": 0.58,
+      "peak": 0.46,
+      "rms": 0.078648,
+      "sha256": "9a210dca8391d6ef18c7e9a52d16ede97684a111a7572ef594a548b6dbe59ba0"
+    },
+    {
+      "cue": "cancelled",
+      "file": "Intersect.Client/resources/sounds/matchmaking/cancelled_v1.wav",
+      "seconds": 0.48,
+      "peak": 0.4,
+      "rms": 0.100362,
+      "sha256": "4fcf48c35fe28094a26f9b4c11d0b4ae9fc79df13a7089f82c44685b43f08fd4"
+    },
+    {
+      "cue": "depart",
+      "file": "Intersect.Client/resources/sounds/matchmaking/depart_v1.wav",
+      "seconds": 1.3,
+      "peak": 0.5,
+      "rms": 0.057647,
+      "sha256": "f69405bd599d2a38716b8a19ec8b6fe5dc754eafa7beed61256f788507a90042"
+    },
+    {
+      "cue": "error",
+      "file": "Intersect.Client/resources/sounds/matchmaking/error_v1.wav",
+      "seconds": 0.42,
+      "peak": 0.41,
+      "rms": 0.061141,
+      "sha256": "c21acd9bb9d8bb9c9fa1681cac611ebbc8c55815e53fe6ad2652a10d0908afa8"
+    }
+  ],
+  "images": [
+    {
+      "file": "Intersect.Client/resources/gui/matchmaking_background_v1.png",
+      "sha256": "bad32ecac1aea82f374aab26d5c2ccfb4aabaed90f3530e6fb7748cc3a57ddd2",
+      "origin": "OpenAI built-in image generation; original Corps Royaux matchmaking UI artwork"
+    },
+    {
+      "file": "Intersect.Client/resources/gui/matchmaking_icons_v1.png",
+      "sha256": "f1ed6272bbc1c3d31f9029846088b34064420d584024a6ccb357dfc012cd514b",
+      "origin": "OpenAI built-in image generation; original Corps Royaux matchmaking UI artwork"
+    }
+  ]
+}

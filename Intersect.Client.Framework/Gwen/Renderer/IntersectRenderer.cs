@@ -81,7 +81,8 @@ public partial class IntersectRenderer : Base, ICacheToTexture
             return default;
         }
 
-        var size = mRenderer.MeasureText(text: text, font: font, size: fontSize, fontScale: scale * Scale);
+        // Layout uses logical canvas coordinates. Scale is applied only when drawing.
+        var size = mRenderer.MeasureText(text: text, font: font, size: fontSize, fontScale: scale);
 
         return new Point((int) size.X, (int) size.Y);
     }
@@ -223,6 +224,8 @@ public partial class IntersectRenderer : Base, ICacheToTexture
             return;
         }
 
+        var flipHorizontal = u2 < u1;
+        if (flipHorizontal) (u1, u2) = (u2, u1);
         var translatedTarget = Translate(targetRect);
         var rect = new FloatRect(
             translatedTarget.X,
@@ -255,7 +258,7 @@ public partial class IntersectRenderer : Base, ICacheToTexture
                 vdiff = (int)Math.Floor(diff / widthRatio);
                 rect.X += diff;
                 rect.Width -= diff;
-                u1 += vdiff;
+                if (flipHorizontal) u2 -= vdiff; else u1 += vdiff;
             }
 
             if (rect.X + rect.Width > clip.X + clip.Width)
@@ -263,7 +266,7 @@ public partial class IntersectRenderer : Base, ICacheToTexture
                 diff = rect.X + rect.Width - (clip.X + clip.Width);
                 vdiff = (int)Math.Floor(diff / widthRatio);
                 rect.Width -= diff;
-                u2 -= vdiff;
+                if (flipHorizontal) u1 += vdiff; else u2 -= vdiff;
             }
 
             if (rect.Y < clip.Y)
@@ -301,14 +304,14 @@ public partial class IntersectRenderer : Base, ICacheToTexture
         if (mRenderTarget == null)
         {
             mRenderer.DrawTexture(
-                tex, u1, v1, u2 - u1, v2 - v1, rect.X, rect.Y, rect.Width, rect.Height, mColor, mRenderTarget,
+                tex, u1, v1, u2 - u1, v2 - v1, flipHorizontal ? rect.X + rect.Width : rect.X, rect.Y, flipHorizontal ? -rect.Width : rect.Width, rect.Height, clr, mRenderTarget,
                 GameBlendModes.None, null, 0f, true
             );
         }
         else
         {
             mRenderer.DrawTexture(
-                tex, u1, v1, u2 - u1, v2 - v1, rect.X, rect.Y, rect.Width, rect.Height, mColor, mRenderTarget,
+                tex, u1, v1, u2 - u1, v2 - v1, flipHorizontal ? rect.X + rect.Width : rect.X, rect.Y, flipHorizontal ? -rect.Width : rect.Width, rect.Height, clr, mRenderTarget,
                 GameBlendModes.None, null, 0f, true
             );
         }
@@ -357,8 +360,6 @@ public partial class IntersectRenderer : Base, ICacheToTexture
 
     private Stack<IGameRenderTexture> m_Stack;
 
-    private IGameRenderTexture m_RealRT;
-
     public void Initialize()
     {
         m_RT = new Dictionary<Control.Base, IGameRenderTexture>();
@@ -380,7 +381,6 @@ public partial class IntersectRenderer : Base, ICacheToTexture
     /// <param name="control">Control to be rendered.</param>
     public void SetupCacheTexture(Control.Base control)
     {
-        m_RealRT = mRenderTarget;
         m_Stack.Push(mRenderTarget); // save current RT
         if (!m_RT.ContainsKey(control))
         {
@@ -410,14 +410,11 @@ public partial class IntersectRenderer : Base, ICacheToTexture
     {
         var ri = m_RT[control];
 
-        //ri.Display();
-        var rt = mRenderTarget;
-        mRenderTarget = m_RealRT;
+        // FinishCacheTexture already restored this panel's destination. A shared
+        // "last target" is stale after nested caches, or when a clean cache is
+        // reused next frame, and can cause sampling from the active render target.
         mColor = Color.White;
         DrawTexturedRect(ri, control.Bounds, Color.White);
-
-        //DrawMissingImage(control.Bounds);
-        mRenderTarget = rt;
     }
 
     /// <summary>
@@ -426,10 +423,18 @@ public partial class IntersectRenderer : Base, ICacheToTexture
     /// <param name="control">Control to be rendered.</param>
     public void CreateControlCacheTexture(Control.Base control)
     {
+        var width = Math.Max(1, (int)Math.Ceiling(control.Width * Scale));
+        var height = Math.Max(1, (int)Math.Ceiling(control.Height * Scale));
+        if (m_RT.TryGetValue(control, out var previous) && (previous.Width != width || previous.Height != height))
+        {
+            DisposeCachedTexture(control);
+        }
         // initialize cache RT
         if (!m_RT.ContainsKey(control))
         {
-            m_RT[control] = mRenderer.CreateRenderTexture(control.Width, control.Height);
+            // The contents are already rendered at canvas scale. A logical-sized
+            // texture clips them, then enlarges the clipped image again on presentation.
+            m_RT[control] = mRenderer.CreateRenderTexture(width, height);
             m_RT[control].Clear(Color.Transparent);
         }
 

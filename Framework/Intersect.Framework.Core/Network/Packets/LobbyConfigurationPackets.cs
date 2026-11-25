@@ -11,4 +11,5 @@ public partial class LobbyConfigurationPacket : IntersectPacket
 {
     [Key(0)] public string Json { get; set; } = "";
     [Key(1)] public string Message { get; set; } = "";
+    [Key(2)] public string MatchmakingCatalogJson { get; set; } = "[]";
 }

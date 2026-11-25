@@ -85,6 +85,9 @@ public partial class Npc : Entity
     public double InvasionHealthMultiplier { get; set; } = 1d;
     public double InvasionBaseDamageMultiplier { get; set; } = 1d;
     public double InvasionDamageMultiplier { get; set; } = 1d;
+    internal Guid DungeonModifierRunId;
+    internal long DungeonBaseHealth;
+    internal int DungeonDamagePercent = 100;
 
     //Moving
     public long LastRandomMove;
@@ -378,6 +381,9 @@ public partial class Npc : Entity
 
     public override bool CanTarget(Entity entity)
     {
+        if (entity is Player { IsDialogueProtected: true }) return false;
+        // Boarding combat uses its own instance; overworld sailors are not land targets.
+        if (entity is Player { NavalShipId: var ship } && ship != Guid.Empty) return false;
         if (PetOwner is { } owner)
             return entity is Npc { PetOwner: null } enemy && !enemy.IsAllyOf(owner) && base.CanTarget(entity);
 
@@ -421,6 +427,8 @@ public partial class Npc : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        // Recheck at impact too: already-cast spells and projectiles must not bypass dialogue protection.
+        if (entity is Player { IsDialogueProtected: true } && spell?.Combat?.Friendly != true) return false;
         if (!base.CanAttack(entity, spell))
         {
             return false;
@@ -514,12 +522,13 @@ public partial class Npc : Entity
             return;
         }
 
-        if (Options.Instance.Combat.EnableAdvancedCombat && Descriptor.IsBoss && PetOwner == null && target is Player bossTarget)
+        if (Options.Instance.Combat.EnableAdvancedCombat && PetOwner == null &&
+            (Descriptor.IsBoss || Descriptor.AdvancedTelegraphEnabled) && !IsAttacking &&
+            target is Player warnedPlayer && target.MapId == MapId &&
+            target.MapInstanceId == MapInstanceId)
         {
-            if (!IsAdvancedTelegraphReady(bossTarget))
-            {
-                return;
-            }
+            BeginAdvancedTelegraph(warnedPlayer);
+            return;
         }
 
         var deadAnimations = new List<KeyValuePair<Guid, Direction>>();
@@ -904,6 +913,11 @@ public partial class Npc : Entity
             CastTarget = target;
         }
 
+        // Phase 5: only eligible hostile, non-splash single-target combat spells
+        // gain a server-authoritative dodgeable warning. Native AoE and
+        // projectiles intentionally continue through their existing paths.
+        CastTime = BeginAdvancedSpellTelegraph(spellBase, CastTarget, CastTime);
+
         if (independentSpells)
         {
             var intervalMs = Descriptor.GetSpellCastIntervalMs(spellIndex);
@@ -1002,6 +1016,9 @@ public partial class Npc : Entity
                     UpdatePet(timeMs);
                     return;
                 }
+                // Resolve the queued strike even if its original target moved away.
+                if (ProcessAdvancedTelegraph(timeMs))
+                    return;
 
                 if (InvasionSessionId != Guid.Empty && Target != null && !HasLiveInvasionCombatTarget(Target))
                     AssignTarget(null);

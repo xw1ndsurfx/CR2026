@@ -33,11 +33,23 @@ internal static partial class NavalSystem
                         return new() { Error = "Stop all ships before changing navigation settings." };
                     if(edited.Herbonia.SelectMany(p=>p.Loot).Any(e=>ItemDescriptor.Get(e.ItemId)==null))
                         return new() {Error="Choose an existing item for every naval loot entry."};
+                    var oceanMaps=OceanMapResolver.Maps();
+                    if (!ValidateExpeditionTargets(edited, oceanMaps))
+                        return new() { Error = "Choose Ocean maps, valid naval targets, a real return dock and an existing reward item for expeditions." };
+                    if(edited.Monsters.Where(m=>m.Enabled).Any(m=>!oceanMaps.Contains(m.MapId) ||
+                        Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Get(m.TentacleNpcId) is not {} limb || string.IsNullOrWhiteSpace(limb.Sprite) ||
+                        new[]{m.BossAnimationId,m.DeathAnimationId}.Any(id=>id!=Guid.Empty && Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(id)==null)) ||
+                        edited.Monsters.SelectMany(m=>m.Loot).Any(e=>ItemDescriptor.Get(e.ItemId)==null))
+                        return new(){Error="Choose an Ocean map, a creature NPC with a sprite, existing animations and loot items for naval monsters."};
                     ValidateEditorShips(edited);
                     Configuration.Replace(edited, request.ExpectedVersion);
                     // No live captain is moved. Idle test ships are replaced; personal vessels are retained.
                     foreach (var id in Ships.Where(p => p.Value.OwnerId == Guid.Empty).Select(p => p.Key).ToArray()) Ships.Remove(id);
                     ApplyConfiguration(edited);
+                    Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(JsonConvert.SerializeObject(
+                        edited.Expeditions.Select(e => new { e.Name, e.Description, Stages = e.Stages.Select(s => new { s.Description }) })));
+                    if(edited.Monsters.Any(m=>!string.IsNullOrWhiteSpace(m.Name)))
+                        Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(JsonConvert.SerializeObject(edited.Monsters.Where(m=>!string.IsNullOrWhiteSpace(m.Name)).Select(m=>new {m.Name})));
                     navigation = Configuration.Load();
                 }
                 else if (request.Section == 2)
