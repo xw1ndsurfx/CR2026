@@ -1,0 +1,53 @@
+name: Royal mount racing
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/*MountRace*'
+      - '**/*MountRacing*'
+      - '**/MountRacing/**'
+      - '**/MountRacingAssets/**'
+      - '**/MountRacingUiTests/**'
+      - 'Intersect.Server.Core/Entities/Player*.cs'
+      - 'Intersect.Server.Core/Entities/Entity.cs'
+      - 'Intersect.Server.Core/Entities/Npc*.cs'
+      - 'Intersect.Server.Core/Core/LogicService.LogicThread.cs'
+      - 'Intersect.Client.Core/Entities/**'
+      - 'Intersect.Client.Core/Interface/Game/MountsWindow.cs'
+      - 'Intersect.Client.Core/Interface/Game/PartyLobbyWindow.cs'
+      - 'Intersect.Client/resources/gui/racing_*'
+      - 'Intersect.Client/resources/sounds/racing/**'
+      - 'Framework/Intersect.Framework.Core/QualityOfLife/**'
+      - 'Shared/MountRacingAssets.props'
+      - 'Documentation/Mount-Racing-Assets.json'
+      - 'Utilities/InterfaceAudioAssets/generate_audio.py'
+      - '.github/workflows/mount-racing.yml'
+jobs:
+  mount-racing:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify racing artwork and sounds
+        run: python Utilities/MountRacingAssets/generate_audio.py --check
+      - name: Verify racing, mounts, jousting and matchmaking
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Release --filter "FullyQualifiedName~Mount|FullyQualifiedName~Joust|FullyQualifiedName~Matchmaking" --nologo
+      - name: Verify race interface in three languages and resolutions
+        run: dotnet run --project Utilities/MountRacingUiTests/MountRacingUiTests.csproj -c Release
+      - name: Verify race editor in three languages
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Release -p:RuntimeIdentifiers=win-x64 -- --mount-racing-only
+      - name: Build the standard client
+        run: dotnet build Intersect.Client/Intersect.Client.csproj -c Release --nologo
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mount-racing-ui
+          path: validation-local/mount-racing-ui/*.png
