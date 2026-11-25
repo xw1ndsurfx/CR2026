@@ -13,13 +13,17 @@ try {
     }
     & dotnet run --project Utilities/FishingRulesTests/FishingRulesTests.csproj -c $Configuration -p:TestServer=true -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" "-p:NetworkHandshakePrivateKey=$fishingPrivate"
     if ($LASTEXITCODE -ne 0) { throw 'Fishing domain and native reward checks failed.' }
+    & dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c $Configuration -m:1 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" "-p:NetworkHandshakePrivateKey=$fishingPrivate" --filter "FullyQualifiedName~FishingPersistenceTests"
+    if ($LASTEXITCODE -ne 0) { throw 'Fishing SQLite persistence checks failed.' }
     & dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c $Configuration -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" --filter "FullyQualifiedName~FishingEventInteractionTests|FullyQualifiedName~FishingWindowTests|FullyQualifiedName~FishingAudioTests|FullyQualifiedName~FishingSceneGeometryTests|FullyQualifiedName~FontGlyphFallbackTests|FullyQualifiedName~UiTextureMirrorTests|FullyQualifiedName~ExportationContrastTests|FullyQualifiedName~WeaponSkillHudTests"
     if ($LASTEXITCODE -ne 0) { throw 'Fishing event interaction and native window checks failed.' }
+    & dotnet run --project Utilities/FishingUiTests/FishingUiTests.csproj -c $Configuration -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic"
+    if ($LASTEXITCODE -ne 0) { throw 'Fishing rendered UI checks failed.' }
     & dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --fishing-only
     if ($LASTEXITCODE -ne 0) { throw 'Fishing editor checks failed.' }
     & dotnet run --no-build --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c $Configuration -p:RuntimeIdentifiers=win-x64 -p:RunAnalyzers=false "-p:NetworkHandshakePublicKey=$fishingPublic" -- --hub-only
     if ($LASTEXITCODE -ne 0) { throw 'Fishing Hub entry and editor navigation checks failed.' }
-    & python scripts/fishing/verify_assets.py
+    & python scripts/fishing/verify_assets.py --output "Intersect.Client/bin/$Configuration/net8.0/win-x64" --output "Intersect.Editor/bin/$Configuration/net8.0-windows/win-x64"
     if ($LASTEXITCODE -ne 0) { throw 'Fishing asset integrity checks failed.' }
 }
 finally { Pop-Location }

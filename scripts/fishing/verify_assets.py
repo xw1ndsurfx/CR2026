@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--report", type=Path)
     parser.add_argument("--archive", type=Path, help="Also verify the Windows release bundle ZIP produced in dist/")
+    parser.add_argument("--output", type=Path, action="append", default=[], help="Verify actual client/editor build output; repeat for both")
     args = parser.parse_args()
     root = args.root.resolve()
     errors: list[str] = []
@@ -180,11 +181,21 @@ def main() -> None:
                     check(hashlib.sha256(archive.read(info)).hexdigest() == digest,
                           f"Archive contains changed bytes: {destination}")
 
+    output_files = 0
+    for directory in args.output:
+        for destination, digest in runtime_files.values():
+            path = directory / destination.removeprefix("Client and Editor/")
+            check(path.is_file(), f"Build output omits {path}")
+            if path.is_file():
+                output_files += 1
+                check(hashlib.sha256(path.read_bytes()).hexdigest() == digest, f"Build output contains changed bytes: {path}")
+
     report = {"checks": checks, "passed": not errors, "errors": errors,
               "images": len(manifest["assets"]), "audio_files": len(audio["assets"]),
               "audio_event_bindings": len(audio["events"]), "max_pcm_peak": max_peak,
               "release_bundles": bundle_count, "runtime_files_per_bundle": len(runtime_files),
               "archive_files_verified": archive_files,
+              "build_outputs_verified": len(args.output), "build_files_verified": output_files,
               "scope": "File integrity, atlas bounds, source coverage, numerical audio checks and release bundle coverage. Optional ZIP byte verification. Not a listening or game-render test."}
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)

@@ -97,7 +97,7 @@ L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.f
 - [ ] Compléter et tester #240 (Exportation) ; contrôler la chaîne commande → navire → livraison ou naufrage → récompenses.
 - [ ] Vérifier l'ensemble Royal Guide (#247–249) avec objectifs client/serveur, événements et compatibilité des anciens tutoriels.
 - [ ] Effectuer le scénario complet des Commandes d'artisanat avec deux joueurs.
-- [ ] Rejouer la Pêche automatique à différentes probabilités et valider l'EXP, la configuration active et les prises.
+- [ ] Terminer la recette de Pêche en client connecté et l'écoute des sons. Les contrôles automatiques du 25 novembre couvrent les règles AUTO, l'EXP, la configuration restaurée, les prises, les sauvegardes SQLite, les GFX/audio livrés et deux redémarrages isolés ; deux défauts de lisibilité sont corrigés localement. [Rapport et limites](Documentation/Fishing/Validation-2026-11-25.fr.md).
 - [ ] Déployer le combat avancé **uniquement en staging** derrière son option, après les migrations requises ; tester mobs, boss, sorts, combos et exercices dans différents cas réseau.
 
 ### P2 — pistes de conception, non engagées comme fonctionnalités livrées

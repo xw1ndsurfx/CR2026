@@ -88,8 +88,11 @@ internal static class FishingEditorTests
                     Zones = [new() { Name = "Fixture lagoon", Enabled = false, MapIds = [north.MapId, south.MapId],
                         Catches = [new() { ItemId = fish.Id, ToolItemIds = [rod.Id] }] }],
                 };
+                Console.WriteLine($"Fishing editor {language}: draft workflow");
                 CheckDraftWorkflow(source, replacement, fish);
+                Console.WriteLine($"Fishing editor {language}: activation feedback");
                 CheckActivationFeedback(source);
+                Console.WriteLine($"Fishing editor {language}: controls and acknowledgements");
                 // TabControl selects its initial page during native handle creation.
                 // Exercise the same Show lifecycle as EditorWindows.Show before reading controls.
                 using var form = Open(source.ToJson());

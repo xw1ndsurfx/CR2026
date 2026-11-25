@@ -103,7 +103,7 @@ internal sealed class FishingWindow : Base
         {
             var skill = i;
             _skills[i] = AddButton("Skill" + i, "", 510 + i * 174, 775, 154, 96, 20, () => UseSkill(skill));
-            _skills[i].TextAlign = Pos.Center | Pos.Bottom;
+            _skills[i].TextAlign = Pos.CenterH | Pos.Bottom;
             AddLabel("SkillKey" + i, (i + 1).ToString(CultureInfo.InvariantCulture), 520 + i * 174, 780, 25, 29, 18, true);
         }
         _instruction = AddLabel("Instructions", "", 282, 888, 880, 35, 18, true);
@@ -383,6 +383,8 @@ internal sealed class FishingWindow : Base
                     i == state.ChallengeExpectedInput ? new Color(250, 109, 78, 29) : new Color(230, 35, 29, 23));
             // Readable instruction plaque, with no baked-in labels or inventory values.
             if (state.Phase != FishingPhase.Waiting) Panel(skin, 300, 228, 668, 85, new Color(205, 36, 24, 18));
+            // Coral and fish can be very bright behind the session counter.
+            Fill(skin, 750, 697, 434, 39, new Color(230, 36, 24, 18));
         }
         base.Render(skin);
     }
@@ -615,6 +617,8 @@ internal sealed class FishingWindow : Base
             var rect = SceneRect(placement.X, placement.Y, placement.W, placement.H);
             placement.Control.SetBounds(rect.X, rect.Y, rect.Width, rect.Height);
             if (placement.Control is Label label && placement.Font > 0) label.FontSize = Math.Max(8, (int)Math.Round(placement.Font * _scale));
+            if (_skills.Contains(placement.Control))
+                placement.Control.Padding = new Padding(3, 3, 3, Math.Max(3, (int)Math.Round(10 * _scale)));
         }
         if (_language == ClientLanguages.Current) return;
         _language = ClientLanguages.Current;
