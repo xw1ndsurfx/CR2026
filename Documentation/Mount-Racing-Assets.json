@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "origin": "Original procedural foley and generated artwork; no external samples",
+  "audio": [
+    {
+      "cue": "open",
+      "file": "Intersect.Client/resources/sounds/racing/open_v1.wav",
+      "seconds": 0.65,
+      "peak": 0.43,
+      "rms": 0.085863,
+      "sha256": "ddccc4d52b8bfe7798b6572e9971ca9064eaaebbc5e921df598e0a0b9930f2cc"
+    },
+    {
+      "cue": "ready",
+      "file": "Intersect.Client/resources/sounds/racing/ready_v1.wav",
+      "seconds": 0.75,
+      "peak": 0.46,
+      "rms": 0.115442,
+      "sha256": "969fa6984dfdbb023988d122dfcffa7831d18baaa2ed54788e0619d638f31620"
+    },
+    {
+      "cue": "countdown",
+      "file": "Intersect.Client/resources/sounds/racing/countdown_v1.wav",
+      "seconds": 0.32,
+      "peak": 0.41,
+      "rms": 0.050502,
+      "sha256": "2b7e8b03cd50a8c434d5ec61591f582b6377994171052285412cd44ff93cf909"
+    },
+    {
+      "cue": "start",
+      "file": "Intersect.Client/resources/sounds/racing/start_v1.wav",
+      "seconds": 1.25,
+      "peak": 0.5,
+      "rms": 0.067093,
+      "sha256": "9aabfb599185a3d411130f7db9f7c5f7d7391ea152afdf98a579fcc15cfc9bac"
+    },
+    {
+      "cue": "checkpoint",
+      "file": "Intersect.Client/resources/sounds/racing/checkpoint_v1.wav",
+      "seconds": 0.38,
+      "peak": 0.39,
+      "rms": 0.093505,
+      "sha256": "cde1993c5452e8e19228ecefcccedf8a49cc138a5587970ea0e52c8f6aef9de4"
+    },
+    {
+      "cue": "lap",
+      "file": "Intersect.Client/resources/sounds/racing/lap_v1.wav",
+      "seconds": 0.68,
+      "peak": 0.43,
+      "rms": 0.098628,
+      "sha256": "a617ed7442f654ab3547acc4689d448293e79f920a271b7a3790f1c48ef0d05a"
+    },
+    {
+      "cue": "finish",
+      "file": "Intersect.Client/resources/sounds/racing/finish_v1.wav",
+      "seconds": 1.45,
+      "peak": 0.51,
+      "rms": 0.076459,
+      "sha256": "f78a2aece65000adb2ea978f7a34e796d22c510fec5533494ecd4d724ff523fe"
+    },
+    {
+      "cue": "reward",
+      "file": "Intersect.Client/resources/sounds/racing/reward_v1.wav",
+      "seconds": 0.9,
+      "peak": 0.46,
+      "rms": 0.077175,
+      "sha256": "ea06cea65462600b978dde46832a93c081d617642f16f6d004666c1c64bf37fa"
+    },
+    {
+      "cue": "cancel",
+      "file": "Intersect.Client/resources/sounds/racing/cancel_v1.wav",
+      "seconds": 0.55,
+      "peak": 0.39,
+      "rms": 0.077435,
+      "sha256": "91184d98bdf7f746e8a6ad1dec1e167dbaf1edb7c1a87c64da62f4e8f7d7bcda"
+    }
+  ],
+  "images": [
+    {
+      "file": "Intersect.Client/resources/gui/racing_background_v1.png",
+      "sha256": "2f4eac868337eeaacf4b4dadab37ca8e959d1a9b62dd7029f512d7c6a5429ef9",
+      "origin": "OpenAI built-in image generation; original Corps Royaux Royal Races interface artwork"
+    },
+    {
+      "file": "Intersect.Client/resources/gui/racing_icons_v1.png",
+      "sha256": "1925016293b16e8a99e6cfc580d5275ff1ad67389926a588926ea24d4c0f85af",
+      "origin": "OpenAI built-in image generation; original Corps Royaux Royal Races interface artwork"
+    }
+  ]
+}

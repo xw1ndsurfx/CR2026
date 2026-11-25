@@ -10,6 +10,7 @@ namespace Intersect.Server.Entities;
 
 public sealed class PetCollection
 {
+    public RacingProfile Racing { get; set; } = new();
     public Intersect.Framework.Core.EquipmentLoadouts.EquipmentLoadoutProfile EquipmentLoadouts { get; set; } = new();
     public Intersect.Framework.Core.RoyalSeasons.RoyalSeasonProfile RoyalSeasons { get; set; } = new();
     public Intersect.Framework.Core.RoyalContracts.RoyalContractProfile RoyalContracts { get; set; } = new();
@@ -46,6 +47,7 @@ public partial class Player
         {
             PetCollection = string.IsNullOrWhiteSpace(value) ? new PetCollection() : JsonConvert.DeserializeObject<PetCollection>(value) ?? new PetCollection();
             PetCollection.Mounts ??= new(); PetCollection.Mounts.Owned ??= [];
+            PetCollection.Racing ??= new(); PetCollection.Racing.Receipts ??= [];
             PetCollection.EquipmentLoadouts ??= new();
             PetCollection.EquipmentLoadouts.Sets ??= [];
             foreach (var slot in PetCollection.EquipmentLoadouts.Sets.Keys.ToArray())
@@ -97,6 +99,7 @@ public partial class Player
 
     private void SummonPet(Guid npcId)
     {
+        if (IsMountRacing) return;
         PetCollection.OwnedPets ??= [];
         if (!PetCollection.OwnedPets.ContainsKey(npcId) ||
             !NPCDescriptor.TryGet(npcId, out var descriptor) || !descriptor.IsPet)
@@ -140,7 +143,7 @@ public partial class Player
 
     private void SpawnPetRuntime(NPCDescriptor? descriptor = null)
     {
-        if (!InGame || IsDead || Client == null || MapId == Guid.Empty) return;
+        if (!InGame || IsDead || Client == null || MapId == Guid.Empty || IsMountRacing) return;
         PetCollection.OwnedPets ??= [];
         descriptor ??= NPCDescriptor.Get(PetCollection.ActivePetId);
         if (descriptor == null || !descriptor.IsPet ||

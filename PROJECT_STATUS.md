@@ -19,9 +19,15 @@
 
 ## État des fonctionnalités — distinction code / validation
 
+### Ajout du 25 novembre 2026 : courses royales de montures
+
+Les [courses royales](Documentation/Mount-Racing.fr.md) sont regroupées dans la [PR 283](https://github.com/xw1ndsurfx/CR2026/pull/283), depuis `main` après la PR 282 (`a3ff262ed`). Le serveur contrôle inscriptions, consentements individuels, instance privée, vitesse identique, passages, tours, temps et prix. L'éditeur règle les circuits, montures prêtées, récompenses et médias. L'entraînement solo est sans prix. Les résultats/prix en attente et le retour du personnage survivent au redémarrage ; une course interrompue ne reprend pas.
+
+Deux PNG et neuf WAV originaux ont été installés et vérifiés dans CURRENT CLIENT & EDITOR. Les interfaces sont traduites et contrôlées dans les trois langues. La validation couvre les règles, collisions serveur, sauvegardes en échec, double attribution, inventaire plein et retour après déconnexion ; la recette connectée à plusieurs clients reste à faire avec un circuit configuré. Aucun exécutable installé ni client Intel HD 3000 n'a été remplacé. Un contrôle GitHub dédié vérifie les courses, les activités existantes, les interfaces, l'éditeur et les ressources.
+
 ### Ajout du 25 novembre 2026 : matchmaking donjons et expéditions
 
-La [recherche de groupe](Documentation/Matchmaking.fr.md) est développée localement sur `codex/activity-matchmaking`, depuis `main` après la PR 281 (`2a9d8e288`). Elle rassemble joueurs seuls et groupes complets, exige l'accord individuel de tous les participants et prend en charge un équipage ou plusieurs navires. Les délais, activités, entrées de donjon et médias se règlent dans Lobby Editor. Deux PNG et sept WAV ont été installés dans CURRENT CLIENT & EDITOR avec contrôle des empreintes. Les exécutables installés et le client Intel HD 3000 restent inchangés. La publication et la recette connectée avec activités configurées restent à effectuer ; les constats historiques ci-dessous ne sont pas réévalués.
+La [recherche de groupe](Documentation/Matchmaking.fr.md) est fusionnée dans `main` par la PR 282 (`a3ff262ed`). Elle rassemble joueurs seuls et groupes complets, exige l'accord individuel de tous les participants et prend en charge un équipage ou plusieurs navires. Les délais, activités, entrées de donjon et médias se règlent dans Lobby Editor. Deux PNG et sept WAV ont été installés dans CURRENT CLIENT & EDITOR avec contrôle des empreintes. Les exécutables installés et le client Intel HD 3000 restent inchangés. La recette connectée avec activités configurées reste à effectuer ; les constats historiques ci-dessous ne sont pas réévalués.
 
 Validation locale : 20 tests dédiés et 362 tests de régression réussis (sélections partiellement communes), neuf contrôles d'interface sur trois langues/résolutions et trois contrôles de l'éditeur réussis. Les builds normaux réussissent ; aucun essai multijoueur connecté n'est revendiqué par ces résultats.
 
@@ -92,7 +98,7 @@ L’[enquête instrumentée au repos](Documentation/Playtests/Repos-2026-11-11.f
 
 ### P2 — pistes de conception, non engagées comme fonctionnalités livrées
 
-Les idées discutées pour une étape ultérieure comprennent le **matchmaking amélioré** et les **courses de montures**. Les expéditions navales coopératives ont rejoint la référence de travail par la PR 277, le quartier général par la PR 278, et les donjons à modificateurs et saisons royales par la PR 279. Les configurations rapides d’équipement sont décrites dans l’ajout du 23 novembre ci-dessus. L’intégration de code ne vaut pas validation en production. Priorité, périmètre et faisabilité des autres pistes restent à valider séparément.
+Le **matchmaking amélioré** est fusionné et les **courses de montures** sont implémentées localement, selon les ajouts du 25 novembre ci-dessus. Les expéditions navales coopératives ont rejoint la référence de travail par la PR 277, le quartier général par la PR 278, et les donjons à modificateurs et saisons royales par la PR 279. Les configurations rapides d’équipement sont décrites dans l’ajout du 23 novembre ci-dessus. L’intégration de code ne vaut pas validation en production. Priorité, périmètre et faisabilité des autres pistes restent à valider séparément.
 
 ## Reprise sur une nouvelle session de développement
 

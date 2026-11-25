@@ -5440,6 +5440,431 @@
       "en": "Random",
       "fr": "Aléatoire",
       "es": "Aleatorio"
+    },
+    "Back": {
+      "en": "Back",
+      "fr": "Retour",
+      "es": "Volver"
+    },
+    "Royal Races": {
+      "en": "Royal Races",
+      "fr": "Courses royales",
+      "es": "Carreras reales"
+    },
+    "Royal Races Editor": {
+      "en": "Royal Races Editor",
+      "fr": "Éditeur des courses royales",
+      "es": "Editor de carreras reales"
+    },
+    "A mount is provided. Everyone has the same speed. Practice gives no prizes.": {
+      "en": "A mount is provided. Everyone has the same speed. Practice gives no prizes.",
+      "fr": "Une monture est fournie. Tous ont la même vitesse. L'entraînement ne donne pas de prix.",
+      "es": "Se proporciona una montura. Todos tienen la misma velocidad. La práctica no da premios."
+    },
+    "Add circuit": {
+      "en": "Add circuit",
+      "fr": "Ajouter un circuit",
+      "es": "Añadir circuito"
+    },
+    "Add prize": {
+      "en": "Add prize",
+      "fr": "Ajouter un prix",
+      "es": "Añadir premio"
+    },
+    "Allow solo practice": {
+      "en": "Allow solo practice",
+      "fr": "Autoriser l'entraînement solo",
+      "es": "Permitir práctica individual"
+    },
+    "Check circuit settings, ordered checkpoints and prizes before saving.": {
+      "en": "Check circuit settings, ordered checkpoints and prizes before saving.",
+      "fr": "Vérifiez les paramètres, l'ordre des passages et les prix avant d'enregistrer.",
+      "es": "Revisa los ajustes, el orden de los puntos de control y los premios antes de guardar."
+    },
+    "Checkpoint sound": {
+      "en": "Checkpoint sound",
+      "fr": "Son de passage",
+      "es": "Sonido de punto de control"
+    },
+    "Checkpoints in order (last = finish)": {
+      "en": "Checkpoints in order (last = finish)",
+      "fr": "Passages dans l'ordre (dernier = arrivée)",
+      "es": "Puntos en orden (último = meta)"
+    },
+    "Choose a circuit, then enter or practise.": {
+      "en": "Choose a circuit, then enter or practise.",
+      "fr": "Choisissez un circuit pour participer ou vous entraîner.",
+      "es": "Elige un circuito para competir o practicar."
+    },
+    "Choose a mount": {
+      "en": "Choose a mount",
+      "fr": "Choisir une monture",
+      "es": "Elegir montura"
+    },
+    "Choose a safe circuit, registration point, mount and valid prizes.": {
+      "en": "Choose a safe circuit, registration point, mount and valid prizes.",
+      "fr": "Choisissez un circuit sûr, un point d'inscription, une monture et des prix valides.",
+      "es": "Elige un circuito seguro, un punto de inscripción, una montura y premios válidos."
+    },
+    "Circuit map": {
+      "en": "Circuit map",
+      "fr": "Carte du circuit",
+      "es": "Mapa del circuito"
+    },
+    "Circuit name": {
+      "en": "Circuit name",
+      "fr": "Nom du circuit",
+      "es": "Nombre del circuito"
+    },
+    "Claim prize": {
+      "en": "Claim prize",
+      "fr": "Récupérer le prix",
+      "es": "Recoger premio"
+    },
+    "Competition": {
+      "en": "Competition",
+      "fr": "Compétition",
+      "es": "Competición"
+    },
+    "Confirm your place. The race starts only after every rider is ready.": {
+      "en": "Confirm your place. The race starts only after every rider is ready.",
+      "fr": "Confirmez votre place. La course commence quand tous les cavaliers sont prêts.",
+      "es": "Confirma tu plaza. La carrera comienza cuando todos los jinetes estén listos."
+    },
+    "Countdown (seconds)": {
+      "en": "Countdown (seconds)",
+      "fr": "Compte à rebours (secondes)",
+      "es": "Cuenta atrás (segundos)"
+    },
+    "Countdown sound": {
+      "en": "Countdown sound",
+      "fr": "Son du compte à rebours",
+      "es": "Sonido de cuenta atrás"
+    },
+    "Enable mount races": {
+      "en": "Enable mount races",
+      "fr": "Activer les courses de montures",
+      "es": "Activar carreras de monturas"
+    },
+    "Finish sound": {
+      "en": "Finish sound",
+      "fr": "Son d'arrivée",
+      "es": "Sonido de llegada"
+    },
+    "Finish your current activity before entering a race.": {
+      "en": "Finish your current activity before entering a race.",
+      "fr": "Terminez votre activité avant de rejoindre une course.",
+      "es": "Termina tu actividad antes de entrar en una carrera."
+    },
+    "Finish your race before claiming a prize.": {
+      "en": "Finish your race before claiming a prize.",
+      "fr": "Terminez votre course avant de récupérer un prix.",
+      "es": "Termina tu carrera antes de recoger un premio."
+    },
+    "Invalid race configuration.": {
+      "en": "Invalid race configuration.",
+      "fr": "Configuration de course invalide.",
+      "es": "Configuración de carrera no válida."
+    },
+    "Join race": {
+      "en": "Join race",
+      "fr": "Participer",
+      "es": "Participar"
+    },
+    "Lap sound": {
+      "en": "Lap sound",
+      "fr": "Son de tour",
+      "es": "Sonido de vuelta"
+    },
+    "Lap {0}/{1} · Checkpoint {2}/{3} · {4}s left": {
+      "en": "Lap {0}/{1} · Checkpoint {2}/{3} · {4}s left",
+      "fr": "Tour {0}/{1} · Passage {2}/{3} · Reste {4}s",
+      "es": "Vuelta {0}/{1} · Punto {2}/{3} · Quedan {4}s"
+    },
+    "Leave race": {
+      "en": "Leave race",
+      "fr": "Quitter la course",
+      "es": "Salir de la carrera"
+    },
+    "Make room in your inventory to claim this race prize.": {
+      "en": "Make room in your inventory to claim this race prize.",
+      "fr": "Libérez de la place dans votre inventaire pour récupérer ce prix.",
+      "es": "Haz espacio en tu inventario para recoger este premio."
+    },
+    "Maximum racers": {
+      "en": "Maximum racers",
+      "fr": "Cavaliers maximum",
+      "es": "Máximo de jinetes"
+    },
+    "Meet at this circuit's registration point to enter.": {
+      "en": "Meet at this circuit's registration point to enter.",
+      "fr": "Rejoignez le point d'inscription de ce circuit pour participer.",
+      "es": "Acude al punto de inscripción de este circuito para participar."
+    },
+    "Milliseconds per tile": {
+      "en": "Milliseconds per tile",
+      "fr": "Millisecondes par case",
+      "es": "Milisegundos por casilla"
+    },
+    "Minimum racers": {
+      "en": "Minimum racers",
+      "fr": "Cavaliers minimum",
+      "es": "Mínimo de jinetes"
+    },
+    "Missing resource": {
+      "en": "Missing resource",
+      "fr": "Ressource manquante",
+      "es": "Recurso no encontrado"
+    },
+    "Move checkpoint down": {
+      "en": "Move checkpoint down",
+      "fr": "Descendre le passage",
+      "es": "Bajar punto de control"
+    },
+    "Move checkpoint up": {
+      "en": "Move checkpoint up",
+      "fr": "Monter le passage",
+      "es": "Subir punto de control"
+    },
+    "New race circuit": {
+      "en": "New race circuit",
+      "fr": "Nouveau circuit",
+      "es": "Nuevo circuito"
+    },
+    "No race circuits are configured.": {
+      "en": "No race circuits are configured.",
+      "fr": "Aucun circuit n'est configuré.",
+      "es": "No hay circuitos configurados."
+    },
+    "No records or unclaimed prizes yet.": {
+      "en": "No records or unclaimed prizes yet.",
+      "fr": "Aucun record ni prix à récupérer.",
+      "es": "Aún no hay récords ni premios pendientes."
+    },
+    "Place {0} · {1}": {
+      "en": "Place {0} · {1}",
+      "fr": "Place {0} · {1}",
+      "es": "Puesto {0} · {1}"
+    },
+    "Practice": {
+      "en": "Practice",
+      "fr": "Entraînement",
+      "es": "Práctica"
+    },
+    "Practice is disabled for this circuit.": {
+      "en": "Practice is disabled for this circuit.",
+      "fr": "L'entraînement est désactivé pour ce circuit.",
+      "es": "La práctica está desactivada en este circuito."
+    },
+    "Prize cooldown (seconds)": {
+      "en": "Prize cooldown (seconds)",
+      "fr": "Délai entre prix (secondes)",
+      "es": "Espera entre premios (segundos)"
+    },
+    "Prize for place {0} · ×{1}": {
+      "en": "Prize for place {0} · ×{1}",
+      "fr": "Prix de la place {0} · ×{1}",
+      "es": "Premio del puesto {0} · ×{1}"
+    },
+    "Prizes: place, item, quantity": {
+      "en": "Prizes: place, item, quantity",
+      "fr": "Prix : place, objet, quantité",
+      "es": "Premios: puesto, objeto, cantidad"
+    },
+    "Provided race mount": {
+      "en": "Provided race mount",
+      "fr": "Monture de course fournie",
+      "es": "Montura proporcionada"
+    },
+    "Race cancelled": {
+      "en": "Race cancelled",
+      "fr": "Course annulée",
+      "es": "Carrera cancelada"
+    },
+    "Race circuits": {
+      "en": "Race circuits",
+      "fr": "Circuits de course",
+      "es": "Circuitos de carreras"
+    },
+    "Race details": {
+      "en": "Race details",
+      "fr": "Détails de la course",
+      "es": "Detalles de la carrera"
+    },
+    "Race in progress": {
+      "en": "Race in progress",
+      "fr": "Course en cours",
+      "es": "Carrera en curso"
+    },
+    "Race prize already claimed.": {
+      "en": "Race prize already claimed.",
+      "fr": "Prix déjà récupéré.",
+      "es": "Premio ya recogido."
+    },
+    "Race prize claimed!": {
+      "en": "Race prize claimed!",
+      "fr": "Prix récupéré !",
+      "es": "¡Premio recogido!"
+    },
+    "Race results": {
+      "en": "Race results",
+      "fr": "Résultats de la course",
+      "es": "Resultados de la carrera"
+    },
+    "Race results are temporarily unavailable.": {
+      "en": "Race results are temporarily unavailable.",
+      "fr": "Les résultats sont temporairement indisponibles.",
+      "es": "Los resultados no están disponibles temporalmente."
+    },
+    "Race service unavailable. Please try again.": {
+      "en": "Race service unavailable. Please try again.",
+      "fr": "Les courses sont indisponibles. Réessayez.",
+      "es": "Las carreras no están disponibles. Inténtalo de nuevo."
+    },
+    "Race settings could not be saved. Check the circuit, mount and prizes.": {
+      "en": "Race settings could not be saved. Check the circuit, mount and prizes.",
+      "fr": "Impossible d'enregistrer. Vérifiez le circuit, la monture et les prix.",
+      "es": "No se pudo guardar. Revisa el circuito, la montura y los premios."
+    },
+    "Race start sound": {
+      "en": "Race start sound",
+      "fr": "Son du départ",
+      "es": "Sonido de salida"
+    },
+    "Race time limit (seconds)": {
+      "en": "Race time limit (seconds)",
+      "fr": "Durée limite de course (secondes)",
+      "es": "Tiempo límite de carrera (segundos)"
+    },
+    "Radius": {
+      "en": "Radius",
+      "fr": "Rayon",
+      "es": "Radio"
+    },
+    "Records and prizes": {
+      "en": "Records and prizes",
+      "fr": "Records et prix",
+      "es": "Récords y premios"
+    },
+    "Registration X": {
+      "en": "Registration X",
+      "fr": "Inscription X",
+      "es": "Inscripción X"
+    },
+    "Registration Y": {
+      "en": "Registration Y",
+      "fr": "Inscription Y",
+      "es": "Inscripción Y"
+    },
+    "Registration map": {
+      "en": "Registration map",
+      "fr": "Carte d'inscription",
+      "es": "Mapa de inscripción"
+    },
+    "Registration window (seconds)": {
+      "en": "Registration window (seconds)",
+      "fr": "Délai d'inscription (secondes)",
+      "es": "Plazo de inscripción (segundos)"
+    },
+    "Remove circuit": {
+      "en": "Remove circuit",
+      "fr": "Supprimer le circuit",
+      "es": "Eliminar circuito"
+    },
+    "Reward sound": {
+      "en": "Reward sound",
+      "fr": "Son de récompense",
+      "es": "Sonido de recompensa"
+    },
+    "Settings and media": {
+      "en": "Settings and media",
+      "fr": "Paramètres et médias",
+      "es": "Ajustes y recursos"
+    },
+    "Solo practice": {
+      "en": "Solo practice",
+      "fr": "Entraînement solo",
+      "es": "Práctica individual"
+    },
+    "Starting X": {
+      "en": "Starting X",
+      "fr": "Départ X",
+      "es": "Salida X"
+    },
+    "Starting Y": {
+      "en": "Starting Y",
+      "fr": "Départ Y",
+      "es": "Salida Y"
+    },
+    "Starting in {0}…": {
+      "en": "Starting in {0}…",
+      "fr": "Départ dans {0}…",
+      "es": "Salida en {0}…"
+    },
+    "Stay near registration. Closing this window keeps your place in the queue.": {
+      "en": "Stay near registration. Closing this window keeps your place in the queue.",
+      "fr": "Restez près de l'inscription. Fermer cette fenêtre conserve votre place dans la file.",
+      "es": "Quédate cerca de la inscripción. Cerrar esta ventana conserva tu plaza en la cola."
+    },
+    "This race circuit is unavailable.": {
+      "en": "This race circuit is unavailable.",
+      "fr": "Ce circuit est indisponible.",
+      "es": "Este circuito no está disponible."
+    },
+    "This race invitation is no longer available.": {
+      "en": "This race invitation is no longer available.",
+      "fr": "Cette invitation à la course n'est plus valable.",
+      "es": "Esta invitación a la carrera ya no es válida."
+    },
+    "This race prize is currently unavailable.": {
+      "en": "This race prize is currently unavailable.",
+      "fr": "Ce prix est actuellement indisponible.",
+      "es": "Este premio no está disponible actualmente."
+    },
+    "This race prize is no longer available.": {
+      "en": "This race prize is no longer available.",
+      "fr": "Ce prix n'est plus disponible.",
+      "es": "Este premio ya no está disponible."
+    },
+    "Travel to this race circuit is unavailable.": {
+      "en": "Travel to this race circuit is unavailable.",
+      "fr": "Le déplacement vers ce circuit est indisponible.",
+      "es": "El viaje a este circuito no está disponible."
+    },
+    "Use a dedicated map without NPC spawns or events. Finish with a checkpoint at the starting tile. All riders use the same speed; practice awards no prizes.": {
+      "en": "Use a dedicated map without NPC spawns or events. Finish with a checkpoint at the starting tile. All riders use the same speed; practice awards no prizes.",
+      "fr": "Utilisez une carte dédiée sans PNJ ni événements. Le dernier passage doit être sur la case de départ. Tous les cavaliers ont la même vitesse ; l'entraînement ne donne pas de prix.",
+      "es": "Usa un mapa dedicado sin PNJ ni eventos. El último punto debe estar en la casilla de salida. Todos los jinetes tienen la misma velocidad; la práctica no da premios."
+    },
+    "Waiting for riders…": {
+      "en": "Waiting for riders…",
+      "fr": "En attente de cavaliers…",
+      "es": "Esperando jinetes…"
+    },
+    "You are already registered, or the race queue is full.": {
+      "en": "You are already registered, or the race queue is full.",
+      "fr": "Vous êtes déjà inscrit ou la file de course est pleine.",
+      "es": "Ya estás inscrito o la cola de la carrera está llena."
+    },
+    "You left the race.": {
+      "en": "You left the race.",
+      "fr": "Vous avez quitté la course.",
+      "es": "Has salido de la carrera."
+    },
+    "Your race prize could not be saved. Please try again.": {
+      "en": "Your race prize could not be saved. Please try again.",
+      "fr": "Votre prix n'a pas pu être enregistré. Réessayez.",
+      "es": "No se pudo guardar tu premio. Inténtalo de nuevo."
+    },
+    "Your race registration expired or its conditions changed.": {
+      "en": "Your race registration expired or its conditions changed.",
+      "fr": "Votre inscription a expiré ou ses conditions ont changé.",
+      "es": "Tu inscripción ha caducado o sus condiciones han cambiado."
+    },
+    "{0} laps · {1}–{2} riders · {3} waiting": {
+      "en": "{0} laps · {1}–{2} riders · {3} waiting",
+      "fr": "{0} tours · {1}–{2} cavaliers · {3} en attente",
+      "es": "{0} vueltas · {1}–{2} jinetes · {3} en espera"
     }
   }
 }

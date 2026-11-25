@@ -26,6 +26,7 @@ internal sealed class MountsWindow : Window
         var title = new Label(this) { Text = T("Stable"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 17, TextColorOverride = Color.White }; title.SetBounds(24, 42, 420, 28);
         var search = new TextBox(this, "MountSearch"); search.SetBounds(24, 82, 445, 30);
+        MountRaceWindow.Button(this, "Royal Races", 484, 42, 208, () => { Hide(); Interface.EnqueueInGame(ui => ui.OpenMountRaces()); });
         search.TextChanged += (_, _) => { _search = search.Text ?? ""; Rebuild(); };
         var ownedFilter = NavalManagementWindow.Button(this, "MountOwnedFilter", T("Unlocked only"), 484, 82, 208, 30, () => { _ownedOnly = !_ownedOnly; Rebuild(); });
         ownedFilter.IsToggle = true; ownedFilter.TextColorOverride = Color.White;

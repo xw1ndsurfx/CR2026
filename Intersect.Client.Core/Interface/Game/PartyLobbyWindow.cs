@@ -40,7 +40,8 @@ internal sealed class PartyLobbyWindow : Window
         _search.PlaceholderText=ClientLanguages.Text("Search host, lobby or dungeon");
         _search.SetBounds(199,14,width-295,28); _search.SetToolTipText(ClientLanguages.Text("Search host, lobby or dungeon"));
         Button(this,"Refresh",Width-110,14,94,()=>Request(LobbyAction.Browse));
-        _summary=Label(this,"LobbySummary",16,49,width-350,26,Gold);
+        _summary=Label(this,"LobbySummary",200,49,Math.Max(60,Width-558),26,Gold);
+        MountRaceWindow.Button(this,"Royal Races",16,45,Math.Min(180,Width-380),()=>{Hide();Intersect.Client.Interface.Interface.EnqueueInGame(ui=>ui.OpenMountRaces());});
         var matchmaking=Button(this,"Find an adventure",Width-350,45,166,()=>{Hide();Intersect.Client.Interface.Interface.EnqueueInGame(ui=>ui.OpenMatchmaking());});
         matchmaking.Text=MatchmakingWindow.T("Find an adventure");
         Button(this,"Royal Jousting",Width-178,45,160,()=>{Hide();JoustWindow.Open();});

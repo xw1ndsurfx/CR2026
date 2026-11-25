@@ -42,7 +42,7 @@ public partial class Npc
                 spell.Combat.HitRadius,
                 spell.CastDuration) ||
             player.IsDisposed || !player.InGame || player.IsDead || player.HasPendingDeath ||
-            player.IsJoustProtected || player.MapId != MapId || player.MapInstanceId != MapInstanceId)
+            player.IsActivityCombatProtected || player.MapId != MapId || player.MapInstanceId != MapInstanceId)
             return nativeCastEnd;
 
         var now = Timing.Global.Milliseconds;
@@ -80,7 +80,7 @@ public partial class Npc
         var canResolve =
             Options.Instance.Combat.EnableAdvancedCombat &&
             player != null && player.InGame && !player.IsDead &&
-            !player.HasPendingDeath && !player.IsDisposed && !player.IsJoustProtected &&
+            !player.HasPendingDeath && !player.IsDisposed && !player.IsActivityCombatProtected &&
             !IsDead && !IsDisposed && 
             !CachedStatuses.Any(status => status.Type is SpellEffect.Stun or SpellEffect.Sleep or SpellEffect.Silence) &&
             MapId == _advancedSpellWarningMapId &&

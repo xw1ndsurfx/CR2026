@@ -4,6 +4,8 @@
 
 # Local verification output and temporary tooling
 /validation-local/
+mount-races.json
+mount-race-results.json
 
 *.pydevproject
 .project
