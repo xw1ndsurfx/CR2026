@@ -84,7 +84,9 @@ internal static partial class DungeonRunRuntime
         MapInstanceType instanceType,
         out string error,
         IReadOnlyList<Player>? navalParticipants=null,
-        Guid navalEncounterId=default
+        Guid navalEncounterId=default,
+        bool requireAllParticipants=false,
+        Action? onCommitted=null
     )
     {
         error = string.Empty;
@@ -220,6 +222,12 @@ internal static partial class DungeonRunRuntime
             }
         }
 
+        if (requireAllParticipants && participants.Any(member => member.MapInstanceId != instanceId || member.MapId != mapId))
+        {
+            error = "A participant could not enter the dungeon.";
+            return false;
+        }
+
         // Pre-create every configured dungeon map in this same instance so
         // monster counting and no-respawn behavior are deterministic.
         foreach (var dungeonMapId in GetDungeonMapIds(dungeon, mapId))
@@ -272,6 +280,7 @@ internal static partial class DungeonRunRuntime
 
             RunsByInstance[instanceId] = run;
         }
+        onCommitted?.Invoke();
 
         if (navalEncounterId != Guid.Empty) SetBoardingCombat(run, true);
         foreach (var npc in ModifierNpcs(run)) ConfigureDungeonNpc(npc);

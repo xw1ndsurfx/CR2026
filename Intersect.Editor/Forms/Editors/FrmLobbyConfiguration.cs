@@ -9,7 +9,7 @@ public sealed class FrmLobbyConfiguration : DarkForm
     private readonly LobbyConfiguration _working;
     private readonly List<(LobbyPresentation Value,ComboBox Image,NumericUpDown Maximum)> _rows=[];
     private static string T(string s)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(s,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-    public FrmLobbyConfiguration(string json)
+    public FrmLobbyConfiguration(string json,string matchmakingCatalog="[]")
     {
         _working=JsonConvert.DeserializeObject<LobbyConfiguration>(json)??new();Text=T("Lobby Editor");Size=new Size(850,660);MinimumSize=new Size(700,450);StartPosition=FormStartPosition.CenterParent;
         var activities=Enum.GetValues<LobbyActivity>();
@@ -41,6 +41,10 @@ public sealed class FrmLobbyConfiguration : DarkForm
             foreach(var row in _rows){row.Value.Image=row.Image.Text.Trim();row.Value.MaximumMembers=(int)row.Maximum.Value;}
             try{_working.Validate();Networking.Network.SendPacket(new LobbyConfigurationRequestPacket{Save=true,Json=JsonConvert.SerializeObject(_working)});}
             catch{MessageBox.Show(this,T("Invalid lobby settings."));}
-        };footer.Controls.Add(save);Controls.Add(viewport);Controls.Add(footer);Controls.Add(help);EditorTheme.Apply(this);
+        };footer.Controls.Add(save);
+        var tabs=new TabControl {Dock=DockStyle.Fill};
+        var lobbyPage=new TabPage(T("Adventure lobbies"));lobbyPage.Controls.Add(viewport);lobbyPage.Controls.Add(help);tabs.TabPages.Add(lobbyPage);
+        var matchPage=new TabPage(T("Matchmaking"));matchPage.Controls.Add(new MatchmakingEditor(_working.Matchmaking,JsonConvert.DeserializeObject<Intersect.Framework.Core.Matchmaking.MatchmakingEditorChoice[]>(matchmakingCatalog)??[]));tabs.TabPages.Add(matchPage);
+        Controls.Add(tabs);Controls.Add(footer);EditorTheme.Apply(this);
     }
 }

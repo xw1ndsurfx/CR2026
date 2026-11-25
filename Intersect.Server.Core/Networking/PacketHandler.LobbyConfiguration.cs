@@ -7,7 +7,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client,LobbyConfigurationRequestPacket packet)
     {
         if(!client.IsEditor)return;
-        try { if(packet.Save)LobbyConfigurationRuntime.Save(packet.Json);client.Send(new LobbyConfigurationPacket {Json=JsonConvert.SerializeObject(LobbyConfigurationRuntime.Current)}); }
+        try { if(packet.Save)LobbyConfigurationRuntime.Save(packet.Json);client.Send(new LobbyConfigurationPacket {Json=JsonConvert.SerializeObject(LobbyConfigurationRuntime.Current),MatchmakingCatalogJson=JsonConvert.SerializeObject(Matchmaking.MatchmakingRuntime.EditorCatalog())}); }
         catch { client.Send(new LobbyConfigurationPacket {Message="Invalid lobby settings."}); }
     }
 }

@@ -19,6 +19,12 @@
 
 ## État des fonctionnalités — distinction code / validation
 
+### Ajout du 25 novembre 2026 : matchmaking donjons et expéditions
+
+La [recherche de groupe](Documentation/Matchmaking.fr.md) est développée localement sur `codex/activity-matchmaking`, depuis `main` après la PR 281 (`2a9d8e288`). Elle rassemble joueurs seuls et groupes complets, exige l'accord individuel de tous les participants et prend en charge un équipage ou plusieurs navires. Les délais, activités, entrées de donjon et médias se règlent dans Lobby Editor. Deux PNG et sept WAV ont été installés dans CURRENT CLIENT & EDITOR avec contrôle des empreintes. Les exécutables installés et le client Intel HD 3000 restent inchangés. La publication et la recette connectée avec activités configurées restent à effectuer ; les constats historiques ci-dessous ne sont pas réévalués.
+
+Validation locale : 20 tests dédiés et 362 tests de régression réussis (sélections partiellement communes), neuf contrôles d'interface sur trois langues/résolutions et trois contrôles de l'éditeur réussis. Les builds normaux réussissent ; aucun essai multijoueur connecté n'est revendiqué par ces résultats.
+
 ### Ajout du 23 novembre 2026 : sons des interfaces
 
 La branche locale `codex/interface-audio`, issue de `main` après la PR 280 (`be0731f61`), ajoute une [palette de 27 sons originaux](Documentation/InterfaceAudio.fr.md) au menu principal et aux interfaces du jeu : clics, survols, clavier, onglets, réglages, fenêtres et confirmations. Les sons déjà configurés restent prioritaires. Le volume des effets, les limites de répétition et la libération des instances sont pris en compte. Aucun changement de protocole ou de serveur n’est nécessaire.
